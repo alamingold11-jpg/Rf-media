@@ -1027,17 +1027,12 @@ async function hashPassword(password) {
   return 'demo-' + (hash >>> 0).toString(16).padStart(8, '0');
 }
 
+// data-view বাটনগুলো একটাই ডেলিগেটেড লিসেনারে হ্যান্ডেল হয় (আগে ডুপ্লিকেট লিসেনার ছিল)
 document.addEventListener('click', function(event) {
   const button = event.target.closest('[data-view]');
   if (button && button.dataset.view) {
     showView(button.dataset.view);
   }
-});
-
-document.querySelectorAll('[data-view]').forEach(function(button) {
-  button.addEventListener('click', function() {
-    showView(button.dataset.view);
-  });
 });
 
 document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
@@ -1156,6 +1151,7 @@ if (loginForm) {
         showView('dashboard', 'zoom');
       });
     } catch (error) {
+      console.error('Login error:', error);
       if (message) message.textContent = 'লগইন করা যায়নি। আবার চেষ্টা করুন।';
     }
   });
@@ -1180,7 +1176,7 @@ function showRegistrationSuccess(phone) {
     overlay.remove();
     openDashboardPanel('profile');
     showView('dashboard', 'zoom');
-    showToastNotification(`🎉 স্বাগতম! আপনার অ্যাকাউন্ট (${phone}) ডাটাবেজে সফলভাবে তৈরি হয়েছে।`);
+    showToastNotification(`🎉 স্বাগতম! আপনার অ্যাকাউন্ট (${phone}) ডাটাবেজে সফলভাবে তৈরি হয়েছে।`);
   }, 1600);
 }
 
@@ -1276,9 +1272,15 @@ if (registerForm) {
         await registerTeamHierarchy(registeredNumber, account.memberId, 'LV0', enteredInviteCode || uplinePhone);
       }
 
-      // 3. Save locally
-      accounts.push(account);
-      localStorage.setItem('aloAccounts', JSON.stringify(accounts));
+      // 3. Save locally (dbSaveUser আগেই লোকালে সেভ করে, তাই ডুপ্লিকেট এড়াতে চেক করা হলো)
+      const freshAccounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
+      const alreadySaved = freshAccounts.some(function(a) {
+        return normalizeBdPhone(a.phone || a.accountNumber || '') === normInput;
+      });
+      if (!alreadySaved) {
+        freshAccounts.push(account);
+        localStorage.setItem('aloAccounts', JSON.stringify(freshAccounts));
+      }
 
       // Set registered account as active signed in user
       const signedInUser = {
@@ -1302,6 +1304,7 @@ if (registerForm) {
 
       showRegistrationSuccess(registeredNumber);
     } catch (error) {
+      console.error('Register error:', error);
       if (message) message.textContent = 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।';
     }
   });
@@ -1339,13 +1342,13 @@ const packageTaskSettings = {
 };
 
 const packageData = {
-  LV0: { name: 'ফ্রি স্তর', price: 0, count: 5, reward: 20, dailyIncome: 100, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০ BDT' },
-  LV1: { name: 'বেসিক প্যাকেজ', price: 3500, count: 6, reward: 30, dailyIncome: 180, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০ BDT' },
-  LV2: { name: 'স্ট্যান্ডার্ড প্যাকেজ', price: 7500, count: 12, reward: 40, dailyIncome: 480, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০ BDT' },
-  LV3: { name: 'সিলভার প্যাকেজ', price: 36000, count: 15, reward: 50, dailyIncome: 750, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০ BDT' },
-  LV4: { name: 'গোল্ড প্যাকেজ', price: 84000, count: 25, reward: 60, dailyIncome: 1500, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০ BDT' },
-  LV5: { name: 'প্রিমিয়াম প্যাকেজ', price: 150000, count: 35, reward: 70, dailyIncome: 2450, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০ BDT' },
-  LV6: { name: 'এলিট প্যাকেজ', price: 300000, count: 25, reward: 80, dailyIncome: 2000, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৮০.০০ BDT' }
+  LV0: { name: 'ফ্রি স্তর', price: 0, count: 5, reward: 20, dailyIncome: 100, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০ BDT' },
+  LV1: { name: 'বেসিক প্যাকেজ', price: 3500, count: 6, reward: 30, dailyIncome: 180, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০ BDT' },
+  LV2: { name: 'স্ট্যান্ডার্ড প্যাকেজ', price: 7500, count: 12, reward: 40, dailyIncome: 480, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০ BDT' },
+  LV3: { name: 'সিলভার প্যাকেজ', price: 36000, count: 15, reward: 50, dailyIncome: 750, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০ BDT' },
+  LV4: { name: 'গোল্ড প্যাকেজ', price: 84000, count: 25, reward: 60, dailyIncome: 1500, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০ BDT' },
+  LV5: { name: 'প্রিমিয়াম প্যাকেজ', price: 150000, count: 35, reward: 70, dailyIncome: 2450, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০ BDT' },
+  LV6: { name: 'এলিট প্যাকেজ', price: 300000, count: 25, reward: 80, dailyIncome: 2000, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৮০.০০ BDT' }
 };
 
 const LEVEL_ORDER = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
@@ -1479,11 +1482,11 @@ function updateRecordsPanelPackages() {
       btn.disabled = true;
       btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-slate-700/60 text-slate-300 cursor-default';
     } else if (isPurchased) {
-      btn.textContent = 'ক্রয় করা হয়েছে ✓';
+      btn.textContent = 'ক্রয় করা হয়েছে ✓';
       btn.disabled = true;
       btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-emerald-700/60 text-emerald-200 cursor-default';
     } else {
-      btn.textContent = 'প্যাকেজ ক্রয় করুন';
+      btn.textContent = 'প্যাকেজ ক্রয় করুন';
       btn.disabled = false;
       btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95 cursor-pointer';
     }
@@ -1567,7 +1570,7 @@ function openPackagePurchaseModal(level, alertNotice) {
   const isSufficient = userBal >= price;
 
   const titleEl = document.getElementById('sheet-header-title');
-  if (titleEl) titleEl.textContent = `${level} প্যাকেজ ক্রয় ও ব্যালেন্স`;
+  if (titleEl) titleEl.textContent = `${level} প্যাকেজ ক্রয় ও ব্যালেন্স`;
 
   const badgeEl = document.getElementById('purchase-modal-badge');
   if (badgeEl) badgeEl.textContent = `${level} · ${pkg.name}`;
@@ -1602,7 +1605,7 @@ function openPackagePurchaseModal(level, alertNotice) {
           <span class="text-base text-[#34d399] font-bold">✓</span>
           <div>
             <p class="font-bold text-white">পর্যাপ্ত ব্যালেন্স বিদ্যমান রয়েছে</p>
-            <p class="mt-0.5 text-slate-300">আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স আছে। নিচে 'ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন' বাটনে চাপ দিয়ে এখনই প্যাকেজটি চালু করুন।</p>
+            <p class="mt-0.5 text-slate-300">আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স আছে। নিচে 'ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন' বাটনে চাপ দিয়ে এখনই প্যাকেজটি চালু করুন।</p>
           </div>
         </div>
       `;
@@ -1625,7 +1628,7 @@ function openPackagePurchaseModal(level, alertNotice) {
   if (confirmBtn) {
     if (isSufficient) {
       confirmBtn.disabled = false;
-      confirmBtn.innerHTML = `<span>💎</span> <span>ব্যালেন্স দিয়ে ${level} প্যাকেজ ক্রয় করুন</span>`;
+      confirmBtn.innerHTML = `<span>💎</span> <span>ব্যালেন্স দিয়ে ${level} প্যাকেজ ক্রয় করুন</span>`;
       confirmBtn.className = 'w-full py-3 rounded-xl bg-[#1264c9] hover:bg-[#1877f2] text-white text-xs font-bold transition shadow-lg cursor-pointer active:scale-95 flex items-center justify-center gap-2';
     } else {
       confirmBtn.disabled = true;
@@ -1689,10 +1692,12 @@ function confirmPackagePurchase() {
   updateVipHallRooms();
   updateRecordsPanelPackages();
 
-  showToastNotification(`🎉 অভিনন্দন! আপনার ${level} (${pkg.name}) সফলভাবে সক্রিয় হয়েছে! এখন আপনি ${level}-এর সমস্ত কাজ করতে পারবেন।`);
+  showToastNotification(`🎉 অভিনন্দন! আপনার ${level} (${pkg.name}) সফলভাবে সক্রিয় হয়েছে! এখন আপনি ${level}-এর সমস্ত কাজ করতে পারবেন।`);
 
   renderPackageTasks(level);
   openDashboardPanel('platform-tasks');
+} // ✅ FIX #1: confirmPackagePurchase-এর এই closing brace আগে ছিল না
+
 // Distribute multi-level team recharge commissions (Level 1: 10%, Level 2: 5%, Level 3: 2%)
 async function distributeTeamRebate(memberPhone, rechargeAmount) {
   const normPhone = normalizeBdPhone(memberPhone);
@@ -2023,6 +2028,15 @@ function closeMethodPicker() {
   }
 }
 
+// ✅ FIX #3: আগে এই ফাংশনটা কোথাও ডিফাইন করা ছিল না
+function updateWithdrawCalculations() {
+  const input = document.getElementById('withdraw-amount-input');
+  if (!input) return;
+  const amt = parseFloat(input.value) || 0;
+  const actualEl = document.getElementById('withdraw-actual-amount');
+  if (actualEl) actualEl.textContent = (amt * 0.5).toFixed(2);
+}
+
 // ==========================================
 // BKASH ACCOUNT SETTINGS ("বিকাশ সেট করুন")
 // ==========================================
@@ -2185,25 +2199,25 @@ const platformTaskDescriptions = {
   TikTok: [
     'TikTok ভিডিও লাইক করুন ও সুন্দর মন্তব্য করুন',
     'নতুন ট্রেন্ডিং ভিডিও সম্পূর্ণ দেখে লাইক দিন',
-    'অফিশিয়াল ক্রিয়েটর অ্যাকাউন্ট ফলো করুন',
+    'অফিশিয়াল ক্রিয়েটর অ্যাকাউন্ট ফলো করুন',
     'ক্রিয়েটরের প্রোফাইল ভিজিট করে ৩টি ভিডিওতে লাইক দিন',
     'ভিডিওটি বন্ধুদের সাথে শেয়ার করুন এবং বুকমার্ক করুন',
     'সাউন্ডট্র্যাক ব্যবহার করে ফেভারিটে যুক্ত করুন',
     'লাইভ স্ট্রিম ১৫ সেকেন্ড দেখুন ও লাইক দিন',
     'শিক্ষামূলক শর্ট ভিডিওতে লাইক ও কমেন্ট দিন',
     'ব্র্যান্ড চ্যানেলে ফলো দিন ও ভিডিও দেখুন',
-    'ভাইরাল ক্লিপে লাভ রিয়্যাক্ট দিন',
+    'ভাইরাল ক্লিপে লাভ রিয়্যাক্ট দিন',
     'হ্যাশট্যাগ চ্যালেঞ্জ ভিডিও দেখুন ও লাইক দিন',
-    'টেক রিভিউ ভিডিওতে লাইক ও শেয়ার দিন',
+    'টেক রিভিউ ভিডিওতে লাইক ও শেয়ার দিন',
     'রন্ধনশিল্প ও কুকিং ভিডিওতে লাইক দিন',
     'ট্রাভেল ভ্লগ ভিডিও দেখুন ও কমেন্ট করুন',
     'ফিটনেস ও স্বাস্থ্য টিপস ভিডিও সেভ করুন',
     'সঙ্গীত ভিডিও সম্পূর্ণ শুনে লাইক দিন',
-    'ফ্যাশন ট্রেন্ড শর্টসে লাভ রিয়্যাক্ট দিন',
+    'ফ্যাশন ট্রেন্ড শর্টসে লাভ রিয়্যাক্ট দিন',
     'কমেডি ক্লিপ সম্পূর্ণ দেখে লাইক দিন',
-    'মোটিভেশনাল ভিডিওতে লাইক ও শেয়ার দিন',
+    'মোটিভেশনাল ভিডিওতে লাইক ও শেয়ার দিন',
     'লাইফস্টাইল ভ্লগ অ্যাকাউন্ট ফলো করুন',
-    'অ্যানিমেশন ক্লিপে লাভ রিয়্যাক্ট দিন',
+    'অ্যানিমেশন ক্লিপে লাভ রিয়্যাক্ট দিন',
     'স্পোর্টস হাইলাইটস ভিডিও দেখুন ও লাইক দিন',
     'গেমিং শর্টসে লাইক ও মন্তব্য দিন',
     'ডিআইওয়াই ও ক্রাফট ভিডিও সেভ করুন',
@@ -2219,26 +2233,26 @@ const platformTaskDescriptions = {
     'ভিডিওটি সম্পূর্ণ দেখে লাইক দিন',
     'ভিডিওতে ইতিবাচক ও গঠনমূলক মন্তব্য করুন',
     'প্লেলিস্টের একটি ভিডিও লাইক ও সেভ করুন',
-    'শর্টস ভিডিওতে লাইক দিয়ে চ্যানেল সাবস্ক্রাইব করুন',
+    'শর্টস ভিডিওতে লাইক দিয়ে চ্যানেল সাবস্ক্রাইব করুন',
     'টেক রিভিউ ভিডিও সম্পূর্ণ দেখুন ও লাইক দিন',
-    'শিক্ষামূলক টিউটোরিয়াল ভিডিওতে লাইক দিন',
-    'অফিসিয়াল মিউজিক ভিডিও দেখুন ও কমেন্ট করুন',
+    'শিক্ষামূলক টিউটোরিয়াল ভিডিওতে লাইক দিন',
+    'অফিসিয়াল মিউজিক ভিডিও দেখুন ও কমেন্ট করুন',
     'ট্রাভেল ডকুমেন্টারি ভিডিওতে লাইক দিন',
-    'কুকিং রেসিপি ভিডিওটি পরে দেখার তালিকায় রাখুন',
-    'ফিটনেস ওয়ার্কআউট ভিডিওতে লাইক দিন',
-    'নিউজ ও কারেন্ট অ্যাফেয়ার্স ভিডিও দেখুন',
-    'মোটিভেশনাল স্পিচ ভিডিওতে লাইক ও শেয়ার দিন',
+    'কুকিং রেসিপি ভিডিওটি পরে দেখার তালিকায় রাখুন',
+    'ফিটনেস ওয়ার্কআউট ভিডিওতে লাইক দিন',
+    'নিউজ ও কারেন্ট অ্যাফেয়ার্স ভিডিও দেখুন',
+    'মোটিভেশনাল স্পিচ ভিডিওতে লাইক ও শেয়ার দিন',
     'পডকাস্টের একটি পর্বে লাইক ও কমেন্ট করুন',
     'গেমিং লাইভস্ট্রিম ভিডিও ৫ মিনিট দেখুন',
     'বিজ্ঞান ও প্রযুক্তির ভিডিওতে লাইক দিন',
     'নতুন সিনেমার ট্রেলার সম্পূর্ণ দেখুন',
     'বুক সামারি ভিডিওতে সুন্দর কমেন্ট করুন',
-    'ক্যারিয়ার গাইডলাইন ভিডিও লাইক দিন',
-    'ভাষা শিক্ষা টিউটোরিয়াল ভিডিও সেভ করুন',
+    'ক্যারিয়ার গাইডলাইন ভিডিও লাইক দিন',
+    'ভাষা শিক্ষা টিউটোরিয়াল ভিডিও সেভ করুন',
     'ড্রয়িং ও স্কেচ টিউটোরিয়াল ভিডিও দেখুন',
     'অটোমোবাইল ও বাইক রিভিউ ভিডিওতে লাইক দিন',
-    'ইতিহাস ও ঐতিহ্য বিষয়ক ভিডিও সম্পূর্ণ দেখুন',
-    'লাইফ হ্যাকস ভিডিওতে লাইক ও শেয়ার দিন',
+    'ইতিহাস ও ঐতিহ্য বিষয়ক ভিডিও সম্পূর্ণ দেখুন',
+    'লাইফ হ্যাকস ভিডিওতে লাইক ও শেয়ার দিন',
     'ইসলামিক আলোচনা ও মোনাজাত ভিডিও লাইক দিন',
     'ফিন্যান্স ও ইনভেস্টমেন্ট ভিডিও সম্পূর্ণ দেখুন',
     'স্মার্টফোন রিভিউ ভিডিওতে মন্তব্য করুন',
@@ -2249,11 +2263,11 @@ const platformTaskDescriptions = {
   FaceBook: [
     'FaceBook অফিসিয়াল পেজে লাইক ও ফলো করুন',
     'সাম্প্রতিক পোস্টে লাইক ও শেয়ার করুন',
-    'অফিসিয়াল গ্রুপে যুক্ত হন ও পোস্ট দেখুন',
+    'অফিসিয়াল গ্রুপে যুক্ত হন ও পোস্ট দেখুন',
     'ফেসবুক রিলস ভিডিওতে লাভ রিয়্যাক্ট দিন',
     'ব্যবসায়িক পেজে ইতিবাচক রিভিউ দিন',
     'শিক্ষামূলক পোস্টে লাইক ও মন্তব্য দিন',
-    'লাইভ সেশনে যুক্ত হয়ে লাভ রিয়্যাক্ট দিন',
+    'লাইভ সেশনে যুক্ত হয়ে লাভ রিয়্যাক্ট দিন',
     'পণ্য প্রচারের পোস্টে লাইক ও শেয়ার দিন',
     'মোটিভেশনাল পোস্টে লাইক দিন',
     'সাম্প্রতিক ফটো অ্যালবামে লাইক ও কমেন্ট করুন',
@@ -2268,10 +2282,10 @@ const platformTaskDescriptions = {
     'রিলস ভিডিও সম্পূর্ণ দেখে শেয়ার দিন',
     'গ্রুপ আলোচনায় ইতিবাচক কমেন্ট দিন',
     'লাইফস্টাইল পেজে ফলো করুন',
-    'ক্যারিয়ার টিপস পোস্টে লাইক দিন',
+    'ক্যারিয়ার টিপস পোস্টে লাইক দিন',
     'ডিজিটাল আর্ট পোস্টে লাভ রিয়্যাক্ট দিন',
     'বই রিভিউ পোস্টে কমেন্ট করুন',
-    'ভিডিও কন্টেন্টে ৩ মিনিট ওয়াচটাইম দিন',
+    'ভিডিও কন্টেন্টে ৩ মিনিট ওয়াচটাইম দিন',
     'পডকাস্ট লাইভ স্ট্রিমে লাইক দিন',
     'অফার ও ডিসকাউন্ট পোস্টে লাইক দিন',
     'মোবাইল টিপস পোস্টে লাইক দিন',
@@ -2399,6 +2413,7 @@ function saveAcceptedMission(serverMission) {
   const missions = readAcceptedMissions();
   missions.unshift({
     id: serverMission.id,
+    taskIndex: serverMission.taskIndex,
     platform: serverMission.platform,
     title: serverMission.title,
     description: serverMission.description,
@@ -2407,7 +2422,7 @@ function saveAcceptedMission(serverMission) {
     status: serverMission.status,
     acceptedAt: serverMission.acceptedAt,
     evidenceName: '',
-    taskLink: serverMission.platform === 'TikTok' ? 'https://vt.tiktok.com/ZSb666bLY/' : ''
+    taskLink: serverMission.taskLink || (serverMission.platform === 'TikTok' ? 'https://vt.tiktok.com/ZSb666bLY/' : '')
   });
   localStorage.setItem('aloAcceptedMissions', JSON.stringify(missions));
   renderMissionRecords(activeMissionFilter);
@@ -2445,10 +2460,10 @@ function refreshDailyMissionLimit(level) {
           <div class="flex items-center justify-between gap-3">
             <div>
               <p class="font-bold text-white flex items-center gap-1.5"><span class="text-base text-amber-400">🔒</span> এই প্যাকেজটি আনলক করা নেই</p>
-              <p class="text-[11px] text-amber-200/90 mt-1">ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</p>
+              <p class="text-[11px] text-amber-200/90 mt-1">ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</p>
             </div>
             <button type="button" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer" data-buy-package="${level}">
-              প্যাকেজ ক্রয়
+              প্যাকেজ ক্রয়
             </button>
           </div>
         </div>
@@ -2510,7 +2525,7 @@ function refreshDailyMissionLimit(level) {
     if (!isUnlocked) {
       message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">⚠️ ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</span>`;
     } else if (reached) {
-      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">⚠️ আজকের ${level} প্যাকেজের ${quotaLimit}টি কাজের সীমা পূর্ণ হয়েছে!</span> <br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন। আগামীকাল আবার নতুন কোটা চালু হবে।</small>`;
+      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">⚠️ আজকের ${level} প্যাকেজের ${quotaLimit}টি কাজের সীমা পূর্ণ হয়েছে!</span> <br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন। আগামীকাল আবার নতুন কোটা চালু হবে।</small>`;
     } else {
       message.innerHTML = `আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}টি</strong> (মোট কোটা ${quotaLimit}টি)`;
     }
@@ -2643,7 +2658,7 @@ function renderMissionRecords(filter) {
         <p>গ্রহণের সময়: <span style="color: var(--color-muted);">${dateText}</span></p>
         ${mission.screenshot ? `
         <div class="mt-1.5 flex items-center justify-between gap-2 pt-1 border-t" style="border-color: rgba(255,255,255,0.06);">
-          <span class="text-[11px] text-slate-400">জমা দেওয়া প্রমাণ:</span>
+          <span class="text-[11px] text-slate-400">জমা দেওয়া প্রমাণ:</span>
           <button type="button" class="view-task-screenshot-btn flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e2a66] border border-[#1b3e85] text-xs font-bold text-[#38bdf8] hover:bg-[#133785] transition cursor-pointer active:scale-95" data-task-screenshot="${mission.id}">
             <span>🖼️</span> <span>প্রিভিউ দেখুন 🔍</span>
           </button>
@@ -2682,11 +2697,11 @@ function renderPackageTasks(level) {
     banner.className = 'mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-[#0c2364] to-[#071b50] border-2 border-[#35c6e7]/60 text-white text-xs shadow-xl flex items-center justify-between gap-3 glow-pulse-cyan';
     banner.innerHTML = `
       <div class="min-w-0 flex-1">
-        <p class="font-bold text-[#35c6e7] flex items-center gap-1.5"><span class="text-base">🔒</span> প্যাকেজ ক্রয় প্রয়োজন</p>
-        <p class="mt-1 text-[11px] text-slate-200 leading-4">ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</p>
+        <p class="font-bold text-[#35c6e7] flex items-center gap-1.5"><span class="text-base">🔒</span> প্যাকেজ ক্রয় প্রয়োজন</p>
+        <p class="mt-1 text-[11px] text-slate-200 leading-4">ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</p>
       </div>
       <button type="button" class="shrink-0 px-3.5 py-2 rounded-xl bg-[#1264c9] hover:bg-[#1877f2] text-white font-bold text-xs shadow-lg transition active:scale-95 cursor-pointer flex items-center gap-1" data-buy-package="${activePackageLevel}">
-        <span>💎</span> <span>প্যাকেজ ক্রয়</span>
+        <span>💎</span> <span>প্যাকেজ ক্রয়</span>
       </button>
     `;
     rows.push(banner);
@@ -2894,16 +2909,6 @@ function handleOpenTaskLink() {
     window.open(url, '_blank', 'noopener,noreferrer');
   } catch (e) {}
 
-  try {
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } catch (e) {}
-
   if (msg) {
     msg.innerHTML = `✓ লিংক নতুন ট্যাবে খোলা হচ্ছে। ব্রাউজারে পপআপ ব্লক থাকলে <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--color-profile-cyan); text-decoration: underline; font-weight: bold;">সরাসরি এখানে ক্লিক করুন ↗</a>`;
   }
@@ -2984,6 +2989,7 @@ function checkPendingReviews() {
   const missions = readAcceptedMissions();
   let changed = false;
   let totalReward = 0;
+  let completedCount = 0;
   const now = Date.now();
 
   missions.forEach(function(m) {
@@ -2998,6 +3004,7 @@ function checkPendingReviews() {
         if (!m.rewardCredited) {
           m.rewardCredited = true;
           totalReward += (Number(m.reward) || 30);
+          completedCount += 1;
         }
         changed = true;
       }
@@ -3015,7 +3022,7 @@ function checkPendingReviews() {
         user.balance = (Number(user.balance) || 0) + totalReward;
         user.todayIncome = (Number(user.todayIncome) || 0) + totalReward;
         user.totalIncome = (Number(user.totalIncome) || 0) + totalReward;
-        user.completedMissions = (Number(user.completedMissions) || 0) + 1;
+        user.completedMissions = (Number(user.completedMissions) || 0) + completedCount;
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
         updateUserDetails(user);
         updateProfileMetrics();
@@ -3036,6 +3043,69 @@ setInterval(function() {
     el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
   });
 }, 1000);
+
+// ✅ FIX #2: এই ফাংশনটা আগে click listener-এর ভেতরে ঢুকে ছিল। এখন টপ-লেভেলে।
+async function renderTeamMembersView() {
+  const membersContent = document.getElementById('team-members-view-content');
+  if (!membersContent) return;
+  const user = getCurrentUser();
+  const phone = (user && (user.phone || user.accountNumber)) || '';
+
+  const defaultMembers = [
+    { phone: '01718-***892', level: 'LV1', status: 'সক্রিয়' },
+    { phone: '01824-***103', level: 'LV2', status: 'সক্রিয়' },
+    { phone: '01955-***447', level: 'LV1', status: 'সক্রিয়' }
+  ];
+
+  let dbMembers = [];
+  if (phone) {
+    try {
+      dbMembers = await dbGetTeamMembers(phone);
+    } catch (e) {}
+  }
+
+  const allMembers = [];
+  if (dbMembers && dbMembers.length > 0) {
+    dbMembers.forEach(function(m) {
+      let p = m.memberPhone || '';
+      if (p.length >= 10) {
+        p = p.slice(0, 5) + '-***' + p.slice(-3);
+      }
+      allMembers.push({
+        phone: p,
+        level: m.level || 'LV0',
+        status: m.status || 'সক্রিয়'
+      });
+    });
+  }
+  defaultMembers.forEach(function(dm) {
+    allMembers.push(dm);
+  });
+
+  const memberRows = allMembers.map(function(m) {
+    return `
+      <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#040e29] border border-[#0d1e45] hover:border-[#1d4ed8] transition">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+          <span class="font-mono text-white text-xs tracking-wider">${m.phone}</span>
+        </div>
+        <span class="text-[#38bdf8] font-bold text-xs bg-[#0b2460] px-2 py-0.5 rounded border border-[#1b3d8a]">${m.level} · ${m.status}</span>
+      </div>
+    `;
+  }).join('');
+
+  membersContent.innerHTML = `
+    <div class="p-4 rounded-xl bg-[#06143b] border border-[#0f245a] text-center text-slate-300 text-xs shadow-xl">
+      <div class="flex items-center justify-between border-b border-[#0f245a] pb-3 mb-3">
+        <p class="font-bold text-white text-sm">সরাসরি যুক্ত সদস্য তালিকা (${allMembers.length} জন)</p>
+        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">ক্লাউড ডাটাবেজ</span>
+      </div>
+      <div class="space-y-2 text-left max-h-[360px] overflow-y-auto pr-1">
+        ${memberRows}
+      </div>
+    </div>
+  `;
+}
 
 // Global click event listeners
 document.addEventListener('click', function(event) {
@@ -3110,68 +3180,6 @@ document.addEventListener('click', function(event) {
     openDashboardPanel(previousDashboardPanel || 'profile');
     return;
   }
-
-async function renderTeamMembersView() {
-  const membersContent = document.getElementById('team-members-view-content');
-  if (!membersContent) return;
-  const user = getCurrentUser();
-  const phone = (user && (user.phone || user.accountNumber)) || '';
-
-  const defaultMembers = [
-    { phone: '01718-***892', level: 'LV1', status: 'সক্রিয়' },
-    { phone: '01824-***103', level: 'LV2', status: 'সক্রিয়' },
-    { phone: '01955-***447', level: 'LV1', status: 'সক্রিয়' }
-  ];
-
-  let dbMembers = [];
-  if (phone) {
-    try {
-      dbMembers = await dbGetTeamMembers(phone);
-    } catch (e) {}
-  }
-
-  const allMembers = [];
-  if (dbMembers && dbMembers.length > 0) {
-    dbMembers.forEach(function(m) {
-      let p = m.memberPhone || '';
-      if (p.length >= 10) {
-        p = p.slice(0, 5) + '-***' + p.slice(-3);
-      }
-      allMembers.push({
-        phone: p,
-        level: m.level || 'LV0',
-        status: m.status || 'সক্রিয়'
-      });
-    });
-  }
-  defaultMembers.forEach(function(dm) {
-    allMembers.push(dm);
-  });
-
-  const memberRows = allMembers.map(function(m) {
-    return `
-      <div class="flex items-center justify-between p-2.5 rounded-lg bg-[#040e29] border border-[#0d1e45] hover:border-[#1d4ed8] transition">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-          <span class="font-mono text-white text-xs tracking-wider">${m.phone}</span>
-        </div>
-        <span class="text-[#38bdf8] font-bold text-xs bg-[#0b2460] px-2 py-0.5 rounded border border-[#1b3d8a]">${m.level} · ${m.status}</span>
-      </div>
-    `;
-  }).join('');
-
-  membersContent.innerHTML = `
-    <div class="p-4 rounded-xl bg-[#06143b] border border-[#0f245a] text-center text-slate-300 text-xs shadow-xl">
-      <div class="flex items-center justify-between border-b border-[#0f245a] pb-3 mb-3">
-        <p class="font-bold text-white text-sm">সরাসরি যুক্ত সদস্য তালিকা (${allMembers.length} জন)</p>
-        <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">ক্লাউড ডাটাবেজ</span>
-      </div>
-      <div class="space-y-2 text-left max-h-[360px] overflow-y-auto pr-1">
-        ${memberRows}
-      </div>
-    </div>
-  `;
-}
 
   // Team report main tabs (দলের রিপোর্ট vs আমার দল)
   const teamMainTab = event.target.closest('.team-main-tab');
@@ -3595,7 +3603,7 @@ async function renderTeamMembersView() {
     const newAcceptedCount = acceptedToday.length + 1;
     const msg = document.getElementById('platform-task-message');
     if (newAcceptedCount >= quota) {
-      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">অভিনন্দন! আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে।</span><br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন।</small>`;
+      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">অভিনন্দন! আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে।</span><br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন।</small>`;
     } else {
       if (msg) msg.innerHTML = `কাজ গৃহীত হয়েছে! (আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${quota - newAcceptedCount}টি</strong>)`;
     }
@@ -3676,7 +3684,6 @@ async function renderTeamMembersView() {
   }
 });
 
-  
 
 // Submission confirm click: Sets to 'review' for 5-10 minutes
 const confirmSubmitBtn = document.getElementById('mission-submit-confirm');
@@ -3960,49 +3967,6 @@ if (confirmPurchaseBtn) {
   confirmPurchaseBtn.addEventListener('click', confirmPackagePurchase);
 }
 
-const openDepositFromPurchaseBtn = document.getElementById('open-deposit-from-purchase-btn');
-if (openDepositFromPurchaseBtn) {
-  openDepositFromPurchaseBtn.addEventListener('click', function() {
-    pendingPurchaseLevel = currentPurchaseLevel;
-    const pkg = packageData[currentPurchaseLevel];
-    const user = getCurrentUser();
-    const deficit = pkg ? Math.max(0, pkg.price - (Number(user.balance) || 0)) : 3500;
-    const customInput = document.getElementById('custom-deposit-amount');
-    if (customInput) customInput.value = deficit;
-    selectedDepositAmount = deficit;
-    switchSheetTab('deposit');
-  });
-}
-
-const sheetTabPurchaseBtn = document.getElementById('sheet-tab-purchase');
-if (sheetTabPurchaseBtn) {
-  sheetTabPurchaseBtn.addEventListener('click', function() {
-    switchSheetTab('purchase');
-  });
-}
-
-const sheetTabDepositBtn = document.getElementById('sheet-tab-deposit');
-if (sheetTabDepositBtn) {
-  sheetTabDepositBtn.addEventListener('click', function() {
-    switchSheetTab('deposit');
-  });
-}
-
-const closeActionSheetBtn = document.getElementById('close-action-sheet-btn');
-if (closeActionSheetBtn) {
-  closeActionSheetBtn.addEventListener('click', closeActionSheet);
-}
-
-const sheetCloseTextBtn = document.getElementById('sheet-close-text-btn');
-if (sheetCloseTextBtn) {
-  sheetCloseTextBtn.addEventListener('click', closeActionSheet);
-}
-
-const actionBackdrop = document.getElementById('alo-action-backdrop');
-if (actionBackdrop) {
-  actionBackdrop.addEventListener('click', closeActionSheet);
-}
-
 const closeInlineRechargeBtn = document.getElementById('close-inline-recharge-btn');
 if (closeInlineRechargeBtn) {
   closeInlineRechargeBtn.addEventListener('click', function() {
@@ -4059,15 +4023,10 @@ if (customDepositInput) {
 
 function handleLogout() {
   localStorage.removeItem('aloSignedInUser');
-  showToastNotification('সফলভাবে সাইন আউট করা হয়েছে।');
+  showToastNotification('সফলভাবে সাইন আউট করা হয়েছে।');
   const loginPass = document.getElementById('login-password');
   if (loginPass) loginPass.value = '';
   showView('login');
-}
-
-const logoutBtn = document.getElementById('logout-button');
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', handleLogout);
 }
 
 const demoLoginBtn = document.getElementById('quick-demo-login-btn');
