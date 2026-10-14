@@ -14,15 +14,9 @@
   "icons": [
     {
       "src": "/rabbit_avatar.jpg",
-      "sizes": "192x192",
+      "sizes": "1024x1024",
       "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/rabbit_avatar.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ]
 }
