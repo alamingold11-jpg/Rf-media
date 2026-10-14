@@ -4058,6 +4058,16 @@ document.addEventListener('click', async function(event) {
   showToastNotification('📲 অ্যাপ ডাউনলোড শুরু হয়েছে। ডাউনলোড শেষে ফাইলটি খুলে ইনস্টল করুন।');
 });
 
+
+// Service worker রেজিস্টার (PWA / অ্যাপ প্যাকেজের জন্য প্রয়োজন)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+}
+
 function handleLogout() {
   localStorage.removeItem('aloSignedInUser');
   showToastNotification('সফলভাবে সাইন আউট করা হয়েছে।');
