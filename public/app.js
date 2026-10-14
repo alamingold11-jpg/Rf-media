@@ -4021,6 +4021,43 @@ if (customDepositInput) {
   });
 }
 
+
+// ==========================================
+// APP DOWNLOAD BUTTON ("APP ডাউনলোড")
+// /app.apk ফাইলটি index.html-এর পাশে (public ফোল্ডারে) রাখতে হবে
+// ==========================================
+const APP_APK_URL = '/app.apk';
+const APP_APK_FILENAME = 'Alo-App.apk';
+
+document.addEventListener('click', async function(event) {
+  const btn = event.target.closest('#app-download-btn');
+  if (!btn) return;
+  event.preventDefault();
+
+  // ফাইলটি সত্যিই আছে কিনা যাচাই (না থাকলে Vercel index.html ফেরত দেয়)
+  let available = false;
+  try {
+    const res = await fetch(APP_APK_URL, { method: 'HEAD', cache: 'no-store' });
+    const type = (res.headers.get('content-type') || '').toLowerCase();
+    available = res.ok && type.indexOf('text/html') === -1;
+  } catch (e) {
+    available = false;
+  }
+
+  if (!available) {
+    showToastNotification('⚠️ অ্যাপ ফাইল এখনো আপলোড করা হয়নি। কিছুক্ষণ পরে আবার চেষ্টা করুন।');
+    return;
+  }
+
+  const link = document.createElement('a');
+  link.href = APP_APK_URL;
+  link.download = APP_APK_FILENAME;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  showToastNotification('📲 অ্যাপ ডাউনলোড শুরু হয়েছে। ডাউনলোড শেষে ফাইলটি খুলে ইনস্টল করুন।');
+});
+
 function handleLogout() {
   localStorage.removeItem('aloSignedInUser');
   showToastNotification('সফলভাবে সাইন আউট করা হয়েছে।');
