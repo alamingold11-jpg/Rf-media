@@ -1,6 +1,6 @@
 {
-  "name": "আলো | আপনার ব্যক্তিগত স্পেস",
-  "description": "আলো - আপনার ব্যক্তিগত ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম",
+  "name": "PW New Media | ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম",
+  "description": "PW New Media - আপনার নির্ভরযোগ্য অনলাইন ইনভেস্টমেন্ট, রিবেট ও মিশন আর্নিং প্ল্যাটফর্ম",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

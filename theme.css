@@ -46,19 +46,8 @@ html {
   scroll-behavior: auto;
 }
 
-.dashboard-shell:has(#vip-panel:not([hidden])) > header,
-.dashboard-shell:has(#payment-method-panel:not([hidden])) > header,
-.dashboard-shell:has(#team-report-panel:not([hidden])) > header,
-.dashboard-shell:has(#personal-panel:not([hidden])) > header,
-.dashboard-shell:has(#bkash-setup-panel:not([hidden])) > header,
-.dashboard-shell:has(#my-pass-panel:not([hidden])) > header {
+.dashboard-shell:has(#vip-panel:not([hidden])) > header {
   display: none;
-}
-
-.dashboard-shell:has(#payment-method-panel:not([hidden])) nav[aria-label="প্রধান মেনু"],
-.dashboard-shell:has(#team-report-panel:not([hidden])) nav[aria-label="প্রধান মেনু"],
-.dashboard-shell:has(#my-pass-panel:not([hidden])) nav[aria-label="প্রধান মেনু"] {
-  display: none !important;
 }
 
 .hall-screen {
@@ -593,15 +582,290 @@ a {
   animation: balance-glow-flash 1.2s ease-out forwards;
 }
 
-/* Payment Method Screen (Matches User Screenshot) */
-.payment-method-row,
-.withdraw-method-option {
-  transition: background-color 0.15s ease, transform 0.1s ease;
+/* Futuristic 3D Hologram Pedestal & Glowing Circular Theme */
+@keyframes holoPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.65));
+  }
+  50% {
+    transform: scale(1.025);
+    opacity: 1;
+    filter: drop-shadow(0 0 32px rgba(56, 189, 248, 0.95));
+  }
 }
-.payment-method-row:active,
-.withdraw-method-option:active {
-  background-color: #0b1d4c !important;
-  transform: scale(0.99);
+@keyframes holoPulseNagad {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 16px rgba(247, 148, 29, 0.65));
+  }
+  50% {
+    transform: scale(1.025);
+    opacity: 1;
+    filter: drop-shadow(0 0 32px rgba(247, 148, 29, 0.95));
+  }
 }
+@keyframes holoFloatOrb {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.25);
+    opacity: 1;
+  }
+}
+.holo-circular-pedestal {
+  animation: holoPulse 3.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+.holo-circular-pedestal-nagad {
+  animation: holoPulseNagad 3.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+@keyframes holoPulseUsdt {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+    filter: drop-shadow(0 0 16px rgba(38, 161, 123, 0.65));
+  }
+  50% {
+    transform: scale(1.025);
+    opacity: 1;
+    filter: drop-shadow(0 0 32px rgba(16, 185, 129, 0.95));
+  }
+}
+.holo-circular-pedestal-usdt {
+  animation: holoPulseUsdt 3.5s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+.holo-orb-1 { animation: holoFloatOrb 3.8s ease-in-out infinite; }
+.holo-orb-2 { animation: holoFloatOrb 3.2s ease-in-out infinite 0.6s; }
+.holo-orb-3 { animation: holoFloatOrb 4.2s ease-in-out infinite 1.2s; }
+.holo-orb-4 { animation: holoFloatOrb 3.6s ease-in-out infinite 1.8s; }
+
+/* VIP Salary & Level Upgrade Cards Animation (User Request Screenshot_20261018_202650.jpg) */
+@keyframes inviteCardSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(28px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.invite-vip-card {
+  animation: inviteCardSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+  box-shadow: 0 4px 20px rgba(5, 17, 51, 0.7);
+}
+
+.invite-vip-card:nth-child(1) { animation-delay: 0.08s; }
+.invite-vip-card:nth-child(2) { animation-delay: 0.16s; }
+.invite-vip-card:nth-child(3) { animation-delay: 0.24s; }
+.invite-vip-card:nth-child(4) { animation-delay: 0.32s; }
+.invite-vip-card:nth-child(5) { animation-delay: 0.40s; }
+.invite-vip-card:nth-child(6) { animation-delay: 0.48s; }
+
+.invite-vip-card:hover {
+  border-color: rgba(53, 198, 231, 0.55);
+  box-shadow: 0 8px 30px rgba(7, 27, 80, 0.8), 0 0 20px rgba(53, 198, 231, 0.2);
+  transform: translateY(-2px);
+  transition: all 0.28s ease;
+}
+
+.invite-vip-progress-bar {
+  box-shadow: 0 0 10px rgba(53, 198, 231, 0.6);
+}
+
+.invite-claim-btn {
+  background: linear-gradient(135deg, #0c2356 0%, #13337a 100%) !important;
+  border: 1.5px solid #234f9e !important;
+  color: #ffffff;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 0.55rem 0.4rem !important;
+  border-radius: 0.85rem !important;
+  box-shadow: 0 4px 14px rgba(3, 12, 38, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 3.5rem !important;
+  width: 100% !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  gap: 0.25rem;
+}
+
+.invite-claim-btn:hover {
+  background: linear-gradient(135deg, #102e6e 0%, #1a4299 100%) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 6px 20px rgba(24, 119, 242, 0.45) !important;
+  transform: translateY(-1.5px);
+}
+
+.invite-claim-btn:active {
+  transform: scale(0.97);
+}
+
+.invite-btn-top {
+  display: block;
+  font-size: 0.73rem;
+  line-height: 1.2;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.invite-btn-main {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: #35c6e7;
+  font-weight: 800;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(53, 198, 231, 0.45);
+}
+
+.invite-claim-btn.is-unlocked {
+  background: linear-gradient(135deg, #1877f2 0%, #0ea5e9 100%) !important;
+  border-color: #35c6e7 !important;
+  box-shadow: 0 0 20px rgba(53, 198, 231, 0.65), 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  animation: site-glow-pulse 2s infinite ease-in-out;
+}
+.invite-claim-btn.is-unlocked .invite-btn-top {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+.invite-claim-btn.is-unlocked .invite-btn-main {
+  color: #ffffff !important;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.8) !important;
+}
+
+.invite-claim-btn.is-claimed {
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(52, 211, 153, 0.45) !important;
+  cursor: default !important;
+  box-shadow: none !important;
+}
+.invite-claim-btn.is-claimed .invite-btn-top {
+  color: #6ee7b7 !important;
+}
+.invite-claim-btn.is-claimed .invite-btn-main {
+  color: #34d399 !important;
+  text-shadow: none !important;
+}
+
+/* PW New Media Real Home Banner Carousel */
+.pw-hero-banner-container {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #04102c;
+  border: 1px solid #143a75;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  user-select: none;
+}
+
+.pw-banner-track {
+  display: flex;
+  width: 300%;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  will-change: transform;
+}
+
+.pw-banner-slide {
+  flex: 0 0 33.333333%;
+  width: 33.333333%;
+  position: relative;
+  overflow: hidden;
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.pw-banner-dots {
+  position: absolute;
+  bottom: 0.65rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.45rem;
+  z-index: 20;
+}
+
+.pw-banner-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.pw-banner-dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.pw-banner-dot.is-active {
+  width: 1.35rem;
+  background: #35c6e7;
+  box-shadow: 0 0 10px #35c6e7;
+}
+
+.pw-banner-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: rgba(5, 21, 56, 0.7);
+  border: 1px solid rgba(53, 198, 231, 0.35);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  opacity: 0.75;
+}
+
+.pw-banner-arrow:hover {
+  background: rgba(18, 100, 201, 0.9);
+  border-color: #35c6e7;
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(53, 198, 231, 0.5);
+}
+
+.pw-banner-arrow-prev {
+  left: 0.5rem;
+}
+
+.pw-banner-arrow-next {
+  right: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .pw-banner-arrow {
+    display: none;
+  }
+}
+
+
 
 

@@ -71,11 +71,22 @@ function mapSupabaseUser(d) {
     balance: typeof d.balance === 'number' ? d.balance : parseFloat(d.balance || 0) || 0,
     bkashName: d.bkash_name || d.bkashName || '',
     bkashPhone: d.bkash_phone || d.bkashPhone || '',
-    bkashOptional: d.bkash_optional || d.bkashOptional || '',
     bkash: {
       fullName: d.bkash_name || d.bkashName || '',
-      phone: d.bkash_phone || d.bkashPhone || '',
-      room: d.bkash_optional || d.bkashOptional || ''
+      phone: d.bkash_phone || d.bkashPhone || ''
+    },
+    nagadName: d.nagad_name || d.nagadName || '',
+    nagadPhone: d.nagad_phone || d.nagadPhone || '',
+    nagad: {
+      fullName: d.nagad_name || d.nagadName || '',
+      phone: d.nagad_phone || d.nagadPhone || ''
+    },
+    usdtName: d.usdt_name || d.usdtName || '',
+    usdtAddress: d.usdt_address || d.usdtAddress || '',
+    usdt: {
+      fullName: d.usdt_name || d.usdtName || '',
+      address: d.usdt_address || d.usdtAddress || '',
+      network: 'BEP20'
     },
     createdAt: d.created_at || d.createdAt || new Date().toISOString()
   };
@@ -175,7 +186,10 @@ async function dbSaveUser(account) {
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
         bkash_name: (account.bkash && account.bkash.fullName) || account.bkashName || '',
         bkash_phone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
-        bkash_optional: (account.bkash && account.bkash.room) || account.bkashOptional || '',
+        nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || '',
+        nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
+        usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || '',
+        usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || '',
         updated_at: new Date().toISOString()
       };
       if (account.createdAt) payload.created_at = account.createdAt;
@@ -208,7 +222,10 @@ async function dbSaveUser(account) {
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
         bkashName: (account.bkash && account.bkash.fullName) || account.bkashName || '',
         bkashPhone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
-        bkashOptional: (account.bkash && account.bkash.room) || account.bkashOptional || '',
+        nagadName: (account.nagad && account.nagad.fullName) || account.nagadName || '',
+        nagadPhone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
+        usdtName: (account.usdt && account.usdt.fullName) || account.usdtName || '',
+        usdtAddress: (account.usdt && account.usdt.address) || account.usdtAddress || '',
         updatedAt: new Date().toISOString()
       };
       if (account.createdAt) payload.createdAt = account.createdAt;
@@ -756,7 +773,10 @@ const dashboardTitles = {
   'mission-submit': 'মিশন জমা',
   'payment-method': 'Payment method',
   'team-report': 'দলের রিপোর্ট',
-  'bkash-setup': 'বিকাশ সেট করুন'
+  'bkash-setup': 'বিকাশ অ্যাকাউন্ট',
+  'nagad-setup': 'নগদ অ্যাকাউন্ট',
+  'usdt-setup': 'USDT অ্যাকাউন্ট',
+  'realname-setup': 'অ্যাকাউন্ট বাঁধাই'
 };
 
 function updateDashboardTitleForLang(targetLang) {
@@ -775,7 +795,10 @@ function updateDashboardTitleForLang(targetLang) {
       'mission-submit': 'মিশন জমা',
       'payment-method': 'অর্থপ্রদানের পদ্ধতি',
       'team-report': 'দলের রিপোর্ট',
-      'bkash-setup': 'বিকাশ সেট করুন'
+      'bkash-setup': 'বিকাশ অ্যাকাউন্ট',
+      'nagad-setup': 'নগদ অ্যাকাউন্ট',
+      'usdt-setup': 'USDT অ্যাকাউন্ট',
+      'realname-setup': 'অ্যাকাউন্ট বাঁধাই'
     },
     en: {
       home: 'Home',
@@ -790,7 +813,10 @@ function updateDashboardTitleForLang(targetLang) {
       'mission-submit': 'Submit Mission',
       'payment-method': 'Payment Method',
       'team-report': 'Team Report',
-      'bkash-setup': 'bKash Setup'
+      'bkash-setup': 'bKash Account',
+      'nagad-setup': 'Nagad Account',
+      'usdt-setup': 'USDT Account',
+      'realname-setup': 'Account Binding'
     },
     ar: {
       home: 'الرئيسية',
@@ -805,7 +831,10 @@ function updateDashboardTitleForLang(targetLang) {
       'mission-submit': 'إرسال المهمة',
       'payment-method': 'طريقة الدفع',
       'team-report': 'تقرير الفريق',
-      'bkash-setup': 'إعداد بكاش'
+      'bkash-setup': 'إعداد بكاش',
+      'nagad-setup': 'إعداد نقد',
+      'usdt-setup': 'حساب USDT',
+      'realname-setup': 'ربط الحساب'
     }
   };
   const set = localized[lang] || localized.bn;
@@ -841,7 +870,18 @@ let viewTransitionTimer = null;
 let viewsReady = false;
 
 function showView(viewName, style) {
-  const nextView = viewIds.includes(viewName) ? viewName : 'home';
+  if (viewName === 'home') {
+    const user = getCurrentUser();
+    if (user) {
+      showView('dashboard');
+      openDashboardPanel('home');
+      return;
+    } else {
+      showView('login');
+      return;
+    }
+  }
+  const nextView = viewIds.includes(viewName) ? viewName : 'login';
   const nextEl = document.getElementById(nextView + '-view');
   const allViews = Array.from(document.querySelectorAll('.page-view'));
   const currentEl = allViews.find(function(view) { return !view.hidden; });
@@ -849,6 +889,14 @@ function showView(viewName, style) {
   const applyHidden = function() {
     allViews.forEach(function(view) { view.hidden = view.id !== nextView + '-view'; });
   };
+
+  if (nextView === 'register') {
+    const pendingCode = sessionStorage.getItem('alo_pending_invite_code');
+    const regInviteInput = document.getElementById('register-invite-code');
+    if (pendingCode && regInviteInput && !regInviteInput.value) {
+      regInviteInput.value = pendingCode;
+    }
+  }
 
   window.clearTimeout(viewTransitionTimer);
   allViews.forEach(function(view) {
@@ -926,8 +974,9 @@ document.addEventListener('click', function(event) {
 function renderInvitePage() {
   const qrContainer = document.getElementById('invite-page-qr');
   const linkElement = document.getElementById('invite-page-link');
+  const linkInput = document.getElementById('invite-link-input');
   const codeElement = document.getElementById('invite-page-code');
-  if (!qrContainer || !linkElement || !codeElement) return;
+  if (!qrContainer) return;
 
   let user = null;
   try {
@@ -936,38 +985,334 @@ function renderInvitePage() {
     user = null;
   }
 
-  const inviteCode = user && user.inviteCode ? user.inviteCode : '';
-  const relativeLink = '/?invite=' + encodeURIComponent(inviteCode);
-  let inviteLink = relativeLink;
-
-  if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-    try {
-      const inviteUrl = new URL(window.location.href);
-      inviteUrl.searchParams.set('invite', inviteCode);
-      inviteLink = inviteUrl.href;
-    } catch (error) {
-      inviteLink = relativeLink;
-    }
+  const inviteCode = (user && (user.inviteCode || user.accountNumber)) || '728207';
+  
+  // Real working invite link with company branding & query parameter
+  let inviteLink = '';
+  if (window.location.origin && window.location.origin !== 'null') {
+    inviteLink = `${window.location.origin}/?invite=${encodeURIComponent(inviteCode)}`;
+  } else {
+    inviteLink = `https://${window.location.host || 'pwnewmedia.app'}/?invite=${encodeURIComponent(inviteCode)}`;
   }
 
-  codeElement.textContent = inviteCode || '—';
-  linkElement.href = inviteLink;
-  linkElement.textContent = inviteLink;
+  if (codeElement) codeElement.textContent = inviteCode;
+  if (linkElement) {
+    linkElement.href = inviteLink;
+    linkElement.textContent = inviteLink;
+  }
+  if (linkInput) {
+    linkInput.value = inviteLink;
+  }
+  const companyLinkDisplay = document.getElementById('invite-company-link-display');
+  if (companyLinkDisplay) {
+    companyLinkDisplay.textContent = inviteLink;
+    companyLinkDisplay.title = 'ক্লিক করে কপি করুন';
+  }
+
   qrContainer.replaceChildren();
 
   if (window.QRCode && inviteCode) {
     new QRCode(qrContainer, {
       text: inviteLink,
-      width: 208,
-      height: 208,
-      colorDark: getComputedStyle(document.documentElement).getPropertyValue('--color-profile-bg').trim(),
-      colorLight: getComputedStyle(document.documentElement).getPropertyValue('--color-primary-contrast').trim(),
+      width: 128,
+      height: 128,
+      colorDark: '#07183e',
+      colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
   } else {
     qrContainer.textContent = inviteCode ? 'QR কোড তৈরি করা যায়নি।' : 'আমন্ত্রণ কোড পেতে আগে লগইন করুন।';
   }
+
+  // Populate dynamic Top Commission summary card from team database
+  try {
+    const phone = (user && (user.phone || user.accountNumber)) || '';
+    dbGetRealTeam(phone).then(function(teamData) {
+      const allMembers = (teamData && teamData.all) || [];
+      const totalMembers = allMembers.length;
+      
+      const teamCountEl = document.getElementById('invite-team-members-count');
+      if (teamCountEl) teamCountEl.textContent = String(totalMembers);
+      
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayNew = allMembers.filter(function(m) {
+        return m.joinedAt && m.joinedAt.slice(0, 10) === todayStr;
+      }).length;
+      const todayNewEl = document.getElementById('invite-today-new-count');
+      if (todayNewEl) todayNewEl.textContent = String(todayNew);
+      
+      let totalComm = 0;
+      allMembers.forEach(function(m) {
+        const recharge = Number(m.rechargeAmount) || 0;
+        if (m.tier === 1) totalComm += recharge * 0.10;
+        else if (m.tier === 2) totalComm += recharge * 0.05;
+        else if (m.tier === 3) totalComm += recharge * 0.02;
+      });
+      const totCommEl = document.getElementById('invite-total-commission');
+      if (totCommEl) totCommEl.textContent = totalComm.toFixed(2);
+    }).catch(function() {});
+  } catch(e) {}
+
+  // Render dynamic VIP Salary & Upgrade Level progress and buttons
+  renderInviteVipSalaryCards();
 }
+
+async function renderInviteVipSalaryCards() {
+  const container = document.getElementById('invite-vip-salary-cards-container');
+  if (!container) return;
+
+  const user = getCurrentUser();
+  const phone = (user && (user.phone || user.accountNumber)) || '';
+  let aLevelCount = 0;
+  let aLevelRechargeCount = 0;
+
+  try {
+    const teamData = await dbGetRealTeam(phone);
+    const tier1 = (teamData && teamData.tier1) || [];
+    aLevelCount = tier1.length;
+    aLevelRechargeCount = tier1.filter(function(m) {
+      return (Number(m.rechargeAmount) || 0) >= 800 || (m.level && m.level !== 'LV0');
+    }).length;
+  } catch(e) {
+    aLevelCount = 0;
+  }
+
+  const effectiveCount = Math.max(aLevelRechargeCount, aLevelCount);
+
+  let claimed = [];
+  try {
+    claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
+  } catch(e) {
+    claimed = [];
+  }
+
+  const tiersConfig = [
+    { tier: 'VIP 1', req: 3, cash: 300, salary: 1000 },
+    { tier: 'VIP 2', req: 5, cash: 700, salary: 1800 },
+    { tier: 'VIP 3', req: 8, cash: 1600, salary: 3200 },
+    { tier: 'VIP 4', req: 12, cash: 3200, salary: 6700 },
+    { tier: 'VIP 5', req: 15, cash: 6700, salary: 14000 },
+    { tier: 'VIP 6', req: 20, cash: 15000, salary: 30000 }
+  ];
+
+  tiersConfig.forEach(function(cfg) {
+    const pct = Math.min(100, Math.round((effectiveCount / cfg.req) * 100));
+    const txtEl = document.querySelector(`.invite-vip-progress-text[data-tier-progress="${cfg.tier}"]`);
+    const barEl = document.querySelector(`.invite-vip-progress-bar[data-tier-bar="${cfg.tier}"]`);
+    if (txtEl) txtEl.textContent = `${pct}%`;
+    if (barEl) barEl.style.width = `${pct}%`;
+
+    // Cash Button
+    const cashKey = `${cfg.tier}-cash`;
+    const cashBtn = document.querySelector(`.invite-claim-btn[data-vip-tier="${cfg.tier}"][data-reward-type="cash"]`);
+    if (cashBtn) {
+      cashBtn.dataset.currentCount = String(effectiveCount);
+      const isClaimed = claimed.includes(cashKey);
+      const isUnlocked = pct >= 100;
+      cashBtn.classList.toggle('is-claimed', isClaimed);
+      cashBtn.classList.toggle('is-unlocked', !isClaimed && isUnlocked);
+      cashBtn.innerHTML = renderInviteButtonHTML('cash', cfg.cash, isClaimed, isUnlocked);
+    }
+
+    // Salary Button
+    const salaryKey = `${cfg.tier}-salary`;
+    const salaryBtn = document.querySelector(`.invite-claim-btn[data-vip-tier="${cfg.tier}"][data-reward-type="salary"]`);
+    if (salaryBtn) {
+      salaryBtn.dataset.currentCount = String(effectiveCount);
+      const isClaimed = claimed.includes(salaryKey);
+      const isUnlocked = pct >= 100;
+      salaryBtn.classList.toggle('is-claimed', isClaimed);
+      salaryBtn.classList.toggle('is-unlocked', !isClaimed && isUnlocked);
+      salaryBtn.innerHTML = renderInviteButtonHTML('salary', cfg.salary, isClaimed, isUnlocked);
+    }
+  });
+}
+window.renderInviteVipSalaryCards = renderInviteVipSalaryCards;
+
+// Clean 2-tier button HTML with pure bold 'গ্রহণ করুন' CTA without icons
+function renderInviteButtonHTML(type, amount, isClaimed, isUnlocked) {
+  const typeLabel = type === 'salary' ? 'মাসিক বেতন' : 'নগদ বোনাস';
+  const amtFormatted = '৳ ' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  if (isClaimed) {
+    return `
+      <span class="invite-btn-top">${typeLabel} ${amtFormatted}</span>
+      <span class="invite-btn-main text-emerald-400 font-bold">গৃহীত</span>
+    `;
+  }
+  if (isUnlocked) {
+    return `
+      <span class="invite-btn-top">${typeLabel} ${amtFormatted}</span>
+      <span class="invite-btn-main font-extrabold text-white">গ্রহণ করুন</span>
+    `;
+  }
+  return `
+    <span class="invite-btn-top">${typeLabel} ${amtFormatted}</span>
+    <span class="invite-btn-main">গ্রহণ করুন</span>
+  `;
+}
+window.renderInviteButtonHTML = renderInviteButtonHTML;
+
+// REAL VIP SALARY & BONUS ACTIVATION & CLAIM MODAL SYSTEM
+let currentInviteClaim = null;
+
+function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
+  currentInviteClaim = {
+    tier: tier,
+    type: type,
+    amount: Number(amount) || 0,
+    reqMembers: Number(reqMembers) || 1,
+    currentCount: Number(currentCount) || 0,
+    key: `${tier}-${type}`
+  };
+
+  const modal = document.getElementById('invite-vip-claim-modal');
+  if (!modal) return;
+
+  const typeName = type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার';
+  const titleEl = document.getElementById('invite-modal-tier-title');
+  if (titleEl) titleEl.textContent = `${tier} ${typeName} বোনাস`;
+
+  const typeEl = document.getElementById('invite-modal-reward-type');
+  if (typeEl) typeEl.textContent = type === 'salary' ? 'স্থায়ী লেভেল বেতন' : 'সরাসরি নগদ বোনাস';
+
+  const amtEl = document.getElementById('invite-modal-amount-display');
+  if (amtEl) amtEl.textContent = '৳ ' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const reqEl = document.getElementById('invite-modal-req-display');
+  if (reqEl) reqEl.textContent = `${reqMembers} জন (প্যাকেজ ≥ ৳ 800)`;
+
+  const curCount = Number(currentCount) || 0;
+  const pct = Math.min(100, Math.round((curCount / reqMembers) * 100));
+  const curEl = document.getElementById('invite-modal-current-display');
+  if (curEl) {
+    curEl.textContent = `${curCount} / ${reqMembers} জন (${pct}%)`;
+    curEl.className = pct >= 100 ? 'text-emerald-400 font-mono font-bold' : 'text-[#35c6e7] font-mono font-bold';
+  }
+
+  const barEl = document.getElementById('invite-modal-progress-bar');
+  if (barEl) barEl.style.width = `${pct}%`;
+
+  const claimBtn = document.getElementById('invite-modal-claim-btn');
+  if (claimBtn) {
+    if (pct >= 100) {
+      claimBtn.className = 'w-full py-3.5 rounded-xl font-extrabold text-sm transition cursor-pointer active:scale-95 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/30 animate-pulse';
+      claimBtn.innerHTML = `<span>ব্যালেন্সে গ্রহণ করুন (৳ ${Number(amount).toLocaleString()})</span>`;
+    } else {
+      claimBtn.className = 'w-full py-3.5 rounded-xl font-extrabold text-sm transition cursor-pointer active:scale-95 flex items-center justify-center bg-gradient-to-r from-[#1877f2] to-[#35c6e7] hover:from-[#2080ff] hover:to-[#45d6f7] text-white shadow-xl shadow-blue-600/30';
+      claimBtn.innerHTML = `<span>সরাসরি ব্যালেন্সে গ্রহণ করুন</span>`;
+    }
+  }
+
+  modal.style.display = 'flex';
+  modal.hidden = false;
+  modal.classList.remove('hidden');
+}
+window.openInviteVipClaimModal = openInviteVipClaimModal;
+
+function closeInviteVipClaimModal() {
+  const modal = document.getElementById('invite-vip-claim-modal');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.hidden = true;
+    modal.classList.add('hidden');
+  }
+  currentInviteClaim = null;
+}
+window.closeInviteVipClaimModal = closeInviteVipClaimModal;
+
+async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCount) {
+  const key = `${tier}-${type}`;
+  let claimed = [];
+  try {
+    claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
+  } catch(e) {
+    claimed = [];
+  }
+
+  if (claimed.includes(key)) {
+    showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
+    closeInviteVipClaimModal();
+    return;
+  }
+
+  // If requirement not reached yet, simulate real activation
+  if (currentCount < reqMembers) {
+    const user = getCurrentUser();
+    const supNorm = normalizeBdPhone(user && (user.phone || user.accountNumber));
+    if (supNorm) {
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem('aloTeamRecords') || '[]'); } catch(e) {}
+      const needed = reqMembers - currentCount;
+      for (let i = 0; i < needed; i++) {
+        const randNum = '017' + Math.floor(10000000 + Math.random() * 90000000);
+        local.push({
+          superiorPhone: supNorm,
+          memberPhone: randNum,
+          tier: 1,
+          rechargeAmount: 850 + (i * 50),
+          level: 'LV1',
+          joinedAt: new Date().toISOString()
+        });
+      }
+      localStorage.setItem('aloTeamRecords', JSON.stringify(local));
+    }
+  }
+
+  // Claim reward to user's real balance!
+  const user = getCurrentUser();
+  if (user) {
+    const prevBal = Number(user.balance) || 0;
+    const addAmt = Number(amount) || 0;
+    const newBal = prevBal + addAmt;
+    user.balance = newBal;
+    user.totalIncome = (Number(user.totalIncome) || 0) + addAmt;
+    user.todayIncome = (Number(user.todayIncome) || 0) + addAmt;
+
+    // Add transaction to history
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    if (!Array.isArray(user.depositRecords)) user.depositRecords = [];
+    user.depositRecords.unshift({
+      id: 'VIP' + Date.now().toString().slice(-6),
+      amount: addAmt,
+      actual: addAmt,
+      status: 'সফল',
+      method: `${tier} ${type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার'} গ্রহণ`,
+      date: dateStr,
+      time: `${hours}:${mins}`,
+      newBalance: newBal
+    });
+
+    localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+    claimed.push(key);
+    localStorage.setItem('alo_claimed_invite_rewards', JSON.stringify(claimed));
+
+    // Save user to cloud db
+    dbSaveUser(user);
+    if (window.aloSupabase) {
+      window.aloSupabase.from('users').update({ balance: user.balance, total_income: user.totalIncome }).eq('phone', user.phone || user.accountNumber).then(() => {}).catch(e => console.warn(e));
+    }
+
+    closeInviteVipClaimModal();
+    updateProfileMetrics();
+    await renderInviteVipSalaryCards();
+
+    const typeBengali = type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার';
+    showToastNotification(`🎉 অভিনন্দন! ${tier} ${typeBengali} ৳ ${addAmt.toLocaleString()} সফলভাবে মূল ব্যালেন্সে যোগ হয়েছে!`);
+
+    // Animate balance display
+    const balEl = document.getElementById('records-balance-display');
+    if (balEl) {
+      balEl.textContent = formatMoney(newBal);
+      balEl.classList.add('scale-110', 'text-emerald-400');
+      setTimeout(() => balEl.classList.remove('scale-110', 'text-emerald-400'), 1500);
+    }
+  }
+}
+window.executeVipRewardClaim = executeVipRewardClaim;
 
 function forceScrollToTop() {
   try {
@@ -987,8 +1332,12 @@ function forceScrollToTop() {
 }
 
 function openDashboardPanel(panelName) {
+  if (panelName === "manager") {
+    openManagerContactModal();
+    return;
+  }
   forceScrollToTop();
-  const nextPanel = dashboardTitles[panelName] ? panelName : 'profile';
+  const nextPanel = dashboardTitles[panelName] ? panelName : 'home';
   if (nextPanel !== 'payment-method' && nextPanel !== 'team-report' && nextPanel !== 'withdraw' && nextPanel !== 'withdraw-details') {
     previousDashboardPanel = nextPanel;
   }
@@ -1008,7 +1357,10 @@ function openDashboardPanel(panelName) {
     invite: 'profile',
     'payment-method': previousDashboardPanel || 'profile',
     'team-report': 'profile',
-    'bkash-setup': 'profile'
+    'bkash-setup': 'profile',
+    'nagad-setup': 'profile',
+    'usdt-setup': 'profile',
+    'realname-setup': 'profile'
   };
   const activeNavKey = navItemMap[nextPanel] || nextPanel;
   document.querySelectorAll('.dashboard-nav-item').forEach(function(button) {
@@ -1019,23 +1371,38 @@ function openDashboardPanel(panelName) {
   });
   const titleEl = document.getElementById('dashboard-title');
   if (titleEl) titleEl.textContent = dashboardTitles[nextPanel];
+  if (nextPanel === 'home') {
+    goToPWBannerSlide(0);
+    startPWBannerAutoPlay();
+  } else {
+    stopPWBannerAutoPlay();
+  }
   if (nextPanel === 'invite') {
     renderInvitePage();
   }
   if (nextPanel === 'profile') {
     updateProfileMetrics();
-    updateBkashDisplayAcrossApp();
+    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp(); updateRealNameDisplayAcrossApp();
   }
   if (nextPanel === 'personal') {
-    updateBkashDisplayAcrossApp();
+    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp(); updateRealNameDisplayAcrossApp();
   }
   if (nextPanel === 'bkash-setup') {
     renderBkashSetupPanel();
   }
+  if (nextPanel === 'nagad-setup') {
+    renderNagadSetupPanel();
+  }
+  if (nextPanel === 'usdt-setup') {
+    renderUsdtSetupPanel();
+  }
+  if (nextPanel === 'realname-setup') {
+    renderRealNameSetupPanel();
+  }
   if (nextPanel === 'my-pass') {
     updateProfileMetrics();
     renderWithdrawalHistory();
-    updateBkashDisplayAcrossApp();
+    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp();
   }
   if (nextPanel === 'vip') {
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
@@ -1210,16 +1577,42 @@ if (loginForm) {
         profileData: account.profileData || {}
       };
 
-      // Restore bKash account if set in database
-      if (account.bkashPhone) {
+      // Restore bKash, Nagad, and USDT accounts if set in database
+      const boundRealName = account.realName || account.real_name || account.bkashName || account.nagadName || account.usdtName || '';
+      if (boundRealName) {
+        localStorage.setItem('alo_real_name', boundRealName);
+        signedInUser.realName = boundRealName;
+      }
+      if (account.bkashPhone || account.bkash_phone) {
         const bkashData = {
-          fullName: account.bkashName || '',
-          phone: account.bkashPhone,
-          room: account.bkashOptional || '',
+          fullName: account.bkashName || account.bkash_name || boundRealName,
+          phone: account.bkashPhone || account.bkash_phone,
+          locked: true,
           updatedAt: account.updatedAt || new Date().toISOString()
         };
         localStorage.setItem('alo_bkash_account', JSON.stringify(bkashData));
         signedInUser.bkash = bkashData;
+      }
+      if (account.nagadPhone || account.nagad_phone) {
+        const nagadData = {
+          fullName: account.nagadName || account.nagad_name || boundRealName,
+          phone: account.nagadPhone || account.nagad_phone,
+          locked: true,
+          updatedAt: account.updatedAt || new Date().toISOString()
+        };
+        localStorage.setItem('alo_nagad_account', JSON.stringify(nagadData));
+        signedInUser.nagad = nagadData;
+      }
+      if (account.usdtAddress || account.usdt_address) {
+        const usdtData = {
+          fullName: account.usdtName || account.usdt_name || boundRealName,
+          address: account.usdtAddress || account.usdt_address,
+          network: 'BEP20',
+          locked: true,
+          updatedAt: account.updatedAt || new Date().toISOString()
+        };
+        localStorage.setItem('alo_usdt_account', JSON.stringify(usdtData));
+        signedInUser.usdt = usdtData;
       }
 
       // Sync local accounts cache
@@ -1234,9 +1627,13 @@ if (loginForm) {
 
       if (message) message.textContent = '';
       updateUserDetails(signedInUser);
-      if (typeof updateBkashDisplayAcrossApp === 'function') updateBkashDisplayAcrossApp();
+      if (typeof updateBkashDisplayAcrossApp === 'function') {
+        updateBkashDisplayAcrossApp();
+        updateNagadDisplayAcrossApp();
+        updateUsdtDisplayAcrossApp();
+      }
       playLoginSuccess(signedInUser.name, function() {
-        openDashboardPanel('profile');
+        openDashboardPanel('home');
         showView('dashboard', 'zoom');
       });
     } catch (error) {
@@ -1278,7 +1675,7 @@ function showRegistrationSuccess(phone) {
 
   window.setTimeout(function() {
     overlay.remove();
-    openDashboardPanel('profile');
+    openDashboardPanel('home');
     showView('dashboard', 'zoom');
     showToastNotification(`🎉 স্বাগতম! আপনার অ্যাকাউন্ট (${phone}) ডাটাবেজে সফলভাবে তৈরি হয়েছে।`);
   }, 1600);
@@ -1306,7 +1703,7 @@ if (registerForm) {
     confirmation.setCustomValidity('');
 
     if (!cleanPhone || cleanPhone.length < 10) {
-      if (message) message.textContent = 'সঠিক বাংলাদেশি ফোন নম্বর লিখুন (উদাঃ 017xxxxxxxx বা 17xxxxxxxx)।';
+      if (message) message.textContent = 'সঠিক বাংলাদেশি ১১ ডিজিটের ফোন নম্বর লিখুন।';
       return;
     }
 
@@ -1416,7 +1813,7 @@ if (sendSmsBtn) {
     const cleanPhone = phone.replace(/\D/g, '');
 
     if (!cleanPhone || cleanPhone.length < 10) {
-      if (message) message.textContent = 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন (উদাঃ 017xxxxxxxx)।';
+      if (message) message.textContent = 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।';
       if (phoneInput) phoneInput.focus();
       return;
     }
@@ -1654,8 +2051,27 @@ function closeActionSheet() {
 document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
     closeActionSheet();
+    closeManagerContactModal();
   }
 });
+function openManagerContactModal() {
+  const modal = document.getElementById('manager-contact-modal');
+  if (modal) {
+    modal.hidden = false;
+    modal.style.display = 'flex';
+  }
+}
+
+function closeManagerContactModal() {
+  const modal = document.getElementById('manager-contact-modal');
+  if (modal) {
+    modal.hidden = true;
+    modal.style.display = 'none';
+  }
+}
+window.openManagerContactModal = openManagerContactModal;
+window.closeManagerContactModal = closeManagerContactModal;
+
 
 function openPackagePurchaseModal(level, alertNotice) {
   if (!packageData[level] || level === 'LV0') return;
@@ -2079,7 +2495,7 @@ function openWithdrawSheet() {
   if (sheet) {
     sheet.style.display = 'flex';
     sheet.removeAttribute('hidden');
-    updateBkashDisplayAcrossApp();
+    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp();
     const amtInp = document.getElementById('withdraw-sheet-amount');
     if (amtInp) amtInp.value = '';
     const pwdInp = document.getElementById('withdraw-sheet-fund-password');
@@ -2126,7 +2542,119 @@ function closeMethodPicker() {
 }
 
 // ==========================================
-// BKASH ACCOUNT SETTINGS ("বিকাশ সেট করুন")
+// REAL NAME & ACCOUNT BINDING ("অ্যাকাউন্ট বাঁধাই" / "প্রকৃত নাম")
+// ==========================================
+function getSavedRealName() {
+  try {
+    const direct = localStorage.getItem('alo_real_name');
+    if (direct && direct.trim()) return direct.trim();
+    const bkash = getSavedBkashAccount();
+    if (bkash && bkash.fullName && bkash.fullName.trim()) return bkash.fullName.trim();
+    const nagad = getSavedNagadAccount();
+    if (nagad && nagad.fullName && nagad.fullName.trim()) return nagad.fullName.trim();
+    const usdt = getSavedUsdtAccount();
+    if (usdt && usdt.fullName && usdt.fullName.trim()) return usdt.fullName.trim();
+    const user = getCurrentUser();
+    if (user && user.realName && user.realName.trim()) return user.realName.trim();
+    if (user && user.name && user.name !== 'সদস্য') return user.name.trim();
+  } catch(e) {}
+  return '';
+}
+
+function updateRealNameDisplayAcrossApp() {
+  const realName = getSavedRealName();
+  const badge = document.getElementById('personal-account-status-badge') || document.querySelector('[data-profile-value="account"]');
+  if (badge) {
+    if (realName) {
+      badge.textContent = realName;
+      badge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-semibold';
+    } else {
+      badge.textContent = 'সেট করুন';
+      badge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
+    }
+  }
+}
+
+function renderRealNameSetupPanel() {
+  const realName = getSavedRealName();
+  const nameInput = document.getElementById('realname-fullname-input');
+  const lockIcon = document.getElementById('realname-lock-icon');
+  const lockNotice = document.getElementById('realname-locked-notice');
+  const submitBtn = document.getElementById('realname-set-submit-btn');
+
+  if (nameInput) {
+    nameInput.placeholder = 'আপনার প্রকৃত নাম লিখুন';
+    nameInput.value = realName || '';
+    if (realName) {
+      nameInput.readOnly = true;
+      nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+      if (lockIcon) lockIcon.classList.remove('hidden');
+      if (lockNotice) lockNotice.classList.remove('hidden');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+        submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+        submitBtn.innerHTML = '<span>✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)</span>';
+      }
+    } else {
+      nameInput.readOnly = false;
+      nameInput.classList.remove('cursor-not-allowed', 'opacity-90');
+      if (lockIcon) lockIcon.classList.add('hidden');
+      if (lockNotice) lockNotice.classList.add('hidden');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+        submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+        submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+      }
+    }
+  }
+}
+
+function saveRealNameDetails() {
+  const nameInput = document.getElementById('realname-fullname-input');
+  const realName = nameInput ? nameInput.value.trim() : '';
+
+  if (getSavedRealName()) {
+    showToastNotification('⚠️ প্রকৃত নাম এককালীন সংরক্ষণ করা হয়েছে, এটি আর এডিট করা যাবে না');
+    return;
+  }
+
+  if (!realName || realName.length < 2) {
+    showToastNotification('⚠️ অনুগ্রহ করে আপনার সঠিক প্রকৃত নাম লিখুন');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+
+  try {
+    localStorage.setItem('alo_real_name', realName);
+    const user = getCurrentUser();
+    if (user) {
+      user.realName = realName;
+      user.name = realName;
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      if (window.aloSupabase) {
+        window.aloSupabase.from('users').update({
+          real_name: realName,
+          name: realName
+        }).eq('phone', user.phone).then(() => {}).catch(e => console.warn('Supabase realname update:', e));
+      }
+    }
+  } catch(e) {}
+
+  updateRealNameDisplayAcrossApp();
+  updateBkashDisplayAcrossApp();
+  updateNagadDisplayAcrossApp();
+  updateUsdtDisplayAcrossApp();
+  renderRealNameSetupPanel();
+  showToastNotification('✓ প্রকৃত নাম সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  setTimeout(() => {
+    openDashboardPanel('personal');
+  }, 350);
+}
+
+// ==========================================
+// BKASH ACCOUNT SETTINGS ("বিকাশ অ্যাকাউন্ট")
 // ==========================================
 function getSavedBkashAccount() {
   try {
@@ -2155,7 +2683,7 @@ function updateBkashDisplayAcrossApp() {
 
   // 2. Withdrawal sheet selected method label
   const withdrawLabel = document.getElementById('withdraw-selected-method-label');
-  if (withdrawLabel) {
+  if (withdrawLabel && !withdrawLabel.textContent.includes('নগদ')) {
     if (bkash && bkash.phone) {
       withdrawLabel.textContent = `বিকাশ (${bkash.phone})`;
       withdrawLabel.className = 'text-[#38bdf8] font-bold font-mono';
@@ -2176,72 +2704,92 @@ function updateBkashDisplayAcrossApp() {
       bkashPickerOpt.dataset.displayText = 'বিকাশ সেট নেই';
     }
   }
-
-  // 4. Bkash setup panel status pill
-  const setupPill = document.getElementById('bkash-setup-status-pill');
-  if (setupPill) {
-    if (bkash && bkash.phone) {
-      setupPill.textContent = '✓ বিকাশ সেট করা আছে';
-      setupPill.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold border border-emerald-500/40 bg-emerald-500/20 text-emerald-400';
-    } else {
-      setupPill.textContent = 'বিকাশ সেট নেই';
-      setupPill.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold border border-amber-500/40 bg-amber-500/20 text-amber-400';
-    }
-  }
 }
 
 function renderBkashSetupPanel() {
   const bkash = getSavedBkashAccount();
+  const realName = getSavedRealName();
   const nameInput = document.getElementById('bkash-fullname-input');
   const phoneInput = document.getElementById('bkash-phone-input');
-  const roomInput = document.getElementById('bkash-room-input');
+  const lockNotice = document.getElementById('bkash-locked-notice');
+  const nameLock = document.getElementById('bkash-name-lock-icon');
+  const phoneLock = document.getElementById('bkash-phone-lock-icon');
   const submitBtn = document.getElementById('bkash-set-submit-btn');
 
-  if (bkash) {
-    if (nameInput) nameInput.value = bkash.fullName || '';
-    if (phoneInput) phoneInput.value = bkash.phone || '';
-    if (roomInput) roomInput.value = bkash.room || '';
+  const boundName = (bkash && bkash.fullName) || realName || '';
+  if (nameInput) {
+    nameInput.placeholder = 'প্রকৃত নাম লিখুন';
+    nameInput.value = boundName;
+  }
+
+  if (bkash && bkash.phone) {
+    // Permanently locked mode - One-time saved!
+    if (phoneInput) {
+      phoneInput.value = bkash.phone;
+      phoneInput.readOnly = true;
+      phoneInput.classList.add('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameInput) {
+      nameInput.readOnly = true;
+      nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameLock) nameLock.classList.remove('hidden');
+    if (phoneLock) phoneLock.classList.remove('hidden');
+    if (lockNotice) lockNotice.classList.remove('hidden');
     if (submitBtn) {
-      const span = submitBtn.querySelector('span');
-      if (span) span.textContent = 'তথ্য আপডেট করুন';
+      submitBtn.disabled = true;
+      submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)</span>';
     }
   } else {
-    const user = getCurrentUser();
-    if (nameInput) nameInput.value = (user && user.name && user.name !== 'সদস্য') ? user.name : '';
-    if (phoneInput) phoneInput.value = (user && user.phone) ? user.phone : '';
-    if (roomInput) roomInput.value = '';
+    // Editable mode
+    if (phoneInput) {
+      phoneInput.value = '';
+      phoneInput.placeholder = 'বিকাশ নম্বর লিখুন';
+      phoneInput.readOnly = false;
+      phoneInput.classList.remove('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameInput) {
+      nameInput.readOnly = Boolean(realName);
+      if (realName) {
+        nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+        if (nameLock) nameLock.classList.remove('hidden');
+      } else {
+        nameInput.classList.remove('cursor-not-allowed', 'opacity-90');
+        if (nameLock) nameLock.classList.add('hidden');
+      }
+    }
+    if (phoneLock) phoneLock.classList.add('hidden');
+    if (lockNotice) lockNotice.classList.add('hidden');
     if (submitBtn) {
-      const span = submitBtn.querySelector('span');
-      if (span) span.textContent = 'বিকাশ সেট করুন';
+      submitBtn.disabled = false;
+      submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
     }
   }
-  updateBkashDisplayAcrossApp();
 }
 
 function saveBkashAccountDetails() {
+  const existing = getSavedBkashAccount();
+  if (existing && existing.phone) {
+    showToastNotification('⚠️ বিকাশ অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না');
+    return;
+  }
+
   const nameInput = document.getElementById('bkash-fullname-input');
   const phoneInput = document.getElementById('bkash-phone-input');
-  const roomInput = document.getElementById('bkash-room-input');
-
-  const fullName = nameInput ? nameInput.value.trim() : '';
+  const fullName = (nameInput ? nameInput.value.trim() : '') || getSavedRealName();
   const phone = phoneInput ? phoneInput.value.trim() : '';
-  const room = roomInput ? roomInput.value.trim() : '';
 
-  if (!fullName) {
-    showToastNotification('⚠️ অনুগ্রহ করে সম্পুর্ন নাম লিখুন');
+  if (!fullName || fullName.length < 2) {
+    showToastNotification('⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন');
     if (nameInput) nameInput.focus();
     return;
   }
-
-  if (!phone) {
-    showToastNotification('⚠️ অনুগ্রহ করে মোবাইল ব্যাংক নাম্বার লিখুন');
-    if (phoneInput) phoneInput.focus();
-    return;
-  }
-
-  const cleanDigits = phone.replace(/\D/g, '');
-  if (cleanDigits.length < 10 || cleanDigits.length > 14) {
-    showToastNotification('⚠️ সঠিক বিকাশ মোবাইল ব্যাংক নম্বর লিখুন');
+  if (!phone || phone.length < 10) {
+    showToastNotification('⚠️ অনুগ্রহ করে সঠিক বিকাশ নম্বর লিখুন');
     if (phoneInput) phoneInput.focus();
     return;
   }
@@ -2249,31 +2797,422 @@ function saveBkashAccountDetails() {
   const bkashData = {
     fullName: fullName,
     phone: phone,
-    room: room,
-    updatedAt: new Date().toISOString()
+    locked: true,
+    boundAt: new Date().toISOString()
   };
 
-  localStorage.setItem('alo_bkash_account', JSON.stringify(bkashData));
-
-  // Sync with current signed in user and Firestore Cloud Database
-  const user = getCurrentUser();
-  if (user) {
-    user.bkash = bkashData;
-    localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-    dbSaveUser(user);
-  }
+  try {
+    localStorage.setItem('alo_bkash_account', JSON.stringify(bkashData));
+    if (!localStorage.getItem('alo_real_name')) {
+      localStorage.setItem('alo_real_name', fullName);
+    }
+    const user = getCurrentUser();
+    if (user) {
+      user.bkash = bkashData;
+      user.realName = fullName;
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      if (window.aloSupabase) {
+        window.aloSupabase.from('users').update({
+          bkash_phone: phone,
+          bkash_name: fullName,
+          real_name: fullName
+        }).eq('phone', user.phone || phone).then(() => {}).catch(e => console.warn('Supabase bkash update:', e));
+      }
+    }
+  } catch(e) {}
 
   updateBkashDisplayAcrossApp();
-  showToastNotification('🎉 বিকাশ সফলভাবে সেট করা হয়েছে!');
-
-  setTimeout(function() {
+  updateRealNameDisplayAcrossApp();
+  renderBkashSetupPanel();
+  showToastNotification('✓ বিকাশ অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  setTimeout(() => {
     if (previousDashboardPanel === 'my-pass') {
       openDashboardPanel('my-pass');
       openWithdrawSheet();
     } else {
       openDashboardPanel('personal');
     }
-  }, 450);
+  }, 400);
+}
+
+// ==========================================
+// NAGAD ACCOUNT SETTINGS ("নগদ অ্যাকাউন্ট")
+// ==========================================
+function getSavedNagadAccount() {
+  try {
+    const raw = localStorage.getItem('alo_nagad_account');
+    if (raw) return JSON.parse(raw);
+    const user = getCurrentUser();
+    if (user && user.nagad) return user.nagad;
+  } catch(e) {}
+  return null;
+}
+
+function updateNagadDisplayAcrossApp() {
+  const nagad = getSavedNagadAccount();
+
+  // 1. Profile / Personal Info row badge
+  const personalBadge = document.getElementById('personal-nagad-status-badge');
+  if (personalBadge) {
+    if (nagad && nagad.phone) {
+      personalBadge.textContent = nagad.phone;
+      personalBadge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-mono font-semibold';
+    } else {
+      personalBadge.textContent = 'নগদ সেট নেই';
+      personalBadge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
+    }
+  }
+
+  // 2. Withdrawal sheet selected method label
+  const withdrawLabel = document.getElementById('withdraw-selected-method-label');
+  if (withdrawLabel && withdrawLabel.textContent.includes('নগদ')) {
+    if (nagad && nagad.phone) {
+      withdrawLabel.textContent = `নগদ (${nagad.phone})`;
+      withdrawLabel.className = 'text-[#f7941d] font-bold font-mono';
+    } else {
+      withdrawLabel.textContent = 'নগদ সেট নেই';
+      withdrawLabel.className = 'text-white font-semibold';
+    }
+  }
+
+  // 3. Method picker options
+  const nagadPickerOpt = document.querySelector('.withdraw-picker-option[data-method-key="NAGAD"]');
+  if (nagadPickerOpt) {
+    if (nagad && nagad.phone) {
+      nagadPickerOpt.textContent = `নগদ: ${nagad.phone}`;
+      nagadPickerOpt.dataset.displayText = `নগদ (${nagad.phone})`;
+    } else {
+      nagadPickerOpt.textContent = 'নগদ সেট নেই';
+      nagadPickerOpt.dataset.displayText = 'নগদ সেট নেই';
+    }
+  }
+}
+
+function renderNagadSetupPanel() {
+  const nagad = getSavedNagadAccount();
+  const realName = getSavedRealName();
+  const nameInput = document.getElementById('nagad-fullname-input');
+  const phoneInput = document.getElementById('nagad-phone-input');
+  const lockNotice = document.getElementById('nagad-locked-notice');
+  const nameLock = document.getElementById('nagad-name-lock-icon');
+  const phoneLock = document.getElementById('nagad-phone-lock-icon');
+  const submitBtn = document.getElementById('nagad-set-submit-btn');
+
+  const boundName = (nagad && nagad.fullName) || realName || '';
+  if (nameInput) {
+    nameInput.placeholder = 'প্রকৃত নাম লিখুন';
+    nameInput.value = boundName;
+  }
+
+  if (nagad && nagad.phone) {
+    // Permanently locked mode - One-time saved!
+    if (phoneInput) {
+      phoneInput.value = nagad.phone;
+      phoneInput.readOnly = true;
+      phoneInput.classList.add('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameInput) {
+      nameInput.readOnly = true;
+      nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameLock) nameLock.classList.remove('hidden');
+    if (phoneLock) phoneLock.classList.remove('hidden');
+    if (lockNotice) lockNotice.classList.remove('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)</span>';
+    }
+  } else {
+    // Editable mode
+    if (phoneInput) {
+      phoneInput.value = '';
+      phoneInput.placeholder = 'নগদ নম্বর লিখুন';
+      phoneInput.readOnly = false;
+      phoneInput.classList.remove('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameInput) {
+      nameInput.readOnly = Boolean(realName);
+      if (realName) {
+        nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+        if (nameLock) nameLock.classList.remove('hidden');
+      } else {
+        nameInput.classList.remove('cursor-not-allowed', 'opacity-90');
+        if (nameLock) nameLock.classList.add('hidden');
+      }
+    }
+    if (phoneLock) phoneLock.classList.add('hidden');
+    if (lockNotice) lockNotice.classList.add('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+    }
+  }
+}
+
+function saveNagadAccountDetails() {
+  const existing = getSavedNagadAccount();
+  if (existing && existing.phone) {
+    showToastNotification('⚠️ নগদ অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না');
+    return;
+  }
+
+  const nameInput = document.getElementById('nagad-fullname-input');
+  const phoneInput = document.getElementById('nagad-phone-input');
+  const fullName = (nameInput ? nameInput.value.trim() : '') || getSavedRealName();
+  const phone = phoneInput ? phoneInput.value.trim() : '';
+
+  if (!fullName || fullName.length < 2) {
+    showToastNotification('⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+  if (!phone || phone.length < 10) {
+    showToastNotification('⚠️ অনুগ্রহ করে সঠিক নগদ নম্বর লিখুন');
+    if (phoneInput) phoneInput.focus();
+    return;
+  }
+
+  const nagadData = {
+    fullName: fullName,
+    phone: phone,
+    locked: true,
+    boundAt: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem('alo_nagad_account', JSON.stringify(nagadData));
+    if (!localStorage.getItem('alo_real_name')) {
+      localStorage.setItem('alo_real_name', fullName);
+    }
+    const user = getCurrentUser();
+    if (user) {
+      user.nagad = nagadData;
+      user.realName = fullName;
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      if (window.aloSupabase) {
+        window.aloSupabase.from('users').update({
+          nagad_phone: phone,
+          nagad_name: fullName,
+          real_name: fullName
+        }).eq('phone', user.phone || phone).then(() => {}).catch(e => console.warn('Supabase nagad update:', e));
+      }
+    }
+  } catch(e) {}
+
+  updateNagadDisplayAcrossApp();
+  updateRealNameDisplayAcrossApp();
+  renderNagadSetupPanel();
+  showToastNotification('✓ নগদ অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  setTimeout(() => {
+    if (previousDashboardPanel === 'my-pass') {
+      openDashboardPanel('my-pass');
+      openWithdrawSheet();
+    } else {
+      openDashboardPanel('personal');
+    }
+  }, 400);
+}
+
+// ==========================================
+// USDT ACCOUNT SETTINGS ("USDT অ্যাকাউন্ট / BEP20")
+// ==========================================
+function getSavedUsdtAccount() {
+  try {
+    const raw = localStorage.getItem('alo_usdt_account');
+    if (raw) return JSON.parse(raw);
+    const user = getCurrentUser();
+    if (user && user.usdt) return user.usdt;
+    const directAddr = localStorage.getItem('alo_usdt_address');
+    if (directAddr) {
+      return {
+        fullName: getSavedRealName(),
+        address: directAddr,
+        network: 'BEP20',
+        locked: true
+      };
+    }
+  } catch(e) {}
+  return null;
+}
+
+function updateUsdtDisplayAcrossApp() {
+  const usdt = getSavedUsdtAccount();
+
+  // 1. Profile / Personal Info row badge
+  const personalBadge = document.getElementById('personal-usdt-status-badge') || document.querySelector('[data-profile-value="usdt"]');
+  if (personalBadge) {
+    if (usdt && usdt.address) {
+      const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
+      personalBadge.textContent = shortAddr;
+      personalBadge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-mono font-semibold';
+    } else {
+      personalBadge.textContent = 'USDT সেট নেই';
+      personalBadge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
+    }
+  }
+
+  // 2. Withdrawal sheet selected method label
+  const withdrawLabel = document.getElementById('withdraw-selected-method-label');
+  if (withdrawLabel && withdrawLabel.textContent.includes('USDT')) {
+    if (usdt && usdt.address) {
+      const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
+      withdrawLabel.textContent = `USDT (${shortAddr})`;
+      withdrawLabel.className = 'text-[#26a17b] font-bold font-mono';
+    } else {
+      withdrawLabel.textContent = 'USDT সেট নেই';
+      withdrawLabel.className = 'text-white font-semibold';
+    }
+  }
+
+  // 3. Method picker options
+  const usdtPickerOpt = document.querySelector('.withdraw-picker-option[data-method-key="USDT"]');
+  if (usdtPickerOpt) {
+    if (usdt && usdt.address) {
+      const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
+      usdtPickerOpt.textContent = `USDT: ${shortAddr} (BEP20)`;
+      usdtPickerOpt.dataset.displayText = `USDT (${shortAddr})`;
+    } else {
+      usdtPickerOpt.textContent = 'USDT সেট নেই';
+      usdtPickerOpt.dataset.displayText = 'USDT সেট নেই';
+    }
+  }
+}
+
+function renderUsdtSetupPanel() {
+  const usdt = getSavedUsdtAccount();
+  const realName = getSavedRealName();
+  const nameInput = document.getElementById('usdt-fullname-input');
+  const addressInput = document.getElementById('usdt-address-input');
+  const lockNotice = document.getElementById('usdt-locked-notice');
+  const nameLock = document.getElementById('usdt-name-lock-icon');
+  const addressLock = document.getElementById('usdt-address-lock-icon');
+  const submitBtn = document.getElementById('usdt-set-submit-btn');
+
+  const boundName = (usdt && usdt.fullName) || realName || '';
+  if (nameInput) {
+    nameInput.placeholder = 'প্রকৃত নাম লিখুন';
+    nameInput.value = boundName;
+  }
+
+  if (usdt && usdt.address) {
+    // Permanently locked mode - One-time saved!
+    if (addressInput) {
+      addressInput.value = usdt.address;
+      addressInput.readOnly = true;
+      addressInput.classList.add('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameInput) {
+      nameInput.readOnly = true;
+      nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameLock) nameLock.classList.remove('hidden');
+    if (addressLock) addressLock.classList.remove('hidden');
+    if (lockNotice) lockNotice.classList.remove('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)</span>';
+    }
+  } else {
+    // Editable mode
+    if (addressInput) {
+      addressInput.value = '';
+      addressInput.placeholder = 'BEP20 ওয়ালেট ঠিকানা লিখুন (0x...)';
+      addressInput.readOnly = false;
+      addressInput.classList.remove('cursor-not-allowed', 'opacity-90');
+    }
+    if (nameInput) {
+      nameInput.readOnly = Boolean(realName);
+      if (realName) {
+        nameInput.classList.add('cursor-not-allowed', 'opacity-90');
+        if (nameLock) nameLock.classList.remove('hidden');
+      } else {
+        nameInput.classList.remove('cursor-not-allowed', 'opacity-90');
+        if (nameLock) nameLock.classList.add('hidden');
+      }
+    }
+    if (addressLock) addressLock.classList.add('hidden');
+    if (lockNotice) lockNotice.classList.add('hidden');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+    }
+  }
+}
+
+function saveUsdtAccountDetails() {
+  const existing = getSavedUsdtAccount();
+  if (existing && existing.address) {
+    showToastNotification('⚠️ USDT (BEP20) অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না');
+    return;
+  }
+
+  const nameInput = document.getElementById('usdt-fullname-input');
+  const addressInput = document.getElementById('usdt-address-input');
+  const fullName = (nameInput ? nameInput.value.trim() : '') || getSavedRealName();
+  const address = addressInput ? addressInput.value.trim() : '';
+
+  if (!fullName || fullName.length < 2) {
+    showToastNotification('⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+  if (!address || address.length < 15 || !address.toLowerCase().startsWith('0x')) {
+    showToastNotification('⚠️ সঠিক BEP20 (0x...) ওয়ালেট ঠিকানা লিখুন');
+    if (addressInput) addressInput.focus();
+    return;
+  }
+
+  const usdtData = {
+    fullName: fullName,
+    address: address,
+    network: 'BEP20',
+    locked: true,
+    boundAt: new Date().toISOString()
+  };
+
+  try {
+    localStorage.setItem('alo_usdt_account', JSON.stringify(usdtData));
+    localStorage.setItem('alo_usdt_address', address);
+    if (!localStorage.getItem('alo_real_name')) {
+      localStorage.setItem('alo_real_name', fullName);
+    }
+    const user = getCurrentUser();
+    if (user) {
+      user.usdt = usdtData;
+      user.realName = fullName;
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      if (window.aloSupabase) {
+        window.aloSupabase.from('users').update({
+          usdt_address: address,
+          usdt_name: fullName,
+          real_name: fullName
+        }).eq('phone', user.phone || '').then(() => {}).catch(e => console.warn('Supabase usdt update:', e));
+      }
+    }
+  } catch(e) {}
+
+  updateUsdtDisplayAcrossApp();
+  updateRealNameDisplayAcrossApp();
+  renderUsdtSetupPanel();
+  showToastNotification('✓ USDT (BEP20) অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  setTimeout(() => {
+    if (previousDashboardPanel === 'my-pass') {
+      openDashboardPanel('my-pass');
+      openWithdrawSheet();
+    } else if (previousDashboardPanel === 'payment-method') {
+      openDashboardPanel('payment-method');
+    } else {
+      openDashboardPanel('personal');
+    }
+  }, 400);
 }
 
 function getAvailableBalance() {
@@ -3429,6 +4368,69 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // Manager shortcut click (on homepage or anywhere with data-panel="manager")
+  const managerShortcutBtn = event.target.closest('#home-manager-btn, [data-panel="manager"]');
+  if (managerShortcutBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    openManagerContactModal();
+    return;
+  }
+
+  // Close manager modal
+  const closeManagerBtn = event.target.closest('#close-manager-modal-btn');
+  if (closeManagerBtn) {
+    event.preventDefault();
+    closeManagerContactModal();
+    return;
+  }
+  if (event.target && event.target.id === 'manager-contact-modal') {
+    closeManagerContactModal();
+    return;
+  }
+
+  // Copy manager ID
+  const copyMgrBtn = event.target.closest('#copy-manager-id-btn');
+  if (copyMgrBtn) {
+    event.preventDefault();
+    const mgrCode = '#PW-MANAGER-8802';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(mgrCode).then(function() {
+        showToastNotification('📋 ম্যানেজার আইডি কপি করা হয়েছে: ' + mgrCode);
+      }).catch(function() {
+        showToastNotification('ম্যানেজার আইডি: ' + mgrCode);
+      });
+    } else {
+      showToastNotification('ম্যানেজার আইডি: ' + mgrCode);
+    }
+    return;
+  }
+
+  // Telegram action
+  const tgMgrBtn = event.target.closest('#manager-telegram-action-btn');
+  if (tgMgrBtn) {
+    event.preventDefault();
+    showToastNotification('🚀 টেলিগ্রাম ম্যানেজার সার্ভিস কানেক্ট হচ্ছে (@PW_Official_Manager_BD)');
+    return;
+  }
+
+  // Live chat action
+  const liveChatBtn = event.target.closest('#manager-live-chat-btn');
+  if (liveChatBtn) {
+    event.preventDefault();
+    showToastNotification('💬 অনলাইন ম্যানেজার চ্যাটে যুক্ত হচ্ছেন...');
+    return;
+  }
+
+  // Generic data-dashboard-message handler
+  const dashMsgBtn = event.target.closest('[data-dashboard-message]');
+  if (dashMsgBtn && !event.target.closest('#logout-button')) {
+    event.preventDefault();
+    const msg = dashMsgBtn.dataset.dashboardMessage;
+    if (msg) showToastNotification(msg);
+    return;
+  }
+
   // Logout button click
   const logoutClick = event.target.closest('#logout-button');
   if (logoutClick) {
@@ -3623,12 +4625,30 @@ document.addEventListener('click', function(event) {
     event.preventDefault();
     const methodKey = pickerOption.dataset.methodKey || 'BKASH';
     const bkash = getSavedBkashAccount();
+    const nagad = getSavedNagadAccount();
     if (methodKey === 'BKASH' && (!bkash || !bkash.phone)) {
       closeMethodPicker();
       closeWithdrawSheet();
       previousDashboardPanel = 'my-pass';
       openDashboardPanel('bkash-setup');
       showToastNotification('বিকাশ সেট নেই! অনুগ্রহ করে বিকাশ তথ্য সেট করুন');
+      return;
+    }
+    if (methodKey === 'NAGAD' && (!nagad || !nagad.phone)) {
+      closeMethodPicker();
+      closeWithdrawSheet();
+      previousDashboardPanel = 'my-pass';
+      openDashboardPanel('nagad-setup');
+      showToastNotification('নগদ সেট নেই! অনুগ্রহ করে নগদ তথ্য সেট করুন');
+      return;
+    }
+    const usdt = getSavedUsdtAccount();
+    if (methodKey === 'USDT' && (!usdt || !usdt.address)) {
+      closeMethodPicker();
+      closeWithdrawSheet();
+      previousDashboardPanel = 'my-pass';
+      openDashboardPanel('usdt-setup');
+      showToastNotification('USDT সেট নেই! অনুগ্রহ করে USDT (BEP20) তথ্য সেট করুন');
       return;
     }
     pendingPickerMethod = methodKey;
@@ -3644,8 +4664,15 @@ document.addEventListener('click', function(event) {
     const label = document.getElementById('withdraw-selected-method-label');
     if (label) {
       label.textContent = pendingPickerDisplay;
-      label.classList.add('text-[#38bdf8]', 'font-bold');
-      label.classList.remove('text-slate-300');
+      if (pendingPickerDisplay.includes('নগদ')) {
+        label.className = 'text-[#f7941d] font-bold font-mono';
+      } else if (pendingPickerDisplay.includes('USDT')) {
+        label.className = 'text-[#26a17b] font-bold font-mono';
+      } else if (pendingPickerDisplay.includes('বিকাশ')) {
+        label.className = 'text-[#38bdf8] font-bold font-mono';
+      } else {
+        label.className = 'text-white font-semibold';
+      }
     }
     closeMethodPicker();
     showToastNotification(`পদ্ধতি নির্বাচন: ${pendingPickerDisplay}`);
@@ -3653,6 +4680,58 @@ document.addEventListener('click', function(event) {
   }
 
   // Profile bkash row click ("বিকাশ সেট করুন")
+  
+  // Profile nagad row click ("নগদ সেট করুন")
+  
+  // Account binding row ("অ্যাকাউন্ট বাঁধাই" -> প্রকৃত নাম)
+  const accountBindRow = event.target.closest('#personal-account-row, [data-profile-edit="account"]');
+  if (accountBindRow) {
+    event.preventDefault();
+    previousDashboardPanel = 'personal';
+    openDashboardPanel('realname-setup');
+    return;
+  }
+
+  // Realname setup back button
+  const realnameBackBtn = event.target.closest('#realname-setup-back-btn');
+  if (realnameBackBtn) {
+    event.preventDefault();
+    openDashboardPanel(previousDashboardPanel || 'personal');
+    return;
+  }
+
+  // Realname submit button
+  const realnameSubmitBtn = event.target.closest('#realname-set-submit-btn');
+  if (realnameSubmitBtn) {
+    event.preventDefault();
+    saveRealNameDetails();
+    return;
+  }
+
+  const nagadProfileRow = event.target.closest('#personal-nagad-row, [data-profile-edit="nagad"]');
+  if (nagadProfileRow) {
+    event.preventDefault();
+    previousDashboardPanel = 'personal';
+    openDashboardPanel('nagad-setup');
+    return;
+  }
+
+  // Nagad setup back button
+  const nagadSetupBackBtn = event.target.closest('#nagad-setup-back-btn');
+  if (nagadSetupBackBtn) {
+    event.preventDefault();
+    openDashboardPanel(previousDashboardPanel || 'personal');
+    return;
+  }
+
+  // Submit button in Nagad setup panel
+  const nagadSubmitBtn = event.target.closest('#nagad-set-submit-btn');
+  if (nagadSubmitBtn) {
+    event.preventDefault();
+    saveNagadAccountDetails();
+    return;
+  }
+
   const bkashProfileRow = event.target.closest('#personal-bkash-row, [data-profile-edit="bkash"]');
   if (bkashProfileRow) {
     event.preventDefault();
@@ -3682,9 +4761,41 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // USDT Profile row click ("USDT সেট করুন")
+  const usdtProfileRow = event.target.closest('#personal-usdt-row, [data-profile-edit="usdt"]');
+  if (usdtProfileRow) {
+    event.preventDefault();
+    previousDashboardPanel = 'personal';
+    openDashboardPanel('usdt-setup');
+    return;
+  }
+
+  // USDT setup back button
+  const usdtSetupBackBtn = event.target.closest('#usdt-setup-back-btn');
+  if (usdtSetupBackBtn) {
+    event.preventDefault();
+    if (previousDashboardPanel === 'my-pass') {
+      openDashboardPanel('my-pass');
+      openWithdrawSheet();
+    } else if (previousDashboardPanel === 'payment-method') {
+      openDashboardPanel('payment-method');
+    } else {
+      openDashboardPanel(previousDashboardPanel || 'personal');
+    }
+    return;
+  }
+
+  // Submit button in USDT setup panel
+  const usdtSubmitBtn = event.target.closest('#usdt-set-submit-btn');
+  if (usdtSubmitBtn) {
+    event.preventDefault();
+    saveUsdtAccountDetails();
+    return;
+  }
+
   // Personal message buttons for other rows
   const personalMsgBtn = event.target.closest('[data-personal-message]');
-  if (personalMsgBtn && !personalMsgBtn.closest('#personal-bkash-row, [data-profile-edit="bkash"], #bkash-setup-panel')) {
+  if (personalMsgBtn && !personalMsgBtn.closest('#personal-bkash-row, [data-profile-edit="bkash"], #bkash-setup-panel, #personal-nagad-row, [data-profile-edit="nagad"], #nagad-setup-panel, #personal-usdt-row, [data-profile-edit="usdt"], #usdt-setup-panel, #personal-account-row, [data-profile-edit="account"], #realname-setup-panel')) {
     event.preventDefault();
     const msg = personalMsgBtn.dataset.personalMessage;
     const msgEl = document.getElementById('personal-message');
@@ -3697,16 +4808,38 @@ document.addEventListener('click', function(event) {
   const withdrawSheetSubmitBtn = event.target.closest('#withdraw-sheet-submit-btn');
   if (withdrawSheetSubmitBtn) {
     event.preventDefault();
-    const bkash = getSavedBkashAccount();
     const label = document.getElementById('withdraw-selected-method-label');
     const selectedMethod = label ? label.textContent.trim() : 'বিকাশ সেট নেই';
-    
-    if (!bkash || !bkash.phone || selectedMethod === 'বিকাশ সেট নেই') {
-      showToastNotification('⚠️ উত্তোলন করার পূর্বে বিকাশ সেট করতে হবে');
-      closeWithdrawSheet();
-      previousDashboardPanel = 'my-pass';
-      openDashboardPanel('bkash-setup');
-      return;
+    const isUsdt = selectedMethod.includes('USDT');
+    const isNagad = selectedMethod.includes('নগদ');
+    const bkash = getSavedBkashAccount();
+    const nagad = getSavedNagadAccount();
+    const usdt = getSavedUsdtAccount();
+
+    if (isUsdt) {
+      if (!usdt || !usdt.address || selectedMethod.includes('সেট নেই') || selectedMethod.includes('সেট না')) {
+        showToastNotification('⚠️ উত্তোলন করার পূর্বে USDT (BEP20) সেট করতে হবে');
+        closeWithdrawSheet();
+        previousDashboardPanel = 'my-pass';
+        openDashboardPanel('usdt-setup');
+        return;
+      }
+    } else if (isNagad) {
+      if (!nagad || !nagad.phone || selectedMethod === 'নগদ সেট নেই') {
+        showToastNotification('⚠️ উত্তোলন করার পূর্বে নগদ সেট করতে হবে');
+        closeWithdrawSheet();
+        previousDashboardPanel = 'my-pass';
+        openDashboardPanel('nagad-setup');
+        return;
+      }
+    } else {
+      if (!bkash || !bkash.phone || selectedMethod === 'বিকাশ সেট নেই') {
+        showToastNotification('⚠️ উত্তোলন করার পূর্বে বিকাশ সেট করতে হবে');
+        closeWithdrawSheet();
+        previousDashboardPanel = 'my-pass';
+        openDashboardPanel('bkash-setup');
+        return;
+      }
     }
 
     const amtInp = document.getElementById('withdraw-sheet-amount');
@@ -3786,6 +4919,170 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // VIP Salary & Level Upgrade claim button click (Matches prominent গ্রহণ করুন action)
+  const inviteClaimBtn = event.target.closest('.invite-claim-btn');
+  if (inviteClaimBtn) {
+    event.preventDefault();
+    const tier = inviteClaimBtn.dataset.vipTier;
+    const type = inviteClaimBtn.dataset.rewardType;
+    const amount = Number(inviteClaimBtn.dataset.rewardAmount) || 0;
+    const reqMembers = Number(inviteClaimBtn.dataset.requiredMembers) || 1;
+    const currentCount = Number(inviteClaimBtn.dataset.currentCount) || 0;
+    const key = `${tier}-${type}`;
+
+    let claimed = [];
+    try {
+      claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
+    } catch(e) { claimed = []; }
+
+    if (claimed.includes(key)) {
+      showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
+      return;
+    }
+
+    // If progress is already 100%, automatic instant claim to balance!
+    if (currentCount >= reqMembers) {
+      executeVipRewardClaim(tier, type, amount, reqMembers, currentCount);
+      return;
+    }
+
+    // Open real activation & claim modal
+    openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount);
+    return;
+  }
+
+  // Modal Action: Direct Balance Claim
+  const modalClaimBtn = event.target.closest('#invite-modal-claim-btn');
+  if (modalClaimBtn) {
+    event.preventDefault();
+    if (currentInviteClaim) {
+      executeVipRewardClaim(
+        currentInviteClaim.tier,
+        currentInviteClaim.type,
+        currentInviteClaim.amount,
+        currentInviteClaim.reqMembers,
+        currentInviteClaim.currentCount
+      );
+    }
+    return;
+  }
+
+  // Modal Action: Test Active Member (+1)
+  const modalTestBtn = event.target.closest('#invite-modal-test-add-btn');
+  if (modalTestBtn) {
+    event.preventDefault();
+    const user = getCurrentUser();
+    const supNorm = normalizeBdPhone(user && (user.phone || user.accountNumber));
+    if (supNorm) {
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem('aloTeamRecords') || '[]'); } catch(e) {}
+      const randNum = '017' + Math.floor(10000000 + Math.random() * 90000000);
+      local.push({
+        superiorPhone: supNorm,
+        memberPhone: randNum,
+        tier: 1,
+        rechargeAmount: 850,
+        level: 'LV1',
+        joinedAt: new Date().toISOString()
+      });
+      localStorage.setItem('aloTeamRecords', JSON.stringify(local));
+      showToastNotification('⚡ নতুন একজন সক্রিয় A-লেভেল সদস্য সফলভাবে যোগ হয়েছে!');
+      renderInviteVipSalaryCards().then(function() {
+        if (currentInviteClaim) {
+          const updatedCount = (Number(currentInviteClaim.currentCount) || 0) + 1;
+          openInviteVipClaimModal(
+            currentInviteClaim.tier,
+            currentInviteClaim.type,
+            currentInviteClaim.amount,
+            currentInviteClaim.reqMembers,
+            updatedCount
+          );
+        }
+      });
+    }
+    return;
+  }
+
+  // Modal Action: Copy Invite Link
+  const modalCopyBtn = event.target.closest('#invite-modal-copy-link-btn');
+  if (modalCopyBtn) {
+    event.preventDefault();
+    const user = getCurrentUser();
+    const code = (user && user.inviteCode) || (user && user.accountNumber) || 'ALO123';
+    const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(function() {
+        showToastNotification(`🔗 ইনভাইট লিংক কপি হয়েছে: ${link}`);
+      }).catch(function() {
+        showToastNotification(`আমন্ত্রণ কোড: ${code}`);
+      });
+    } else {
+      showToastNotification(`আমন্ত্রণ কোড: ${code}`);
+    }
+    return;
+  }
+
+  // Modal Action: Close
+  if (event.target.closest('#invite-modal-close-btn') || event.target.closest('#invite-vip-modal-backdrop')) {
+    event.preventDefault();
+    closeInviteVipClaimModal();
+    return;
+  }
+
+  // Invite Page Copy Link Button & Company Referral System Link Button
+  const pageCopyBtn = event.target.closest('#invite-page-copy, #invite-company-link-copy-btn, #invite-company-link-display');
+  if (pageCopyBtn) {
+    event.preventDefault();
+    const linkInput = document.getElementById('invite-link-input');
+    const linkEl = document.getElementById('invite-page-link');
+    const companyDisplay = document.getElementById('invite-company-link-display');
+    const user = getCurrentUser();
+    const code = (user && (user.inviteCode || user.accountNumber)) || '728207';
+    let linkText = (linkInput && linkInput.value) || (companyDisplay && companyDisplay.textContent && companyDisplay.textContent.trim()) || (linkEl && linkEl.textContent && linkEl.textContent.trim()) || `${window.location.origin}/?invite=${code}`;
+
+    if (linkInput) {
+      linkInput.focus();
+      linkInput.select();
+    }
+
+    const copyBtnText = document.getElementById('invite-copy-btn-text');
+    const companyCopyText = document.getElementById('invite-company-copy-text');
+    function onCopied() {
+      if (copyBtnText) {
+        const orig = copyBtnText.textContent;
+        copyBtnText.textContent = 'কপি সম্পন্ন!';
+        setTimeout(function() { copyBtnText.textContent = orig; }, 2000);
+      }
+      if (companyCopyText) {
+        const origComp = companyCopyText.textContent;
+        companyCopyText.textContent = 'কপি হয়েছে! ✓';
+        setTimeout(function() { companyCopyText.textContent = origComp; }, 2000);
+      }
+      showToastNotification(`🔗 PW New Media রেফারেল লিংক কপি করা হয়েছে!`);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(linkText).then(onCopied).catch(function() {
+        if (linkInput) {
+          linkInput.select();
+          document.execCommand('copy');
+          onCopied();
+        } else {
+          showToastNotification(`আমন্ত্রণ কোড: ${code}`);
+        }
+      });
+    } else {
+      if (linkInput) {
+        linkInput.select();
+        document.execCommand('copy');
+        onCopied();
+      } else {
+        showToastNotification(`আমন্ত্রণ কোড: ${code}`);
+      }
+    }
+    return;
+  }
+
   // Hall package level room click:
   // LV0 is free; selecting any package other than LV0 opens package modal
   const levelRoom = event.target.closest('[data-open-level-tasks]');
@@ -3832,6 +5129,16 @@ document.addEventListener('click', function(event) {
       openPackagePurchaseModal(lvl);
       return;
     }
+  }
+
+  // PW Home Banner Dot click
+  const bannerDot = event.target.closest('.pw-banner-dot');
+  if (bannerDot) {
+    event.preventDefault();
+    const idx = parseInt(bannerDot.dataset.bannerIndex || '0', 10);
+    goToPWBannerSlide(idx);
+    startPWBannerAutoPlay();
+    return;
   }
 
   // Hall platform tabs
@@ -4398,14 +5705,82 @@ if (demoLoginBtn) {
     updateVipHallRooms();
     updateRecordsPanelPackages();
     playLoginSuccess(demoUser.name, function() {
-      openDashboardPanel('profile');
+      openDashboardPanel('home');
       showView('dashboard', 'zoom');
     });
   });
 }
 
+// PW Home Banner Carousel (3 Slides - Auto-change continually, Touch swipe OFF)
+let pwBannerCurrentIndex = 0;
+let pwBannerTimer = null;
+const PW_BANNER_TOTAL = 3;
+
+function goToPWBannerSlide(idx) {
+  pwBannerCurrentIndex = ((idx % PW_BANNER_TOTAL) + PW_BANNER_TOTAL) % PW_BANNER_TOTAL;
+  const track = document.getElementById('pw-home-banner-track');
+  if (track) {
+    track.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+    track.style.transform = `translateX(-${pwBannerCurrentIndex * (100 / PW_BANNER_TOTAL)}%)`;
+  }
+  document.querySelectorAll('.pw-banner-dot').forEach(function(dot, i) {
+    if (i === pwBannerCurrentIndex) {
+      dot.classList.add('is-active');
+      dot.setAttribute('aria-current', 'true');
+    } else {
+      dot.classList.remove('is-active');
+      dot.removeAttribute('aria-current');
+    }
+  });
+}
+
+function startPWBannerAutoPlay() {
+  stopPWBannerAutoPlay();
+  // Automatically rotates every 3.8 seconds
+  pwBannerTimer = setInterval(function() {
+    goToPWBannerSlide(pwBannerCurrentIndex + 1);
+  }, 3800);
+}
+
+function stopPWBannerAutoPlay() {
+  if (pwBannerTimer) {
+    clearInterval(pwBannerTimer);
+    pwBannerTimer = null;
+  }
+}
+
+function initPWBannerCarousel() {
+  const container = document.getElementById('pw-hero-banner-container');
+  const track = document.getElementById('pw-home-banner-track');
+  if (!container || !track) return;
+
+  goToPWBannerSlide(0);
+  startPWBannerAutoPlay();
+
+  // Navigation arrows (Touch swipe is OFF as requested by user)
+  const prevBtn = document.getElementById('pw-banner-prev');
+  const nextBtn = document.getElementById('pw-banner-next');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      goToPWBannerSlide(pwBannerCurrentIndex - 1);
+      startPWBannerAutoPlay();
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      goToPWBannerSlide(pwBannerCurrentIndex + 1);
+      startPWBannerAutoPlay();
+    });
+  }
+}
+
 // Initial session check
 function initApp() {
+  initPWBannerCarousel();
   let savedUser = null;
   try {
     savedUser = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
@@ -4420,6 +5795,22 @@ function initApp() {
     accounts = [];
   }
   const latestAccount = accounts.length > 0 ? accounts[accounts.length - 1] : null;
+
+  // If no user session is active, set default demo user so visitor immediately sees the home dashboard & banners
+  if (!savedUser) {
+    savedUser = {
+      name: (latestAccount && latestAccount.name) || 'সদস্য',
+      phone: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || '01735235999',
+      accountNumber: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || '01735235999',
+      inviteCode: (latestAccount && latestAccount.inviteCode) || '728207',
+      memberId: (latestAccount && latestAccount.memberId) || '1105',
+      superiorId: '11',
+      packageLevel: 'LV0',
+      purchasedPackages: ['LV0'],
+      balance: 0.00
+    };
+    localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
+  }
 
   if (savedUser) {
     if (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) {
@@ -4439,17 +5830,30 @@ function initApp() {
     updateProfileMetrics();
     updateVipHallRooms();
     updateRecordsPanelPackages();
-    updateBkashDisplayAcrossApp();
-    openDashboardPanel('profile');
+    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp(); updateRealNameDisplayAcrossApp();
+    
+    // Open HOME panel so the banner carousel is immediately visible on first load!
+    openDashboardPanel('home');
     showView('dashboard');
-  } else {
-    // If not logged in, show login page so user can login or register
-    if (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) {
-      const loginEmail = document.getElementById('login-email');
-      if (loginEmail) loginEmail.value = latestAccount.accountNumber || latestAccount.phone;
-    }
-    showView('login');
   }
+
+  // Handle incoming referral link query parameters (?invite=... or ?ref=...)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteQuery = urlParams.get('invite') || urlParams.get('ref') || urlParams.get('code');
+    if (inviteQuery) {
+      const cleanCode = inviteQuery.trim();
+      sessionStorage.setItem('alo_pending_invite_code', cleanCode);
+      const regInviteInput = document.getElementById('register-invite-code');
+      if (regInviteInput) {
+        regInviteInput.value = cleanCode;
+      }
+      if (!savedUser) {
+        showView('register');
+        showToastNotification(`স্বাগতম! আমন্ত্রণ কোড: ${cleanCode}`);
+      }
+    }
+  } catch(e) {}
 }
 
 document.addEventListener('input', function(e) {
