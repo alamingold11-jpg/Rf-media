@@ -888,6 +888,9 @@ function showView(viewName, style) {
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const applyHidden = function() {
     allViews.forEach(function(view) { view.hidden = view.id !== nextView + '-view'; });
+    if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+      window.aloI18n.translateDOM();
+    }
   };
 
   if (nextView === 'register') {
@@ -1455,8 +1458,161 @@ function updateUserDetails(user) {
   const userName = document.getElementById('dashboard-user-name');
   if (userName) userName.textContent = user.name || 'সদস্য';
 
+  // Country & Currency Information
+  const userCountryName = user.country === 'IN' ? (user.language === 'hi' ? 'भारत' : 'ইন্ডিয়া') : (user.countryName || 'বাংলাদেশ');
+  const userCurrCode = user.currency || 'BDT';
+  const userCurrSym = user.currencySymbol || (user.currency === 'BDT' ? '৳' : (user.currency === 'INR' ? '₹' : (user.currency === 'USD' ? '$' : user.currency || 'BDT')));
+  const userFlag = (getCountryByCode(user.country || 'BD') && getCountryByCode(user.country || 'BD').flag) || '🇧🇩';
+
+  const countryBadge = document.getElementById('profile-country-badge');
+  if (countryBadge) {
+    countryBadge.innerHTML = `<span class="text-sm select-none">${userFlag}</span> <span>${userCountryName} · ${userCurrCode} (${userCurrSym})</span>`;
+  }
+  const personalCountry = document.getElementById('personal-country-text');
+  if (personalCountry) {
+    personalCountry.textContent = `${userFlag} ${userCountryName} (${user.currencyName || userCurrCode})`;
+  }
+  const personalCurrBadge = document.getElementById('personal-currency-badge');
+  if (personalCurrBadge) {
+    personalCurrBadge.textContent = `${userCurrCode} · ${userCurrSym}`;
+  }
+  const profileBalCurr = document.getElementById('profile-balance-currency');
+  if (profileBalCurr) {
+    profileBalCurr.textContent = userCurrCode;
+  }
+
+  updatePaymentAndWithdrawalForUser(user);
+
   if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
   if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+}
+
+function updatePaymentAndWithdrawalForUser(user) {
+  if (!user) user = getCurrentUser();
+  const isBd = !user || !user.country || user.country === 'BD';
+  const curr = (user && user.currency) || 'BDT';
+
+  // 1. Payment Method Panel rows (Recharge options)
+  document.querySelectorAll('.payment-method-row').forEach(function(row) {
+    const method = row.dataset.paymentMethod;
+    if (method === 'usdt') {
+      row.style.display = '';
+    } else {
+      // BKASH, Nagad, BKAsh-2 are visible for Bangladesh only!
+      row.style.display = isBd ? '' : 'none';
+    }
+  });
+
+  // 2. Inline Recharge Drawer & Modal Recharge Payment Badges
+  document.querySelectorAll('.bd-only-payment-method').forEach(function(badge) {
+    badge.style.display = isBd ? '' : 'none';
+  });
+  const inlineGrid = document.getElementById('inline-recharge-methods-grid');
+  if (inlineGrid) {
+    inlineGrid.className = isBd ? 'grid grid-cols-3 gap-2 text-center text-[10px]' : 'grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto';
+  }
+  const modalGrid = document.getElementById('modal-deposit-methods-grid');
+  if (modalGrid) {
+    modalGrid.className = isBd ? 'grid grid-cols-3 gap-2 text-center text-[10px]' : 'grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto';
+  }
+
+  // 3. Withdrawal Sheet Method Picker Options
+  document.querySelectorAll('.withdraw-picker-option').forEach(function(opt) {
+    const key = opt.dataset.methodKey;
+    if (key === 'USDT') {
+      opt.style.display = '';
+    } else {
+      // BKASH, NAGAD are visible for Bangladesh only!
+      opt.style.display = isBd ? '' : 'none';
+    }
+  });
+
+  // 4. Withdrawal Label in Sheet (Default to USDT for non-BD)
+  const withdrawLabel = document.getElementById('withdraw-selected-method-label');
+  const usdt = getSavedUsdtAccount();
+  if (!isBd) {
+    // Non-BD users only use USDT!
+    if (usdt && usdt.address) {
+      const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
+      if (withdrawLabel) {
+        withdrawLabel.textContent = `USDT (${shortAddr})`;
+        withdrawLabel.className = 'text-[#26a17b] font-bold font-mono';
+      }
+    } else {
+      if (withdrawLabel) {
+        withdrawLabel.textContent = 'USDT সেট নেই';
+        withdrawLabel.className = 'text-white font-semibold';
+      }
+    }
+    // Update picker option highlight
+    document.querySelectorAll('.withdraw-picker-option').forEach(function(opt) {
+      if (opt.dataset.methodKey === 'USDT') {
+        opt.className = 'withdraw-picker-option py-2 px-5 rounded-xl text-[14.5px] transition cursor-pointer text-white font-bold bg-[#0d2358]/80 ring-1 ring-[#38bdf8]/40 shadow-sm text-center';
+      } else {
+        opt.className = 'withdraw-picker-option py-2 px-5 rounded-xl text-[14.5px] transition cursor-pointer text-slate-300 hover:text-white text-center';
+      }
+    });
+  }
+
+  // 5. Withdrawal Hint Text (hide BDT withdrawal timeline for non-BD)
+  const bdtWithdrawHint = document.querySelector('#my-pass-withdraw-sheet .space-y-1 div:nth-child(2)');
+  if (bdtWithdrawHint && bdtWithdrawHint.textContent.includes('উত্তোলন 48-96')) {
+    bdtWithdrawHint.style.display = isBd ? '' : 'none';
+  }
+
+  // 6. Personal Info Rows (bKash & Nagad hidden for non-BD)
+  const personalBkash = document.getElementById('personal-bkash-row');
+  if (personalBkash) personalBkash.style.display = isBd ? '' : 'none';
+  const personalNagad = document.getElementById('personal-nagad-row');
+  if (personalNagad) personalNagad.style.display = isBd ? '' : 'none';
+
+  // 7. Dynamic Currency Text Elements
+  document.querySelectorAll('.user-currency-text').forEach(function(el) {
+    el.textContent = curr;
+  });
+
+  // 8. 9 Earnings Cards Labels in Profile
+  const earningsLabelIds = [
+    'personal-earnings-value',
+    'yesterday-earnings-value',
+    'today-earnings-value',
+    'weekly-earnings-value',
+    'monthly-earnings-value',
+    'last-month-earnings-value',
+    'total-revenue-value'
+  ];
+  earningsLabelIds.forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el && el.nextElementSibling) {
+      const currSpan = el.nextElementSibling.querySelector('.user-currency-text');
+      if (currSpan) {
+        currSpan.textContent = curr;
+      } else if (el.nextElementSibling.textContent.includes('(')) {
+        el.nextElementSibling.textContent = el.nextElementSibling.textContent.replace(/\([A-Z]{3,4}\)/g, `(${curr})`);
+      }
+    }
+  });
+
+  // 9. Team Report Labels
+  document.querySelectorAll('#team-report-panel p, [data-panel="team-report"] p').forEach(function(p) {
+    const currSpan = p.querySelector('.user-currency-text');
+    if (currSpan) {
+      currSpan.textContent = curr;
+    } else if (p.textContent.includes('(')) {
+      p.textContent = p.textContent.replace(/\([A-Z]{3,4}\)/g, `(${curr})`);
+    }
+  });
+
+  // 10. VIP Package Cards Currency & Localization
+  if (typeof updateRecordsPanelPackages === 'function') {
+    updateRecordsPanelPackages();
+  }
+
+  // Mission submit reward
+  const missionReward = document.getElementById('mission-submit-reward');
+  if (missionReward && (missionReward.textContent.includes('BDT') || missionReward.textContent.includes('INR') || missionReward.textContent.includes('PKR') || missionReward.textContent.includes('USD'))) {
+    missionReward.textContent = missionReward.textContent.replace(/(BDT|INR|PKR|USD)/g, curr);
+  }
 }
 
 async function hashPassword(password) {
@@ -1497,7 +1653,7 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
     if (!field) return;
     const showing = field.type === 'password';
     field.type = showing ? 'text' : 'password';
-    button.setAttribute('aria-label', showing ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখান');
+    button.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
     button.toggleAttribute('data-password-visible', showing);
   });
 });
@@ -1509,22 +1665,213 @@ document.querySelectorAll('[data-message]').forEach(function(button) {
   });
 });
 
-function normalizeBdPhone(phoneStr) {
+function normalizeBdPhone(phoneStr, countryCode) {
   let digits = String(phoneStr || '').replace(/\D/g, '');
   if (digits.startsWith('880')) digits = digits.slice(3);
+  else if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
   if (digits.startsWith('0')) digits = digits.slice(1);
   return digits;
 }
+
+// =========================================================================
+// COUNTRY-BASED CURRENCY SYSTEM (দেশ ও কারেন্সি সিস্টেম)
+// Rules:
+// Bangladesh (BD) -> BDT (৳) +880
+// India (IN)      -> INR (₹) +91
+// =========================================================================
+const COUNTRY_DATABASE = [
+  { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameHi: 'बांग्लादेश', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, defaultLang: 'bn', placeholder: '' },
+  { code: 'IN', nameBn: 'ইন্ডিয়া', nameEn: 'India', nameHi: 'भारत', flag: '🇮🇳', dialCode: '+91', currency: 'INR', symbol: '₹', currencyName: 'রুপি', phoneLen: 10, defaultLang: 'bn', placeholder: '' }
+];
+
+let currentRegistrationCountry = COUNTRY_DATABASE[0]; // Default Bangladesh
+
+function getCountryByCode(code) {
+  if (!code) return COUNTRY_DATABASE[0];
+  const clean = String(code).trim();
+  const lower = clean.toLowerCase();
+  const upper = clean.toUpperCase();
+  const digits = clean.replace(/\D/g, '');
+
+  return COUNTRY_DATABASE.find(function(c) {
+    if (c.code === upper) return true;
+    if (c.dialCode === clean) return true;
+    if (digits && c.dialCode.replace(/\D/g, '') === digits) return true;
+    if (c.nameBn === clean || c.nameBn.toLowerCase() === lower) return true;
+    if (c.nameEn.toLowerCase() === lower) return true;
+    if (c.nameHi && (c.nameHi === clean || c.nameHi.toLowerCase() === lower)) return true;
+    if (lower === 'india' || lower === 'ইন্ডিয়া' || lower === 'ভারত' || lower === 'ind' || lower === 'in') return c.code === 'IN';
+    if (lower === 'bangladesh' || lower === 'বাংলাদেশ' || lower === 'bd') return c.code === 'BD';
+    return false;
+  }) || COUNTRY_DATABASE[0];
+}
+
+function selectRegistrationCountry(code) {
+  const country = getCountryByCode(code);
+  if (!country) return;
+  currentRegistrationCountry = country;
+
+  // 1. Update dropdown
+  const selectEl = document.getElementById('register-country-select');
+  if (selectEl && selectEl.value !== country.code) {
+    selectEl.value = country.code;
+  }
+
+  // 2. Update Hidden Form Data
+  const codeInput = document.getElementById('register-country-code');
+  if (codeInput) codeInput.value = country.code;
+  const nameInput = document.getElementById('register-country-name');
+  if (nameInput) nameInput.value = country.nameEn;
+  const currCodeInput = document.getElementById('register-currency-code');
+  if (currCodeInput) currCodeInput.value = country.currency;
+  const currSymInput = document.getElementById('register-currency-symbol');
+  if (currSymInput) currSymInput.value = country.symbol;
+  const currNameInput = document.getElementById('register-currency-name');
+  if (currNameInput) currNameInput.value = country.currencyName;
+  const dialCodeInput = document.getElementById('register-dial-code');
+  if (dialCodeInput) dialCodeInput.value = country.dialCode;
+
+  // 3. Update Phone Prefix with numerical dial code!
+  const prefixEl = document.getElementById('register-phone-prefix');
+  if (prefixEl) {
+    prefixEl.innerHTML = `${country.dialCode} <span class="phone-register-prefix-arrow text-[10px]" aria-hidden="true">▼</span>`;
+    prefixEl.setAttribute('aria-label', `Country: ${country.nameEn}, Dial Code: ${country.dialCode}`);
+  }
+  const phoneInput = document.getElementById('register-phone');
+  if (phoneInput) {
+    phoneInput.placeholder = '';
+    phoneInput.maxLength = country.phoneLen || 15;
+  }
+
+  // Re-render country list in modal to update checkmark
+  renderCountryList();
+}
+
+function selectLoginCountry(code) {
+  const country = getCountryByCode(code);
+  if (!country) return;
+
+  const loginSelect = document.getElementById('login-country-select');
+  if (loginSelect && loginSelect.value !== country.code) {
+    loginSelect.value = country.code;
+  }
+  const prefixEl = document.getElementById('login-phone-prefix');
+  if (prefixEl) {
+    prefixEl.textContent = country.dialCode;
+  }
+  const emailInp = document.getElementById('login-email');
+  if (emailInp) {
+    emailInp.maxLength = country.phoneLen || 15;
+  }
+}
+
+// Global exposure
+window.selectRegistrationCountry = selectRegistrationCountry;
+window.selectLoginCountry = selectLoginCountry;
+window.getCountryByCode = getCountryByCode;
+
+// Immediate global event delegation for country dropdown (change & input)
+document.addEventListener('change', function(e) {
+  if (e.target && e.target.id === 'login-country-select') {
+    selectLoginCountry(e.target.value);
+  }
+  if (e.target && e.target.id === 'register-country-select') {
+    selectRegistrationCountry(e.target.value);
+  }
+});
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'login-country-select') {
+    selectLoginCountry(e.target.value);
+  }
+  if (e.target && e.target.id === 'register-country-select') {
+    selectRegistrationCountry(e.target.value);
+  }
+});
+
+// Immediate global click delegation for country selection
+document.addEventListener('click', function(e) {
+  const countryListItem = e.target.closest('.country-list-item, [data-country-code]');
+  if (countryListItem && countryListItem.dataset.countryCode) {
+    e.preventDefault();
+    selectRegistrationCountry(countryListItem.dataset.countryCode);
+    closeCountryPickerModal();
+  }
+});
+
+function openCountryPickerModal() {
+  const modal = document.getElementById('country-picker-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  renderCountryList();
+}
+
+function closeCountryPickerModal() {
+  const modal = document.getElementById('country-picker-modal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function renderCountryList() {
+  const container = document.getElementById('country-list-container');
+  if (!container) return;
+
+  const currentLang = (window.aloI18n ? window.aloI18n.getLanguage() : 'en');
+
+  container.innerHTML = COUNTRY_DATABASE.map(function(item) {
+    const isSelected = currentRegistrationCountry && currentRegistrationCountry.code === item.code;
+    const displayName = currentLang === 'hi' ? item.nameHi : (currentLang === 'en' ? item.nameEn : item.nameBn);
+    return `
+      <button type="button" class="country-list-item w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-[#0c245c] transition text-left cursor-pointer ${isSelected ? 'bg-[#0f2e73] border border-[#35c6e7]/50 shadow-md' : 'bg-[#061842] border border-[#14326d]'}" data-country-code="${item.code}">
+        <div class="flex items-center gap-3">
+          <span class="text-xl">${item.flag}</span>
+          <span class="text-base font-semibold text-white ${isSelected ? 'text-[#35c6e7]' : ''}">${displayName}</span>
+          <span class="text-xs font-mono font-bold text-[#35c6e7] bg-[#0c245c] px-2 py-0.5 rounded-md border border-[#1b3e85]">${item.dialCode}</span>
+        </div>
+        ${isSelected ? '<span class="w-6 h-6 rounded-full bg-[#35c6e7] text-[#061842] flex items-center justify-center text-xs font-black shadow">✓</span>' : ''}
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.country-list-item').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const code = this.dataset.countryCode;
+      selectRegistrationCountry(code);
+      closeCountryPickerModal();
+    });
+  });
+}
+
+function getUserCurrency(user) {
+  if (!user) user = getCurrentUser();
+  return (user && user.currency) || 'BDT';
+}
+
+function getUserCurrencySymbol(user) {
+  if (!user) user = getCurrentUser();
+  return (user && (user.currencySymbol || (user.currency === 'BDT' ? '৳' : (user.currency === 'INR' ? '₹' : (user.currency === 'USD' ? '$' : user.currency || 'BDT'))))) || '৳';
+}
+
+function formatUserMoney(amount, user) {
+  if (!user) user = getCurrentUser();
+  const curr = getUserCurrency(user);
+  const sym = getUserCurrencySymbol(user);
+  return `${sym} ${formatMoney(amount, user)}`;
+}
+
 
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
   loginForm.addEventListener('submit', async function(event) {
     event.preventDefault();
     const message = document.getElementById('login-message');
+    const loginCountryCode = document.getElementById('login-country-select')?.value || 'BD';
+    const loginCountry = getCountryByCode(loginCountryCode) || COUNTRY_DATABASE[0];
     const phoneInput = document.getElementById('login-email').value.trim();
-    const normPhone = normalizeBdPhone(phoneInput);
+    const normPhone = normalizeBdPhone(phoneInput, loginCountry.code);
     const password = document.getElementById('login-password').value;
-    if (message) message.textContent = 'ডাটাবেজে তথ্য যাচাই করা হচ্ছে…';
+    if (message) message.textContent = 'Verifying credentials…';
 
     try {
       const passwordHash = await hashPassword(password);
@@ -1536,7 +1883,7 @@ if (loginForm) {
       const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
       if (!account) {
         account = accounts.find(function(item) {
-          return normalizeBdPhone(item.phone || item.accountNumber || item.email || '') === normPhone;
+          return normalizeBdPhone(item.phone || item.accountNumber || item.email || '', loginCountry.code) === normPhone;
         });
       }
 
@@ -1551,12 +1898,20 @@ if (loginForm) {
           superiorId: '11',
           packageLevel: 'LV0',
           purchasedPackages: ['LV0'],
-          balance: 0.00
+          balance: 0.00,
+          country: loginCountry.code,
+          countryName: loginCountry.code === 'IN' ? 'ইন্ডিয়া' : 'বাংলাদেশ',
+          countryNameEn: loginCountry.nameEn,
+          currency: loginCountry.currency,
+          currencySymbol: loginCountry.symbol,
+          currencyName: loginCountry.code === 'IN' ? 'রুপি' : 'টাকা',
+          dialCode: loginCountry.dialCode,
+          language: 'bn'
         };
         // Save demo account to DB as well
         dbSaveUser(account).catch(function() {});
       } else if (!account || ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password))) {
-        if (message) message.textContent = 'ফোন নম্বর অথবা পাসওয়ার্ড সঠিক নয়।';
+        if (message) message.textContent = (window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.';
         return;
       }
 
@@ -1574,6 +1929,14 @@ if (loginForm) {
         packageLevel: account.packageLevel || 'LV0',
         purchasedPackages: account.purchasedPackages || ['LV0'],
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
+        country: account.country || loginCountry.code || 'BD',
+        countryName: account.countryName || (account.country === 'IN' ? 'ইন্ডিয়া' : 'বাংলাদেশ'),
+        countryNameEn: account.countryNameEn || (account.country === 'IN' ? 'India' : 'Bangladesh'),
+        currency: account.currency || (account.country === 'IN' ? 'INR' : 'BDT'),
+        currencySymbol: account.currencySymbol || (account.country === 'IN' ? '₹' : '৳'),
+        currencyName: account.currencyName || (account.country === 'IN' ? 'রুপি' : 'টাকা'),
+        dialCode: account.dialCode || (account.country === 'IN' ? '+91' : '+880'),
+        language: account.language || 'bn',
         profileData: account.profileData || {}
       };
 
@@ -1625,8 +1988,17 @@ if (loginForm) {
       localStorage.setItem('aloAccounts', JSON.stringify(accounts));
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
+      const userLang = signedInUser.language || localStorage.getItem('alo_lang') || 'bn';
+      if (typeof setAppLanguage === 'function') {
+        setAppLanguage(userLang);
+      }
+
       if (message) message.textContent = '';
       updateUserDetails(signedInUser);
+      updateProfileMetrics();
+      updateVipHallRooms();
+      updateRecordsPanelPackages();
+
       if (typeof updateBkashDisplayAcrossApp === 'function') {
         updateBkashDisplayAcrossApp();
         updateNagadDisplayAcrossApp();
@@ -1637,7 +2009,7 @@ if (loginForm) {
         showView('dashboard', 'zoom');
       });
     } catch (error) {
-      if (message) message.textContent = 'লগইন করা যায়নি। আবার চেষ্টা করুন।';
+      if (message) message.textContent = (window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'লগইন করা যায়নি। আবার চেষ্টা করুন।' : 'Login failed. Please check your credentials and try again.';
     }
   });
 }
@@ -1658,7 +2030,25 @@ if (quickDemoBtn) {
   });
 }
 
-function showRegistrationSuccess(phone) {
+function showRegistrationSuccess(phone, countryName, currencyCode, currencySymbol, lang) {
+  const currentLang = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en') || 'en';
+  let title = 'Registration Successful!';
+  let desc = `Your account has been created (Account Number: <strong>${phone}</strong>). Welcome!`;
+  let meta = `Country: ${countryName} · Currency: ${currencyCode} (${currencySymbol})`;
+  let toastMsg = `🎉 Welcome! Your account (${phone}) [Country: ${countryName || 'Bangladesh'} · ${currencyCode || 'BDT'}] has been created.`;
+
+  if (currentLang === 'bn') {
+    title = 'নিবন্ধন সফল!';
+    desc = `আপনার অ্যাকাউন্ট তৈরি হয়েছে (হিসাব নাম্বার: <strong>${phone}</strong>)। স্বাগতম!`;
+    meta = `দেশ: ${countryName} · কারেন্সি: ${currencyCode} (${currencySymbol})`;
+    toastMsg = `🎉 স্বাগতম! আপনার অ্যাকাউন্ট (${phone}) [দেশ: ${countryName || 'বাংলাদেশ'} · ${currencyCode || 'BDT'}] ডাটাবেজে সফলভাবে তৈরি হয়েছে।`;
+  } else if (currentLang === 'hi') {
+    title = 'पंजीकरण सफल!';
+    desc = `आपका खाता सफलतापूर्वक बन गया है (खाता संख्या: <strong>${phone}</strong>)। स्वागत है!`;
+    meta = `देश: ${countryName} · मुद्रा: ${currencyCode} (${currencySymbol})`;
+    toastMsg = `🎉 स्वागत है! आपका खाता (${phone}) [देश: ${countryName || 'भारत'} · ${currencyCode || 'INR'}] सफलतापूर्वक तैयार हो गया है।`;
+  }
+
   const overlay = document.createElement('div');
   overlay.className = 'login-success-overlay is-visible';
   overlay.innerHTML = `
@@ -1667,8 +2057,9 @@ function showRegistrationSuccess(phone) {
         <circle cx="55" cy="55" r="48"></circle>
         <path d="M34 57 L49 72 L77 40"></path>
       </svg>
-      <h2>নিবন্ধন সফল!</h2>
-      <p>আপনার অ্যাকাউন্ট তৈরি হয়েছে (হিসাব নাম্বার: <strong>${phone}</strong>)। স্বাগতম!</p>
+      <h2>${title}</h2>
+      <p>${desc}</p>
+      ${countryName ? `<p class="mt-2 text-xs text-[#35c6e7] font-bold">${meta}</p>` : ''}
     </div>
   `;
   document.body.appendChild(overlay);
@@ -1677,11 +2068,25 @@ function showRegistrationSuccess(phone) {
     overlay.remove();
     openDashboardPanel('home');
     showView('dashboard', 'zoom');
-    showToastNotification(`🎉 স্বাগতম! আপনার অ্যাকাউন্ট (${phone}) ডাটাবেজে সফলভাবে তৈরি হয়েছে।`);
+    showToastNotification(toastMsg);
   }, 1600);
 }
 
 let demoSmsCode = '';
+
+// Clear password error states in real-time as user types
+const regPassInput = document.getElementById('register-password');
+const confPassInput = document.getElementById('confirm-password');
+function clearRegisterPasswordErrors() {
+  if (confPassInput) confPassInput.setCustomValidity('');
+  if (regPassInput) regPassInput.setCustomValidity('');
+  const msg = document.getElementById('register-message');
+  if (msg && (msg.textContent.includes('match') || msg.textContent.includes('মিলছে') || msg.textContent.includes('মেল') || msg.textContent.includes('character') || msg.textContent.includes('অক্ষর'))) {
+    msg.textContent = '';
+  }
+}
+if (regPassInput) regPassInput.addEventListener('input', clearRegisterPasswordErrors);
+if (confPassInput) confPassInput.addEventListener('input', clearRegisterPasswordErrors);
 
 const registerForm = document.getElementById('register-form');
 if (registerForm) {
@@ -1691,20 +2096,67 @@ if (registerForm) {
     const phoneInput = document.getElementById('register-phone').value.trim();
     const cleanPhone = phoneInput.replace(/\D/g, '');
     let smsCode = document.getElementById('register-sms-code').value.trim();
-    const password = document.getElementById('register-password').value;
+    const passwordEl = document.getElementById('register-password');
     const confirmation = document.getElementById('confirm-password');
 
-    if (password !== confirmation.value) {
-      confirmation.setCustomValidity('দুটি পাসওয়ার্ড মিলছে না।');
-      confirmation.reportValidity();
-      if (message) message.textContent = 'দুটি পাসওয়ার্ড মিলছে না।';
+    // Immediately clear stale HTML5 validity before running validation
+    if (passwordEl) passwordEl.setCustomValidity('');
+    if (confirmation) confirmation.setCustomValidity('');
+
+    const password = (passwordEl?.value || '').trim();
+    const confirmVal = (confirmation?.value || '').trim();
+
+    // Country & Currency Selection (দেশ নির্বাচন নিশ্চিতকরণ)
+    const selectEl = document.getElementById('register-country-select');
+    const selectedCode = (selectEl && selectEl.value) || document.getElementById('register-country-code')?.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
+    const country = getCountryByCode(selectedCode) || COUNTRY_DATABASE[0];
+    const countryCode = country.code;
+    const targetLang = localStorage.getItem('alo_lang') || 'en';
+    const countryName = country.nameEn;
+    const countryNameEn = country.nameEn;
+    const currencyCode = country.currency;
+    const currencySymbol = country.symbol;
+    const currencyName = country.currencyName;
+    const dialCode = country.dialCode;
+
+    if (!password) {
+      if (message) message.textContent = targetLang === 'bn' ? 'পাসওয়ার্ড দিন।' : 'Please enter a password.';
+      if (passwordEl) passwordEl.focus();
       return;
     }
-    confirmation.setCustomValidity('');
 
-    if (!cleanPhone || cleanPhone.length < 10) {
-      if (message) message.textContent = 'সঠিক বাংলাদেশি ১১ ডিজিটের ফোন নম্বর লিখুন।';
+    if (password.length < 6) {
+      const minMsg = targetLang === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.';
+      if (message) message.textContent = minMsg;
+      if (passwordEl) {
+        passwordEl.setCustomValidity(minMsg);
+        passwordEl.reportValidity();
+      }
       return;
+    }
+
+    if (password !== confirmVal) {
+      const matchMsg = targetLang === 'bn' ? 'দুটি পাসওয়ার্ড মিলছে না।' : (targetLang === 'hi' ? 'पासवर्ड मेल नहीं खाते।' : 'Passwords do not match.');
+      if (message) message.textContent = matchMsg;
+      if (confirmation) {
+        confirmation.setCustomValidity(matchMsg);
+        confirmation.reportValidity();
+      }
+      return;
+    }
+    if (confirmation) confirmation.setCustomValidity('');
+
+    // Country-aware phone validation
+    if (countryCode === 'BD') {
+      if (!cleanPhone || cleanPhone.length < 10) {
+        if (message) message.textContent = 'Please enter a valid 10-11 digit phone number.';
+        return;
+      }
+    } else {
+      if (!cleanPhone || cleanPhone.length < 10) {
+        if (message) message.textContent = 'Please enter a valid 10-digit mobile number.';
+        return;
+      }
     }
 
     // Auto-fulfill SMS OTP if user didn't explicitly request it
@@ -1715,21 +2167,21 @@ if (registerForm) {
       smsCode = demoSmsCode;
     }
 
-    if (message) message.textContent = 'ডাটাবেজে নিবন্ধন যাচাই করা হচ্ছে…';
+    if (message) message.textContent = 'Creating account…';
 
     try {
       const registeredNumber = phoneInput;
-      const normInput = normalizeBdPhone(registeredNumber);
+      const normInput = normalizeBdPhone(registeredNumber, countryCode);
 
       // Check cloud database and local accounts for duplicate phone
       const dbUser = await dbGetUser(normInput);
       const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
       const localAccount = accounts.find(function(account) {
-        return normalizeBdPhone(account.phone || account.accountNumber || '') === normInput;
+        return normalizeBdPhone(account.phone || account.accountNumber || '', countryCode) === normInput;
       });
 
       if (dbUser || localAccount) {
-        if (message) message.textContent = 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।';
+        if (message) message.textContent = targetLang === 'bn' ? 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।' : (targetLang === 'hi' ? 'इस नंबर पर पहले से खाता मौजूद है। लॉगिन पेज पर जाएं।' : 'An account with this number already exists. Redirecting to login…');
         const loginEmail = document.getElementById('login-email');
         if (loginEmail) loginEmail.value = registeredNumber;
         setTimeout(function() { showView('login'); }, 1400);
@@ -1749,7 +2201,7 @@ if (registerForm) {
       const superiorId = (upline1 && (upline1.inviteCode || upline1.memberId || upline1.phone)) || enteredInviteCode || '11';
 
       const account = {
-        name: 'সদস্য',
+        name: targetLang === 'hi' ? 'सदस्य' : (targetLang === 'en' ? 'Member' : 'সদস্য'),
         phone: registeredNumber,
         accountNumber: registeredNumber,
         passwordHash: passwordHash,
@@ -1761,7 +2213,24 @@ if (registerForm) {
         packageLevel: 'LV0',
         purchasedPackages: ['LV0'],
         balance: 0.00,
-        profileData: {},
+        // Country & Currency System Data:
+        country: countryCode,
+        countryName: countryName,
+        countryNameEn: countryNameEn,
+        currency: currencyCode,
+        currencySymbol: currencySymbol,
+        currencyName: currencyName,
+        dialCode: dialCode,
+        language: targetLang,
+        profileData: {
+          country: countryCode,
+          countryName: countryName,
+          currency: currencyCode,
+          currencySymbol: currencySymbol,
+          currencyName: currencyName,
+          dialCode: dialCode,
+          language: targetLang
+        },
         createdAt: new Date().toISOString()
       };
 
@@ -1778,28 +2247,22 @@ if (registerForm) {
       localStorage.setItem('aloAccounts', JSON.stringify(accounts));
 
       // Set registered account as active signed in user
-      const signedInUser = {
-        name: account.name,
-        phone: registeredNumber,
-        accountNumber: registeredNumber,
-        memberId: account.memberId,
-        inviteCode: account.inviteCode,
-        superiorId: superiorId,
-        superiorPhone: uplinePhone,
-        packageLevel: 'LV0',
-        purchasedPackages: ['LV0'],
-        balance: 0.00,
-        profileData: {}
-      };
+      const signedInUser = Object.assign({}, account);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
+
+      // CRITICAL: Immediately switch entire website language to this country's language!
+      if (typeof setAppLanguage === 'function') {
+        setAppLanguage(targetLang);
+      }
+
       updateUserDetails(signedInUser);
       updateProfileMetrics();
       updateVipHallRooms();
       updateRecordsPanelPackages();
 
-      showRegistrationSuccess(registeredNumber);
+      showRegistrationSuccess(registeredNumber, countryName, currencyCode, currencySymbol, targetLang);
     } catch (error) {
-      if (message) message.textContent = 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।';
+      if (message) message.textContent = targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Failed to create account. Please try again.';
     }
   });
 }
@@ -1811,9 +2274,10 @@ if (sendSmsBtn) {
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const message = document.getElementById('register-message');
     const cleanPhone = phone.replace(/\D/g, '');
+    const targetLang = localStorage.getItem('alo_lang') || 'en';
 
     if (!cleanPhone || cleanPhone.length < 10) {
-      if (message) message.textContent = 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।';
+      if (message) message.textContent = targetLang === 'bn' ? 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।' : 'Please enter a valid phone number to receive verification code.';
       if (phoneInput) phoneInput.focus();
       return;
     }
@@ -1821,7 +2285,7 @@ if (sendSmsBtn) {
     demoSmsCode = String(Math.floor(100000 + Math.random() * 900000));
     const smsInput = document.getElementById('register-sms-code');
     if (smsInput) smsInput.value = demoSmsCode;
-    if (message) message.textContent = '✅ যাচাইকরণ কোড পাঠানো হয়েছে: ' + demoSmsCode;
+    if (message) message.textContent = targetLang === 'bn' ? ('✅ যাচাইকরণ কোড পাঠানো হয়েছে: ' + demoSmsCode) : ('✅ Verification code sent: ' + demoSmsCode);
   });
 }
 
@@ -1836,14 +2300,22 @@ const packageTaskSettings = {
 };
 
 const packageData = {
-  LV0: { name: 'ফ্রি স্তর', price: 0, count: 5, reward: 20, dailyIncome: 100, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০ BDT' },
-  LV1: { name: 'বেসিক প্যাকেজ', price: 3500, count: 6, reward: 30, dailyIncome: 180, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০ BDT' },
-  LV2: { name: 'স্ট্যান্ডার্ড প্যাকেজ', price: 7500, count: 12, reward: 40, dailyIncome: 480, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০ BDT' },
-  LV3: { name: 'সিলভার প্যাকেজ', price: 36000, count: 15, reward: 50, dailyIncome: 750, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০ BDT' },
-  LV4: { name: 'গোল্ড প্যাকেজ', price: 84000, count: 25, reward: 60, dailyIncome: 1500, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০ BDT' },
-  LV5: { name: 'প্রিমিয়াম প্যাকেজ', price: 150000, count: 35, reward: 70, dailyIncome: 2450, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০ BDT' },
-  LV6: { name: 'এলিট প্যাকেজ', price: 300000, count: 25, reward: 80, dailyIncome: 2000, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৮০.০০ BDT' }
+  LV0: { name: 'ফ্রি স্তর', nameBn: 'ফ্রি স্তর', nameHi: 'निःशुल्क स्तर', nameEn: 'Free Tier', price: 0, count: 5, reward: 20, dailyIncome: 100, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০' },
+  LV1: { name: 'বেসিক প্যাকেজ', nameBn: 'বেসিক প্যাকেজ', nameHi: 'बेसिक पैकेज', nameEn: 'Basic Package', price: 3500, count: 6, reward: 30, dailyIncome: 180, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০' },
+  LV2: { name: 'স্ট্যান্ডার্ড প্যাকেজ', nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameHi: 'स्टैंडर्ड पैकेज', nameEn: 'Standard Package', price: 7500, count: 12, reward: 40, dailyIncome: 480, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০' },
+  LV3: { name: 'সিলভার প্যাকেজ', nameBn: 'সিলভার প্যাকেজ', nameHi: 'सिल्वर पैकेज', nameEn: 'Silver Package', price: 36000, count: 15, reward: 50, dailyIncome: 750, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০' },
+  LV4: { name: 'গোল্ড প্যাকেজ', nameBn: 'গোল্ড প্যাকেজ', nameHi: 'गोल्ड पैकेज', nameEn: 'Gold Package', price: 84000, count: 25, reward: 60, dailyIncome: 1500, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০' },
+  LV5: { name: 'প্রিমিয়াম প্যাকেজ', nameBn: 'প্রিমিয়াম প্যাকেজ', nameHi: 'प्रीमियम पैकेज', nameEn: 'Premium Package', price: 150000, count: 35, reward: 70, dailyIncome: 2450, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০' },
+  LV6: { name: 'এলিট প্যাকেজ', nameBn: 'এলিট প্যাকেজ', nameHi: 'एलीट पैकेज', nameEn: 'Elite Package', price: 300000, count: 25, reward: 80, dailyIncome: 2000, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৮০.০০' }
 };
+
+function getPackageName(level, lang) {
+  const l = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en') || 'en';
+  const pkg = packageData[level] || packageData.LV0;
+  if (l === 'hi') return pkg.nameHi || pkg.nameEn || pkg.nameBn;
+  if (l === 'bn') return pkg.nameBn || pkg.nameEn;
+  return pkg.nameEn || pkg.nameBn;
+}
 
 const LEVEL_ORDER = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
 
@@ -1895,10 +2367,26 @@ function formatBanglaNumber(num) {
   });
 }
 
-function formatMoney(amount) {
+function formatMoney(amount, user) {
+  if (!user) user = getCurrentUser();
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
   const num = Number(amount || 0);
   const formatted = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return formatBanglaNumber(formatted);
+  if (lang === 'bn') {
+    return formatBanglaNumber(formatted);
+  }
+  return formatted;
+}
+
+function formatNumber(num, user) {
+  if (!user) user = getCurrentUser();
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const n = Number(num || 0);
+  const formatted = n.toLocaleString('en-US');
+  if (lang === 'bn') {
+    return formatBanglaNumber(formatted);
+  }
+  return formatted;
 }
 
 function isLevelUnlocked(targetLevel, user) {
@@ -1937,15 +2425,30 @@ function updateVipHallRooms() {
         room.appendChild(tag);
       }
     }
+
+    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+    const hallLabels = {
+      current: lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর'),
+      unlocked: lang === 'hi' ? 'अनलॉक ✓' : (lang === 'en' ? 'Unlocked ✓' : 'আনলকড ✓'),
+      locked: lang === 'hi' ? 'खरीद आवश्यक 🔒' : (lang === 'en' ? 'Purchase Required 🔒' : 'ক্রয় প্রয়োজন 🔒'),
+      dailyWork: lang === 'hi' ? 'दैनिक कार्य:' : (lang === 'en' ? 'Daily Tasks:' : 'দৈনিক কর্ম:')
+    };
+
+    const pkg = packageData[lvl];
+    const workP = room.querySelector('p.mt-2');
+    if (workP && pkg) {
+      workP.innerHTML = `${hallLabels.dailyWork} <strong class="ml-1">${pkg.count}</strong>`;
+    }
+
     if (isCurrent) {
       tag.className = 'hall-current-tag text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/40';
-      tag.textContent = 'বর্তমান স্তর';
+      tag.textContent = hallLabels.current;
     } else if (isUnlocked) {
       tag.className = 'hall-status-tag text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200';
-      tag.textContent = 'আনলকড ✓';
+      tag.textContent = hallLabels.unlocked;
     } else {
       tag.className = 'hall-status-tag text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 flex items-center gap-0.5';
-      tag.textContent = 'ক্রয় প্রয়োজন 🔒';
+      tag.textContent = hallLabels.locked;
     }
   });
 }
@@ -1953,36 +2456,83 @@ function updateVipHallRooms() {
 function updateRecordsPanelPackages() {
   const user = getCurrentUser();
   const userLevel = user.packageLevel || 'LV0';
+  const curr = getUserCurrency(user);
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+
   const curLevelDisplay = document.getElementById('records-current-level-display');
   if (curLevelDisplay) {
-    const pkgName = packageData[userLevel]?.name || 'ফ্রি স্তর';
+    const pkgName = getPackageName(userLevel, lang);
     curLevelDisplay.textContent = `${userLevel} (${pkgName})`;
   }
   const balDisplay = document.getElementById('records-balance-display');
   if (balDisplay) {
-    balDisplay.textContent = formatMoney(user.balance || 0);
+    balDisplay.textContent = formatMoney(user.balance || 0, user);
   }
+
+  const labels = {
+    dailyTasks: lang === 'hi' ? 'दैनिक कार्य:' : (lang === 'en' ? 'Daily Tasks:' : 'দৈনিক কাজ:'),
+    perTask: lang === 'hi' ? 'प्रति कार्य:' : (lang === 'en' ? 'Per Task:' : 'প্রতি কাজ:'),
+    dailyIncome: lang === 'hi' ? 'दैनिक आय:' : (lang === 'en' ? 'Daily Income:' : 'দৈনিক আয়:'),
+    btnCurrent: lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর'),
+    btnPurchased: lang === 'hi' ? 'खरीदा गया ✓' : (lang === 'en' ? 'Purchased ✓' : 'ক্রয় করা হয়েছে ✓'),
+    btnBuy: lang === 'hi' ? 'पैकेज खरीदें' : (lang === 'en' ? 'Buy Package' : 'প্যাকেজ ক্রয় করুন'),
+    freeText: lang === 'hi' ? 'मुफ़्त' : (lang === 'en' ? 'Free' : 'ফ্রি'),
+    tasksUnit: lang === 'bn' ? 'টি' : ''
+  };
 
   const pkgCards = document.querySelectorAll('[data-record-package]');
   pkgCards.forEach(function(card) {
     const level = card.dataset.recordPackage;
-    const btn = card.querySelector('[data-buy-package]');
-    if (!btn) return;
-    const isCurrent = (level === userLevel);
-    const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+    const pkg = packageData[level];
+    if (!pkg) return;
 
-    if (isCurrent) {
-      btn.textContent = 'বর্তমান স্তর';
-      btn.disabled = true;
-      btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-slate-700/60 text-slate-300 cursor-default';
-    } else if (isPurchased) {
-      btn.textContent = 'ক্রয় করা হয়েছে ✓';
-      btn.disabled = true;
-      btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-emerald-700/60 text-emerald-200 cursor-default';
-    } else {
-      btn.textContent = 'প্যাকেজ ক্রয় করুন';
-      btn.disabled = false;
-      btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95 cursor-pointer';
+    // 1. Update Package Title & Badge
+    const badge = card.querySelector('span.uppercase');
+    if (badge) badge.textContent = getPackageName(level, lang);
+
+    // 2. Update Price
+    const priceEl = card.querySelector('h3');
+    if (priceEl) {
+      if (pkg.price === 0) {
+        priceEl.textContent = `0 ${curr} (${labels.freeText})`;
+      } else {
+        priceEl.textContent = `${formatNumber(pkg.price, user)} ${curr}`;
+      }
+    }
+
+    // 3. Update Metrics Grid
+    const metricSpans = card.querySelectorAll('.text-slate-400, .text-slate-300');
+    if (metricSpans.length >= 3) {
+      metricSpans[0].textContent = labels.dailyTasks;
+      metricSpans[1].textContent = labels.perTask;
+      metricSpans[2].textContent = labels.dailyIncome;
+    }
+    const metricValues = card.querySelectorAll('strong');
+    if (metricValues.length >= 3) {
+      metricValues[0].textContent = `${pkg.count}${labels.tasksUnit}`;
+      metricValues[1].textContent = `${pkg.reward}.00 ${curr}`;
+      metricValues[2].textContent = `${formatNumber(pkg.dailyIncome, user)}.00 ${curr}`;
+    }
+
+    // 4. Update Button
+    const btn = card.querySelector('[data-buy-package]');
+    if (btn) {
+      const isCurrent = (level === userLevel);
+      const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+
+      if (isCurrent) {
+        btn.textContent = labels.btnCurrent;
+        btn.disabled = true;
+        btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-slate-700/60 text-slate-300 cursor-default';
+      } else if (isPurchased) {
+        btn.textContent = labels.btnPurchased;
+        btn.disabled = true;
+        btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-emerald-700/60 text-emerald-200 cursor-default';
+      } else {
+        btn.textContent = labels.btnBuy;
+        btn.disabled = false;
+        btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95 cursor-pointer';
+      }
     }
   });
 }
@@ -2052,6 +2602,7 @@ document.addEventListener('keydown', function(event) {
   if (event.key === 'Escape') {
     closeActionSheet();
     closeManagerContactModal();
+    closeCountryPickerModal();
   }
 });
 function openManagerContactModal() {
@@ -2085,26 +2636,38 @@ function openPackagePurchaseModal(level, alertNotice) {
   const titleEl = document.getElementById('sheet-header-title');
   if (titleEl) titleEl.textContent = `${level} প্যাকেজ ক্রয় ও ব্যালেন্স`;
 
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const curr = getUserCurrency(user);
+  const pkgName = getPackageName(level, lang);
+
   const badgeEl = document.getElementById('purchase-modal-badge');
-  if (badgeEl) badgeEl.textContent = `${level} · ${pkg.name}`;
+  if (badgeEl) badgeEl.textContent = `${level} · ${pkgName}`;
 
   const priceEl = document.getElementById('purchase-modal-price');
-  if (priceEl) priceEl.textContent = formatBanglaNumber(price.toLocaleString('en-US'));
+  if (priceEl) priceEl.textContent = formatMoney(price, user);
 
   const detailsEl = document.getElementById('purchase-modal-details');
-  if (detailsEl) detailsEl.textContent = pkg.desc;
+  if (detailsEl) {
+    if (lang === 'hi') {
+      detailsEl.textContent = `दैनिक ${pkg.count} कार्य · प्रति कार्य आय ${pkg.reward}.00 ${curr}`;
+    } else if (lang === 'en') {
+      detailsEl.textContent = `Daily ${pkg.count} tasks · Income per task ${pkg.reward}.00 ${curr}`;
+    } else {
+      detailsEl.textContent = `দৈনিক ${pkg.count}টি কাজ · প্রতি কাজের আয় ${formatBanglaNumber(pkg.reward)}.০০ ${curr}`;
+    }
+  }
 
   const userLevelEl = document.getElementById('purchase-modal-user-level');
   if (userLevelEl) {
-    const userPkgName = packageData[user.packageLevel]?.name || 'ফ্রি স্তর';
+    const userPkgName = getPackageName(user.packageLevel || 'LV0', lang);
     userLevelEl.textContent = `${user.packageLevel || 'LV0'} (${userPkgName})`;
   }
 
   const userBalEl = document.getElementById('purchase-modal-user-balance');
-  if (userBalEl) userBalEl.textContent = formatMoney(userBal);
+  if (userBalEl) userBalEl.textContent = formatMoney(userBal, user);
 
   const costEl = document.getElementById('purchase-modal-cost');
-  if (costEl) costEl.textContent = formatMoney(price) + ' BDT';
+  if (costEl) costEl.textContent = formatMoney(price, user) + ' ' + curr;
 
   const statusBox = document.getElementById('purchase-modal-status-box');
   const confirmBtn = document.getElementById('confirm-package-purchase-btn');
@@ -2113,25 +2676,39 @@ function openPackagePurchaseModal(level, alertNotice) {
   if (statusBox) {
     if (isSufficient) {
       statusBox.className = 'p-3 rounded-xl text-xs leading-5 bg-[#051c4a] border border-[#34d399]/40 text-[#34d399] shadow';
+      const statusTitle = lang === 'hi' ? 'पर्याप्त बैलेंस उपलब्ध है' : (lang === 'en' ? 'Sufficient Balance Available' : 'পর্যাপ্ত ব্যালেন্স বিদ্যমান রয়েছে');
+      const statusDesc = lang === 'hi' 
+        ? 'आपके खाते में पर्याप्त बैलेंस है। नीचे दिए गए बटन पर क्लिक करके तुरंत पैकेज सक्रिय करें।' 
+        : (lang === 'en' ? 'Your account has sufficient balance. Click the button below to activate the package now.' : 'আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স আছে। নিচে বাটনে চাপ দিয়ে এখনই প্যাকেজটি চালু করুন।');
       statusBox.innerHTML = `
         <div class="flex items-start gap-2">
           <span class="text-base text-[#34d399] font-bold">✓</span>
           <div>
-            <p class="font-bold text-white">পর্যাপ্ত ব্যালেন্স বিদ্যমান রয়েছে</p>
-            <p class="mt-0.5 text-slate-300">আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স আছে। নিচে 'ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন' বাটনে চাপ দিয়ে এখনই প্যাকেজটি চালু করুন।</p>
+            <p class="font-bold text-white">${statusTitle}</p>
+            <p class="mt-0.5 text-slate-300">${statusDesc}</p>
           </div>
         </div>
       `;
     } else {
       const deficit = price - userBal;
       statusBox.className = 'p-3 rounded-xl text-xs leading-5 bg-[#211504] border border-amber-500/50 text-amber-200 shadow';
+      const freeOnlyNotice = lang === 'hi' 
+        ? 'मुफ़्त में केवल LV0 कार्य कर सकते हैं!' 
+        : (lang === 'en' ? 'Only LV0 tasks can be performed for free!' : 'ফ্রিতে শুধু LV0 কাজ করতে পারবেন!');
+      const reqNotice = alertNotice || (lang === 'hi'
+        ? `${pkgName} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
+        : (lang === 'en' ? `To perform ${pkgName} tasks, you must purchase the package with balance.` : `${pkgName} প্যাকেজের কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`));
+      const deficitNotice = lang === 'hi'
+        ? `आपको और <strong class="text-white">${formatMoney(deficit, user)} ${curr}</strong> बैलेंस रिचार्ज करना होगा।`
+        : (lang === 'en' ? `You need to recharge <strong class="text-white">${formatMoney(deficit, user)} ${curr}</strong> more balance.` : `আপনার আরও <strong class="text-white">${formatMoney(deficit, user)} ${curr}</strong> ব্যালেন্স রিচার্জ (জমা) করতে হবে।`);
+
       statusBox.innerHTML = `
         <div class="flex items-start gap-2">
           <span class="text-base text-amber-400 font-bold">⚠️</span>
           <div>
-            <p class="font-bold text-amber-300">ফ্রিতে শুধু LV0 কাজ করতে পারবেন!</p>
-            <p class="mt-0.5 text-slate-300 text-[11px] leading-4">${alertNotice || `${level} প্যাকেজের কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`}</p>
-            <p class="mt-1.5 font-bold text-amber-300">আপনার আরও <strong class="text-white">${formatMoney(deficit)} BDT</strong> ব্যালেন্স রিচার্জ (জমা) করতে হবে।</p>
+            <p class="font-bold text-amber-300">${freeOnlyNotice}</p>
+            <p class="mt-0.5 text-slate-300 text-[11px] leading-4">${reqNotice}</p>
+            <p class="mt-1.5 font-bold text-amber-300">${deficitNotice}</p>
           </div>
         </div>
       `;
@@ -2141,11 +2718,18 @@ function openPackagePurchaseModal(level, alertNotice) {
   if (confirmBtn) {
     if (isSufficient) {
       confirmBtn.disabled = false;
-      confirmBtn.innerHTML = `<span>💎</span> <span>ব্যালেন্স দিয়ে ${level} প্যাকেজ ক্রয় করুন</span>`;
+      const buyText = lang === 'hi'
+        ? `बैलेंस से ${pkgName} खरीदें`
+        : (lang === 'en' ? `Buy ${pkgName} with Balance` : `ব্যালেন্স দিয়ে ${pkgName} ক্রয় করুন`);
+      confirmBtn.innerHTML = `<span>💎</span> <span>${buyText}</span>`;
       confirmBtn.className = 'w-full py-3 rounded-xl bg-[#1264c9] hover:bg-[#1877f2] text-white text-xs font-bold transition shadow-lg cursor-pointer active:scale-95 flex items-center justify-center gap-2';
     } else {
       confirmBtn.disabled = true;
-      confirmBtn.innerHTML = `<span>🔒</span> <span>ব্যালেন্স অপর্যাপ্ত (${formatMoney(price - userBal)} BDT ঘাটতি)</span>`;
+      const deficit = price - userBal;
+      const deficitText = lang === 'hi'
+        ? `अपर्याप्त बैलेंस (${formatMoney(deficit, user)} ${curr} की कमी)`
+        : (lang === 'en' ? `Insufficient Balance (${formatMoney(deficit, user)} ${curr} needed)` : `ব্যালেন্স অপর্যাপ্ত (${formatMoney(deficit, user)} ${curr} ঘাটতি)`);
+      confirmBtn.innerHTML = `<span>🔒</span> <span>${deficitText}</span>`;
       confirmBtn.className = 'w-full py-3 rounded-xl bg-[#0a1838] text-slate-400 text-xs font-bold border border-[#1b3b80] cursor-not-allowed opacity-80 flex items-center justify-center gap-2';
     }
   }
@@ -2154,8 +2738,12 @@ function openPackagePurchaseModal(level, alertNotice) {
     if (isSufficient) {
       depositBtn.classList.add('hidden');
     } else {
+      const deficit = price - userBal;
+      const depText = lang === 'hi'
+        ? `रिचार्ज टैब पर जाएँ (${formatMoney(deficit, user)} ${curr} की कमी)`
+        : (lang === 'en' ? `Go to Recharge Tab (${formatMoney(deficit, user)} ${curr} needed)` : `ব্যালেন্স রিচার্জ ট্যাবে যান (${formatMoney(deficit, user)} ${curr} ঘাটতি)`);
       depositBtn.classList.remove('hidden');
-      depositBtn.innerHTML = `<span>⚡</span> <span>ব্যালেন্স রিচার্জ ট্যাবে যান (${formatMoney(price - userBal)} BDT ঘাটতি)</span>`;
+      depositBtn.innerHTML = `<span>⚡</span> <span>${depText}</span>`;
     }
   }
 
@@ -2348,13 +2936,19 @@ function confirmDeposit() {
     console.warn('Rebate distribution notice:', e);
   });
 
+  const curr = getUserCurrency(user);
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+
   const curBalEl = document.getElementById('deposit-current-balance');
-  if (curBalEl) curBalEl.textContent = formatMoney(user.balance);
+  if (curBalEl) curBalEl.textContent = formatMoney(user.balance, user);
 
   const statusMsg = document.getElementById('deposit-status-message');
   if (statusMsg) {
     statusMsg.className = 'text-center font-bold text-xs text-[#34d399]';
-    statusMsg.textContent = `✅ ${formatMoney(amount)} BDT রিচার্জ সফল হয়েছে!`;
+    const msg = lang === 'hi' 
+      ? `✅ ${formatMoney(amount, user)} ${curr} रिचार्ज सफल रहा!` 
+      : (lang === 'en' ? `✅ ${formatMoney(amount, user)} ${curr} recharge successful!` : `✅ ${formatMoney(amount, user)} ${curr} রিচার্জ সফল হয়েছে!`);
+    statusMsg.textContent = msg;
   }
 
   updateProfileMetrics();
@@ -2369,7 +2963,10 @@ function confirmDeposit() {
       openPackagePurchaseModal(lvl);
     } else {
       closeActionSheet();
-      showToastNotification(`⚡ ${formatMoney(amount)} BDT রিচার্জ সফল হয়েছে! বর্তমান ব্যালেন্স: ${formatMoney(user.balance)} BDT`);
+      const toastMsg = lang === 'hi'
+        ? `⚡ ${formatMoney(amount, user)} ${curr} रिचार्ज सफल रहा! वर्तमान बैलेंस: ${formatMoney(user.balance, user)} ${curr}`
+        : (lang === 'en' ? `⚡ ${formatMoney(amount, user)} ${curr} recharge successful! Current balance: ${formatMoney(user.balance, user)} ${curr}` : `⚡ ${formatMoney(amount, user)} ${curr} রিচার্জ সফল হয়েছে! বর্তমান ব্যালেন্স: ${formatMoney(user.balance, user)} ${curr}`);
+      showToastNotification(toastMsg);
     }
   }, 650);
 }
@@ -2495,7 +3092,10 @@ function openWithdrawSheet() {
   if (sheet) {
     sheet.style.display = 'flex';
     sheet.removeAttribute('hidden');
-    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp();
+    updateBkashDisplayAcrossApp();
+    updateNagadDisplayAcrossApp();
+    updateUsdtDisplayAcrossApp();
+    updatePaymentAndWithdrawalForUser();
     const amtInp = document.getElementById('withdraw-sheet-amount');
     if (amtInp) amtInp.value = '';
     const pwdInp = document.getElementById('withdraw-sheet-fund-password');
@@ -2515,11 +3115,24 @@ let pendingPickerMethod = 'BKASH';
 let pendingPickerDisplay = 'বিকাশ সেট নেই';
 
 function openMethodPicker() {
+  const user = getCurrentUser();
+  const isBd = !user || !user.country || user.country === 'BD';
   const picker = document.getElementById('withdraw-method-picker-modal');
   if (picker) {
+    if (!isBd) {
+      pendingPickerMethod = 'USDT';
+      const usdt = getSavedUsdtAccount();
+      if (usdt && usdt.address) {
+        const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
+        pendingPickerDisplay = `USDT (${shortAddr})`;
+      } else {
+        pendingPickerDisplay = 'USDT সেট নেই';
+      }
+    }
     picker.style.display = 'flex';
     picker.removeAttribute('hidden');
     updatePickerOptionHighlight();
+    updatePaymentAndWithdrawalForUser(user);
   }
 }
 
@@ -3472,42 +4085,60 @@ function refreshDailyMissionLimit(level) {
   const currentCount = acceptedToday.length;
   const reached = currentCount >= quotaLimit;
 
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const curr = getUserCurrency(user);
+
   if (title) {
     if (!isUnlocked) {
-      title.innerHTML = `${activePlatform} · <strong style="color: var(--color-warning);">${level} 🔒 (লকড)</strong>`;
+      const lockLabel = lang === 'hi' ? 'लॉक 🔒' : (lang === 'en' ? 'Locked 🔒' : 'লকড 🔒');
+      title.innerHTML = `${activePlatform} · <strong style="color: var(--color-warning);">${level} (${lockLabel})</strong>`;
     } else {
-      title.innerHTML = `${activePlatform} · <strong style="color: var(--color-primary-contrast);">${level}</strong> (দৈনিক কোটা: ${quotaLimit}টি)`;
+      const quotaLabel = lang === 'hi' ? `दैनिक कोटा: ${quotaLimit}` : (lang === 'en' ? `Daily Quota: ${quotaLimit}` : `দৈনিক কোটা: ${quotaLimit}টি`);
+      title.innerHTML = `${activePlatform} · <strong style="color: var(--color-primary-contrast);">${level}</strong> (${quotaLabel})`;
     }
   }
   if (note) {
     if (!isUnlocked) {
+      const lockHeading = lang === 'hi' ? 'यह पैकेज अनलॉक नहीं है' : (lang === 'en' ? 'Package Locked' : 'এই প্যাকেজটি আনলক করা নেই');
+      const lockDesc = lang === 'hi' 
+        ? `मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${level} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
+        : (lang === 'en' ? `Only LV0 tasks can be performed for free. Purchase package to perform ${level} tasks.` : `ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`);
+      const buyBtnText = lang === 'hi' ? 'पैकेज खरीदें' : (lang === 'en' ? 'Buy Package' : 'প্যাকেজ ক্রয়');
       note.innerHTML = `
         <div class="rounded-xl p-3 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs shadow-md">
           <div class="flex items-center justify-between gap-3">
             <div>
-              <p class="font-bold text-white flex items-center gap-1.5"><span class="text-base text-amber-400">🔒</span> এই প্যাকেজটি আনলক করা নেই</p>
-              <p class="text-[11px] text-amber-200/90 mt-1">ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</p>
+              <p class="font-bold text-white flex items-center gap-1.5"><span class="text-base text-amber-400">🔒</span> ${lockHeading}</p>
+              <p class="text-[11px] text-amber-200/90 mt-1">${lockDesc}</p>
             </div>
             <button type="button" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer" data-buy-package="${level}">
-              প্যাকেজ ক্রয়
+              ${buyBtnText}
             </button>
           </div>
         </div>
       `;
     } else {
       const remaining = Math.max(0, quotaLimit - currentCount);
+      const quotaTitle = lang === 'hi' ? `दैनिक कार्य कोटा: <strong>${quotaLimit}</strong>` : (lang === 'en' ? `Daily Task Quota: <strong>${quotaLimit}</strong>` : `দৈনিক কাজের কোটা: <strong>${quotaLimit}টি</strong>`);
+      const acceptedTitle = lang === 'hi'
+        ? `स्वीकृत: ${currentCount}/${quotaLimit} ${reached ? '(कोटा पूर्ण)' : `(शेष ${remaining})`}`
+        : (lang === 'en' ? `Accepted: ${currentCount}/${quotaLimit} ${reached ? '(Limit Reached)' : `(${remaining} remaining)`}` : `গৃহীত: ${currentCount}/${quotaLimit} ${reached ? '(সীমা পূর্ণ)' : `(বাকি ${remaining}টি)`}`);
+      const rewText = lang === 'hi'
+        ? `प्रति कार्य ${packageTaskSettings[level]?.reward || 20}.00 ${curr} · पैकेज में कुल 25 उपलब्ध कार्यों की सूची`
+        : (lang === 'en' ? `Per task ${packageTaskSettings[level]?.reward || 20}.00 ${curr} · Total 25 available tasks in package` : `প্রতি কাজে ${packageTaskSettings[level]?.reward || 20}.০০ ${curr} · প্যাকেজে মোট ২৫টি উপলব্ধ কাজের তালিকা`);
+
       note.innerHTML = `
         <div class="flex items-center justify-between text-xs mt-1" style="color: var(--color-profile-text);">
-          <span>দৈনিক কাজের কোটা: <strong>${quotaLimit}টি</strong></span>
+          <span>${quotaTitle}</span>
           <span class="font-bold" style="color: ${reached ? 'var(--color-warning)' : 'var(--color-profile-cyan)'};">
-            গৃহীত: ${currentCount}/${quotaLimit} ${reached ? '(সীমা পূর্ণ)' : `(বাকি ${remaining}টি)`}
+            ${acceptedTitle}
           </span>
         </div>
         <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.12); border-radius: 9999px; margin-top: 6px; overflow: hidden;">
           <div style="width: ${Math.min(100, (currentCount / quotaLimit) * 100)}%; height: 100%; background: ${reached ? 'var(--color-warning)' : 'var(--color-profile-cyan)'}; transition: width 300ms ease;"></div>
         </div>
         <p style="font-size: 11px; color: var(--color-muted); margin-top: 6px;">
-          প্রতি কাজে ${packageTaskSettings[level]?.reward || 20}.০০ BDT · প্যাকেজে মোট ২৫টি উপলব্ধ কাজের তালিকা
+          ${rewText}
         </p>
       `;
     }
@@ -3524,22 +4155,22 @@ function refreshDailyMissionLimit(level) {
       });
 
       if (!isUnlocked) {
-        btn.textContent = 'লকড 🔒';
+        btn.textContent = lang === 'hi' ? 'लॉक 🔒' : (lang === 'en' ? 'Locked 🔒' : 'লকড 🔒');
         btn.disabled = false;
         btn.className = 'platform-task-accept bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
         btn.dataset.lockedLevel = level;
       } else if (isTaskAccepted) {
-        btn.textContent = 'গৃহীত';
+        btn.textContent = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
         btn.disabled = true;
         btn.dataset.accepted = 'true';
         btn.removeAttribute('data-limit-reached');
       } else if (reached) {
-        btn.textContent = 'সীমা পূর্ণ';
+        btn.textContent = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
         btn.disabled = true;
         btn.dataset.limitReached = 'true';
         btn.removeAttribute('data-accepted');
       } else {
-        btn.textContent = 'গ্রহণ';
+        btn.textContent = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
         btn.disabled = false;
         btn.removeAttribute('data-limit-reached');
         btn.removeAttribute('data-accepted');
@@ -3549,11 +4180,23 @@ function refreshDailyMissionLimit(level) {
 
   if (message) {
     if (!isUnlocked) {
-      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">⚠️ ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</span>`;
+      const lockMsg = lang === 'hi'
+        ? `⚠️ मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${level} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
+        : (lang === 'en' ? `⚠️ Only LV0 tasks can be performed for free. Purchase package to perform ${level} tasks.` : `⚠️ ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`);
+      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${lockMsg}</span>`;
     } else if (reached) {
-      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">⚠️ আজকের ${level} প্যাকেজের ${quotaLimit}টি কাজের সীমা পূর্ণ হয়েছে!</span> <br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন। আগামীকাল আবার নতুন কোটা চালু হবে।</small>`;
+      const limitTitle = lang === 'hi'
+        ? `⚠️ आज के ${level} पैकेज के ${quotaLimit} कार्यों की सीमा पूरी हो गई है!`
+        : (lang === 'en' ? `⚠️ Today's ${quotaLimit} task limit for ${level} package has been reached!` : `⚠️ আজকের ${level} প্যাকেজের ${quotaLimit}টি কাজের সীমা পূর্ণ হয়েছে!`);
+      const limitSub = lang === 'hi'
+        ? 'टास्क मेनू में जाकर कार्य सबमिट करें। कल फिर नया कोटा शुरू होगा।'
+        : (lang === 'en' ? 'Go to the Task menu to submit tasks. New quota tomorrow.' : 'টাস্ক মেনুতে গিয়ে কাজ জমা দিন। আগামীকাল আবার নতুন কোটা চালু হবে।');
+      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${limitTitle}</span> <br><small style="color: var(--color-muted);">${limitSub}</small>`;
     } else {
-      message.innerHTML = `আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}টি</strong> (মোট কোটা ${quotaLimit}টি)`;
+      const remainingLabel = lang === 'hi'
+        ? `आज के शेष कार्य: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}</strong> (कुल कोटा ${quotaLimit})`
+        : (lang === 'en' ? `Remaining tasks today: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}</strong> (Total quota ${quotaLimit})` : `আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}টি</strong> (মোট কোটা ${quotaLimit}টি)`);
+      message.innerHTML = remainingLabel;
     }
   }
 }
@@ -3654,16 +4297,29 @@ function renderMissionRecords(filter) {
       const compDate = new Date(mission.completedAt || Date.now());
       const compDateText = compDate.getFullYear() + '-' + String(compDate.getMonth() + 1).padStart(2, '0') + '-' + String(compDate.getDate()).padStart(2, '0') + ' ' + String(compDate.getHours()).padStart(2, '0') + ':' + String(compDate.getMinutes()).padStart(2, '0');
 
+      const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+      const curr = getUserCurrency(user);
+      const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(mission.reward)}.০০` : `${mission.reward}.00`;
+
       actionsHtml = `
         <div class="mission-card-complete-bar mt-2 pt-2.5 border-t flex items-center justify-between text-xs" style="border-color: var(--color-profile-border);">
           <span class="font-bold flex items-center gap-1.5" style="color: #34d399;">
-            <span>✓</span> পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে
+            <span>✓</span> ${lang === 'hi' ? 'समीक्षा सफल — इनाम बैलेंस में जुड़ गया' : (lang === 'en' ? 'Review Successful — Reward credited' : 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে')}
           </span>
-          <span class="font-bold" style="color: var(--color-profile-cyan);">+${mission.reward}.০০ BDT</span>
+          <span class="font-bold" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr}</span>
         </div>
-        <p class="text-[11px]" style="color: var(--color-muted);">সম্পন্নের সময়: ${compDateText}</p>
+        <p class="text-[11px]" style="color: var(--color-muted);">${lang === 'hi' ? 'पूर्ण होने का समय:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:')} ${compDateText}</p>
       `;
     }
+
+    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+    const curr = getUserCurrency(user);
+    const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(mission.reward)}.০০` : `${mission.reward}.00`;
+    const rewLabel = lang === 'hi' ? 'इनाम' : (lang === 'en' ? 'Reward' : 'পুরস্কার');
+    const taskLabel = lang === 'hi' ? 'कार्य:' : (lang === 'en' ? 'Task:' : 'কাজ:');
+    const acceptLabel = lang === 'hi' ? 'स्वीकृति समय:' : (lang === 'en' ? 'Accepted at:' : 'গ্রহণের সময়:');
+    const proofLabel = lang === 'hi' ? 'सबमिट किया गया प्रमाण:' : (lang === 'en' ? 'Submitted Proof:' : 'জমা দেওয়া প্রমাণ:');
+    const previewLabel = lang === 'hi' ? 'प्रिव्यू देखें 🔍' : (lang === 'en' ? 'Preview 🔍' : 'প্রিভিউ দেখুন 🔍');
 
     card.innerHTML = `
       <div class="mission-card-top flex items-center justify-between gap-3">
@@ -3675,18 +4331,18 @@ function renderMissionRecords(filter) {
           </div>
         </div>
         <div class="text-right">
-          <p class="text-[11px]" style="color: var(--color-muted);">পুরস্কার</p>
-          <p class="mission-reward font-bold text-base" style="color: var(--color-profile-cyan);">${mission.reward}.০০ BDT</p>
+          <p class="text-[11px]" style="color: var(--color-muted);">${rewLabel}</p>
+          <p class="mission-reward font-bold text-base" style="color: var(--color-profile-cyan);">${rewFormatted} ${curr}</p>
         </div>
       </div>
       <div class="mission-card-details text-xs leading-5" style="color: var(--color-profile-text);">
-        <p>কাজ: <span class="font-medium">${mission.description}</span></p>
-        <p>গ্রহণের সময়: <span style="color: var(--color-muted);">${dateText}</span></p>
+        <p>${taskLabel} <span class="font-medium">${mission.description}</span></p>
+        <p>${acceptLabel} <span style="color: var(--color-muted);">${dateText}</span></p>
         ${mission.screenshot ? `
         <div class="mt-1.5 flex items-center justify-between gap-2 pt-1 border-t" style="border-color: rgba(255,255,255,0.06);">
-          <span class="text-[11px] text-slate-400">জমা দেওয়া প্রমাণ:</span>
+          <span class="text-[11px] text-slate-400">${proofLabel}</span>
           <button type="button" class="view-task-screenshot-btn flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e2a66] border border-[#1b3e85] text-xs font-bold text-[#38bdf8] hover:bg-[#133785] transition cursor-pointer active:scale-95" data-task-screenshot="${mission.id}">
-            <span>🖼️</span> <span>প্রিভিউ দেখুন 🔍</span>
+            <span>🖼️</span> <span>${previewLabel}</span>
           </button>
         </div>` : ''}
       </div>
@@ -3718,16 +4374,24 @@ function renderPackageTasks(level) {
   const TOTAL_TASKS_TO_DISPLAY = 25; // 25-30 tasks per package according to function
   const rows = [];
 
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const curr = getUserCurrency(user);
+
   if (!isUnlocked) {
     const banner = document.createElement('div');
     banner.className = 'mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-[#0c2364] to-[#071b50] border-2 border-[#35c6e7]/60 text-white text-xs shadow-xl flex items-center justify-between gap-3 glow-pulse-cyan';
+    const lockTitle = lang === 'hi' ? 'पैकेज खरीदना आवश्यक' : (lang === 'en' ? 'Package Purchase Required' : 'প্যাকেজ ক্রয় প্রয়োজন');
+    const lockSub = lang === 'hi'
+      ? `मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${activePackageLevel} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
+      : (lang === 'en' ? `Only LV0 tasks are free. Purchase package to perform ${activePackageLevel} tasks.` : `ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`);
+    const buyBtnText = lang === 'hi' ? 'पैकेज खरीदें' : (lang === 'en' ? 'Buy Package' : 'প্যাকেজ ক্রয়');
     banner.innerHTML = `
       <div class="min-w-0 flex-1">
-        <p class="font-bold text-[#35c6e7] flex items-center gap-1.5"><span class="text-base">🔒</span> প্যাকেজ ক্রয় প্রয়োজন</p>
-        <p class="mt-1 text-[11px] text-slate-200 leading-4">ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।</p>
+        <p class="font-bold text-[#35c6e7] flex items-center gap-1.5"><span class="text-base">🔒</span> ${lockTitle}</p>
+        <p class="mt-1 text-[11px] text-slate-200 leading-4">${lockSub}</p>
       </div>
       <button type="button" class="shrink-0 px-3.5 py-2 rounded-xl bg-[#1264c9] hover:bg-[#1877f2] text-white font-bold text-xs shadow-lg transition active:scale-95 cursor-pointer flex items-center gap-1" data-buy-package="${activePackageLevel}">
-        <span>💎</span> <span>প্যাকেজ ক্রয়</span>
+        <span>💎</span> <span>${buyBtnText}</span>
       </button>
     `;
     rows.push(banner);
@@ -3738,25 +4402,31 @@ function renderPackageTasks(level) {
       return m.platform === activePlatform && m.level === activePackageLevel && m.taskIndex === i && new Date(m.acceptedAt).toDateString() === today;
     });
 
-    let btnText = 'গ্রহণ';
+    let btnText = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
     let btnDisabled = false;
     let extraAttr = '';
     let btnClass = 'platform-task-accept';
 
     if (!isUnlocked) {
-      btnText = 'লকড 🔒';
+      btnText = lang === 'hi' ? 'लॉक 🔒' : (lang === 'en' ? 'Locked 🔒' : 'লকড 🔒');
       btnDisabled = false;
       extraAttr = `data-locked-level="${activePackageLevel}"`;
       btnClass = 'platform-task-accept bg-[#0c2364] text-[#35c6e7] border border-[#35c6e7]/40 hover:bg-[#1264c9] hover:text-white transition';
     } else if (isThisAccepted) {
-      btnText = 'গৃহীত';
+      btnText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
       btnDisabled = true;
       extraAttr = 'data-accepted="true"';
     } else if (isLimitReached) {
-      btnText = 'সীমা পূর্ণ';
+      btnText = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
       btnDisabled = true;
       extraAttr = 'data-limit-reached="true"';
     }
+
+    const taskTitle = lang === 'hi' ? `${activePlatform} · कार्य ${i + 1}` : (lang === 'en' ? `${activePlatform} · Task ${i + 1}` : `${activePlatform} · কাজ ${i + 1}`);
+    const typeLabel = lang === 'hi' ? 'कार्य प्रकार:' : (lang === 'en' ? 'Task Type:' : 'কাজের ধরন:');
+    const tierLabel = lang === 'hi' ? 'स्तर:' : (lang === 'en' ? 'Tier:' : 'স্তর:');
+    const rewHeading = lang === 'hi' ? 'दैनिक पुरस्कार' : (lang === 'en' ? 'Daily Reward' : 'দৈনিক পুরস্কার');
+    const rewVal = lang === 'bn' ? `${formatBanglaNumber(settings.reward)}.০০` : `${settings.reward}.00`;
 
     const row = document.createElement('article');
     row.className = 'platform-task-row flex items-start gap-3 py-5';
@@ -3766,17 +4436,17 @@ function renderPackageTasks(level) {
         ${getPlatformSvg(activePlatform, 'h-7 w-7')}
       </span>
       <div class="min-w-0 flex-1">
-        <h3 class="font-bold text-sm">${activePlatform} · কাজ ${i + 1}</h3>
-        <p class="mt-1 text-xs leading-5" style="color: var(--color-muted);">কাজের ধরন: ${descriptions[i % descriptions.length]}</p>
+        <h3 class="font-bold text-sm">${taskTitle}</h3>
+        <p class="mt-1 text-xs leading-5" style="color: var(--color-muted);">${typeLabel} ${descriptions[i % descriptions.length]}</p>
         <div class="mt-2 flex items-center gap-3 text-xs">
-          <p>স্তর: <span class="platform-task-level">${activePackageLevel}</span></p>
+          <p>${tierLabel} <span class="platform-task-level">${activePackageLevel}</span></p>
           <p style="color: var(--color-muted);">অগ্রগতি: <span class="font-semibold" style="color: var(--color-profile-text);">১০০০০০ / ৯${1200 + (i * 37) % 800}</span></p>
         </div>
       </div>
       <div class="flex shrink-0 flex-col items-end gap-2.5">
         <div class="text-right">
-          <p class="text-[10px]" style="color: var(--color-muted);">দৈনিক পুরস্কার</p>
-          <p class="font-bold text-sm" style="color: var(--color-profile-blue-text);">${settings.reward}.০০ BDT</p>
+          <p class="text-[10px]" style="color: var(--color-muted);">${rewHeading}</p>
+          <p class="font-bold text-sm" style="color: var(--color-profile-blue-text);">${rewVal} ${curr}</p>
         </div>
         <button type="button" class="${btnClass}" data-platform-accept ${btnDisabled ? 'disabled' : ''} ${extraAttr}>${btnText}</button>
       </div>
@@ -3786,17 +4456,21 @@ function renderPackageTasks(level) {
 
   const bottomExitBtn = document.createElement('div');
   bottomExitBtn.className = 'pt-6 pb-14 text-center';
+  const exitText = lang === 'hi' ? 'इस स्तर से बाहर निकलें (वीआईपी हॉल पर लौटें)' : (lang === 'en' ? 'Exit this tier (Return to VIP Hall)' : 'এই স্তর থেকে কেটে বের হন (ভিআইপি হলে ফিরে যান)');
   bottomExitBtn.innerHTML = `
     <button type="button" class="w-full py-3.5 px-4 rounded-xl bg-[#0c2364] hover:bg-[#123185] border-2 border-[#35c6e7]/50 text-white font-bold text-xs shadow-lg transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer" data-panel="vip">
       <svg viewBox="0 0 24 24" class="h-4 w-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      <span>এই স্তর থেকে কেটে বের হন (ভিআইপি হলে ফিরে যান)</span>
+      <span>${exitText}</span>
     </button>
   `;
   rows.push(bottomExitBtn);
 
   platformTaskList.replaceChildren(...rows);
   const headerLvl = document.getElementById('platform-task-header-level');
-  if (headerLvl) headerLvl.textContent = `${activePackageLevel} মিশন তালিকা`;
+  if (headerLvl) {
+    const listTitle = lang === 'hi' ? `${activePackageLevel} मिशन सूची` : (lang === 'en' ? `${activePackageLevel} Mission List` : `${activePackageLevel} মিশন তালিকা`);
+    headerLvl.textContent = listTitle;
+  }
   refreshDailyMissionLimit(activePackageLevel);
 }
 
@@ -3830,6 +4504,9 @@ function renderMissionSubmission() {
     return;
   }
 
+  const user = getCurrentUser();
+  const curr = getUserCurrency(user);
+
   const platformEl = document.getElementById('mission-submit-platform');
   if (platformEl) platformEl.textContent = mission.platform || 'YouTube';
 
@@ -3841,7 +4518,7 @@ function renderMissionSubmission() {
   const rewardEl = document.getElementById('mission-submit-reward');
   if (rewardEl) {
     const rew = Number(mission.reward || 30).toFixed(2);
-    rewardEl.textContent = rew + 'BDT';
+    rewardEl.textContent = rew + ' ' + curr;
   }
 
   const descEl = document.getElementById('mission-submit-description');
@@ -4196,27 +4873,77 @@ async function renderTeamMembersView(filter) {
   else if (currentTeamMemberFilter === '2') displayMembers = tier2;
   else if (currentTeamMemberFilter === '3') displayMembers = tier3;
 
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const curr = getUserCurrency(user);
+
+  const tabLabels = {
+    all: lang === 'hi' ? `सभी (${all.length})` : (lang === 'en' ? `All (${all.length})` : `সব (${all.length})`),
+    t1: lang === 'hi' ? `स्तर 1 (${tier1.length})` : (lang === 'en' ? `Tier 1 (${tier1.length})` : `স্তর ১ (${tier1.length})`),
+    t2: lang === 'hi' ? `स्तर 2 (${tier2.length})` : (lang === 'en' ? `Tier 2 (${tier2.length})` : `স্তর ২ (${tier2.length})`),
+    t3: lang === 'hi' ? `स्तर 3 (${tier3.length})` : (lang === 'en' ? `Tier 3 (${tier3.length})` : `স্তর ৩ (${tier3.length})`),
+  };
+
   const filterTabsHtml = `
     <div class="grid grid-cols-4 gap-1 p-1 bg-[#040e29] rounded-xl border border-[#0f245a] text-center text-xs font-semibold mb-3">
       <button type="button" class="team-filter-pill py-1.5 px-1 rounded-lg transition cursor-pointer ${currentTeamMemberFilter === 'all' ? 'bg-[#1877f2] text-white shadow font-bold' : 'text-slate-300 hover:text-white'}" data-filter="all">
-        সব (${all.length})
+        ${tabLabels.all}
       </button>
       <button type="button" class="team-filter-pill py-1.5 px-1 rounded-lg transition cursor-pointer ${currentTeamMemberFilter === '1' ? 'bg-[#1877f2] text-white shadow font-bold' : 'text-slate-300 hover:text-white'}" data-filter="1">
-        স্তর ১ (${tier1.length})
+        ${tabLabels.t1}
       </button>
       <button type="button" class="team-filter-pill py-1.5 px-1 rounded-lg transition cursor-pointer ${currentTeamMemberFilter === '2' ? 'bg-[#1877f2] text-white shadow font-bold' : 'text-slate-300 hover:text-white'}" data-filter="2">
-        স্তর ২ (${tier2.length})
+        ${tabLabels.t2}
       </button>
       <button type="button" class="team-filter-pill py-1.5 px-1 rounded-lg transition cursor-pointer ${currentTeamMemberFilter === '3' ? 'bg-[#1877f2] text-white shadow font-bold' : 'text-slate-300 hover:text-white'}" data-filter="3">
-        স্তর ৩ (${tier3.length})
+        ${tabLabels.t3}
       </button>
     </div>
   `;
 
   if (displayMembers.length === 0) {
-    const emptyTitle = currentTeamMemberFilter === 'all'
+    let emptyTitle = currentTeamMemberFilter === 'all'
       ? 'আপনার এখনো কোনো দল সদস্য যুক্ত হয়নি'
       : `স্তর ${currentTeamMemberFilter}-এ এখনো কোনো সদস্য যুক্ত হয়নি`;
+    let emptySub = 'আপনার রেফারেল লিঙ্ক বা কোড শেয়ার করে বন্ধুদের যুক্ত করুন। আপনার বন্ধুরা অ্যাকাউন্ট খুললে স্তর ১, স্তর ২ ও স্তর ৩ এর কমিশন আপনার ব্যালেন্সে যোগ হবে!';
+    let inviteCodeLabel = 'আপনার আমন্ত্রণ কোড:';
+    let t1Comm = 'স্তর ১ কমিশন (সরাসরি):';
+    let t2Comm = 'স্তর ২ কমিশন:';
+    let t3Comm = 'স্তর ৩ কমিশন:';
+    let rebate10 = '১০% রিবেট';
+    let rebate5 = '৫% রিবেট';
+    let rebate2 = '২% রিবেট';
+    let copyText = 'কোড কপি';
+    let invitePageText = 'আমন্ত্রণ পেজ';
+
+    if (lang === 'hi') {
+      emptyTitle = currentTeamMemberFilter === 'all'
+        ? 'आपके पास अभी तक कोई टीम सदस्य नहीं है'
+        : `स्तर ${currentTeamMemberFilter} में अभी तक कोई सदस्य नहीं जुड़ा है`;
+      emptySub = 'अपने रेफरल लिंक या कोड को मित्रों के साथ साझा करें। आपके मित्रों के जुड़ने पर स्तर 1, स्तर 2 और स्तर 3 का कमीशन आपके बैलेंस में जुड़ जाएगा!';
+      inviteCodeLabel = 'आपका निमंत्रण कोड:';
+      t1Comm = 'स्तर 1 कमीशन (प्रत्यक्ष):';
+      t2Comm = 'स्तर 2 कमीशन:';
+      t3Comm = 'स्तर 3 कमीशन:';
+      rebate10 = '10% कमीशन';
+      rebate5 = '5% कमीशन';
+      rebate2 = '2% कमीशन';
+      copyText = 'कोड कॉपी';
+      invitePageText = 'आमंत्रण पेज';
+    } else if (lang === 'en') {
+      emptyTitle = currentTeamMemberFilter === 'all'
+        ? 'No team members joined yet'
+        : `No members joined in Tier ${currentTeamMemberFilter} yet`;
+      emptySub = 'Share your referral link or code with friends to invite them. You will earn Tier 1, 2, and 3 commissions!';
+      inviteCodeLabel = 'Your Invite Code:';
+      t1Comm = 'Tier 1 Commission (Direct):';
+      t2Comm = 'Tier 2 Commission:';
+      t3Comm = 'Tier 3 Commission:';
+      rebate10 = '10% Rebate';
+      rebate5 = '5% Rebate';
+      rebate2 = '2% Rebate';
+      copyText = 'Copy Code';
+      invitePageText = 'Invite Page';
+    }
 
     membersContent.innerHTML = `
       ${filterTabsHtml}
@@ -4226,32 +4953,32 @@ async function renderTeamMembersView(filter) {
         </div>
         <h3 class="text-sm font-bold text-white mb-1.5">${emptyTitle}</h3>
         <p class="text-xs text-slate-300 leading-5 max-w-xs mx-auto mb-4">
-          আপনার রেফারেল লিঙ্ক বা কোড শেয়ার করে বন্ধুদের যুক্ত করুন। আপনার বন্ধুরা অ্যাকাউন্ট খুললে স্তর ১, স্তর ২ ও স্তর ৩ এর কমিশন আপনার ব্যালেন্সে যোগ হবে!
+          ${emptySub}
         </p>
         <div class="p-3 rounded-xl bg-[#030b20] border border-[#0f245a] mb-4 space-y-1.5 text-xs text-left">
           <div class="flex items-center justify-between text-slate-400">
-            <span>আপনার আমন্ত্রণ কোড:</span>
+            <span>${inviteCodeLabel}</span>
             <span class="font-mono font-bold text-[#38bdf8] text-sm">${inviteCode || '—'}</span>
           </div>
           <div class="flex items-center justify-between text-slate-400 pt-1 border-t border-[#0f245a]">
-            <span>স্তর ১ কমিশন (সরাসরি):</span>
-            <span class="font-bold text-emerald-400">১০% রিবেট</span>
+            <span>${t1Comm}</span>
+            <span class="font-bold text-emerald-400">${rebate10}</span>
           </div>
           <div class="flex items-center justify-between text-slate-400">
-            <span>স্তর ২ কমিশন:</span>
-            <span class="font-bold text-sky-400">৫% রিবেট</span>
+            <span>${t2Comm}</span>
+            <span class="font-bold text-sky-400">${rebate5}</span>
           </div>
           <div class="flex items-center justify-between text-slate-400">
-            <span>স্তর ৩ কমিশন:</span>
-            <span class="font-bold text-indigo-400">২% রিবেট</span>
+            <span>${t3Comm}</span>
+            <span class="font-bold text-indigo-400">${rebate2}</span>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
           <button type="button" class="team-copy-code-btn py-2.5 px-3 rounded-xl bg-[#0e2a66] hover:bg-[#133785] text-[#38bdf8] border border-[#1b3e85] font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5" data-copy-text="${inviteCode}">
-            <span>📋</span> <span>কোড কপি</span>
+            <span>📋</span> <span>${copyText}</span>
           </button>
           <button type="button" class="py-2.5 px-3 rounded-xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-xs transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5" data-panel="invite">
-            <span>🔗</span> <span>আমন্ত্রণ পেজ</span>
+            <span>🔗</span> <span>${invitePageText}</span>
           </button>
         </div>
       </div>
@@ -4259,15 +4986,20 @@ async function renderTeamMembersView(filter) {
     return;
   }
 
+  const pkgLabel = lang === 'hi' ? 'पैकेज' : (lang === 'en' ? 'Package' : 'প্যাকেজ');
+  const balLabel = lang === 'hi' ? 'बैलेंस' : (lang === 'en' ? 'Balance' : 'ব্যালেন্স');
+  const rechLabel = lang === 'hi' ? 'रिचार्ज' : (lang === 'en' ? 'Recharge' : 'রিচার্জ');
+  const joinedLabel = lang === 'hi' ? 'जुड़े:' : (lang === 'en' ? 'Joined:' : 'যুক্ত:');
+
   const memberRows = displayMembers.map(function(m) {
     let tierBadgeClass = 'text-sky-400 bg-sky-500/15 border-sky-400/30';
-    let tierText = 'স্তর ১ (সরাসরি)';
+    let tierText = lang === 'hi' ? 'स्तर 1 (प्रत्यक्ष)' : (lang === 'en' ? 'Tier 1 (Direct)' : 'স্তর ১ (সরাসরি)');
     if (m.tier === 2) {
       tierBadgeClass = 'text-blue-400 bg-blue-500/15 border-blue-400/30';
-      tierText = 'স্তর ২';
+      tierText = lang === 'hi' ? 'स्तर 2' : (lang === 'en' ? 'Tier 2' : 'স্তর ২');
     } else if (m.tier === 3) {
       tierBadgeClass = 'text-purple-400 bg-purple-500/15 border-purple-400/30';
-      tierText = 'স্তর ৩';
+      tierText = lang === 'hi' ? 'स्तर 3' : (lang === 'en' ? 'Tier 3' : 'স্তর ৩');
     }
 
     const dateStr = m.joinedAt ? m.joinedAt.split('T')[0] : '';
@@ -4285,36 +5017,44 @@ async function renderTeamMembersView(filter) {
         </div>
         <div class="mt-2.5 pt-2 border-t border-[#0b1b42] grid grid-cols-3 gap-1 text-[11px] text-slate-300">
           <div>
-            <span class="text-slate-400 block text-[10px]">প্যাকেজ</span>
+            <span class="text-slate-400 block text-[10px]">${pkgLabel}</span>
             <span class="font-bold text-white">${m.level}</span>
           </div>
           <div>
-            <span class="text-slate-400 block text-[10px]">ব্যালেন্স</span>
-            <span class="font-bold text-[#34d399]">${Number(m.balance).toFixed(2)} BDT</span>
+            <span class="text-slate-400 block text-[10px]">${balLabel}</span>
+            <span class="font-bold text-[#34d399]">${Number(m.balance).toFixed(2)} ${curr}</span>
           </div>
           <div class="text-right">
-            <span class="text-slate-400 block text-[10px]">রিচার্জ</span>
-            <span class="font-bold text-[#38bdf8]">${Number(m.rechargeAmount).toFixed(2)} BDT</span>
+            <span class="text-slate-400 block text-[10px]">${rechLabel}</span>
+            <span class="font-bold text-[#38bdf8]">${Number(m.rechargeAmount).toFixed(2)} ${curr}</span>
           </div>
         </div>
         <div class="mt-1 text-[10px] text-slate-400 text-right">
-          যুক্ত: ${dateStr}
+          ${joinedLabel} ${dateStr}
         </div>
       </div>
     `;
   }).join('');
+
+  const listHeader = lang === 'hi'
+    ? `सदस्य सूची (${displayMembers.length} सदस्य)`
+    : (lang === 'en' ? `Member List (${displayMembers.length} members)` : `সদস্য তালিকা (${displayMembers.length} জন)`);
+  const listSub = lang === 'hi'
+    ? 'क्लाउड डेटाबेस से रीयल-टाइम सिंक'
+    : (lang === 'en' ? 'Real-time synchronized from Cloud DB' : 'সুপাবেস ও ক্লাউড ডাটাবেজ থেকে রিয়েল-টাইম সিঙ্কড');
+  const realDataBadge = lang === 'hi' ? 'रीयल डेटा' : (lang === 'en' ? 'Real Data' : 'রিয়েল ডাটা');
 
   membersContent.innerHTML = `
     ${filterTabsHtml}
     <div class="p-3.5 rounded-xl bg-[#06143b] border border-[#0f245a] shadow-xl">
       <div class="flex items-center justify-between border-b border-[#0f245a] pb-2.5 mb-2.5">
         <div>
-          <p class="font-bold text-white text-xs">সদস্য তালিকা (${displayMembers.length} জন)</p>
-          <p class="text-[10px] text-slate-400">সুপাবেস ও ক্লাউড ডাটাবেজ থেকে রিয়েল-টাইম সিঙ্কড</p>
+          <p class="font-bold text-white text-xs">${listHeader}</p>
+          <p class="text-[10px] text-slate-400">${listSub}</p>
         </div>
         <span class="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1">
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          রিয়েল ডাটা
+          ${realDataBadge}
         </span>
       </div>
       <div class="space-y-2 max-h-[420px] overflow-y-auto pr-0.5">
@@ -4374,6 +5114,35 @@ document.addEventListener('click', function(event) {
     event.preventDefault();
     event.stopPropagation();
     openManagerContactModal();
+    return;
+  }
+
+  // Open Country & Currency Selector Modal
+  const countryPickerTrigger = event.target.closest('#register-country-selector-btn, #register-phone-prefix');
+  if (countryPickerTrigger) {
+    event.preventDefault();
+    openCountryPickerModal();
+    return;
+  }
+
+  // Close Country Picker Modal
+  const closeCountryBtn = event.target.closest('#close-country-picker-btn');
+  if (closeCountryBtn) {
+    event.preventDefault();
+    closeCountryPickerModal();
+    return;
+  }
+  if (event.target && event.target.id === 'country-picker-modal') {
+    closeCountryPickerModal();
+    return;
+  }
+
+  // Quick Featured Country Chip Click
+  const countryChip = event.target.closest('.country-quick-chip');
+  if (countryChip && countryChip.dataset.countryCode) {
+    event.preventDefault();
+    selectRegistrationCountry(countryChip.dataset.countryCode);
+    closeCountryPickerModal();
     return;
   }
 
@@ -4576,6 +5345,7 @@ document.addEventListener('click', function(event) {
     closeActionSheet();
     previousDashboardPanel = 'my-pass';
     openDashboardPanel('payment-method');
+    updatePaymentAndWithdrawalForUser();
     return;
   }
 
@@ -4599,6 +5369,20 @@ document.addEventListener('click', function(event) {
   const openMethodPickerRow = event.target.closest('#withdraw-method-select-row');
   if (openMethodPickerRow) {
     event.preventDefault();
+    const user = getCurrentUser();
+    const isBd = !user || !user.country || user.country === 'BD';
+    if (!isBd) {
+      const usdt = getSavedUsdtAccount();
+      if (!usdt || !usdt.address) {
+        closeWithdrawSheet();
+        previousDashboardPanel = 'my-pass';
+        openDashboardPanel('usdt-setup');
+        showToastNotification('USDT সেট নেই! অনুগ্রহ করে USDT (BEP20) তথ্য সেট করুন');
+        return;
+      }
+      openMethodPicker();
+      return;
+    }
     const bkash = getSavedBkashAccount();
     if (!bkash || !bkash.phone) {
       closeWithdrawSheet();
@@ -4845,15 +5629,24 @@ document.addEventListener('click', function(event) {
     const amtInp = document.getElementById('withdraw-sheet-amount');
     const amt = parseFloat(amtInp ? amtInp.value : '0') || 0;
     const availBal = getAvailableBalance();
+    const user = getCurrentUser();
+    const curr = getUserCurrency(user);
+    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
 
-    if (amt <= 0) {
-      showToastNotification('⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন');
+    if (isNaN(amt) || amt < 700) {
+      const minNotice = lang === 'hi' 
+        ? '⚠️ कृपया वैध निकासी राशि दर्ज करें (न्यूनतम 700)' 
+        : (lang === 'en' ? '⚠️ Please enter a valid withdrawal amount (Min 700)' : '⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন (ন্যূনতম ৭০০)');
+      showToastNotification(minNotice);
       if (amtInp) amtInp.focus();
       return;
     }
 
     if (amt > availBal) {
-      showToastNotification(`⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${availBal.toFixed(2)} BDT`);
+      const insMsg = lang === 'hi'
+        ? `⚠️ अपर्याप्त बैलेंस! आपका उपलब्ध बैलेंस ${availBal.toFixed(2)} ${curr}`
+        : (lang === 'en' ? `⚠️ Insufficient balance! Your available balance is ${availBal.toFixed(2)} ${curr}` : `⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${formatBanglaNumber(availBal.toFixed(2))} ${curr}`);
+      showToastNotification(insMsg);
       if (amtInp) amtInp.focus();
       return;
     }
@@ -4861,7 +5654,10 @@ document.addEventListener('click', function(event) {
     const pwdInp = document.getElementById('withdraw-sheet-fund-password');
     const pwd = pwdInp ? pwdInp.value.trim() : '';
     if (!pwd) {
-      showToastNotification('⚠️ অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন');
+      const pwdNotice = lang === 'hi'
+        ? '⚠️ कृपया फंड पासवर्ड दर्ज करें'
+        : (lang === 'en' ? '⚠️ Please enter your fund password' : '⚠️ অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন');
+      showToastNotification(pwdNotice);
       if (pwdInp) pwdInp.focus();
       return;
     }
@@ -4869,7 +5665,6 @@ document.addEventListener('click', function(event) {
     // Deduct available balance
     const newBal = Math.max(0, availBal - amt);
     localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
-    const user = getCurrentUser();
     if (user && user.balance) {
       user.balance = Math.max(0, Number(user.balance) - amt);
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
@@ -4915,7 +5710,10 @@ document.addEventListener('click', function(event) {
     renderWithdrawalHistory();
     closeWithdrawSheet();
 
-    showToastNotification(`🎉 ${amt.toFixed(2)} BDT উত্তোলনের আবেদন সফলভাবে জমা দেওয়া হয়েছে!`);
+    const successNotice = lang === 'hi'
+      ? `🎉 ${amt.toFixed(2)} ${curr} निकासी का अनुरोध सफलतापूर्वक सबमिट किया गया!`
+      : (lang === 'en' ? `🎉 ${amt.toFixed(2)} ${curr} withdrawal request submitted successfully!` : `🎉 ${formatBanglaNumber(amt.toFixed(2))} ${curr} উত্তোলনের আবেদন সফলভাবে জমা দেওয়া হয়েছে!`);
+    showToastNotification(successNotice);
     return;
   }
 
@@ -5333,9 +6131,18 @@ if (confirmSubmitBtn) {
 
     const taskMsg = document.getElementById('task-message');
     if (taskMsg) {
+      const user = getCurrentUser();
+      const curr = getUserCurrency(user);
+      const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+      const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(mission.reward)}.০০` : `${mission.reward}.00`;
+      const titleText = lang === 'hi' ? '✓ कार्य समीक्षा के लिए सबमिट किया गया!' : (lang === 'en' ? '✓ Task Submitted for Review!' : '✓ কাজ পর্যালোচনায় জমা হয়েছে!');
+      const bodyText = lang === 'hi'
+        ? `यह अगले <strong>${reviewMinutes} मिनट</strong> तक समीक्षाधीन रहेगा। समीक्षा पूरी होने पर <strong>${rewFormatted} ${curr}</strong> स्वचालित रूप से जुड़ जाएंगे।`
+        : (lang === 'en' ? `This will be under review for <strong>${reviewMinutes} minutes</strong>. Upon completion, <strong>${rewFormatted} ${curr}</strong> will be added.` : `এটি আগামী <strong>${reviewMinutes} মিনিট</strong> পর্যালোচনাধীন থাকবে। পর্যালোচনা শেষ হলে সম্পূর্ণ হয়ে <strong>${rewFormatted} ${curr}</strong> স্বয়ংক্রিয়ভাবে যুক্ত হবে।`);
+
       taskMsg.innerHTML = `<div class="rounded-lg p-3 my-2 text-center" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24;">
-        <p class="font-bold text-sm">✓ কাজ পর্যালোচনায় জমা হয়েছে!</p>
-        <p class="text-xs mt-1">এটি আগামী <strong>${reviewMinutes} মিনিট</strong> পর্যালোচনাধীন থাকবে। পর্যালোচনা শেষ হলে সম্পূর্ণ হয়ে <strong>${mission.reward}.০০ BDT</strong> স্বয়ংক্রিয়ভাবে যুক্ত হবে।</p>
+        <p class="font-bold text-sm">${titleText}</p>
+        <p class="text-xs mt-1">${bodyText}</p>
       </div>`;
       setTimeout(function() {
         if (taskMsg) taskMsg.innerHTML = '';
@@ -5826,6 +6633,11 @@ function initApp() {
     if (typeof savedUser.balance !== 'number') savedUser.balance = 0.00;
     localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
 
+    const userLang = localStorage.getItem('alo_lang') || savedUser.language || 'en';
+    if (typeof setAppLanguage === 'function') {
+      setAppLanguage(userLang);
+    }
+
     updateUserDetails(savedUser);
     updateProfileMetrics();
     updateVipHallRooms();
@@ -5854,12 +6666,63 @@ function initApp() {
       }
     }
   } catch(e) {}
+
+  // Bind country selection dropdown on register form
+  const countrySelect = document.getElementById('register-country-select');
+  if (countrySelect) {
+    function onCountryChange() {
+      if (countrySelect.value) {
+        selectRegistrationCountry(countrySelect.value);
+      }
+    }
+    countrySelect.addEventListener('change', onCountryChange);
+    countrySelect.addEventListener('input', onCountryChange);
+  }
+
+  // Clicking phone prefix also opens country selector / modal
+  const regPrefix = document.getElementById('register-phone-prefix');
+  if (regPrefix) {
+    regPrefix.addEventListener('click', function() {
+      const select = document.getElementById('register-country-select');
+      if (select) {
+        select.focus();
+        if (typeof select.showPicker === 'function') {
+          try { select.showPicker(); return; } catch(e) {}
+        }
+      }
+      openCountryPickerModal();
+    });
+  }
+
+  const closeCountryBtn = document.getElementById('close-country-picker-btn');
+  if (closeCountryBtn) {
+    closeCountryBtn.addEventListener('click', closeCountryPickerModal);
+  }
+  const countryModal = document.getElementById('country-picker-modal');
+  if (countryModal) {
+    countryModal.addEventListener('click', function(e) {
+      if (e.target === countryModal) closeCountryPickerModal();
+    });
+  }
 }
 
 document.addEventListener('input', function(e) {
   if (e.target && e.target.id === 'withdraw-amount-input') {
     updateWithdrawCalculations();
   }
+});
+
+window.addEventListener('alo-language-changed', function(e) {
+  const lang = e.detail && e.detail.lang;
+  const user = getCurrentUser();
+  if (user && lang) {
+    user.language = lang;
+    localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+  }
+  if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+  if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+  if (typeof updateUserDetails === 'function') updateUserDetails(user);
+  if (typeof renderCountryList === 'function') renderCountryList();
 });
 
 if (document.readyState === 'loading') {
