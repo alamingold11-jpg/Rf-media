@@ -1430,8 +1430,37 @@ function openDashboardPanel(panelName) {
   setTimeout(forceScrollToTop, 100);
 }
 
+function isIndianUser(user) {
+  if (!user) {
+    try {
+      user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+    } catch(e) {}
+  }
+  if (!user) return false;
+  if (user.country === 'IN' || user.currency === 'INR' || user.dialCode === '+91') return true;
+  if (user.countryName === 'India' || user.countryName === 'ইন্ডিয়া' || user.countryName === 'ভারত') return true;
+  if (user.countryNameEn === 'India') return true;
+  const p = String(user.phone || user.accountNumber || '').replace(/\D/g, '');
+  if (p.startsWith('91') && p.length >= 10) return true;
+  return false;
+}
+window.isIndianUser = isIndianUser;
+
 function updateUserDetails(user) {
+  if (!user) user = getCurrentUser();
   if (!user) return;
+
+  const isIndia = isIndianUser(user);
+  user.country = isIndia ? 'IN' : 'BD';
+  user.currency = isIndia ? 'INR' : 'BDT';
+  user.currencySymbol = isIndia ? '₹' : '৳';
+  user.currencyName = isIndia ? 'Rupee' : 'Taka';
+  user.dialCode = isIndia ? '+91' : '+880';
+
+  try {
+    localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+  } catch(e) {}
+
   const memberId = document.getElementById('profile-member-id');
   if (memberId) memberId.textContent = user.memberId || '1105';
 
@@ -1452,17 +1481,46 @@ function updateUserDetails(user) {
   const packageLevel = document.getElementById('profile-package-level');
   if (packageLevel) packageLevel.textContent = user.packageLevel || 'LV0';
 
-  const superiorId = document.getElementById('profile-superior-id');
-  if (superiorId) superiorId.textContent = user.superiorId || '11';
+  // Enforce country-specific language availability:
+  // Bangladesh: ONLY English (en) and Bengali (bn). Hindi (hi) is prohibited.
+  // India: ONLY English (en) and Hindi (hi). Bengali (bn) is prohibited.
+  if (typeof window.syncCountryLanguageOptions === 'function') {
+    window.syncCountryLanguageOptions(isIndia ? 'IN' : 'BD');
+  }
+  const currentLang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || user.language || localStorage.getItem('alo_lang') || (isIndia ? 'hi' : 'bn');
+  if (isIndia && currentLang === 'bn') {
+    if (typeof setAppLanguage === 'function') {
+      user.language = 'hi';
+      try {
+        localStorage.setItem('alo_lang', 'hi');
+        localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      } catch(e) {}
+      setAppLanguage('hi');
+      return;
+    }
+  } else if (!isIndia && currentLang === 'hi') {
+    if (typeof setAppLanguage === 'function') {
+      user.language = 'bn';
+      try {
+        localStorage.setItem('alo_lang', 'bn');
+        localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      } catch(e) {}
+      setAppLanguage('bn');
+      return;
+    }
+  }
 
+  const defaultMemberName = isIndia ? (currentLang === 'en' ? 'Member' : 'सदस्य') : 'সদস্য';
   const userName = document.getElementById('dashboard-user-name');
-  if (userName) userName.textContent = user.name || 'সদস্য';
+  if (userName) userName.textContent = (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'सदस्य') ? defaultMemberName : user.name;
 
-  // Country & Currency Information
-  const userCountryName = user.country === 'IN' ? (user.language === 'hi' ? 'भारत' : 'ইন্ডিয়া') : (user.countryName || 'বাংলাদেশ');
-  const userCurrCode = user.currency || 'BDT';
-  const userCurrSym = user.currencySymbol || (user.currency === 'BDT' ? '৳' : (user.currency === 'INR' ? '₹' : (user.currency === 'USD' ? '$' : user.currency || 'BDT')));
-  const userFlag = (getCountryByCode(user.country || 'BD') && getCountryByCode(user.country || 'BD').flag) || '🇧🇩';
+  // Country & Currency Information with Real-time Multi-Language Support
+  const userCountryName = isIndia
+    ? (currentLang === 'en' ? 'India' : 'भारत')
+    : (currentLang === 'hi' ? 'बांग्लादेश' : (currentLang === 'en' ? 'Bangladesh' : 'বাংলাদেশ'));
+  const userCurrCode = isIndia ? 'INR' : 'BDT';
+  const userCurrSym = isIndia ? '₹' : '৳';
+  const userFlag = isIndia ? '🇮🇳' : '🇧🇩';
 
   const countryBadge = document.getElementById('profile-country-badge');
   if (countryBadge) {
@@ -1470,7 +1528,7 @@ function updateUserDetails(user) {
   }
   const personalCountry = document.getElementById('personal-country-text');
   if (personalCountry) {
-    personalCountry.textContent = `${userFlag} ${userCountryName} (${user.currencyName || userCurrCode})`;
+    personalCountry.textContent = `${userFlag} ${userCountryName} (${userCurrCode})`;
   }
   const personalCurrBadge = document.getElementById('personal-currency-badge');
   if (personalCurrBadge) {
@@ -1486,11 +1544,13 @@ function updateUserDetails(user) {
   if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
   if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
 }
+window.updateUserDetails = updateUserDetails;
 
 function updatePaymentAndWithdrawalForUser(user) {
   if (!user) user = getCurrentUser();
-  const isBd = !user || !user.country || user.country === 'BD';
-  const curr = (user && user.currency) || 'BDT';
+  const isIndia = isIndianUser(user);
+  const isBd = !isIndia;
+  const curr = isIndia ? 'INR' : 'BDT';
 
   // 1. Payment Method Panel rows (Recharge options)
   document.querySelectorAll('.payment-method-row').forEach(function(row) {
@@ -1615,6 +1675,22 @@ function updatePaymentAndWithdrawalForUser(user) {
   }
 }
 
+window.addEventListener('alo-language-changed', function(e) {
+  const lang = (e && e.detail && e.detail.lang) || 'bn';
+  const user = getCurrentUser();
+  if (user) {
+    user.language = lang;
+    try {
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+    } catch(err) {}
+    updateUserDetails(user);
+    if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+    if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+    if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+    if (typeof updateTeamReportMetrics === 'function') updateTeamReportMetrics();
+  }
+});
+
 async function hashPassword(password) {
   if (window.crypto && window.crypto.subtle && window.TextEncoder) {
     const bytes = new TextEncoder().encode(password);
@@ -1681,7 +1757,7 @@ function normalizeBdPhone(phoneStr, countryCode) {
 // =========================================================================
 const COUNTRY_DATABASE = [
   { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameHi: 'बांग्लादेश', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, defaultLang: 'bn', placeholder: '' },
-  { code: 'IN', nameBn: 'ইন্ডিয়া', nameEn: 'India', nameHi: 'भारत', flag: '🇮🇳', dialCode: '+91', currency: 'INR', symbol: '₹', currencyName: 'রুপি', phoneLen: 10, defaultLang: 'bn', placeholder: '' }
+  { code: 'IN', nameBn: 'भारत', nameEn: 'India', nameHi: 'भारत', flag: '🇮🇳', dialCode: '+91', currency: 'INR', symbol: '₹', currencyName: 'Rupee', phoneLen: 10, defaultLang: 'hi', placeholder: '' }
 ];
 
 let currentRegistrationCountry = COUNTRY_DATABASE[0]; // Default Bangladesh
@@ -1743,6 +1819,17 @@ function selectRegistrationCountry(code) {
     phoneInput.maxLength = country.phoneLen || 15;
   }
 
+  // 4. Automatically switch website language to Hindi for India, Bengali for BD!
+  if (country.code === 'IN') {
+    if (typeof setAppLanguage === 'function') {
+      setAppLanguage('hi');
+    }
+  } else if (country.code === 'BD') {
+    if (typeof setAppLanguage === 'function') {
+      setAppLanguage('bn');
+    }
+  }
+
   // Re-render country list in modal to update checkmark
   renderCountryList();
 }
@@ -1762,6 +1849,16 @@ function selectLoginCountry(code) {
   const emailInp = document.getElementById('login-email');
   if (emailInp) {
     emailInp.maxLength = country.phoneLen || 15;
+  }
+
+  if (country.code === 'IN') {
+    if (typeof setAppLanguage === 'function') {
+      setAppLanguage('hi');
+    }
+  } else if (country.code === 'BD') {
+    if (typeof setAppLanguage === 'function') {
+      setAppLanguage('bn');
+    }
   }
 }
 
@@ -1844,13 +1941,11 @@ function renderCountryList() {
 }
 
 function getUserCurrency(user) {
-  if (!user) user = getCurrentUser();
-  return (user && user.currency) || 'BDT';
+  return isIndianUser(user) ? 'INR' : 'BDT';
 }
 
 function getUserCurrencySymbol(user) {
-  if (!user) user = getCurrentUser();
-  return (user && (user.currencySymbol || (user.currency === 'BDT' ? '৳' : (user.currency === 'INR' ? '₹' : (user.currency === 'USD' ? '$' : user.currency || 'BDT'))))) || '৳';
+  return isIndianUser(user) ? '₹' : '৳';
 }
 
 function formatUserMoney(amount, user) {
@@ -1859,6 +1954,36 @@ function formatUserMoney(amount, user) {
   const sym = getUserCurrencySymbol(user);
   return `${sym} ${formatMoney(amount, user)}`;
 }
+
+// USD Exchange Rates as specifically requested:
+// Bangladesh: 126 BDT = $1.00 USD (e.g. 126৳ = $1.00, 20৳ = $0.16)
+// India: 84 INR = $1.00 USD (e.g. 84₹ = $1.00, 20₹ = $0.24)
+function getUsdExchangeRate(user) {
+  return isIndianUser(user) ? 84.0 : 126.0;
+}
+window.getUsdExchangeRate = getUsdExchangeRate;
+
+function convertToUsd(amount, user) {
+  const num = Number(amount || 0);
+  const rate = getUsdExchangeRate(user);
+  return num / rate;
+}
+window.convertToUsd = convertToUsd;
+
+function formatUsd(amount, user) {
+  const usd = convertToUsd(amount, user);
+  return usd.toFixed(2);
+}
+window.formatUsd = formatUsd;
+
+function formatMoneyWithUsd(amount, user) {
+  if (!user) user = getCurrentUser();
+  const curr = getUserCurrency(user);
+  const m = formatMoney(amount, user);
+  const usd = formatUsd(amount, user);
+  return `${m} ${curr} ($${usd})`;
+}
+window.formatMoneyWithUsd = formatMoneyWithUsd;
 
 
 const loginForm = document.getElementById('login-form');
@@ -1889,8 +2014,9 @@ if (loginForm) {
 
       // Support demo login if default demo account is entered or testing
       if (!account && (normPhone === '1735235999' || accounts.length === 0)) {
+        const isDemoIndia = (loginCountry.code === 'IN');
         account = {
-          name: 'সদস্য',
+          name: isDemoIndia ? 'सदस्य' : 'সদস্য',
           phone: phoneInput || '01735235999',
           accountNumber: phoneInput || '01735235999',
           memberId: '1105',
@@ -1900,18 +2026,19 @@ if (loginForm) {
           purchasedPackages: ['LV0'],
           balance: 0.00,
           country: loginCountry.code,
-          countryName: loginCountry.code === 'IN' ? 'ইন্ডিয়া' : 'বাংলাদেশ',
+          countryName: isDemoIndia ? 'भारत' : 'বাংলাদেশ',
           countryNameEn: loginCountry.nameEn,
           currency: loginCountry.currency,
           currencySymbol: loginCountry.symbol,
-          currencyName: loginCountry.code === 'IN' ? 'রুপি' : 'টাকা',
+          currencyName: isDemoIndia ? 'Rupee' : 'টাকা',
           dialCode: loginCountry.dialCode,
-          language: 'bn'
+          language: isDemoIndia ? 'hi' : 'bn'
         };
         // Save demo account to DB as well
         dbSaveUser(account).catch(function() {});
       } else if (!account || ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password))) {
-        if (message) message.textContent = (window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.';
+        const isLoginInd = loginCountry.code === 'IN';
+        if (message) message.textContent = isLoginInd ? 'अमान्य फ़ोन नंबर या पासवर्ड।' : ((window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.');
         return;
       }
 
@@ -1919,8 +2046,10 @@ if (loginForm) {
       if (!account.inviteCode) account.inviteCode = 'AL' + Math.random().toString(36).slice(2, 7).toUpperCase();
 
       const regNumber = account.accountNumber || account.phone || phoneInput;
+      const isAccIndia = isIndianUser(account) || (loginCountry.code === 'IN') || (account.country === 'IN') || (account.currency === 'INR') || (account.dialCode === '+91');
+      const targetUserLang = isAccIndia ? (account.language === 'en' ? 'en' : 'hi') : (account.language || 'bn');
       const signedInUser = {
-        name: account.name || 'সদস্য',
+        name: account.name || (isAccIndia ? (targetUserLang === 'en' ? 'Member' : 'सदस्य') : 'সদস্য'),
         phone: regNumber,
         accountNumber: regNumber,
         memberId: account.memberId,
@@ -1929,14 +2058,14 @@ if (loginForm) {
         packageLevel: account.packageLevel || 'LV0',
         purchasedPackages: account.purchasedPackages || ['LV0'],
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
-        country: account.country || loginCountry.code || 'BD',
-        countryName: account.countryName || (account.country === 'IN' ? 'ইন্ডিয়া' : 'বাংলাদেশ'),
-        countryNameEn: account.countryNameEn || (account.country === 'IN' ? 'India' : 'Bangladesh'),
-        currency: account.currency || (account.country === 'IN' ? 'INR' : 'BDT'),
-        currencySymbol: account.currencySymbol || (account.country === 'IN' ? '₹' : '৳'),
-        currencyName: account.currencyName || (account.country === 'IN' ? 'রুপি' : 'টাকা'),
-        dialCode: account.dialCode || (account.country === 'IN' ? '+91' : '+880'),
-        language: account.language || 'bn',
+        country: isAccIndia ? 'IN' : 'BD',
+        countryName: isAccIndia ? (targetUserLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
+        countryNameEn: isAccIndia ? 'India' : 'Bangladesh',
+        currency: isAccIndia ? 'INR' : 'BDT',
+        currencySymbol: isAccIndia ? '₹' : '৳',
+        currencyName: isAccIndia ? 'Rupee' : 'Taka',
+        dialCode: isAccIndia ? '+91' : '+880',
+        language: targetUserLang,
         profileData: account.profileData || {}
       };
 
@@ -1988,7 +2117,7 @@ if (loginForm) {
       localStorage.setItem('aloAccounts', JSON.stringify(accounts));
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
-      const userLang = signedInUser.language || localStorage.getItem('alo_lang') || 'bn';
+      const userLang = isAccIndia ? (signedInUser.language === 'en' ? 'en' : 'hi') : (signedInUser.language || 'bn');
       if (typeof setAppLanguage === 'function') {
         setAppLanguage(userLang);
       }
@@ -2110,23 +2239,24 @@ if (registerForm) {
     const selectEl = document.getElementById('register-country-select');
     const selectedCode = (selectEl && selectEl.value) || document.getElementById('register-country-code')?.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
     const country = getCountryByCode(selectedCode) || COUNTRY_DATABASE[0];
-    const countryCode = country.code;
-    const targetLang = localStorage.getItem('alo_lang') || 'en';
-    const countryName = country.nameEn;
-    const countryNameEn = country.nameEn;
-    const currencyCode = country.currency;
-    const currencySymbol = country.symbol;
-    const currencyName = country.currencyName;
-    const dialCode = country.dialCode;
+    const isIndia = (country.code === 'IN') || (selectedCode === 'IN');
+    const countryCode = isIndia ? 'IN' : 'BD';
+    const targetLang = isIndia ? 'hi' : 'bn';
+    const countryName = isIndia ? 'भारत' : 'বাংলাদেশ';
+    const countryNameEn = isIndia ? 'India' : 'Bangladesh';
+    const currencyCode = isIndia ? 'INR' : 'BDT';
+    const currencySymbol = isIndia ? '₹' : '৳';
+    const currencyName = isIndia ? 'Rupee' : 'Taka';
+    const dialCode = isIndia ? '+91' : '+880';
 
     if (!password) {
-      if (message) message.textContent = targetLang === 'bn' ? 'পাসওয়ার্ড দিন।' : 'Please enter a password.';
+      if (message) message.textContent = targetLang === 'hi' ? 'कृपया पासवर्ड दर्ज करें।' : (targetLang === 'bn' ? 'পাসওয়ার্ড দিন।' : 'Please enter a password.');
       if (passwordEl) passwordEl.focus();
       return;
     }
 
     if (password.length < 6) {
-      const minMsg = targetLang === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.';
+      const minMsg = targetLang === 'hi' ? 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।' : (targetLang === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.');
       if (message) message.textContent = minMsg;
       if (passwordEl) {
         passwordEl.setCustomValidity(minMsg);
@@ -2136,7 +2266,7 @@ if (registerForm) {
     }
 
     if (password !== confirmVal) {
-      const matchMsg = targetLang === 'bn' ? 'দুটি পাসওয়ার্ড মিলছে না।' : (targetLang === 'hi' ? 'पासवर्ड मेल नहीं खाते।' : 'Passwords do not match.');
+      const matchMsg = targetLang === 'hi' ? 'पासवर्ड मेल नहीं खाते।' : (targetLang === 'bn' ? 'দুটি পাসওয়ার্ড মিলছে না।' : 'Passwords do not match.');
       if (message) message.textContent = matchMsg;
       if (confirmation) {
         confirmation.setCustomValidity(matchMsg);
@@ -2149,12 +2279,12 @@ if (registerForm) {
     // Country-aware phone validation
     if (countryCode === 'BD') {
       if (!cleanPhone || cleanPhone.length < 10) {
-        if (message) message.textContent = 'Please enter a valid 10-11 digit phone number.';
+        if (message) message.textContent = targetLang === 'bn' ? 'অনুগ্রহ করে সঠিক ১০-১১ ডিজিটের মোবাইল নম্বর দিন।' : 'Please enter a valid 10-11 digit phone number.';
         return;
       }
     } else {
       if (!cleanPhone || cleanPhone.length < 10) {
-        if (message) message.textContent = 'Please enter a valid 10-digit mobile number.';
+        if (message) message.textContent = targetLang === 'hi' ? 'कृपया वैध 10-अंकीय मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.';
         return;
       }
     }
@@ -2167,7 +2297,7 @@ if (registerForm) {
       smsCode = demoSmsCode;
     }
 
-    if (message) message.textContent = 'Creating account…';
+    if (message) message.textContent = targetLang === 'hi' ? 'खाता बनाया जा रहा है…' : (targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে…' : 'Creating account…');
 
     try {
       const registeredNumber = phoneInput;
@@ -2181,7 +2311,7 @@ if (registerForm) {
       });
 
       if (dbUser || localAccount) {
-        if (message) message.textContent = targetLang === 'bn' ? 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।' : (targetLang === 'hi' ? 'इस नंबर पर पहले से खाता मौजूद है। लॉगिन पेज पर जाएं।' : 'An account with this number already exists. Redirecting to login…');
+        if (message) message.textContent = targetLang === 'hi' ? 'इस नंबर पर पहले से खाता मौजूद है। लॉगिन पेज पर जाएं।' : (targetLang === 'bn' ? 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।' : 'An account with this number already exists. Redirecting to login…');
         const loginEmail = document.getElementById('login-email');
         if (loginEmail) loginEmail.value = registeredNumber;
         setTimeout(function() { showView('login'); }, 1400);
@@ -2201,7 +2331,7 @@ if (registerForm) {
       const superiorId = (upline1 && (upline1.inviteCode || upline1.memberId || upline1.phone)) || enteredInviteCode || '11';
 
       const account = {
-        name: targetLang === 'hi' ? 'सदस्य' : (targetLang === 'en' ? 'Member' : 'সদস্য'),
+        name: isIndia ? 'सदस्य' : 'সদস্য',
         phone: registeredNumber,
         accountNumber: registeredNumber,
         passwordHash: passwordHash,
@@ -2250,7 +2380,7 @@ if (registerForm) {
       const signedInUser = Object.assign({}, account);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
-      // CRITICAL: Immediately switch entire website language to this country's language!
+      // CRITICAL: Immediately switch entire website language: Hindi for India by default, Bengali for BD!
       if (typeof setAppLanguage === 'function') {
         setAppLanguage(targetLang);
       }
@@ -2262,7 +2392,7 @@ if (registerForm) {
 
       showRegistrationSuccess(registeredNumber, countryName, currencyCode, currencySymbol, targetLang);
     } catch (error) {
-      if (message) message.textContent = targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Failed to create account. Please try again.';
+      if (message) message.textContent = targetLang === 'hi' ? 'खाता नहीं बन सका। कृपया पुनः प्रयास करें।' : (targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Failed to create account. Please try again.');
     }
   });
 }
@@ -2310,11 +2440,11 @@ const packageData = {
 };
 
 function getPackageName(level, lang) {
-  const l = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en') || 'en';
+  const l = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || 'bn';
   const pkg = packageData[level] || packageData.LV0;
-  if (l === 'hi') return pkg.nameHi || pkg.nameEn || pkg.nameBn;
-  if (l === 'bn') return pkg.nameBn || pkg.nameEn;
-  return pkg.nameEn || pkg.nameBn;
+  if (l === 'hi') return pkg.nameHi || pkg.nameBn;
+  if (l === 'en') return pkg.nameEn || pkg.nameBn;
+  return pkg.nameBn || pkg.nameEn;
 }
 
 const LEVEL_ORDER = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
@@ -2345,8 +2475,10 @@ function getCurrentUser() {
 
   if (!user) {
     const regPhone = latestAccount ? (latestAccount.accountNumber || latestAccount.phone || '1735235999') : '1735235999';
-    return {
-      name: (latestAccount && latestAccount.name) || 'সদস্য',
+    const isLatestIndia = isIndianUser(latestAccount);
+    const defLang = isLatestIndia ? ((latestAccount && latestAccount.language === 'en') ? 'en' : 'hi') : ((latestAccount && latestAccount.language) || 'bn');
+    user = {
+      name: (latestAccount && latestAccount.name) || (isLatestIndia ? 'सदस्य' : 'সদস্য'),
       phone: regPhone,
       accountNumber: regPhone,
       inviteCode: (latestAccount && latestAccount.inviteCode) || '728207',
@@ -2354,9 +2486,46 @@ function getCurrentUser() {
       superiorId: '11',
       packageLevel: (latestAccount && latestAccount.packageLevel) || 'LV0',
       purchasedPackages: (latestAccount && latestAccount.purchasedPackages) || ['LV0'],
-      balance: (latestAccount && typeof latestAccount.balance === 'number') ? latestAccount.balance : 0.00
+      balance: (latestAccount && typeof latestAccount.balance === 'number') ? latestAccount.balance : 0.00,
+      country: isLatestIndia ? 'IN' : 'BD',
+      countryName: isLatestIndia ? (defLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
+      countryNameEn: isLatestIndia ? 'India' : 'Bangladesh',
+      currency: isLatestIndia ? 'INR' : 'BDT',
+      currencySymbol: isLatestIndia ? '₹' : '৳',
+      currencyName: isLatestIndia ? 'Rupee' : 'Taka',
+      dialCode: isLatestIndia ? '+91' : '+880',
+      language: defLang
     };
+    return user;
   }
+
+  // Strictly sanitize currency based on country
+  const isIndia = isIndianUser(user);
+  if (isIndia) {
+    user.country = 'IN';
+    user.currency = 'INR';
+    user.currencySymbol = '₹';
+    user.currencyName = 'Rupee';
+    user.dialCode = '+91';
+    if (!user.language || user.language === 'bn') {
+      user.language = 'hi';
+    }
+    user.countryName = user.language === 'en' ? 'India' : 'भारत';
+    if (user.name === 'সদস্য') {
+      user.name = user.language === 'en' ? 'Member' : 'सदस्य';
+    }
+  } else {
+    user.country = 'BD';
+    user.currency = 'BDT';
+    user.currencySymbol = '৳';
+    user.currencyName = 'Taka';
+    user.dialCode = '+880';
+    if (!user.language) {
+      user.language = 'bn';
+    }
+    user.countryName = user.language === 'en' ? 'Bangladesh' : 'বাংলাদেশ';
+  }
+
   return user;
 }
 
@@ -2369,7 +2538,7 @@ function formatBanglaNumber(num) {
 
 function formatMoney(amount, user) {
   if (!user) user = getCurrentUser();
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
   const num = Number(amount || 0);
   const formatted = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (lang === 'bn') {
@@ -2380,7 +2549,7 @@ function formatMoney(amount, user) {
 
 function formatNumber(num, user) {
   if (!user) user = getCurrentUser();
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
   const n = Number(num || 0);
   const formatted = n.toLocaleString('en-US');
   if (lang === 'bn') {
@@ -2426,7 +2595,7 @@ function updateVipHallRooms() {
       }
     }
 
-    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
     const hallLabels = {
       current: lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর'),
       unlocked: lang === 'hi' ? 'अनलॉक ✓' : (lang === 'en' ? 'Unlocked ✓' : 'আনলকড ✓'),
@@ -2457,7 +2626,7 @@ function updateRecordsPanelPackages() {
   const user = getCurrentUser();
   const userLevel = user.packageLevel || 'LV0';
   const curr = getUserCurrency(user);
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
 
   const curLevelDisplay = document.getElementById('records-current-level-display');
   if (curLevelDisplay) {
@@ -2636,7 +2805,7 @@ function openPackagePurchaseModal(level, alertNotice) {
   const titleEl = document.getElementById('sheet-header-title');
   if (titleEl) titleEl.textContent = `${level} প্যাকেজ ক্রয় ও ব্যালেন্স`;
 
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
   const curr = getUserCurrency(user);
   const pkgName = getPackageName(level, lang);
 
@@ -3836,103 +4005,312 @@ function getAvailableBalance() {
 }
 
 const platformTaskDescriptions = {
-  TikTok: [
-    'TikTok ভিডিও লাইক করুন ও সুন্দর মন্তব্য করুন',
-    'নতুন ট্রেন্ডিং ভিডিও সম্পূর্ণ দেখে লাইক দিন',
-    'অফিশিয়াল ক্রিয়েটর অ্যাকাউন্ট ফলো করুন',
-    'ক্রিয়েটরের প্রোফাইল ভিজিট করে ৩টি ভিডিওতে লাইক দিন',
-    'ভিডিওটি বন্ধুদের সাথে শেয়ার করুন এবং বুকমার্ক করুন',
-    'সাউন্ডট্র্যাক ব্যবহার করে ফেভারিটে যুক্ত করুন',
-    'লাইভ স্ট্রিম ১৫ সেকেন্ড দেখুন ও লাইক দিন',
-    'শিক্ষামূলক শর্ট ভিডিওতে লাইক ও কমেন্ট দিন',
-    'ব্র্যান্ড চ্যানেলে ফলো দিন ও ভিডিও দেখুন',
-    'ভাইরাল ক্লিপে লাভ রিয়্যাক্ট দিন',
-    'হ্যাশট্যাগ চ্যালেঞ্জ ভিডিও দেখুন ও লাইক দিন',
-    'টেক রিভিউ ভিডিওতে লাইক ও শেয়ার দিন',
-    'রন্ধনশিল্প ও কুকিং ভিডিওতে লাইক দিন',
-    'ট্রাভেল ভ্লগ ভিডিও দেখুন ও কমেন্ট করুন',
-    'ফিটনেস ও স্বাস্থ্য টিপস ভিডিও সেভ করুন',
-    'সঙ্গীত ভিডিও সম্পূর্ণ শুনে লাইক দিন',
-    'ফ্যাশন ট্রেন্ড শর্টসে লাভ রিয়্যাক্ট দিন',
-    'কমেডি ক্লিপ সম্পূর্ণ দেখে লাইক দিন',
-    'মোটিভেশনাল ভিডিওতে লাইক ও শেয়ার দিন',
-    'লাইফস্টাইল ভ্লগ অ্যাকাউন্ট ফলো করুন',
-    'অ্যানিমেশন ক্লিপে লাভ রিয়্যাক্ট দিন',
-    'স্পোর্টস হাইলাইটস ভিডিও দেখুন ও লাইক দিন',
-    'গেমিং শর্টসে লাইক ও মন্তব্য দিন',
-    'ডিআইওয়াই ও ক্রাফট ভিডিও সেভ করুন',
-    'নতুন ক্রিয়েটরকে ফলো ও ভিডিওতে লাইক দিন',
-    'ইনফরমেটিভ ফ্যাক্টস ভিডিও লাইক দিন',
-    'ফটোগ্রাফি ট্রিকস ভিডিওতে লাইক দিন',
-    'প্রোডাক্ট রিভিউ ও আনবক্সিং ভিডিও দেখুন',
-    'আর্ট ও ড্রয়িং ভিডিওতে লাভ রিয়্যাক্ট দিন',
-    'ডেইলি মোটিভেশন ভিডিওতে লাইক ও শেয়ার দিন'
-  ],
-  YouTube: [
-    'YouTube চ্যানেলটি সাবস্ক্রাইব করুন ও বেল আইকন চাপুন',
-    'ভিডিওটি সম্পূর্ণ দেখে লাইক দিন',
-    'ভিডিওতে ইতিবাচক ও গঠনমূলক মন্তব্য করুন',
-    'প্লেলিস্টের একটি ভিডিও লাইক ও সেভ করুন',
-    'শর্টস ভিডিওতে লাইক দিয়ে চ্যানেল সাবস্ক্রাইব করুন',
-    'টেক রিভিউ ভিডিও সম্পূর্ণ দেখুন ও লাইক দিন',
-    'শিক্ষামূলক টিউটোরিয়াল ভিডিওতে লাইক দিন',
-    'অফিসিয়াল মিউজিক ভিডিও দেখুন ও কমেন্ট করুন',
-    'ট্রাভেল ডকুমেন্টারি ভিডিওতে লাইক দিন',
-    'কুকিং রেসিপি ভিডিওটি পরে দেখার তালিকায় রাখুন',
-    'ফিটনেস ওয়ার্কআউট ভিডিওতে লাইক দিন',
-    'নিউজ ও কারেন্ট অ্যাফেয়ার্স ভিডিও দেখুন',
-    'মোটিভেশনাল স্পিচ ভিডিওতে লাইক ও শেয়ার দিন',
-    'পডকাস্টের একটি পর্বে লাইক ও কমেন্ট করুন',
-    'গেমিং লাইভস্ট্রিম ভিডিও ৫ মিনিট দেখুন',
-    'বিজ্ঞান ও প্রযুক্তির ভিডিওতে লাইক দিন',
-    'নতুন সিনেমার ট্রেলার সম্পূর্ণ দেখুন',
-    'বুক সামারি ভিডিওতে সুন্দর কমেন্ট করুন',
-    'ক্যারিয়ার গাইডলাইন ভিডিও লাইক দিন',
-    'ভাষা শিক্ষা টিউটোরিয়াল ভিডিও সেভ করুন',
-    'ড্রয়িং ও স্কেচ টিউটোরিয়াল ভিডিও দেখুন',
-    'অটোমোবাইল ও বাইক রিভিউ ভিডিওতে লাইক দিন',
-    'ইতিহাস ও ঐতিহ্য বিষয়ক ভিডিও সম্পূর্ণ দেখুন',
-    'লাইফ হ্যাকস ভিডিওতে লাইক ও শেয়ার দিন',
-    'ইসলামিক আলোচনা ও মোনাজাত ভিডিও লাইক দিন',
-    'ফিন্যান্স ও ইনভেস্টমেন্ট ভিডিও সম্পূর্ণ দেখুন',
-    'স্মার্টফোন রিভিউ ভিডিওতে মন্তব্য করুন',
-    'ফটোগ্রাফি মাস্টারক্লাস ভিডিও সেভ করুন',
-    'নাটক ও কমেডি ভিডিওতে লাইক দিন',
-    'আর্কিটেকচার ও হোম ডিজাইন ভিডিও দেখুন'
-  ],
-  FaceBook: [
-    'FaceBook অফিসিয়াল পেজে লাইক ও ফলো করুন',
-    'সাম্প্রতিক পোস্টে লাইক ও শেয়ার করুন',
-    'অফিসিয়াল গ্রুপে যুক্ত হন ও পোস্ট দেখুন',
-    'ফেসবুক রিলস ভিডিওতে লাভ রিয়্যাক্ট দিন',
-    'ব্যবসায়িক পেজে ইতিবাচক রিভিউ দিন',
-    'শিক্ষামূলক পোস্টে লাইক ও মন্তব্য দিন',
-    'লাইভ সেশনে যুক্ত হয়ে লাভ রিয়্যাক্ট দিন',
-    'পণ্য প্রচারের পোস্টে লাইক ও শেয়ার দিন',
-    'মোটিভেশনাল পোস্টে লাইক দিন',
-    'সাম্প্রতিক ফটো অ্যালবামে লাইক ও কমেন্ট করুন',
-    'কমিউনিটি পেজে ফ্রেন্ডদের ইনভাইট করুন',
-    'টেকনোলজি পোস্টে লাইক ও কমেন্ট দিন',
-    'স্বাস্থ্য টিপস পোস্টটি শেয়ার করুন',
-    'খবরের লিংকে ক্লিক করে পোস্ট লাইক দিন',
-    'রেসিপি পোস্টে লাভ রিয়্যাক্ট দিন',
-    'ট্রাভেল পেজের ফটোতে লাইক দিন',
-    'স্পোর্টস আপডেট পোস্টে লাইক দিন',
-    'বিজ্ঞান বিষয়ক আর্টিকেলে লাইক দিন',
-    'রিলস ভিডিও সম্পূর্ণ দেখে শেয়ার দিন',
-    'গ্রুপ আলোচনায় ইতিবাচক কমেন্ট দিন',
-    'লাইফস্টাইল পেজে ফলো করুন',
-    'ক্যারিয়ার টিপস পোস্টে লাইক দিন',
-    'ডিজিটাল আর্ট পোস্টে লাভ রিয়্যাক্ট দিন',
-    'বই রিভিউ পোস্টে কমেন্ট করুন',
-    'ভিডিও কন্টেন্টে ৩ মিনিট ওয়াচটাইম দিন',
-    'পডকাস্ট লাইভ স্ট্রিমে লাইক দিন',
-    'অফার ও ডিসকাউন্ট পোস্টে লাইক দিন',
-    'মোবাইল টিপস পোস্টে লাইক দিন',
-    'কমেডি স্কিটে হাসির রিয়্যাক্ট দিন',
-    'নতুন উদ্যোগের পেজে শুভেচ্ছা কমেন্ট করুন'
-  ]
+  TikTok: {
+    bn: [
+      'TikTok ভিডিও লাইক করুন ও সুন্দর মন্তব্য করুন',
+      'নতুন ট্রেন্ডিং ভিডিও সম্পূর্ণ দেখে লাইক দিন',
+      'অফিশিয়াল ক্রিয়েটর অ্যাকাউন্ট ফলো করুন',
+      'ক্রিয়েটরের প্রোফাইল ভিজিট করে ৩টি ভিডিওতে লাইক দিন',
+      'ভিডিওটি বন্ধুদের সাথে শেয়ার করুন এবং বুকমার্ক করুন',
+      'সাউন্ডট্র্যাক ব্যবহার করে ফেভারিটে যুক্ত করুন',
+      'লাইভ স্ট্রিম ১৫ সেকেন্ড দেখুন ও লাইক দিন',
+      'শিক্ষামূলক শর্ট ভিডিওতে লাইক ও কমেন্ট দিন',
+      'ব্র্যান্ড চ্যানেলে ফলো দিন ও ভিডিও দেখুন',
+      'ভাইরাল ক্লিপে লাভ রিয়্যাক্ট দিন',
+      'হ্যাশট্যাগ চ্যালেঞ্জ ভিডিও দেখুন ও লাইক দিন',
+      'টেক রিভিউ ভিডিওতে লাইক ও শেয়ার দিন',
+      'রন্ধনশিল্প ও কুকিং ভিডিওতে লাইক দিন',
+      'ট্রাভেল ভ্লগ ভিডিও দেখুন ও কমেন্ট করুন',
+      'ফিটনেস ও স্বাস্থ্য টিপস ভিডিও সেভ করুন',
+      'সঙ্গীত ভিডিও সম্পূর্ণ শুনে লাইক দিন',
+      'ফ্যাশন ট্রেন্ড শর্টসে লাভ রিয়্যাক্ট দিন',
+      'কমেডি ক্লিপ সম্পূর্ণ দেখে লাইক দিন',
+      'মোটিভেশনাল ভিডিওতে লাইক ও শেয়ার দিন',
+      'লাইফস্টাইল ভ্লগ অ্যাকাউন্ট ফলো করুন',
+      'অ্যানিমেশন ক্লিপে লাভ রিয়্যাক্ট দিন',
+      'স্পোর্টস হাইলাইটস ভিডিও দেখুন ও লাইক দিন',
+      'গেমিং শর্টসে লাইক ও মন্তব্য দিন',
+      'ডিআইওয়াই ও ক্রাফট ভিডিও সেভ করুন',
+      'নতুন ক্রিয়েটরকে ফলো ও ভিডিওতে লাইক দিন',
+      'ইনফরমেটিভ ফ্যাক্টস ভিডিও লাইক দিন',
+      'ফটোগ্রাফি ট্রিকস ভিডিওতে লাইক দিন',
+      'প্রোডাক্ট রিভিউ ও আনবক্সিং ভিডিও দেখুন',
+      'আর্ট ও ড্রয়িং ভিডিওতে লাভ রিয়্যাক্ট দিন',
+      'ডেইলি মোটিভেশন ভিডিওতে লাইক ও শেয়ার দিন'
+    ],
+    en: [
+      'Like TikTok video and leave a positive comment',
+      'Watch trending video completely and tap like',
+      'Follow official creator account',
+      'Visit creator profile and like 3 videos',
+      'Share video with friends and bookmark it',
+      'Add soundtrack to favorites and like video',
+      'Watch live stream for 15 seconds and like',
+      'Like and comment on educational short video',
+      'Follow brand channel and watch latest video',
+      'Give love react to the viral clip',
+      'Watch hashtag challenge video and tap like',
+      'Like and share tech review video',
+      'Like culinary and cooking video',
+      'Watch travel vlog video and leave a comment',
+      'Save fitness and health tips short video',
+      'Listen to music video completely and like',
+      'Give love react to fashion trend shorts',
+      'Watch comedy clip fully and tap like',
+      'Like and share motivational video clip',
+      'Follow lifestyle vlog creator account',
+      'Give love react to animation video',
+      'Watch sports highlights short and like',
+      'Like and leave a comment on gaming clip',
+      'Save DIY craft and project video',
+      'Follow rising creator and like video',
+      'Like informative facts short clip',
+      'Like photography hacks and tricks video',
+      'Watch product unboxing and review video',
+      'Give love react to art and drawing video',
+      'Like and share daily motivation video'
+    ],
+    hi: [
+      'TikTok वीडियो को लाइक करें और सकारात्मक टिप्पणी छोड़ें',
+      'ट्रेंडिंग वीडियो को पूरा देखें और लाइक करें',
+      'आधिकारिक क्रिएटर अकाउंट को फॉलो करें',
+      'क्रिएटर की प्रोफाइल देखें और 3 वीडियो लाइक करें',
+      'दोस्तों के साथ वीडियो शेयर करें और बुकमार्क करें',
+      'साउंडट्रैक को पसंदीदा में जोड़ें और वीडियो लाइक करें',
+      '15 सेकंड तक लाइव स्ट्रीम देखें और लाइक करें',
+      'शैक्षणिक शॉर्ट वीडियो को लाइक और कमेंट करें',
+      'ब्रांड चैनल को फॉलो करें और नया वीडियो देखें',
+      'वायरल क्लिप पर लव रिएक्ट दें',
+      'हैशटैग चैलेंज वीडियो देखें और लाइक करें',
+      'टेक रिव्यू वीडियो को लाइक और शेयर करें',
+      'कुकिंग और रेसिपी वीडियो को लाइक करें',
+      'ट्रैवल व्लॉग वीडियो देखें और कमेंट करें',
+      'फिटनेस और हेल्थ टिप्स शॉर्ट वीडियो सेव करें',
+      'म्यूजिक वीडियो पूरा सुनें और लाइक करें',
+      'फैशन ट्रेंड शॉर्ट्स पर लव रिएक्ट दें',
+      'कॉमेडी क्लिप पूरा देखें और लाइक करें',
+      'मोटिवेशनल वीडियो को लाइक और शेयर करें',
+      'लाइफस्टाइल व्लॉग अकाउंट को फॉलो करें',
+      'एनीमेशन क्लिप पर लव रिएक्ट दें',
+      'स्पोर्ट्स हाइलाइट्स वीडियो देखें और लाइक करें',
+      'गेमिंग शॉर्ट्स को लाइक और कमेंट करें',
+      'DIY क्राफ्ट वीडियो को सेव करें',
+      'नए क्रिएटर को फॉलो करें और वीडियो लाइक करें',
+      'ज्ञानवर्धक फैक्ट्स वीडियो को लाइक करें',
+      'फोटोग्राफी ट्रिक्स वीडियो को लाइक करें',
+      'प्रोडक्ट अनबॉक्सिंग और रिव्यू वीडियो देखें',
+      'आर्ट और ड्राइंग वीडियो पर लव रिएक्ट दें',
+      'डेली मोटिवेशन वीडियो को लाइक और शेयर करें'
+    ]
+  },
+  YouTube: {
+    bn: [
+      'YouTube চ্যানেলটি সাবস্ক্রাইব করুন ও বেল আইকন চাপুন',
+      'ভিডিওটি সম্পূর্ণ দেখে লাইক দিন',
+      'ভিডিওতে ইতিবাচক ও গঠনমূলক মন্তব্য করুন',
+      'প্লেলিস্টের একটি ভিডিও লাইক ও সেভ করুন',
+      'শর্টস ভিডিওতে লাইক দিয়ে চ্যানেল সাবস্ক্রাইব করুন',
+      'টেক রিভিউ ভিডিও সম্পূর্ণ দেখুন ও লাইক দিন',
+      'শিক্ষামূলক টিউটোরিয়াল ভিডিওতে লাইক দিন',
+      'অফিসিয়াল মিউজিক ভিডিও দেখুন ও কমেন্ট করুন',
+      'ট্রাভেল ডকুমেন্টারি ভিডিওতে লাইক দিন',
+      'কুকিং রেসিপি ভিডিওটি পরে দেখার তালিকায় রাখুন',
+      'ফিটনেস ওয়ার্কআউট ভিডিওতে লাইক দিন',
+      'নিউজ ও কারেন্ট অ্যাফেয়ার্স ভিডিও দেখুন',
+      'মোটিভেশনাল স্পিচ ভিডিওতে লাইক ও শেয়ার দিন',
+      'পডকাস্টের একটি পর্বে লাইক ও কমেন্ট করুন',
+      'গেমিং লাইভস্ট্রিম ভিডিও ৫ মিনিট দেখুন',
+      'বিজ্ঞান ও প্রযুক্তির ভিডিওতে লাইক দিন',
+      'নতুন সিনেমার ট্রেলার সম্পূর্ণ দেখুন',
+      'বুক সামারি ভিডিওতে সুন্দর কমেন্ট করুন',
+      'ক্যারিয়ার গাইডলাইন ভিডিও লাইক দিন',
+      'ভাষা শিক্ষা টিউটোরিয়াল ভিডিও সেভ করুন',
+      'ড্রয়িং ও স্কেচ টিউটোরিয়াল ভিডিও দেখুন',
+      'অটোমোবাইল ও বাইক রিভিউ ভিডিওতে লাইক দিন',
+      'ইতিহাস ও ঐতিহ্য বিষয়ক ভিডিও সম্পূর্ণ দেখুন',
+      'লাইফ হ্যাকস ভিডিওতে লাইক ও শেয়ার দিন',
+      'ইসলামিক আলোচনা ও মোনাজাত ভিডিও লাইক দিন',
+      'ফিন্যান্স ও ইনভেস্টমেন্ট ভিডিও সম্পূর্ণ দেখুন',
+      'স্মার্টফোন রিভিউ ভিডিওতে মন্তব্য করুন',
+      'ফটোগ্রাফি মাস্টারক্লাস ভিডিও সেভ করুন',
+      'নাটক ও কমেডি ভিডিওতে লাইক দিন',
+      'আর্কিটেকচার ও হোম ডিজাইন ভিডিও দেখুন'
+    ],
+    en: [
+      'Subscribe to YouTube channel and tap bell icon',
+      'Watch video completely and tap like',
+      'Leave a positive, constructive comment on video',
+      'Like and save video to official playlist',
+      'Like Shorts video and subscribe to channel',
+      'Watch tech review video and give a like',
+      'Like and share educational tutorial video',
+      'Watch official music video and leave a comment',
+      'Like travel documentary video and add to watchlist',
+      'Add cooking recipe video to Watch Later list',
+      'Like fitness workout session video',
+      'Watch news and current affairs segment',
+      'Like and share motivational speech video',
+      'Like and comment on podcast episode',
+      'Watch gaming livestream for 5 minutes',
+      'Like science and technology breakthrough video',
+      'Watch official movie trailer completely',
+      'Leave an inspiring comment on book summary video',
+      'Like career guideline tutorial video',
+      'Save language learning tutorial video',
+      'Watch drawing and sketching tutorial video',
+      'Like automobile and bike review video',
+      'Watch history and heritage documentary video',
+      'Like and share life hacks tutorial video',
+      'Like mindfulness discussion and prayer video',
+      'Watch personal finance and investment video',
+      'Comment on flagship smartphone review video',
+      'Save mobile photography masterclass video',
+      'Like entertainment and comedy sketch video',
+      'Watch architecture and home design showcase video'
+    ],
+    hi: [
+      'YouTube चैनल सब्सक्राइब करें और बेल आइकन दबाएं',
+      'वीडियो को पूरा देखें और लाइक करें',
+      'वीडियो पर सकारात्मक और रचनात्मक टिप्पणी करें',
+      'प्लेलिस्ट से वीडियो लाइक और सेव करें',
+      'शॉर्ट्स वीडियो लाइक करें और चैनल सब्सक्राइब करें',
+      'टेक रिव्यू वीडियो पूरा देखें और लाइक करें',
+      'शैक्षणिक ट्यूटोरियल वीडियो को लाइक करें',
+      'आधिकारिक संगीत वीडियो देखें और कमेंट करें',
+      'ट्रैवल डॉक्यूमेंट्री वीडियो को लाइक करें',
+      'कुकिंग रेसिपी वीडियो को वॉच लेटर में जोड़ें',
+      'फिटनेस वर्कआउट वीडियो को लाइक करें',
+      'समाचार और समसामयिक वीडियो देखें',
+      'मोटिवेशनल स्पीच वीडियो को लाइक और शेयर करें',
+      'पॉडकास्ट एपिसोड पर लाइक और कमेंट करें',
+      'गेमिंग लाइवस्ट्रीम 5 मिनट तक देखें',
+      'विज्ञान और तकनीक वीडियो को लाइक करें',
+      'नए मूवी ट्रेलर को पूरा देखें',
+      'किताब सारांश वीडियो पर अच्छी टिप्पणी करें',
+      'करियर गाइडलाइन वीडियो को लाइक करें',
+      'भाषा सीखने का ट्यूटोरियल वीडियो सेव करें',
+      'ड्राइंग और स्केच ट्यूटोरियल वीडियो देखें',
+      'कार और बाइक रिव्यू वीडियो को लाइक करें',
+      'इतिहास और विरासत वीडियो को पूरा देखें',
+      'लाइफ हैक्स वीडियो को लाइक और शेयर करें',
+      'धार्मिक व प्रेरक चर्चा वीडियो को लाइक करें',
+      'फाइनेंस और निवेश वीडियो पूरा देखें',
+      'स्मार्टफोन रिव्यू वीडियो पर टिप्पणी करें',
+      'फोटोग्राफी मास्टरक्लास वीडियो सेव करें',
+      'कॉमेडी और नाटक वीडियो को लाइक करें',
+      'आर्किटेक्चर और होम डिजाइन वीडियो देखें'
+    ]
+  },
+  FaceBook: {
+    bn: [
+      'FaceBook অফিসিয়াল পেজে লাইক ও ফলো করুন',
+      'সাম্প্রতিক পোস্টে লাইক ও শেয়ার করুন',
+      'অফিসিয়াল গ্রুপে যুক্ত হন ও পোস্ট দেখুন',
+      'ফেসবুক রিলস ভিডিওতে লাভ রিয়্যাক্ট দিন',
+      'ব্যবসায়িক পেজে ইতিবাচক রিভিউ দিন',
+      'শিক্ষামূলক পোস্টে লাইক ও মন্তব্য দিন',
+      'লাইভ সেশনে যুক্ত হয়ে লাভ রিয়্যাক্ট দিন',
+      'পণ্য প্রচারের পোস্টে লাইক ও শেয়ার দিন',
+      'মোটিভেশনাল পোস্টে লাইক দিন',
+      'সাম্প্রতিক ফটো অ্যালবামে লাইক ও কমেন্ট করুন',
+      'কমিউনিটি পেজে ফ্রেন্ডদের ইনভাইট করুন',
+      'টেকনোলজি পোস্টে লাইক ও কমেন্ট দিন',
+      'স্বাস্থ্য টিপস পোস্টটি শেয়ার করুন',
+      'খবরের লিংকে ক্লিক করে পোস্ট লাইক দিন',
+      'রেসিপি পোস্টে লাভ রিয়্যাক্ট দিন',
+      'ট্রাভেল পেজের ফটোতে লাইক দিন',
+      'স্পোর্টস আপডেট পোস্টে লাইক দিন',
+      'বিজ্ঞান বিষয়ক আর্টিকেলে লাইক দিন',
+      'রিলস ভিডিও সম্পূর্ণ দেখে শেয়ার দিন',
+      'গ্রুপ আলোচনায় ইতিবাচক কমেন্ট দিন',
+      'লাইফস্টাইল পেজে ফলো করুন',
+      'ক্যারিয়ার টিপস পোস্টে লাইক দিন',
+      'ডিজিটাল আর্ট পোস্টে লাভ রিয়্যাক্ট দিন',
+      'বই রিভিউ পোস্টে কমেন্ট করুন',
+      'ভিডিও কন্টেন্টে ৩ মিনিট ওয়াচটাইম দিন',
+      'পডকাস্ট লাইভ স্ট্রিমে লাইক দিন',
+      'অফার ও ডিসকাউন্ট পোস্টে লাইক দিন',
+      'মোবাইল টিপস পোস্টে লাইক দিন',
+      'কমেডি স্কিটে হাসির রিয়্যাক্ট দিন',
+      'নতুন উদ্যোগের পেজে শুভেচ্ছা কমেন্ট করুন'
+    ],
+    en: [
+      'Like and follow official FaceBook Page',
+      'Like and share latest published post',
+      'Join official group and view pinned posts',
+      'Give love react to Facebook Reels video',
+      'Leave a positive 5-star review on page',
+      'Like and comment on educational community post',
+      'Join live session and send love reactions',
+      'Like and share promotional showcase post',
+      'Like inspirational and motivational post',
+      'Like and leave a comment on recent photo album',
+      'Invite friends to follow community page',
+      'Like and comment on technology updates post',
+      'Share healthy lifestyle tips post to timeline',
+      'Click news link and like the article post',
+      'Give love react to culinary recipe post',
+      'Like stunning travel photography post',
+      'Like sports highlights update post',
+      'Like science and environment article post',
+      'Watch Facebook Reels video completely and share',
+      'Post helpful constructive comment in group',
+      'Follow official lifestyle creator page',
+      'Like career advancement tips post',
+      'Give love react to digital art showcase post',
+      'Comment on weekly book recommendation post',
+      'Watch featured video content for 3 minutes',
+      'Like podcast livestream announcement post',
+      'Like exclusive seasonal promotion post',
+      'Like smartphone tips and shortcuts post',
+      'Give laugh react to popular comedy skit',
+      'Post congratulations on new venture page'
+    ],
+    hi: [
+      'FaceBook आधिकारिक पेज को लाइक और फॉलो करें',
+      'नवीनतम पोस्ट को लाइक और शेयर करें',
+      'आधिकारिक ग्रुप से जुड़ें और पोस्ट देखें',
+      'फेसबुक रील्स वीडियो पर लव रिएक्ट दें',
+      'बिजनेस पेज पर सकारात्मक 5-स्टार रिव्यू दें',
+      'शैक्षणिक पोस्ट पर लाइक और टिप्पणी करें',
+      'लाइव सेशन में शामिल हों और लव रिएक्ट दें',
+      'प्रमोशनल पोस्ट को लाइक और शेयर करें',
+      'मोटिवेशनल पोस्ट को लाइक करें',
+      'हाल के फोटो एलबम पर लाइक और कमेंट करें',
+      'दोस्तों को कम्युनिटी पेज पर इनवाइट करें',
+      'तकनीक अपडेट पोस्ट पर लाइक और कमेंट करें',
+      'हेल्थ टिप्स पोस्ट को टाइमलाइन पर शेयर करें',
+      'न्यूज लिंक पर क्लिक करें और पोस्ट लाइक करें',
+      'रेसिपी पोस्ट पर लव रिएक्ट दें',
+      'ट्रैवल पेज की तस्वीरों को लाइक करें',
+      'स्पोर्ट्स अपडेट पोस्ट को लाइक करें',
+      'विज्ञान संबंधी लेख को लाइक करें',
+      'रील्स वीडियो पूरा देखें और शेयर करें',
+      'ग्रुप चर्चा में सकारात्मक टिप्पणी करें',
+      'लाइफस्टाइल पेज को फॉलो करें',
+      'करियर टिप्स पोस्ट को लाइक करें',
+      'डिजिटल आर्ट पोस्ट पर लव रिएक्ट दें',
+      'किताब रिव्यू पोस्ट पर कमेंट करें',
+      'वीडियो कंटेंट को 3 मिनट तक देखें',
+      'पॉडकास्ट लाइवस्ट्रीम पोस्ट को लाइक करें',
+      'ऑफर और डिस्काउंट पोस्ट को लाइक करें',
+      'मोबाइल टिप्स पोस्ट को लाइक करें',
+      'कॉमेडी स्किट पर हास्य रिएक्ट दें',
+      'नई पहल के पेज पर शुभकामना कमेंट करें'
+    ]
+  }
 };
+
+function getPlatformTaskDescription(platform, index, lang) {
+  if (!lang) {
+    lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || 'en';
+  }
+  const plat = platformTaskDescriptions[platform] || platformTaskDescriptions.TikTok;
+  const list = plat[lang] || plat.en || plat.bn;
+  const idx = Math.abs(parseInt(index || 0, 10));
+  return list[idx % list.length];
+}
+window.getPlatformTaskDescription = getPlatformTaskDescription;
 
 let acceptedPlatformTasks = 0;
 let activePackageLevel = 'LV0';
@@ -3997,7 +4375,6 @@ function updateProfileMetrics() {
     return date >= startOfMonth && date <= now;
   });
 
-  // Calculation initialized to 0.00 as requested: "ক্যালকুলেশন ০০ করো"
   let currentUser = null;
   try {
     currentUser = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
@@ -4024,30 +4401,58 @@ function updateProfileMetrics() {
   setText('total-revenue-value', totalRevenueVal);
   setText('personal-earnings-value', personalBalanceVal);
 
-  setText('profile-balance-value', balanceText);
-  setText('profile-usdt-value', '0.000');
-  setText('total-balance-value', balanceText);
   const user = getCurrentUser();
+  const rate = getUsdExchangeRate(user); // 126 for BD, 84 for IN
+  const curr = getUserCurrency(user);
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+
+  // Conversion: 126 BDT = $1.00 USD; 84 INR = $1.00 USD
+  const profileUsdVal = (Number(currentBal) / rate).toFixed(2);
+  setText('profile-balance-value', balanceText);
+  setText('profile-usdt-value', profileUsdVal);
+  setText('total-balance-value', balanceText);
+
+  const rateBadge = lang === 'en'
+    ? `(Rate: $1 = ${rate} ${curr})`
+    : (lang === 'hi' ? `(दर: $1 = ${rate} ${curr})` : `(রেট: ১$ = ${rate === 126 ? '১২৬৳' : '৮৪₹'})`);
+  setText('profile-usd-rate-badge', rateBadge);
+
+  // 7 USD spans in 3x3 Grid
+  setText('personal-earnings-usd', '$' + (Number(personalBalanceVal) / rate).toFixed(2));
+  setText('yesterday-earnings-usd', '$' + (Number(yesterdayVal) / rate).toFixed(2));
+  setText('today-earnings-usd', '$' + (Number(todayVal) / rate).toFixed(2));
+  setText('weekly-earnings-usd', '$' + (Number(weeklyVal) / rate).toFixed(2));
+  setText('monthly-earnings-usd', '$' + (Number(monthlyVal) / rate).toFixed(2));
+  setText('last-month-earnings-usd', '$' + (Number(lastMonthVal) / rate).toFixed(2));
+  setText('total-revenue-usd', '$' + (Number(totalRevenueVal) / rate).toFixed(2));
+
+  // My Pass panel balance and USD equivalent
   const availBal = getAvailableBalance();
   const frozenVal = 0.00;
-  setText('my-pass-balance-value', (frozenVal + availBal).toFixed(2));
+  const passTotal = frozenVal + availBal;
+  const passUsd = (passTotal / rate).toFixed(2);
+  setText('my-pass-balance-value', passTotal.toFixed(2));
   setText('my-pass-frozen-value', frozenVal.toFixed(2));
   setText('my-pass-available-value', availBal.toFixed(2));
+  setText('my-pass-usd-subtext', `≈ $${passUsd} USD ${rateBadge}`);
+
   renderWithdrawalHistory();
 
-  // Completed missions count & remaining
+  // Completed missions count & remaining based on actual package quota
   const completedTodayCount = completedMissions.filter(function(m) {
     const d = getCompletedAt(m);
     return d && d >= startOfToday;
   }).length;
 
-  const remainingCount = missions.filter(function(m) {
-    return m.status === 'active' || m.status === 'review';
-  }).length;
+  const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
+  const currentLevelSetting = packageTaskSettings[currentLevel] || packageTaskSettings.LV0;
+  const totalDailyQuota = currentLevelSetting ? currentLevelSetting.count : 5;
+  const remainingTodayCount = Math.max(0, totalDailyQuota - completedTodayCount);
 
   setText('completed-tasks-value', String(completedTodayCount));
-  setText('remaining-tasks-value', String(remainingCount));
+  setText('remaining-tasks-value', String(remainingTodayCount));
 }
+window.updateProfileMetrics = updateProfileMetrics;
 
 function saveAcceptedMission(serverMission) {
   const missions = readAcceptedMissions();
@@ -4214,14 +4619,30 @@ function renderMissionRecords(filter) {
     complete: missions.filter(function(m) { return m.status === 'complete'; }).length,
     failed: missions.filter(function(m) { return m.status === 'failed'; }).length
   };
-  const activeCount = document.getElementById('mission-active-count');
-  if (activeCount) activeCount.textContent = '(' + counts.active + ')';
-  const reviewCount = document.getElementById('mission-review-count');
-  if (reviewCount) reviewCount.textContent = '(' + counts.review + ')';
-  const completeCount = document.getElementById('mission-complete-count');
-  if (completeCount) completeCount.textContent = '(' + counts.complete + ')';
-  const failedCount = document.getElementById('mission-failed-count');
-  if (failedCount) failedCount.textContent = '(' + counts.failed + ')';
+  const user = getCurrentUser();
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const curr = getUserCurrency(user);
+
+  const tabActive = document.querySelector('.mission-record-tab[data-mission-filter="active"]');
+  const tabReview = document.querySelector('.mission-record-tab[data-mission-filter="review"]');
+  const tabComplete = document.querySelector('.mission-record-tab[data-mission-filter="complete"]');
+  const tabFailed = document.querySelector('.mission-record-tab[data-mission-filter="failed"]');
+  if (tabActive) {
+    const lbl = lang === 'hi' ? 'चालू' : (lang === 'en' ? 'In Progress' : 'চলমান');
+    tabActive.innerHTML = `${lbl}<span id="mission-active-count">(${counts.active})</span>`;
+  }
+  if (tabReview) {
+    const lbl = lang === 'hi' ? 'समीक्षा' : (lang === 'en' ? 'Under Review' : 'পর্যালোচনা');
+    tabReview.innerHTML = `${lbl}<span id="mission-review-count">(${counts.review})</span>`;
+  }
+  if (tabComplete) {
+    const lbl = lang === 'hi' ? 'पूर्ण' : (lang === 'en' ? 'Completed' : 'সম্পন্ন');
+    tabComplete.innerHTML = `${lbl}<span id="mission-complete-count">(${counts.complete})</span>`;
+  }
+  if (tabFailed) {
+    const lbl = lang === 'hi' ? 'असफल' : (lang === 'en' ? 'Failed' : 'ব্যর্থ হয়েছে');
+    tabFailed.innerHTML = `${lbl}<span id="mission-failed-count">(${counts.failed})</span>`;
+  }
 
   document.querySelectorAll('.mission-record-tab').forEach(function(tab) {
     tab.setAttribute('aria-selected', String(tab.dataset.missionFilter === activeMissionFilter));
@@ -4236,14 +4657,14 @@ function renderMissionRecords(filter) {
   if (visibleMissions.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'dashboard-card px-5 py-12 text-center';
-    let emptyMsg = 'এই তালিকায় এখনো কোনো কাজ নেই।';
-    let subMsg = 'মিশন হল থেকে কাজ গ্রহণ করলে এখানে দেখা যাবে।';
+    let emptyMsg = lang === 'hi' ? 'इस सूची में अभी कोई कार्य नहीं है।' : (lang === 'en' ? 'No tasks in this list yet.' : 'এই তালিকায় এখনো কোনো কাজ নেই।');
+    let subMsg = lang === 'hi' ? 'मिशन हॉल से कार्य स्वीकार करने पर वे यहां दिखेंगे।' : (lang === 'en' ? 'Accept tasks from Mission Hall to see them here.' : 'মিশন হল থেকে কাজ গ্রহণ করলে এখানে দেখা যাবে।');
     if (activeMissionFilter === 'review') {
-      emptyMsg = 'বর্তমানে কোনো কাজ পর্যালোচনাধীন নেই।';
-      subMsg = 'চলমান কাজ জমা দিলে ৫-১০ মিনিট পর্যালোচনায় থাকবে।';
+      emptyMsg = lang === 'hi' ? 'वर्तमान में कोई कार्य समीक्षाधीन नहीं है।' : (lang === 'en' ? 'No tasks currently under review.' : 'বর্তমানে কোনো কাজ পর্যালোচনাধীন নেই।');
+      subMsg = lang === 'hi' ? 'चलते हुए कार्य सबमिट करने पर 5-10 मिनट तक समीक्षा में रहते हैं।' : (lang === 'en' ? 'Submitted tasks remain under review for 5-10 minutes.' : 'চলমান কাজ জমা দিলে ৫-১০ মিনিট পর্যালোচনায় থাকবে।');
     } else if (activeMissionFilter === 'complete') {
-      emptyMsg = 'এখনো কোনো কাজ সম্পূর্ণ হয়নি।';
-      subMsg = 'পর্যালোচনা শেষ হলে কাজগুলো এখানে সম্পন্ন হিসেবে দেখা যাবে।';
+      emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य पूर्ण नहीं हुआ है।' : (lang === 'en' ? 'No tasks completed yet.' : 'এখনো কোনো কাজ সম্পূর্ণ হয়নি।');
+      subMsg = lang === 'hi' ? 'समीक्षा पूरी होने के बाद कार्य यहाँ दिखेंगे।' : (lang === 'en' ? 'Completed tasks will appear here after review.' : 'পর্যালোচনা শেষ হলে কাজগুলো এখানে সম্পন্ন হিসেবে দেখা যাবে।');
     }
     empty.innerHTML = `<span class="text-3xl" aria-hidden="true">▤</span><p class="mt-3 text-sm font-semibold">${emptyMsg}</p><p class="mt-2 text-xs" style="color: var(--color-muted);">${subMsg}</p>`;
     list.appendChild(empty);
@@ -4263,15 +4684,22 @@ function renderMissionRecords(filter) {
       ? '—'
       : acceptedDate.getFullYear() + '-' + String(acceptedDate.getMonth() + 1).padStart(2, '0') + '-' + String(acceptedDate.getDate()).padStart(2, '0') + ' ' + String(acceptedDate.getHours()).padStart(2, '0') + ':' + String(acceptedDate.getMinutes()).padStart(2, '0');
 
+    const rewMoney = Number(mission.reward || 0);
+    const usdVal = formatUsd(rewMoney, user);
+    const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(rewMoney)}.০০` : `${rewMoney.toFixed(2)}`;
+
     let actionsHtml = '';
 
     if (mission.status === 'active') {
+      const statusLabel = lang === 'hi' ? 'चालू' : (lang === 'en' ? 'In Progress' : 'চলমান');
+      const cancelLabel = lang === 'hi' ? 'रद्द करें' : (lang === 'en' ? 'Cancel' : 'বাতিল করুন');
+      const submitLabel = lang === 'hi' ? 'जमा करें →' : (lang === 'en' ? 'Submit →' : 'জমা দিন →');
       actionsHtml = `
         <div class="mission-record-actions flex items-center justify-between gap-2 pt-2 border-t" style="border-color: var(--color-profile-border);">
-          <span class="text-xs px-2.5 py-1 rounded" style="background: rgba(37, 244, 238, 0.1); color: var(--color-profile-cyan);">চলমান</span>
+          <span class="text-xs px-2.5 py-1 rounded font-semibold" style="background: rgba(37, 244, 238, 0.1); color: var(--color-profile-cyan);">${statusLabel}</span>
           <div class="flex gap-2">
-            <button type="button" class="mission-cancel-button px-3 py-1.5 rounded text-xs font-semibold" style="border: 1px solid var(--color-profile-border); color: var(--color-muted);" data-cancel-mission>বাতিল করুন</button>
-            <button type="button" class="mission-submit-button px-4 py-1.5 rounded text-xs font-bold" style="background: var(--color-profile-cyan); color: #000;" data-open-submission>জমা দিন →</button>
+            <button type="button" class="mission-cancel-button px-3 py-1.5 rounded text-xs font-semibold cursor-pointer hover:bg-slate-800 transition" style="border: 1px solid var(--color-profile-border); color: var(--color-muted);" data-cancel-mission>${cancelLabel}</button>
+            <button type="button" class="mission-submit-button px-4 py-1.5 rounded text-xs font-bold cursor-pointer hover:opacity-90 active:scale-95 transition" style="background: var(--color-profile-cyan); color: #000;" data-open-submission>${submitLabel}</button>
           </div>
         </div>
       `;
@@ -4282,14 +4710,18 @@ function renderMissionRecords(filter) {
       const secs = remainingSec % 60;
       const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
 
+      const reviewLabel = lang === 'hi' ? 'समीक्षाधीन: शेष' : (lang === 'en' ? 'Under Review: Left' : 'পর্যালোচনাধীন: বাকি');
+      const minsLabel = lang === 'hi' ? 'मिनट' : (lang === 'en' ? 'mins' : 'মিনিট');
+      const approveLabel = lang === 'hi' ? 'स्वीकृत करें ⚡' : (lang === 'en' ? 'Approve Now ⚡' : 'অনুমোদন সম্পন্ন করুন ⚡');
+
       actionsHtml = `
         <div class="mission-card-review-bar mt-2 pt-2.5 border-t flex flex-wrap items-center justify-between gap-2" style="border-color: var(--color-profile-border);">
           <div class="flex items-center gap-2 text-xs font-semibold" style="color: #fbbf24;">
             <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-            <span>পর্যালোচনাধীন: বাকি <span class="review-timer-text font-mono font-bold" data-review-ends="${endsAt}">${timeStr}</span> মিনিট</span>
+            <span>${reviewLabel} <span class="review-timer-text font-mono font-bold" data-review-ends="${endsAt}">${timeStr}</span> ${minsLabel}</span>
           </div>
-          <button type="button" class="fast-approve-btn text-[11px] font-bold px-2.5 py-1 rounded transition cursor-pointer hover:opacity-90 active:scale-95" data-fast-approve="${mission.id}" style="background: rgba(37, 244, 238, 0.15); color: var(--color-profile-cyan); border: 1px solid rgba(37, 244, 238, 0.35);" title="পরীক্ষার জন্য এখনই সম্পন্ন করুন">
-            অনুমোদন সম্পন্ন করুন ⚡
+          <button type="button" class="fast-approve-btn text-[11px] font-bold px-2.5 py-1 rounded transition cursor-pointer hover:opacity-90 active:scale-95" data-fast-approve="${mission.id}" style="background: rgba(37, 244, 238, 0.15); color: var(--color-profile-cyan); border: 1px solid rgba(37, 244, 238, 0.35);" title="Instant approval">
+            ${approveLabel}
           </button>
         </div>
       `;
@@ -4297,29 +4729,26 @@ function renderMissionRecords(filter) {
       const compDate = new Date(mission.completedAt || Date.now());
       const compDateText = compDate.getFullYear() + '-' + String(compDate.getMonth() + 1).padStart(2, '0') + '-' + String(compDate.getDate()).padStart(2, '0') + ' ' + String(compDate.getHours()).padStart(2, '0') + ':' + String(compDate.getMinutes()).padStart(2, '0');
 
-      const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
-      const curr = getUserCurrency(user);
-      const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(mission.reward)}.০০` : `${mission.reward}.00`;
+      const compSuccessLabel = lang === 'hi' ? 'समीक्षा सफल — इनाम बैलेंस में जुड़ गया' : (lang === 'en' ? 'Review Successful — Reward credited' : 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে');
+      const compTimeLabel = lang === 'hi' ? 'पूर्ण होने का समय:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:');
 
       actionsHtml = `
         <div class="mission-card-complete-bar mt-2 pt-2.5 border-t flex items-center justify-between text-xs" style="border-color: var(--color-profile-border);">
           <span class="font-bold flex items-center gap-1.5" style="color: #34d399;">
-            <span>✓</span> ${lang === 'hi' ? 'समीक्षा सफल — इनाम बैलेंस में जुड़ गया' : (lang === 'en' ? 'Review Successful — Reward credited' : 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে')}
+            <span>✓</span> ${compSuccessLabel}
           </span>
-          <span class="font-bold" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr}</span>
+          <span class="font-bold font-mono" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr} <span class="text-[11px] text-emerald-400 font-semibold">($${usdVal})</span></span>
         </div>
-        <p class="text-[11px]" style="color: var(--color-muted);">${lang === 'hi' ? 'पूर्ण होने का समय:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:')} ${compDateText}</p>
+        <p class="text-[11px]" style="color: var(--color-muted);">${compTimeLabel} ${compDateText}</p>
       `;
     }
 
-    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
-    const curr = getUserCurrency(user);
-    const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(mission.reward)}.০০` : `${mission.reward}.00`;
     const rewLabel = lang === 'hi' ? 'इनाम' : (lang === 'en' ? 'Reward' : 'পুরস্কার');
     const taskLabel = lang === 'hi' ? 'कार्य:' : (lang === 'en' ? 'Task:' : 'কাজ:');
     const acceptLabel = lang === 'hi' ? 'स्वीकृति समय:' : (lang === 'en' ? 'Accepted at:' : 'গ্রহণের সময়:');
     const proofLabel = lang === 'hi' ? 'सबमिट किया गया प्रमाण:' : (lang === 'en' ? 'Submitted Proof:' : 'জমা দেওয়া প্রমাণ:');
     const previewLabel = lang === 'hi' ? 'प्रिव्यू देखें 🔍' : (lang === 'en' ? 'Preview 🔍' : 'প্রিভিউ দেখুন 🔍');
+    const descText = getPlatformTaskDescription(mission.platform, mission.taskIndex !== undefined ? mission.taskIndex : 0, lang) || mission.description;
 
     card.innerHTML = `
       <div class="mission-card-top flex items-center justify-between gap-3">
@@ -4332,11 +4761,11 @@ function renderMissionRecords(filter) {
         </div>
         <div class="text-right">
           <p class="text-[11px]" style="color: var(--color-muted);">${rewLabel}</p>
-          <p class="mission-reward font-bold text-base" style="color: var(--color-profile-cyan);">${rewFormatted} ${curr}</p>
+          <p class="mission-reward font-bold text-sm md:text-base font-mono" style="color: var(--color-profile-cyan);">${rewFormatted} ${curr} <span class="text-xs text-emerald-400 font-semibold">($${usdVal})</span></p>
         </div>
       </div>
       <div class="mission-card-details text-xs leading-5" style="color: var(--color-profile-text);">
-        <p>${taskLabel} <span class="font-medium">${mission.description}</span></p>
+        <p>${taskLabel} <span class="font-medium">${descText}</span></p>
         <p>${acceptLabel} <span style="color: var(--color-muted);">${dateText}</span></p>
         ${mission.screenshot ? `
         <div class="mt-1.5 flex items-center justify-between gap-2 pt-1 border-t" style="border-color: rgba(255,255,255,0.06);">
@@ -4352,6 +4781,7 @@ function renderMissionRecords(filter) {
     list.appendChild(card);
   });
 }
+window.renderMissionRecords = renderMissionRecords;
 
 function renderPackageTasks(level) {
   const platformTaskList = document.getElementById('platform-task-list');
@@ -4361,7 +4791,6 @@ function renderPackageTasks(level) {
   const user = getCurrentUser();
   const isUnlocked = isLevelUnlocked(activePackageLevel, user);
   const settings = packageTaskSettings[activePackageLevel];
-  const descriptions = platformTaskDescriptions[activePlatform] || platformTaskDescriptions.TikTok;
 
   const today = new Date().toDateString();
   const missions = readAcceptedMissions();
@@ -4371,10 +4800,10 @@ function renderPackageTasks(level) {
   const quotaLimit = settings.count;
   const isLimitReached = acceptedToday.length >= quotaLimit;
 
-  const TOTAL_TASKS_TO_DISPLAY = 25; // 25-30 tasks per package according to function
+  const TOTAL_TASKS_TO_DISPLAY = 25; // 25 tasks per package
   const rows = [];
 
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
   const curr = getUserCurrency(user);
 
   if (!isUnlocked) {
@@ -4427,6 +4856,12 @@ function renderPackageTasks(level) {
     const tierLabel = lang === 'hi' ? 'स्तर:' : (lang === 'en' ? 'Tier:' : 'স্তর:');
     const rewHeading = lang === 'hi' ? 'दैनिक पुरस्कार' : (lang === 'en' ? 'Daily Reward' : 'দৈনিক পুরস্কার');
     const rewVal = lang === 'bn' ? `${formatBanglaNumber(settings.reward)}.০০` : `${settings.reward}.00`;
+    const usdVal = formatUsd(settings.reward, user);
+    const progressLabel = lang === 'hi' ? 'प्रगति:' : (lang === 'en' ? 'Progress:' : 'অগ্রগতি:');
+    const progressVal = lang === 'bn'
+      ? `১০০০০০ / ৯${formatBanglaNumber(1200 + (i * 37) % 800)}`
+      : `100000 / 9${1200 + (i * 37) % 800}`;
+    const taskDesc = getPlatformTaskDescription(activePlatform, i, lang);
 
     const row = document.createElement('article');
     row.className = 'platform-task-row flex items-start gap-3 py-5';
@@ -4437,16 +4872,16 @@ function renderPackageTasks(level) {
       </span>
       <div class="min-w-0 flex-1">
         <h3 class="font-bold text-sm">${taskTitle}</h3>
-        <p class="mt-1 text-xs leading-5" style="color: var(--color-muted);">${typeLabel} ${descriptions[i % descriptions.length]}</p>
+        <p class="mt-1 text-xs leading-5" style="color: var(--color-muted);">${typeLabel} ${taskDesc}</p>
         <div class="mt-2 flex items-center gap-3 text-xs">
           <p>${tierLabel} <span class="platform-task-level">${activePackageLevel}</span></p>
-          <p style="color: var(--color-muted);">অগ্রগতি: <span class="font-semibold" style="color: var(--color-profile-text);">১০০০০০ / ৯${1200 + (i * 37) % 800}</span></p>
+          <p style="color: var(--color-muted);">${progressLabel} <span class="font-semibold" style="color: var(--color-profile-text);">${progressVal}</span></p>
         </div>
       </div>
       <div class="flex shrink-0 flex-col items-end gap-2.5">
         <div class="text-right">
           <p class="text-[10px]" style="color: var(--color-muted);">${rewHeading}</p>
-          <p class="font-bold text-sm" style="color: var(--color-profile-blue-text);">${rewVal} ${curr}</p>
+          <p class="font-bold text-sm font-mono" style="color: var(--color-profile-blue-text);">${rewVal} ${curr} <span class="text-xs font-semibold text-emerald-400">($${usdVal})</span></p>
         </div>
         <button type="button" class="${btnClass}" data-platform-accept ${btnDisabled ? 'disabled' : ''} ${extraAttr}>${btnText}</button>
       </div>
@@ -4473,6 +4908,7 @@ function renderPackageTasks(level) {
   }
   refreshDailyMissionLimit(activePackageLevel);
 }
+window.renderPackageTasks = renderPackageTasks;
 
 function compressMissionScreenshot(file) {
   return new Promise(function(resolve, reject) {
@@ -4506,6 +4942,7 @@ function renderMissionSubmission() {
 
   const user = getCurrentUser();
   const curr = getUserCurrency(user);
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
 
   const platformEl = document.getElementById('mission-submit-platform');
   if (platformEl) platformEl.textContent = mission.platform || 'YouTube';
@@ -4515,14 +4952,78 @@ function renderMissionSubmission() {
     platformIconEl.innerHTML = getPlatformSvg(mission.platform, 'h-5 w-5');
   }
 
+  // Reward formatted with local currency and USD equivalent
   const rewardEl = document.getElementById('mission-submit-reward');
   if (rewardEl) {
-    const rew = Number(mission.reward || 30).toFixed(2);
-    rewardEl.textContent = rew + ' ' + curr;
+    const rew = Number(mission.reward || 30);
+    const usd = formatUsd(rew, user);
+    rewardEl.textContent = `${rew.toFixed(2)} ${curr} ($${usd})`;
   }
 
+  // Localized task description
   const descEl = document.getElementById('mission-submit-description');
-  if (descEl) descEl.textContent = mission.description || 'পছন্দ লক্ষ্য করা';
+  if (descEl) {
+    const localizedDesc = getPlatformTaskDescription(mission.platform, mission.taskIndex !== undefined ? mission.taskIndex : 0, lang);
+    descEl.textContent = localizedDesc || mission.description || (lang === 'en' ? 'Like & Follow' : 'পছন্দ লক্ষ্য করা');
+  }
+
+  // Localized static labels
+  const titleLbl = document.getElementById('mission-submit-title-lbl');
+  if (titleLbl) titleLbl.textContent = lang === 'hi' ? 'कार्य शीर्षक:' : (lang === 'en' ? 'Task Title:' : 'টাস্ক শিরোনাম:');
+  const rewardLbl = document.getElementById('mission-submit-reward-lbl');
+  if (rewardLbl) rewardLbl.textContent = lang === 'hi' ? 'मिशन लाभ:' : (lang === 'en' ? 'Mission Benefit:' : 'মিশন সুবিধা:');
+  const descLbl = document.getElementById('mission-submit-desc-lbl');
+  if (descLbl) descLbl.textContent = lang === 'hi' ? 'मिशन विवरण:' : (lang === 'en' ? 'Mission Description:' : 'মিশনের বিবরণ:');
+  const linkLbl = document.getElementById('mission-submit-link-lbl');
+  if (linkLbl) linkLbl.textContent = lang === 'hi' ? 'कार्य लिंक:' : (lang === 'en' ? 'Task Link:' : 'টাস্ক লিঙ্ক:');
+  const createdLbl = document.getElementById('mission-submit-created-lbl');
+  if (createdLbl) createdLbl.textContent = lang === 'hi' ? 'बनाने का समय:' : (lang === 'en' ? 'Creation Time:' : 'সৃষ্টির সময়:');
+  const commentLbl = document.getElementById('mission-submit-comment-lbl');
+  if (commentLbl) commentLbl.textContent = lang === 'hi' ? 'टिप्पणी' : (lang === 'en' ? 'Comment' : 'মন্তব্য');
+
+  // Header translations
+  const backSpan = document.querySelector('#mission-submit-panel .personal-header-action span');
+  if (backSpan) backSpan.textContent = lang === 'hi' ? 'वापस जाएं' : (lang === 'en' ? 'Back' : 'ফিরে যান');
+  const headerTitle = document.querySelector('#mission-submit-panel h2');
+  if (headerTitle) headerTitle.textContent = lang === 'hi' ? 'मिशन विवरण' : (lang === 'en' ? 'Mission Details' : 'মিশন বিবরণ');
+  const closeSpan = document.querySelector('#mission-submit-panel button[title="কেটে দিন"] span');
+  if (closeSpan) closeSpan.textContent = lang === 'hi' ? 'बंद करें' : (lang === 'en' ? 'Close' : 'কেটে দিন');
+
+  // Localized golden rubber stamp
+  const stampEl = document.getElementById('mission-submit-stamp-text');
+  if (stampEl) {
+    stampEl.textContent = lang === 'hi' ? 'चालू' : (lang === 'en' ? 'IN PROGRESS' : 'চলমান');
+  }
+
+  // Localize buttons
+  const openBtn = document.getElementById('mission-submit-open');
+  if (openBtn) {
+    openBtn.textContent = lang === 'hi' ? 'लिंक खोलें' : (lang === 'en' ? 'Open Link' : 'খোলা সংযুক্তি');
+  }
+  const copyBtn = document.getElementById('mission-submit-copy');
+  if (copyBtn) {
+    copyBtn.textContent = lang === 'hi' ? 'कॉपी लिंक' : (lang === 'en' ? 'Copy Link' : 'অনুলিপি');
+  }
+  const confirmBtn = document.getElementById('mission-submit-confirm');
+  if (confirmBtn) {
+    confirmBtn.textContent = lang === 'hi' ? 'जमा करें' : (lang === 'en' ? 'Submit' : 'জমা');
+  }
+  const cancelBtn = document.getElementById('mission-submit-cancel');
+  if (cancelBtn) {
+    cancelBtn.textContent = lang === 'hi' ? 'रद्द करें' : (lang === 'en' ? 'Cancel' : 'বাতিল করুন');
+  }
+  const uploadLabel = document.getElementById('mission-upload-label');
+  if (uploadLabel) {
+    uploadLabel.innerHTML = lang === 'hi'
+      ? '<p>स्क्रीनशॉट</p><p>अपलोड</p><p>करें</p>'
+      : (lang === 'en' ? '<p>Upload</p><p>Screen-</p><p>shot</p>' : '<p>স্ক্রিনশট</p><p>আপলোড</p><p>করুন</p>');
+  }
+  const viewPreviewBtnEl = document.getElementById('btn-view-preview-modal');
+  if (viewPreviewBtnEl) {
+    viewPreviewBtnEl.innerHTML = lang === 'hi'
+      ? '<span>🔍 पूर्वावलोकन देखें</span>'
+      : (lang === 'en' ? '<span>🔍 View Preview</span>' : '<span>🔍 প্রিভিউ দেখুন</span>');
+  }
 
   const defaultUrl = mission.taskLink || getRealisticTaskUrl(mission.platform, mission.taskIndex || 0);
   const linkEl = document.getElementById('mission-submit-link');
@@ -4556,7 +5057,7 @@ function renderMissionSubmission() {
   const viewPreviewBtn = document.getElementById('btn-view-preview-modal');
   if (previewEl) {
     if (activeSubmissionImage) {
-      previewEl.innerHTML = `<img src="${activeSubmissionImage}" alt="স্ক্রিনশট" class="h-full w-full object-cover rounded cursor-pointer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;" title="পূর্ণ স্ক্রিনশট প্রিভিউ দেখতে ক্লিক করুন">`;
+      previewEl.innerHTML = `<img src="${activeSubmissionImage}" alt="Screenshot" class="h-full w-full object-cover rounded cursor-pointer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;" title="Click to view preview">`;
       if (removeImgBtn) removeImgBtn.classList.remove('hidden');
       if (viewPreviewBtn) {
         viewPreviewBtn.classList.remove('hidden');
@@ -4575,7 +5076,12 @@ function renderMissionSubmission() {
   if (fileStatus) fileStatus.textContent = '';
 
   const commentEl = document.getElementById('mission-submit-comment');
-  if (commentEl) commentEl.value = mission.userComment || '';
+  if (commentEl) {
+    commentEl.value = mission.userComment || '';
+    commentEl.placeholder = lang === 'hi'
+      ? 'कृपया यहां विवरण दर्ज करें...'
+      : (lang === 'en' ? 'Please enter comment here...' : 'দয়া করে এখানে প্রবেশ করুন...');
+  }
   const commentCount = document.getElementById('mission-submit-comment-count');
   if (commentCount) commentCount.textContent = commentEl ? commentEl.value.length : 0;
 
@@ -4586,6 +5092,7 @@ function renderMissionSubmission() {
 
   updateMissionSubmitButton();
 }
+window.renderMissionSubmission = renderMissionSubmission;
 
 function updateMissionSubmitButton() {
   const button = document.getElementById('mission-submit-confirm');
@@ -4594,6 +5101,22 @@ function updateMissionSubmitButton() {
   const link = linkEl ? linkEl.value.trim() : '';
   button.disabled = !link;
 }
+
+function refreshAllMissionsAndMetrics() {
+  updateProfileMetrics();
+  if (typeof renderMissionRecords === 'function') {
+    renderMissionRecords(activeMissionFilter);
+  }
+  if (typeof renderPackageTasks === 'function') {
+    renderPackageTasks(activePackageLevel);
+  }
+  if (typeof renderMissionSubmission === 'function') {
+    renderMissionSubmission();
+  }
+}
+window.refreshAllMissionsAndMetrics = refreshAllMissionsAndMetrics;
+
+
 
 // Open task link handler with iframe fallbacks
 function handleOpenTaskLink() {
@@ -4715,7 +5238,7 @@ function checkPendingReviews() {
         m.completedAt = new Date().toISOString();
         if (!m.rewardCredited) {
           m.rewardCredited = true;
-          totalReward += (Number(m.reward) || 30);
+          totalReward += (Number(m.reward) || (packageTaskSettings[m.level || 'LV0']?.reward || 20));
         }
         changed = true;
       }
@@ -5958,8 +6481,13 @@ document.addEventListener('click', function(event) {
   const acceptBtn = event.target.closest('[data-platform-accept]');
   if (acceptBtn) {
     const user = getCurrentUser();
+    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+
     if (activePackageLevel !== 'LV0' && !isLevelUnlocked(activePackageLevel, user)) {
-      openPackagePurchaseModal(activePackageLevel, 'ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ' + activePackageLevel + ' কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন।');
+      const lockWarning = lang === 'hi'
+        ? `मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${activePackageLevel} के कार्य करने के लिए बैलेंस से पैकेज खरीदें।`
+        : (lang === 'en' ? `Only LV0 tasks are free. Purchase package to perform ${activePackageLevel} tasks.` : `ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel} কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন।`);
+      openPackagePurchaseModal(activePackageLevel, lockWarning);
       return;
     }
     if (acceptBtn.disabled) return;
@@ -5972,14 +6500,17 @@ document.addEventListener('click', function(event) {
     });
 
     if (acceptedToday.length >= quota) {
+      const limitReachedWarning = lang === 'hi'
+        ? `⚠️ आज के ${activePackageLevel} पैकेज के ${quota} कार्यों की सीमा पूरी हो गई है!`
+        : (lang === 'en' ? `⚠️ Today's ${quota} task limit for ${activePackageLevel} has been reached!` : `আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে!`);
       const msg = document.getElementById('platform-task-message');
-      if (msg) msg.innerHTML = `<span style="color: var(--color-warning);">আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে!</span>`;
+      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${limitReachedWarning}</span>`;
       refreshDailyMissionLimit(activePackageLevel);
       return;
     }
 
-    const title = row ? row.querySelector('h3').textContent : (activePlatform + ' · কাজ');
-    const desc = row ? row.querySelector('p').textContent.replace('কাজের ধরন: ', '') : '';
+    const title = lang === 'hi' ? `${activePlatform} · कार्य ${taskIndex + 1}` : (lang === 'en' ? `${activePlatform} · Task ${taskIndex + 1}` : `${activePlatform} · কাজ ${taskIndex + 1}`);
+    const desc = getPlatformTaskDescription(activePlatform, taskIndex, lang);
     const reward = packageTaskSettings[activePackageLevel].reward;
     const taskLink = getRealisticTaskUrl(activePlatform, taskIndex);
 
@@ -5996,7 +6527,8 @@ document.addEventListener('click', function(event) {
       acceptedAt: new Date().toISOString()
     });
 
-    acceptBtn.textContent = 'গৃহীত';
+    const acceptedBtnText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
+    acceptBtn.textContent = acceptedBtnText;
     acceptBtn.disabled = true;
     acceptBtn.dataset.accepted = 'true';
     acceptBtn.removeAttribute('data-limit-reached');
@@ -6004,9 +6536,20 @@ document.addEventListener('click', function(event) {
     const newAcceptedCount = acceptedToday.length + 1;
     const msg = document.getElementById('platform-task-message');
     if (newAcceptedCount >= quota) {
-      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">অভিনন্দন! আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে।</span><br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন।</small>`;
+      const quotaFinishedMsg = lang === 'hi'
+        ? `🎉 बधाई! आज के ${activePackageLevel} स्तर के ${quota} कार्यों की सीमा पूरी हो गई है।<br><small style="color: var(--color-muted);">टास्क मेनू में जाकर कार्य सबमिट करें।</small>`
+        : (lang === 'en'
+          ? `🎉 Congratulations! Today's ${quota} task limit for ${activePackageLevel} has been reached.<br><small style="color: var(--color-muted);">Go to Task menu to submit tasks.</small>`
+          : `অভিনন্দন! আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে।<br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন।</small>`);
+      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${quotaFinishedMsg}</span>`;
     } else {
-      if (msg) msg.innerHTML = `কাজ গৃহীত হয়েছে! (আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${quota - newAcceptedCount}টি</strong>)`;
+      const remainingTasks = quota - newAcceptedCount;
+      const successMsg = lang === 'hi'
+        ? `कार्य स्वीकार किया गया! (आज के शेष कार्य: <strong style="color: var(--color-profile-cyan);">${remainingTasks}</strong>)`
+        : (lang === 'en'
+          ? `Task accepted! (Remaining tasks today: <strong style="color: var(--color-profile-cyan);">${remainingTasks}</strong>)`
+          : `কাজ গৃহীত হয়েছে! (আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${remainingTasks}টি</strong>)`);
+      if (msg) msg.innerHTML = successMsg;
     }
 
     refreshDailyMissionLimit(activePackageLevel);
@@ -6605,16 +7148,26 @@ function initApp() {
 
   // If no user session is active, set default demo user so visitor immediately sees the home dashboard & banners
   if (!savedUser) {
+    const isLatestIndia = isIndianUser(latestAccount);
+    const defLang = isLatestIndia ? ((latestAccount && latestAccount.language === 'en') ? 'en' : 'hi') : ((latestAccount && latestAccount.language) || 'bn');
     savedUser = {
-      name: (latestAccount && latestAccount.name) || 'সদস্য',
-      phone: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || '01735235999',
-      accountNumber: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || '01735235999',
+      name: (latestAccount && latestAccount.name) || (isLatestIndia ? 'सदस्य' : 'সদস্য'),
+      phone: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || (isLatestIndia ? '9876543210' : '01735235999'),
+      accountNumber: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || (isLatestIndia ? '9876543210' : '01735235999'),
       inviteCode: (latestAccount && latestAccount.inviteCode) || '728207',
       memberId: (latestAccount && latestAccount.memberId) || '1105',
       superiorId: '11',
-      packageLevel: 'LV0',
-      purchasedPackages: ['LV0'],
-      balance: 0.00
+      packageLevel: (latestAccount && latestAccount.packageLevel) || 'LV0',
+      purchasedPackages: (latestAccount && latestAccount.purchasedPackages) || ['LV0'],
+      balance: 0.00,
+      country: isLatestIndia ? 'IN' : 'BD',
+      countryName: isLatestIndia ? (defLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
+      countryNameEn: isLatestIndia ? 'India' : 'Bangladesh',
+      currency: isLatestIndia ? 'INR' : 'BDT',
+      currencySymbol: isLatestIndia ? '₹' : '৳',
+      currencyName: isLatestIndia ? 'Rupee' : 'Taka',
+      dialCode: isLatestIndia ? '+91' : '+880',
+      language: defLang
     };
     localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
   }
@@ -6633,7 +7186,13 @@ function initApp() {
     if (typeof savedUser.balance !== 'number') savedUser.balance = 0.00;
     localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
 
-    const userLang = localStorage.getItem('alo_lang') || savedUser.language || 'en';
+    const isUserInd = isIndianUser(savedUser);
+    let userLang = savedUser.language || localStorage.getItem('alo_lang');
+    if (isUserInd) {
+      if (!userLang || userLang === 'bn') userLang = 'hi';
+    } else {
+      if (!userLang) userLang = 'bn';
+    }
     if (typeof setAppLanguage === 'function') {
       setAppLanguage(userLang);
     }

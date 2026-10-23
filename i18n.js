@@ -709,23 +709,28 @@
     "ভাল": { en: "Good", hi: "अच्छा" },
     "চমৎকার": { en: "Excellent", hi: "उत्कृष्ट" },
     "ব্যক্তিগত ভারসাম্য": { en: "Personal Balance", hi: "व्यक्तिगत बैलेंस" },
-    "ব্যক্তিগত ভারসাম্য(BDT)": { en: "Personal Balance", hi: "व्यक्तिगत बैलेंस" },
-    "ব্যক্তিগত ভারসাম্য(INR)": { en: "Personal Balance", hi: "व्यक्तिगत बैलेंस" },
-    "গতকালের উপার্জন": { en: "Yesterday Earnings", hi: "कल की कमाई" },
-    "গতকালের উপার্জন(BDT)": { en: "Yesterday Earnings", hi: "कल की कमाई" },
-    "গতকালের উপার্জন(INR)": { en: "Yesterday Earnings", hi: "कल की कमाई" },
-    "আজ উপার্জন": { en: "Today Earnings", hi: "आज की कमाई" },
-    "আজ উপার্জন(BDT)": { en: "Today Earnings", hi: "आज की कमाई" },
-    "আজ উপার্জন(INR)": { en: "Today Earnings", hi: "आज की कमाई" },
-    "এই সপ্তাহে আয়": { en: "This Week Earnings", hi: "इस सप्ताह की आय" },
-    "এই সপ্তাহে আয়(BDT)": { en: "This Week Earnings", hi: "इस सप्ताह की आय" },
-    "এই সপ্তাহে আয়(INR)": { en: "This Week Earnings", hi: "इस सप्ताह की आय" },
-    "এই মাসে আয়": { en: "This Month Earnings", hi: "इस महीने की आय" },
-    "এই মাসে আয়(BDT)": { en: "This Month Earnings", hi: "इस महीने की आय" },
-    "এই মাসে আয়(INR)": { en: "This Month Earnings", hi: "इस महीने की आय" },
-    "গত মাসে আয়": { en: "Last Month Earnings", hi: "पिछले महीने की आय" },
-    "গত মাসে আয়(BDT)": { en: "Last Month Earnings", hi: "पिछले महीने की आय" },
-    "গত মাসে আয়(INR)": { en: "Last Month Earnings", hi: "पिछले महीने की आय" },
+    "ব্যক্তিগত ভারসাম্য(BDT)": { en: "Personal Balance(BDT)", hi: "व्यक्तिगत बैलेंस(BDT)" },
+    "ব্যক্তিগত ভারসাম্য(INR)": { en: "Personal Balance(INR)", hi: "व्यक्तिगत बैलेंस(INR)" },
+    "গতকালের উপার্জন": { en: "Yesterday's Income", hi: "कल की कमाई" },
+    "গতকালের উপার্জন(BDT)": { en: "Yesterday's Income(BDT)", hi: "कल की कमाई(BDT)" },
+    "গতকালের উপার্জন(INR)": { en: "Yesterday's Income(INR)", hi: "कल की कमाई(INR)" },
+    "গতকালকের উপার্জন": { en: "Yesterday's Income", hi: "कल की कमाई" },
+    "গতকালকের উপার্জন(BDT)": { en: "Yesterday's Income(BDT)", hi: "कल की कमाई(BDT)" },
+    "গতকালকের উপার্জন(INR)": { en: "Yesterday's Income(INR)", hi: "कल की कमाई(INR)" },
+    "আজ উপার্জন": { en: "Today's Income", hi: "आज की कमाई" },
+    "আজ উপার্জন(BDT)": { en: "Today's Income(BDT)", hi: "आज की कमाई(BDT)" },
+    "আজ উপার্জন(INR)": { en: "Today's Income(INR)", hi: "आज की कमाई(INR)" },
+    "এই সপ্তাহে আয়": { en: "This Week's Income", hi: "इस सप्ताह की आय" },
+    "এই সপ্তাহে আয়(BDT)": { en: "This Week's Income(BDT)", hi: "इस सप्ताह की आय(BDT)" },
+    "এই সপ্তাহে আয়(INR)": { en: "This Week's Income(INR)", hi: "इस सप्ताह की आय(INR)" },
+    "এই মাসে আয়": { en: "This Month's Income", hi: "इस महीने की आय" },
+    "এই মাসে আয়(BDT)": { en: "This Month's Income(BDT)", hi: "इस महीने की आय(BDT)" },
+    "এই মাসে আয়(INR)": { en: "This Month's Income(INR)", hi: "इस महीने की आय(INR)" },
+    "গত মাসে আয়": { en: "Last Month's Income", hi: "पिछले महीने की आय" },
+    "গত মাসে আয়(BDT)": { en: "Last Month's Income(BDT)", hi: "पिछले महीने की आय(BDT)" },
+    "গত মাসে আয়(INR)": { en: "Last Month's Income(INR)", hi: "पिछले महीने की आय(INR)" },
+    "মোট রাজস্ব(BDT)": { en: "Total Revenue(BDT)", hi: "कुल राजस्व(BDT)" },
+    "মোট রাজস্ব(INR)": { en: "Total Revenue(INR)", hi: "कुल राजस्व(INR)" },
     "কাজটি আজই সম্পূর্ণ করুন": { en: "Complete tasks today", hi: "कार्य आज ही पूरा करें" },
     "কাজটি আজই সম্পূর্ণ করুন(এক)": { en: "Tasks Completed Today", hi: "आज पूर्ण किए गए कार्य" },
     "আজকের জন্য বাকি কাজ": { en: "Remaining tasks for today", hi: "आज के शेष कार्य" },
@@ -766,9 +771,22 @@
     "লাইক ও অনুসরণ": { en: "Like & Follow", hi: "लाइक और फॉलो" },
     "সদস্যদের আপডেট": { en: "Member Updates", hi: "सदस्यों के अपडेट" },
     "সাম্প্রতিক সদস্য আপডেট": { en: "Recent Member Updates", hi: "हालिया सदस्य अपडेट" },
+    "আজ ৫টি মিশন সম্পন্ন করেছেন": { en: "Completed 5 missions today", hi: "आज 5 मिशन पूरे किए" },
     "আজ ৩টি মিশন সম্পন্ন করেছেন": { en: "Completed 3 missions today", hi: "आज 3 मिशन पूरे किए" },
     "আজ ২টি মিশন সম্পন্ন করেছেন": { en: "Completed 2 missions today", hi: "आज 2 मिशन पूरे किए" },
     "আজ ৪টি মিশন সম্পন্ন করেছেন": { en: "Completed 4 missions today", hi: "आज 4 मिशन पूरे किए" },
+    "আজ ৬টি মিশন সম্পন্ন করেছেন": { en: "Completed 6 missions today", hi: "आज 6 मिशन पूरे किए" },
+    "আজ ১২টি মিশন সম্পন্ন করেছেন": { en: "Completed 12 missions today", hi: "आज 12 मिशन पूरे किए" },
+    "সদস্য: ১৮****৫৪": { en: "Member: 18****54", hi: "सदस्य: 18****54" },
+    "সদস্য: ১৭****২৭": { en: "Member: 17****27", hi: "सदस्य: 17****27" },
+    "সদস্য: ১৩****২৯": { en: "Member: 13****29", hi: "सदस्य: 13****29" },
+    "সদস্য: ২১****৬৪": { en: "Member: 21****64", hi: "सदस्य: 21****64" },
+    "সদস্য: ১৯****০৮": { en: "Member: 19****08", hi: "सदस्य: 19****08" },
+    "+১০০.০০": { en: "+100.00", hi: "+100.00" },
+    "+৪০.০০": { en: "+40.00", hi: "+40.00" },
+    "+৬০.০০": { en: "+60.00", hi: "+60.00" },
+    "+১৮০.০০": { en: "+180.00", hi: "+180.00" },
+    "+৪৮০.০০": { en: "+480.00", hi: "+480.00" },
     "হল প্যাকেজ": { en: "Hall Packages", hi: "हॉल पैकेज" },
     "কাজের তালিকা খুলুন": { en: "Open Task List", hi: "कार्य सूची खोलें" },
     "দৈনিক কর্ম:": { en: "Daily Tasks:", hi: "दैनिक कार्य:" },
@@ -843,8 +861,9 @@
     "পেমেন্ট মেথড:": { en: "Payment Method:", hi: "भुगतान विधि:" },
     "বিকাশ": { en: "bKash", hi: "bKash / बैंक" },
     "নগদ": { en: "Nagad", hi: "Nagad / वॉलेट" },
-    "USDT / ডলার (Crypto)": { en: "USDT / Dollar (Crypto)", hi: "USDT / डॉलर (Crypto)" },
-    "USDT / ডলার": { en: "USDT / Dollar", hi: "USDT / डॉलर" },
+    "USDT (Crypto)": { en: "USDT (Crypto)", hi: "USDT (Crypto)" },
+    "USDT:": { en: "USDT:", hi: "USDT:" },
+    "USDT": { en: "USDT", hi: "USDT" },
     "ক্রিপ্টো": { en: "Crypto (USDT)", hi: "क्रिप्टो (USDT)" },
     "রিচার্জ সম্পন্ন করুন": { en: "Complete Recharge", hi: "रिचार्ज पूरा करें" },
     "ফ্রি স্তর": { en: "Free Tier", hi: "निःशुल्क स्तर" },
@@ -1002,44 +1021,116 @@
     "টাকা উত্তোলন সফল": { en: "Withdrawal Successful", hi: "निकासी सफल" },
     "টাকা উত্তোলন প্রক্রিয়াধীন": { en: "Withdrawal Processing", hi: "निकासी प्रक्रियाधीन" },
     "ন্যূনতম উত্তোলন ৩০০ টাকা": { en: "Minimum withdrawal is 300 BDT", hi: "न्यूनतम निकासी राशि निर्धारित है" },
-    "দেশ নির্বাচন করুন": { en: "দেশ নির্বাচন করুন", hi: "देश चुनें" },
-    "হিসাব নাম্বার": { en: "হিসাব নাম্বার", hi: "खाता संख्या" },
-    "আজকের মোট আয়": { en: "আজকের মোট আয়", hi: "आज की कुल आय" },
-    "আজকের কাজ আয়": { en: "আজকের কাজ আয়", hi: "आज की कार्य आय" },
-    "উপলব্ধ ব্যালेंस": { en: "উপলব্ধ ব্যালेंस", hi: "उपलब्ध बैलेंस" },
+    "দেশ নির্বাচন করুন": { en: "Select Country", hi: "देश चुनें" },
+    "হিসাব নাম্বার": { en: "Account Number", hi: "खाता संख्या" },
+    "আজকের মোট আয়": { en: "Today's Total Income", hi: "आज की कुल आय" },
+    "আজকের কাজ আয়": { en: "Today's Task Income", hi: "आज की कार्य आय" },
+    "উপলব্ধ ব্যালেন্স": { en: "Available Balance", hi: "उपलब्ध बैलेंस" },
+    "উপলব্ধ ব্যালेंस": { en: "Available Balance", hi: "उपलब्ध बैलेंस" },
     "দৈনিক আয়": { en: "Daily Income", hi: "दैनिक आय" },
     "দৈনিক লাভ": { en: "Daily Profit", hi: "दैनिक लाभ" },
     "মোট আয়:": { en: "Total Income:", hi: "कुल आय:" },
-    "মোট আয়": { en: "মোট আয়", hi: "कुल आय" },
+    "মোট আয়": { en: "Total Income", hi: "कुल आय" },
     "মোট লাভ": { en: "Total Profit", hi: "कुल लाभ" },
     "ক্রয় করা হয়েছে": { en: "Purchased", hi: "खरीदा गया" },
     "ক্রয় প্রয়োজন": { en: "Purchase Required", hi: "खरीद आवश्यक" },
     "ক্রয় প্রয়োজন 🔒": { en: "Purchase Required 🔒", hi: "खरीद आवश्यक 🔒" },
     "আনলকড ✓": { en: "Unlocked ✓", hi: "अनलॉक ✓" },
-    "আনলকড": { en: "আনলকড", hi: "अनलॉक" },
-    "দৈনিক কাজ": { en: "দৈনিক কাজ", hi: "दैनिक कार्य" },
-    "প্রতি কাজ": { en: "প্রতি কাজ", hi: "प्रति कार्य" },
-    "প্রতি কাজের আয়": { en: "প্রতি কাজের আয়", hi: "प्रति कार्य आय" },
-    "৫টি": { en: "৫টি", hi: "5" },
-    "৬টি": { en: "৬টি", hi: "6" },
-    "১২টি": { en: "১২টি", hi: "12" },
-    "১৫টি": { en: "১৫টি", hi: "15" },
-    "২৫টি": { en: "২৫টি", hi: "25" },
-    "৩৫টি": { en: "৩৫টি", hi: "35" },
-    "প্যাকেজ বিবরণ": { en: "প্যাকেজ বিবরণ", hi: "पैकेज विवरण" },
-    "বাস্তব টাকা নয়": { en: "বাস্তব টাকা নয়", hi: "वास्तविक धन नहीं है" },
+    "আনলকড": { en: "Unlocked", hi: "अनलॉक" },
+    "দৈনিক কাজ:": { en: "Daily Tasks:", hi: "दैनिक कार्य:" },
+    "দৈনিক কাজ": { en: "Daily Tasks", hi: "दैनिक कार्य" },
+    "প্রতি কাজ:": { en: "Per Task:", hi: "प्रति कार्य:" },
+    "প্রতি কাজ": { en: "Per Task", hi: "प्रति कार्य" },
+    "প্রতি কাজের আয়": { en: "Income Per Task", hi: "प्रति कार्य आय" },
+    "৫টি": { en: "5", hi: "5" },
+    "৬টি": { en: "6", hi: "6" },
+    "১২টি": { en: "12", hi: "12" },
+    "১৫টি": { en: "15", hi: "15" },
+    "২৫টি": { en: "25", hi: "25" },
+    "৩৫টি": { en: "35", hi: "35" },
+    "প্যাকেজ বিবরণ": { en: "Package Details", hi: "पैकेज विवरण" },
+    "বাস্তব টাকা নয়": { en: "Virtual credits, not real money", hi: "वास्तविक धन नहीं है" },
     "পরিমাণ": { en: "Amount", hi: "राशि" },
-    "টাকা প্রত্যাহারের সময়": { en: "টাকা প্রত্যাহারের সময়", hi: "निकासी के समय" },
+    "টাকা প্রত্যাহারের সময়": { en: "Withdrawal processing time", hi: "निकासी के समय" },
     "টাকার পরিমাণ লিখুন": { en: "Enter amount", hi: "राशि दर्ज करें" },
-    "ভাষা পরিবর্তন": { en: "ভাষা পরিবর্তন", hi: "भाषा बदलें" },
-    "ইংরেজি": { en: "ইংরেজি", hi: "English" },
-    "আপনার আমন্ত্রণ لنک": { en: "আপনার আমন্ত্রণ لنک", hi: "आपका निमंत्रण लिंक" },
-    "সঠিক বাংলাদেশি ১০-১১ ডিজিটের ফোন নম্বর লিখুন।": { en: "সঠিক বাংলাদেশি ১০-১১ ডিজিটের ফোন নম্বর লিখুন।", hi: "कृपया सही फ़ोन नंबर दर्ज करें।" },
-    "অনুগ্রহ করে সঠিক ফোন নম্বর লিখুন।": { en: "অনুগ্রহ করে সঠিক ফোন নম্বর লিখুন।", hi: "कृपया सही फ़ोन नंबर दर्ज करें।" },
-    "ফিরে যান": { en: "ফিরে যান", hi: "वापस जाएँ" },
+    "ভাষা পরিবর্তন": { en: "Change Language", hi: "भाषा बदलें" },
+    "ইংরেজি": { en: "English", hi: "English" },
+    "আপনার আমন্ত্রণ লিংক": { en: "Your Invitation Link", hi: "आपका निमंत्रण लिंक" },
+    "আপনার আমন্ত্রণ لنک": { en: "Your Invitation Link", hi: "आपका निमंत्रण लिंक" },
+    "সঠিক বাংলাদেশি ১০-১১ ডিজিটের ফোন নম্বর লিখুন।": { en: "Please enter a valid phone number.", hi: "कृपया सही फ़ोन नंबर दर्ज करें।" },
+    "অনুগ্রহ করে সঠিক ফোন নম্বর লিখুন।": { en: "Please enter a valid phone number.", hi: "कृपया सही फ़ोन नंबर दर्ज करें।" },
+    "ফিরে যান": { en: "Back", hi: "वापस जाएँ" },
     "ক্রয় করা হয়েছে ✓": { en: "Purchased ✓", hi: "खरीदा गया ✓" },
     "দৈনিক লাভ:": { en: "Daily Profit:", hi: "दैनिक लाभ:" },
-    "অনুগ্রহ করে আপনার দেশ নির্বাচন করুন।": { en: "Please select your country.", hi: "कृपया अपना देश चुनें।" }
+    "অনুগ্রহ করে আপনার দেশ নির্বাচন করুন।": { en: "Please select your country.", hi: "कृपया अपना देश चुनें।" },
+    "চলমান": { en: "In Progress", hi: "प्रगति पर" },
+    "পর্যালোচনা": { en: "Review", hi: "समीक्षा" },
+    "পর্যালোচনাধীন": { en: "Under Review", hi: "समीक्षाधीन" },
+    "পর্যালোচনাধীন:": { en: "Under Review:", hi: "समीक्षाधीन:" },
+    "পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে": { en: "Review Successful — Reward credited", hi: "समीक्षा सफल — इनाम बैलेंस में जुड़ गया" },
+    "সম্পন্নের সময়:": { en: "Completed at:", hi: "पूर्ण होने का समय:" },
+    "গ্রহণের সময়:": { en: "Accepted at:", hi: "स्वीकृति समय:" },
+    "জমা দেওয়া প্রমাণ:": { en: "Submitted Proof:", hi: "सबमिट किया गया प्रमाण:" },
+    "প্রিভিউ দেখুন 🔍": { en: "Preview 🔍", hi: "प्रिव्यू देखें 🔍" },
+    "অনুমোদন সম্পন্ন করুন ⚡": { en: "Approve Now ⚡", hi: "स्वीकृत करें ⚡" },
+    "অনুমোদন সম্পন্ন করুন": { en: "Approve Now", hi: "स्वीकृत करें" },
+    "এই স্তর থেকে কেটে বের হন (ভিআইপি হলে ফিরে যান)": { en: "Exit this tier (Return to VIP Hall)", hi: "इस स्तर से बाहर निकलें (वीआईपी हॉल पर लौटें)" },
+    "এই স্তর থেকে কেটে বের হন": { en: "Exit this tier", hi: "इस स्तर से बाहर निकलें" },
+    "ভিআইপি হলে ফিরে যান": { en: "Return to VIP Hall", hi: "वीआईपी हॉल पर लौटें" },
+    "মিশন স্তর": { en: "Mission Tier", hi: "मिशन स्तर" },
+    "মিশন তালিকা": { en: "Mission List", hi: "मिशन सूची" },
+    "টাস্ক মেনুতে গিয়ে কাজ জমা দিন।": { en: "Go to Tasks menu to submit proof.", hi: "टास्क मेनू में जाकर कार्य सबमिट करें।" },
+    "কাজ গৃহীত হয়েছে!": { en: "Task accepted!", hi: "कार्य स्वीकार किया गया!" },
+    "আজকের বাকি কাজ:": { en: "Remaining tasks today:", hi: "आज के शेष कार्य:" },
+    "সীমা পূর্ণ হয়েছে": { en: "Limit reached", hi: "सीमा पूर्ण हो गई" },
+    "সীমা পূর্ণ": { en: "Limit Reached", hi: "सीमा पूर्ण" },
+    "খোলা সংযুক্তি": { en: "Open Link", hi: "लिंक खोलें" },
+    "অনুলিপি": { en: "Copy", hi: "कॉपी" },
+    "সৃষ্টির সময়:": { en: "Created Time:", hi: "निर्माण समय:" },
+    "সৃষ্টির সময়": { en: "Created Time", hi: "निर्माण समय" },
+    "টাস্ক লিঙ্ক:": { en: "Task Link:", hi: "कार्य लिंक:" },
+    "টাস্ক শিরোনাম:": { en: "Task Title:", hi: "कार्य शीर्षक:" },
+    "মিশন সুবিধা:": { en: "Mission Reward:", hi: "मिशन इनाम:" },
+    "মিশনের বিবরণ:": { en: "Mission Details:", hi: "मिशन विवरण:" },
+    "দয়া করে এখানে প্রবেশ করুন...": { en: "Please enter here...", hi: "कृपया यहाँ दर्ज करें..." },
+    "দয়া করে এখানে প্রবেশ করুন": { en: "Please enter here", hi: "कृपया यहाँ दर्ज करें" },
+    "স্ক্রিনশট আপলোড করুন": { en: "Upload Screenshot", hi: "स्क्रीनशॉट अपलोड करें" },
+    "জমা দিন →": { en: "Submit →", hi: "सबमिट करें →" },
+    "জমা দিন": { en: "Submit", hi: "सबमिट करें" },
+    "জমা": { en: "Submit", hi: "सबमिट" },
+    "বাতিল করুন": { en: "Cancel", hi: "रद्द करें" },
+    "বাতিল": { en: "Cancel", hi: "रद्द करें" },
+    "কেটে দিন": { en: "Close", hi: "बंद करें" },
+    "লিংক সফলভাবে অনুলিপি (কপি) করা হয়েছে!": { en: "Link copied successfully!", hi: "लिंक सफलतापूर्वक कॉपी किया गया!" },
+    "কপি সম্পন্ন!": { en: "Copied!", hi: "कॉपी हो गया!" },
+    "লিংক নতুন ট্যাবে খোলা হচ্ছে।": { en: "Opening link in new tab.", hi: "लिंक नए टैब में खोला जा रहा है।" },
+    "সরাসরি এখানে ক্লিক করুন ↗": { en: "Click directly here ↗", hi: "सीधे यहाँ क्लिक करें ↗" },
+    "টাস্কের লিংক পাওয়া যায়নি!": { en: "Task link not found!", hi: "कार्य लिंक नहीं मिला!" },
+    "স্ক্রিনশট আপলোড করুন দয়া করে": { en: "Please upload a screenshot", hi: "कृपया स्क्रीनशॉट अपलोड करें" },
+    "মিশন সফলভাবে জমা দেওয়া হয়েছে!": { en: "Mission submitted successfully!", hi: "मिशन सफलतापूर्वक सबमिट किया गया!" },
+    "এখন এটি পর্যালোচনাধীন রয়েছে।": { en: "It is now under review.", hi: "अब यह समीक्षाधीन है।" },
+    "টাস্ক মেনুতে যান": { en: "Go to Tasks Menu", hi: "टास्क मेनू पर जाएँ" },
+    "ব্যক্তিগত ভারসাম্য": { en: "Personal Balance", hi: "व्यक्तिगत संतुलन" },
+    "গতকালের উপার্জন": { en: "Yesterday's Earnings", hi: "कल की कमाई" },
+    "আজ উপার্জন": { en: "Today's Earnings", hi: "आज की कमाई" },
+    "এই সপ্তাহে আয়": { en: "This Week's Earnings", hi: "इस सप्ताह की आय" },
+    "এই মাসে আয়": { en: "This Month's Earnings", hi: "इस महीने की आय" },
+    "গত মাসে আয়": { en: "Last Month's Earnings", hi: "पिछले महीने की आय" },
+    "কাজটি আজই সম্পূর্ণ করুন": { en: "Completed tasks today", hi: "आज पूरे किए गए कार्य" },
+    "কাজটি আজই সম্পূর্ণ করুন(এক)": { en: "Completed tasks today", hi: "आज पूरे किए गए कार्य" },
+    "আজকের জন্য বাকি কাজ": { en: "Remaining tasks today", hi: "आज के शेष कार्य" },
+    "আজকের জন্য বাকি কাজ(এক)": { en: "Remaining tasks today", hi: "आज के शेष कार्य" },
+    "ভারসাম্য:": { en: "Balance:", hi: "संतुलन:" },
+    "আমার পার্স": { en: "My Wallet", hi: "मेरा वॉलेट" },
+    "শিরোনাম": { en: "Tier", hi: "स्तर" },
+    "সীমা": { en: "Limit", hi: "सीमा" },
+    "ভাল": { en: "Good", hi: "अच्छा" },
+    "চমৎকার": { en: "Excellent", hi: "उत्कृष्ट" },
+    "বরফে পরিণত করা:": { en: "Frozen:", hi: "जमा (फ्रोज़न):" },
+    "উপলব্ধ:": { en: "Available:", hi: "उपलब्ध:" },
+    "স্থানান্তরিত": { en: "Transferred", hi: "स्थानांतरित" },
+    "প্রকৃত আগমন": { en: "Actual Received", hi: "वास्तविक प्राप्त" },
+    "লাভ শেয়ারিং অনুপাত": { en: "Profit Share Ratio", hi: "लाभ शेयर अनुपात" }
   };
 
   // Placeholders dictionary
@@ -1101,9 +1192,70 @@
     }
   };
 
+  function getCurrentCountryCode() {
+    try {
+      const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+      if (user) {
+        if (user.country === 'IN' || user.currency === 'INR' || user.dialCode === '+91' || user.countryNameEn === 'India' || user.countryName === 'India' || user.countryName === 'ইন্ডিয়া' || user.countryName === 'ভারত') {
+          return 'IN';
+        }
+        return 'BD';
+      }
+    } catch(e) {}
+    const regCode = document.getElementById('register-country-code');
+    if (regCode && regCode.value === 'IN') return 'IN';
+    const regSelect = document.getElementById('register-country-select');
+    if (regSelect && regSelect.value === 'IN') return 'IN';
+    return 'BD';
+  }
+
+  function getCountryAllowedLanguages(countryCode) {
+    const c = countryCode || getCurrentCountryCode();
+    // BD users: ONLY English (en) and Bengali (bn). Hindi (hi) is prohibited.
+    // IN users: ONLY English (en) and Hindi (hi). Bengali (bn) is prohibited.
+    return (c === 'IN') ? ['en', 'hi'] : ['en', 'bn'];
+  }
+
+  function syncCountryLanguageOptions(countryCode) {
+    const c = countryCode || getCurrentCountryCode();
+    const isIndia = (c === 'IN');
+    const allowed = isIndia ? ['en', 'hi'] : ['en', 'bn'];
+
+    if (!allowed.includes(currentLang)) {
+      currentLang = isIndia ? 'hi' : 'bn';
+      try {
+        localStorage.setItem('alo_lang', currentLang);
+        const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+        if (user) {
+          user.language = currentLang;
+          localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+        }
+      } catch(e) {}
+    }
+
+    const selectors = document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
+    selectors.forEach(function(sel) {
+      if (!sel) return;
+      const expectedHtml = isIndia
+        ? '<option value="en">English</option><option value="hi">हिन्दी</option>'
+        : '<option value="en">English</option><option value="bn">বাংলা</option>';
+      if (sel.innerHTML.trim() !== expectedHtml) {
+        sel.innerHTML = expectedHtml;
+      }
+      sel.value = currentLang;
+    });
+  }
+
   let currentLang = 'bn';
   try {
-    currentLang = localStorage.getItem('alo_lang') || 'bn';
+    const country = getCurrentCountryCode();
+    const isInd = (country === 'IN');
+    const storedLang = localStorage.getItem('alo_lang');
+    if (isInd) {
+      currentLang = (storedLang === 'en') ? 'en' : 'hi';
+    } else {
+      currentLang = (storedLang === 'en') ? 'en' : 'bn';
+    }
   } catch(e) {
     currentLang = 'bn';
   }
@@ -1131,12 +1283,7 @@
     }
 
     // 2. Synchronize all language selectors
-    const selectors = document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, .language-switcher, .page-language-switch');
-    selectors.forEach(function(sel) {
-      if (sel && sel.value !== lang) {
-        sel.value = lang;
-      }
-    });
+    syncCountryLanguageOptions();
 
     // 3. Update input placeholders
     Object.keys(placeholderMap).forEach(function(id) {
@@ -1236,16 +1383,35 @@
   }
 
   function setAppLanguage(newLang) {
-    if (!newLang || (newLang !== 'bn' && newLang !== 'en' && newLang !== 'hi')) {
-      newLang = 'bn';
+    const country = getCurrentCountryCode();
+    const allowed = getCountryAllowedLanguages(country);
+
+    if (!newLang || !allowed.includes(newLang)) {
+      newLang = (country === 'IN') ? 'hi' : 'bn';
     }
     currentLang = newLang;
     try {
       localStorage.setItem('alo_lang', newLang);
+      const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+      if (user) {
+        user.language = newLang;
+        localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      }
     } catch(e) {}
 
+    syncCountryLanguageOptions(country);
     translateDOM(newLang);
-    console.log('[i18n] Language set to:', newLang);
+
+    try {
+      if (typeof window.refreshAllMissionsAndMetrics === 'function') {
+        window.refreshAllMissionsAndMetrics();
+      }
+      if (typeof window.updateProfileMetrics === 'function') {
+        window.updateProfileMetrics();
+      }
+    } catch(e) {}
+
+    console.log('[i18n] Language set to:', newLang, 'Country:', country);
   }
 
   // Expose to window
@@ -1254,22 +1420,26 @@
     getLanguage: function() { return currentLang; },
     t: getTranslation,
     translateDOM: translateDOM,
-    translations: translations
+    translations: translations,
+    syncCountryLanguageOptions: syncCountryLanguageOptions,
+    getCurrentCountryCode: getCurrentCountryCode
   };
   window.setAppLanguage = setAppLanguage;
+  window.syncCountryLanguageOptions = syncCountryLanguageOptions;
   window.t = getTranslation;
 
   // Auto-bind change events on all language selectors
   function bindLanguageSelectors() {
-    document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, .page-language-switch, .language-switcher').forEach(function(sel) {
+    syncCountryLanguageOptions();
+    document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher').forEach(function(sel) {
       if (sel && !sel.dataset.i18nBound) {
         sel.dataset.i18nBound = 'true';
-        sel.value = currentLang;
         sel.addEventListener('change', function(e) {
           const selected = e.target.value;
           setAppLanguage(selected);
         });
       }
+      if (sel) sel.value = currentLang;
     });
   }
 
