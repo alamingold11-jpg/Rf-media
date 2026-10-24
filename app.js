@@ -1317,13 +1317,18 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
 }
 window.executeVipRewardClaim = executeVipRewardClaim;
 
-function forceScrollToTop() {
-  try {
-    window.scrollTo(0, 0);
-  } catch(e) {}
+function forceScrollToTop(targetPanelId) {
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    try {
+      document.activeElement.blur();
+    } catch(e) {}
+  }
   try {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  } catch(e) {}
+  } catch(e) {
+    try { window.scrollTo(0, 0); } catch(e2) {}
+  }
+  if (document.scrollingElement) document.scrollingElement.scrollTop = 0;
   if (document.documentElement) document.documentElement.scrollTop = 0;
   if (document.body) document.body.scrollTop = 0;
   const shell = document.querySelector('.dashboard-shell');
@@ -1332,6 +1337,13 @@ function forceScrollToTop() {
   if (mainEl) mainEl.scrollTop = 0;
   const dView = document.getElementById('dashboard-view');
   if (dView) dView.scrollTop = 0;
+  const panel = targetPanelId ? document.getElementById(targetPanelId) : document.querySelector('.dashboard-panel:not([hidden])');
+  if (panel) {
+    panel.scrollTop = 0;
+    try {
+      panel.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'instant' });
+    } catch(e) {}
+  }
 }
 
 function openDashboardPanel(panelName) {
@@ -1339,7 +1351,10 @@ function openDashboardPanel(panelName) {
     openManagerContactModal();
     return;
   }
-  forceScrollToTop();
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    try { document.activeElement.blur(); } catch(e) {}
+  }
+  forceScrollToTop(panelName + '-panel');
   const nextPanel = dashboardTitles[panelName] ? panelName : 'home';
   if (nextPanel !== 'payment-method' && nextPanel !== 'team-report' && nextPanel !== 'withdraw' && nextPanel !== 'withdraw-details') {
     previousDashboardPanel = nextPanel;
@@ -1424,10 +1439,11 @@ function openDashboardPanel(panelName) {
       updateTeamReportMetrics();
     }
   }
-  forceScrollToTop();
-  requestAnimationFrame(forceScrollToTop);
-  setTimeout(forceScrollToTop, 30);
-  setTimeout(forceScrollToTop, 100);
+  forceScrollToTop(nextPanel + '-panel');
+  requestAnimationFrame(function() { forceScrollToTop(nextPanel + '-panel'); });
+  setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 20);
+  setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 60);
+  setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 150);
 }
 
 function isIndianUser(user) {
@@ -2012,31 +2028,7 @@ if (loginForm) {
         });
       }
 
-      // Support demo login if default demo account is entered or testing
-      if (!account && (normPhone === '1735235999' || accounts.length === 0)) {
-        const isDemoIndia = (loginCountry.code === 'IN');
-        account = {
-          name: isDemoIndia ? 'सदस्य' : 'সদস্য',
-          phone: phoneInput || '01735235999',
-          accountNumber: phoneInput || '01735235999',
-          memberId: '1105',
-          inviteCode: '728207',
-          superiorId: '11',
-          packageLevel: 'LV0',
-          purchasedPackages: ['LV0'],
-          balance: 0.00,
-          country: loginCountry.code,
-          countryName: isDemoIndia ? 'भारत' : 'বাংলাদেশ',
-          countryNameEn: loginCountry.nameEn,
-          currency: loginCountry.currency,
-          currencySymbol: loginCountry.symbol,
-          currencyName: isDemoIndia ? 'Rupee' : 'টাকা',
-          dialCode: loginCountry.dialCode,
-          language: isDemoIndia ? 'hi' : 'bn'
-        };
-        // Save demo account to DB as well
-        dbSaveUser(account).catch(function() {});
-      } else if (!account || ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password))) {
+      if (!account || ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password))) {
         const isLoginInd = loginCountry.code === 'IN';
         if (message) message.textContent = isLoginInd ? 'अमान्य फ़ोन नंबर या पासवर्ड।' : ((window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.');
         return;
@@ -2143,21 +2135,6 @@ if (loginForm) {
   });
 }
 
-const quickDemoBtn = document.getElementById('quick-demo-login-btn');
-if (quickDemoBtn) {
-  quickDemoBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    const emailInp = document.getElementById('login-email');
-    const pwdInp = document.getElementById('login-password');
-    if (emailInp) emailInp.value = '01735235999';
-    if (pwdInp) pwdInp.value = '12345678';
-    const form = document.getElementById('login-form');
-    if (form) {
-      if (typeof form.requestSubmit === 'function') form.requestSubmit();
-      else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
-    }
-  });
-}
 
 function showRegistrationSuccess(phone, countryName, currencyCode, currencySymbol, lang) {
   const currentLang = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en') || 'en';
@@ -4732,12 +4709,12 @@ function renderMissionRecords(filter) {
       const compSuccessLabel = lang === 'hi' ? 'समीक्षा सफल — इनाम बैलेंस में जुड़ गया' : (lang === 'en' ? 'Review Successful — Reward credited' : 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে');
       const compTimeLabel = lang === 'hi' ? 'पूर्ण होने का समय:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:');
 
-      actionsHtml = `
+        actionsHtml = `
         <div class="mission-card-complete-bar mt-2 pt-2.5 border-t flex items-center justify-between text-xs" style="border-color: var(--color-profile-border);">
           <span class="font-bold flex items-center gap-1.5" style="color: #34d399;">
             <span>✓</span> ${compSuccessLabel}
           </span>
-          <span class="font-bold font-mono" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr} <span class="text-[11px] text-emerald-400 font-semibold">($${usdVal})</span></span>
+          <span class="font-bold font-mono" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr}</span>
         </div>
         <p class="text-[11px]" style="color: var(--color-muted);">${compTimeLabel} ${compDateText}</p>
       `;
@@ -4761,7 +4738,7 @@ function renderMissionRecords(filter) {
         </div>
         <div class="text-right">
           <p class="text-[11px]" style="color: var(--color-muted);">${rewLabel}</p>
-          <p class="mission-reward font-bold text-sm md:text-base font-mono" style="color: var(--color-profile-cyan);">${rewFormatted} ${curr} <span class="text-xs text-emerald-400 font-semibold">($${usdVal})</span></p>
+          <p class="mission-reward font-bold text-sm md:text-base font-mono" style="color: var(--color-profile-cyan);">${rewFormatted} ${curr}</p>
         </div>
       </div>
       <div class="mission-card-details text-xs leading-5" style="color: var(--color-profile-text);">
@@ -4881,7 +4858,7 @@ function renderPackageTasks(level) {
       <div class="flex shrink-0 flex-col items-end gap-2.5">
         <div class="text-right">
           <p class="text-[10px]" style="color: var(--color-muted);">${rewHeading}</p>
-          <p class="font-bold text-sm font-mono" style="color: var(--color-profile-blue-text);">${rewVal} ${curr} <span class="text-xs font-semibold text-emerald-400">($${usdVal})</span></p>
+          <p class="font-bold text-sm font-mono" style="color: var(--color-profile-blue-text);">${rewVal} ${curr}</p>
         </div>
         <button type="button" class="${btnClass}" data-platform-accept ${btnDisabled ? 'disabled' : ''} ${extraAttr}>${btnText}</button>
       </div>
@@ -4952,12 +4929,11 @@ function renderMissionSubmission() {
     platformIconEl.innerHTML = getPlatformSvg(mission.platform, 'h-5 w-5');
   }
 
-  // Reward formatted with local currency and USD equivalent
+  // Reward formatted with local currency without USD (USD calculation only in profile)
   const rewardEl = document.getElementById('mission-submit-reward');
   if (rewardEl) {
     const rew = Number(mission.reward || 30);
-    const usd = formatUsd(rew, user);
-    rewardEl.textContent = `${rew.toFixed(2)} ${curr} ($${usd})`;
+    rewardEl.textContent = `${rew.toFixed(2)} ${curr}`;
   }
 
   // Localized task description
@@ -5718,6 +5694,7 @@ document.addEventListener('click', function(event) {
   const dashMsgBtn = event.target.closest('[data-dashboard-message]');
   if (dashMsgBtn && !event.target.closest('#logout-button')) {
     event.preventDefault();
+    if (typeof dashMsgBtn.blur === 'function') dashMsgBtn.blur();
     const msg = dashMsgBtn.dataset.dashboardMessage;
     if (msg) showToastNotification(msg);
     return;
@@ -5727,6 +5704,7 @@ document.addEventListener('click', function(event) {
   const logoutClick = event.target.closest('#logout-button');
   if (logoutClick) {
     event.preventDefault();
+    if (typeof logoutClick.blur === 'function') logoutClick.blur();
     handleLogout();
     return;
   }
@@ -5734,6 +5712,8 @@ document.addEventListener('click', function(event) {
   // Navigation / Dashboard panel clicks
   const panelBtn = event.target.closest('[data-panel]');
   if (panelBtn) {
+    event.preventDefault();
+    if (typeof panelBtn.blur === 'function') panelBtn.blur();
     openDashboardPanel(panelBtn.dataset.panel);
     return;
   }
@@ -7031,35 +7011,6 @@ if (logoutBtn) {
   logoutBtn.addEventListener('click', handleLogout);
 }
 
-const demoLoginBtn = document.getElementById('quick-demo-login-btn');
-if (demoLoginBtn) {
-  demoLoginBtn.addEventListener('click', function() {
-    let accounts = [];
-    try { accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]'); } catch(e) {}
-    const latest = accounts.length > 0 ? accounts[accounts.length - 1] : null;
-    const regPhone = latest ? (latest.accountNumber || latest.phone || '01735235999') : '01735235999';
-    const demoUser = {
-      name: (latest && latest.name) || 'সদস্য',
-      phone: regPhone,
-      accountNumber: regPhone,
-      inviteCode: (latest && latest.inviteCode) || '728207',
-      memberId: (latest && latest.memberId) || '1105',
-      superiorId: '11',
-      packageLevel: (latest && latest.packageLevel) || 'LV0',
-      purchasedPackages: (latest && latest.purchasedPackages) || ['LV0'],
-      balance: (latest && typeof latest.balance === 'number') ? latest.balance : 0.00
-    };
-    localStorage.setItem('aloSignedInUser', JSON.stringify(demoUser));
-    updateUserDetails(demoUser);
-    updateProfileMetrics();
-    updateVipHallRooms();
-    updateRecordsPanelPackages();
-    playLoginSuccess(demoUser.name, function() {
-      openDashboardPanel('home');
-      showView('dashboard', 'zoom');
-    });
-  });
-}
 
 // PW Home Banner Carousel (3 Slides - Auto-change continually, Touch swipe OFF)
 let pwBannerCurrentIndex = 0;
@@ -7138,45 +7089,20 @@ function initApp() {
     savedUser = null;
   }
 
-  let accounts = [];
-  try {
-    accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-  } catch (e) {
-    accounts = [];
+  // Clear any legacy demo user session
+  if (savedUser && (savedUser.phone === '01735235999' || savedUser.phone === '9876543210' || savedUser.memberId === '1105')) {
+    localStorage.removeItem('aloSignedInUser');
+    savedUser = null;
   }
-  const latestAccount = accounts.length > 0 ? accounts[accounts.length - 1] : null;
 
-  // If no user session is active, set default demo user so visitor immediately sees the home dashboard & banners
-  if (!savedUser) {
-    const isLatestIndia = isIndianUser(latestAccount);
-    const defLang = isLatestIndia ? ((latestAccount && latestAccount.language === 'en') ? 'en' : 'hi') : ((latestAccount && latestAccount.language) || 'bn');
-    savedUser = {
-      name: (latestAccount && latestAccount.name) || (isLatestIndia ? 'सदस्य' : 'সদস্য'),
-      phone: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || (isLatestIndia ? '9876543210' : '01735235999'),
-      accountNumber: (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) || (isLatestIndia ? '9876543210' : '01735235999'),
-      inviteCode: (latestAccount && latestAccount.inviteCode) || '728207',
-      memberId: (latestAccount && latestAccount.memberId) || '1105',
-      superiorId: '11',
-      packageLevel: (latestAccount && latestAccount.packageLevel) || 'LV0',
-      purchasedPackages: (latestAccount && latestAccount.purchasedPackages) || ['LV0'],
-      balance: 0.00,
-      country: isLatestIndia ? 'IN' : 'BD',
-      countryName: isLatestIndia ? (defLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
-      countryNameEn: isLatestIndia ? 'India' : 'Bangladesh',
-      currency: isLatestIndia ? 'INR' : 'BDT',
-      currencySymbol: isLatestIndia ? '₹' : '৳',
-      currencyName: isLatestIndia ? 'Rupee' : 'Taka',
-      dialCode: isLatestIndia ? '+91' : '+880',
-      language: defLang
-    };
-    localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
-  }
+  // Clear demo accounts from local cache
+  try {
+    let accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
+    accounts = accounts.filter(a => (a.phone !== '01735235999' && a.accountNumber !== '01735235999' && a.memberId !== '1105'));
+    localStorage.setItem('aloAccounts', JSON.stringify(accounts));
+  } catch(e) {}
 
   if (savedUser) {
-    if (latestAccount && (latestAccount.accountNumber || latestAccount.phone)) {
-      savedUser.accountNumber = latestAccount.accountNumber || latestAccount.phone;
-      savedUser.phone = latestAccount.phone || latestAccount.accountNumber;
-    }
     if (!savedUser.purchasedPackages) {
       savedUser.purchasedPackages = ['LV0'];
     }
@@ -7206,6 +7132,9 @@ function initApp() {
     // Open HOME panel so the banner carousel is immediately visible on first load!
     openDashboardPanel('home');
     showView('dashboard');
+  } else {
+    // Show login view when not authenticated
+    showView('login');
   }
 
   // Handle incoming referral link query parameters (?invite=... or ?ref=...)

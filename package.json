@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "cp -f app.js i18n.js theme.css public/ 2>/dev/null || true; vite build",
+    "build": "cp -f app.js i18n.js supabase-init.js firebase-init.js theme.css public/ 2>/dev/null || true; vite build",
     "preview": "vite preview",
-    "lint": "node -c app.js && node -c i18n.js && node -c firebase-init.js"
+    "lint": "node -c app.js && node -c i18n.js && node -c firebase-init.js && node -c supabase-init.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "firebase": "^13.0.0",
     "lucide-react": "^0.344.0"
   },

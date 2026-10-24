@@ -46,8 +46,9 @@ html {
   scroll-behavior: auto;
 }
 
-.dashboard-shell:has(#vip-panel:not([hidden])) > header {
-  display: none;
+.dashboard-shell:has(#vip-panel:not([hidden])) > header,
+.dashboard-shell:has(#profile-panel:not([hidden])) > header {
+  display: none !important;
 }
 
 .hall-screen {
@@ -866,6 +867,38 @@ a {
   }
 }
 
+/* Authentic Bengali Typography, Font Selection & Line-Height Standards */
+html[lang="bn"],
+body[data-lang="bn"],
+.lang-bn,
+[lang="bn"] {
+  font-family: 'Noto Sans Bengali', 'Hind Siliguri', system-ui, -apple-system, sans-serif !important;
+  line-height: 1.5 !important;
+}
 
+html[lang="bn"] input,
+html[lang="bn"] select,
+html[lang="bn"] button,
+html[lang="bn"] label,
+html[lang="bn"] p,
+html[lang="bn"] h1,
+html[lang="bn"] h2,
+html[lang="bn"] h3,
+html[lang="bn"] span,
+html[lang="bn"] a {
+  line-height: 1.5 !important;
+}
 
+.login-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
 
+.login-btn-text {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
