@@ -47,8 +47,17 @@ html {
 }
 
 .dashboard-shell:has(#vip-panel:not([hidden])) > header,
-.dashboard-shell:has(#profile-panel:not([hidden])) > header {
+.dashboard-shell:has(#profile-panel:not([hidden])) > header,
+.dashboard-shell:has(#package-detail-panel:not([hidden])) > header,
+.dashboard-shell:has(#savings-plan-panel:not([hidden])) > header,
+.dashboard-shell:has(#package-detail-panel:not([hidden])) > nav {
   display: none !important;
+}
+
+.dashboard-shell:has(#package-detail-panel:not([hidden])),
+#dashboard-view:has(#package-detail-panel:not([hidden])) {
+  background-color: #030d24 !important;
+  background-image: none !important;
 }
 
 .hall-screen {
@@ -893,12 +902,59 @@ html[lang="bn"] a {
   font-size: 0.8125rem;
   font-weight: 600;
   line-height: 1.5;
+  letter-spacing: 0.015em;
+  color: #e2e8f0;
   white-space: nowrap;
 }
 
 .login-btn-text {
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 700;
   line-height: 1.5;
+  letter-spacing: 0.03em;
   white-space: nowrap;
+}
+
+/* 3D Flip Animation for Savings Plan (এনিমেশন দিয়ে উলটে যাওয়া) */
+.savings-flip-viewport {
+  perspective: 1400px;
+  width: 100%;
+}
+.savings-flip-card {
+  width: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.34, 1.25, 0.64, 1);
+}
+.savings-flip-card.is-flipped {
+  transform: rotateY(180deg);
+}
+.savings-flip-face {
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.savings-flip-front {
+  position: relative;
+  z-index: 2;
+}
+.savings-flip-back {
+  transform: rotateY(180deg);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1;
+}
+.savings-flip-card.is-flipped .savings-flip-back {
+  position: relative;
+  z-index: 3;
+}
+.savings-flip-card.is-flipped .savings-flip-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0s 0.4s;
 }

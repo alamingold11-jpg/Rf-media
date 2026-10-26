@@ -7,8 +7,8 @@
   <meta name="theme-color" content="#121212">
   <meta name="description" content="PW New Media - আপনার নির্ভরযোগ্য অনলাইন ইনভেস্টমেন্ট, রিবেট ও মিশন আর্নিং প্ল্যাটফর্ম">
   <title>PW New Media | ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম</title>
-  <link rel="icon" type="image/svg+xml" href="./pw_newmedia_logo.svg">
-  <link rel="apple-touch-icon" href="./pw_newmedia_logo.svg">
+  <link rel="icon" type="image/png" href="./pw_newmedia_brand_logo.png">
+  <link rel="apple-touch-icon" href="./pw_newmedia_brand_logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@
     <section id="home-view" class="page-view min-h-screen" aria-label="হোম" hidden>
       <header class="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 lg:px-8">
         <button type="button" class="brand-name flex items-center gap-2.5 text-xl font-bold tracking-tight" data-view="home" style="color: var(--color-text);">
-          <img src="./pw_newmedia_logo.svg" alt="PW New Media" class="h-10 w-10 rounded-xl shadow object-contain border border-[#3b52b4]/40">
+          <img src="./pw_newmedia_brand_logo.png" alt="PW New Media" class="h-10 w-10 rounded-xl shadow object-contain border border-[#3b52b4]/40">
           <span class="tracking-tight">PW New Media</span>
         </button>
         <nav class="flex items-center gap-2 sm:gap-3" aria-label="প্রধান নেভিগেশন">
@@ -98,48 +98,51 @@
     </section>
 
     <section id="login-view" class="page-view" aria-label="লগইন" hidden>
-      <div class="flex min-h-screen items-center justify-center px-4 py-8 bg-[#040e24] text-white">
-        <div class="w-full max-w-sm sm:max-w-md mx-auto">
-          <!-- Top Row: Logo Branding on Left, Language Dropdown Pill on Right -->
-          <div class="mb-8 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <img src="./pw_newmedia_logo.svg" alt="PW New Media Logo" class="h-13 w-13 sm:h-14 sm:w-14 rounded-2xl shadow-xl object-contain border border-[#3b52b4]/40 shrink-0">
-              <div class="text-left">
-                <span class="block text-xl sm:text-2xl font-bold tracking-tight text-white leading-tight">PW New Media</span>
-                <span class="block text-[10px] sm:text-[11px] font-bold text-[#35c6e7] tracking-wider uppercase mt-0.5">OFFICIAL MEDIA PLATFORM</span>
-              </div>
+      <div class="flex min-h-screen items-center justify-center px-4 py-8 bg-[#030816] text-white relative overflow-hidden">
+        <!-- Ambient backlight matching brand logo palette -->
+        <div class="pointer-events-none absolute -top-36 left-1/2 -translate-x-1/2 w-[540px] h-[320px] bg-gradient-to-b from-[#00d2ff]/12 via-[#0055d4]/8 to-transparent rounded-full blur-3xl" aria-hidden="true"></div>
+
+        <div class="w-full max-w-sm sm:max-w-md mx-auto relative z-10">
+          <!-- Top Bar: Logo (without redundant separate text) & Frosted Language Switcher -->
+          <div class="mb-8 flex items-center justify-between gap-4">
+            <div class="relative group">
+              <div class="absolute -inset-1 bg-gradient-to-r from-[#00d2ff]/35 via-[#0077fe]/25 to-[#004bbd]/20 rounded-2xl blur-md opacity-60 group-hover:opacity-90 transition duration-300"></div>
+              <img src="./pw_newmedia_brand_logo.png" alt="PW New Media" class="relative h-15 w-15 sm:h-16 sm:w-16 rounded-2xl shadow-xl object-contain bg-[#030816] shrink-0">
             </div>
 
-            <!-- Language Selector Pill -->
+            <!-- Borderless Frosted Language Selector Pill -->
             <div class="relative inline-flex items-center">
               <label class="sr-only" for="login-language-switch">Select Language</label>
-              <select id="login-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-[#0a1c44] hover:bg-[#10275c] text-white font-medium text-xs sm:text-sm py-2 pl-3.5 pr-8 rounded-xl border border-[#1b3b82] focus:outline-none focus:border-[#35c6e7] transition shadow-md" aria-label="Select Language">
-                <option value="bn" class="bg-[#07173d] text-white">বাংলা</option>
-                <option value="en" class="bg-[#07173d] text-white">English</option>
-              </select>
-              <svg class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <div class="relative flex items-center bg-[#08152e] hover:bg-[#0c224a] rounded-full transition shadow-md shadow-black/20 backdrop-blur-md">
+                <span class="pl-3 text-xs text-[#00d2ff] select-none">🌐</span>
+                <select id="login-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-xs sm:text-sm py-2 pl-2 pr-8 rounded-full focus:outline-none" aria-label="Select Language">
+                  <option value="bn" class="bg-[#050e21] text-white">বাংলা</option>
+                  <option value="en" class="bg-[#050e21] text-white">English</option>
+                </select>
+                <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
 
-          <!-- Welcome Back Header -->
+          <!-- Welcome Back Section (Clean typography, no border) -->
           <div class="mb-7 text-left">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight" data-i18n="login_welcome_back">Welcome back</h1>
-            <p class="mt-2 text-sm text-slate-400 leading-normal" data-i18n="login_subtitle">Log in to continue to your account.</p>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight" data-i18n="login_welcome_back">Welcome back</h1>
+            <p class="mt-1.5 text-xs sm:text-sm text-slate-400 font-normal leading-normal" data-i18n="login_subtitle">Log in to continue to your account.</p>
           </div>
 
-          <!-- Login Form -->
+          <!-- Login Form (Borderless, High-Tech Luxury Inputs) -->
           <form id="login-form" class="space-y-4" novalidate>
             <!-- Country Selector -->
             <div>
-              <label for="login-country-select" class="mb-1.5 block text-xs font-semibold text-slate-300 login-label" data-i18n="country_label">Country</label>
-              <div class="relative flex items-center bg-[#07173d] border border-[#1a3770] rounded-xl px-3.5 py-3 focus-within:border-[#35c6e7] transition shadow-inner">
+              <label for="login-country-select" class="mb-2 block text-xs font-semibold text-slate-200 tracking-wide login-label" data-i18n="country_label">Country</label>
+              <div class="relative flex items-center bg-[#08152e] hover:bg-[#0b1c3e] focus-within:bg-[#0d224d] rounded-xl px-4 py-3.5 transition-all duration-200 shadow-inner focus-within:ring-2 focus-within:ring-[#00d2ff]/40">
                 <select id="login-country-select" class="w-full bg-transparent border-0 text-sm font-semibold text-white cursor-pointer outline-none appearance-none pr-8" style="color-scheme: dark;">
-                  <option value="BD" class="bg-[#07173d] text-white" selected data-i18n="country_bd">Bangladesh (+880)</option>
-                  <option value="IN" class="bg-[#07173d] text-white" data-i18n="country_in">India (+91)</option>
+                  <option value="BD" class="bg-[#050e21] text-white" selected data-i18n="country_bd">Bangladesh (+880)</option>
+                  <option value="IN" class="bg-[#050e21] text-white" data-i18n="country_in">India (+91)</option>
                 </select>
-                <svg class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
@@ -147,36 +150,34 @@
 
             <!-- Phone Number Input -->
             <div>
-              <label for="login-email" class="mb-1.5 block text-xs font-semibold text-slate-300 login-label" data-i18n="phone_label">Phone number</label>
-              <div class="flex items-center bg-[#07173d] border border-[#1a3770] rounded-xl overflow-hidden focus-within:border-[#35c6e7] transition shadow-inner">
-                <div class="flex items-center gap-2 pl-3.5 pr-3 py-3 select-none shrink-0 border-r border-[#1a3770]/80">
-                  <!-- Phone handset SVG icon -->
-                  <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <label for="login-email" class="mb-2 block text-xs font-semibold text-slate-200 tracking-wide login-label" data-i18n="phone_label">Phone number</label>
+              <div class="flex items-center bg-[#08152e] hover:bg-[#0b1c3e] focus-within:bg-[#0d224d] rounded-xl overflow-hidden transition-all duration-200 shadow-inner focus-within:ring-2 focus-within:ring-[#00d2ff]/40">
+                <div class="flex items-center gap-2 pl-4 pr-3.5 py-3.5 select-none shrink-0 bg-[#0a1936]/60">
+                  <svg class="w-4 h-4 text-[#00d2ff]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <span id="login-phone-prefix" class="font-bold text-sm text-[#35c6e7]">+880</span>
+                  <span id="login-phone-prefix" class="font-bold text-sm text-[#00d2ff]">+880</span>
                 </div>
-                <input class="flex-1 bg-transparent px-3 py-3 text-sm text-white placeholder-slate-500 focus:outline-none min-w-0" type="tel" id="login-email" name="phone" inputmode="tel" data-i18n-placeholder="phone_placeholder" placeholder="Enter your phone number" autocomplete="tel">
+                <input class="flex-1 bg-transparent px-3.5 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none min-w-0" type="tel" id="login-email" name="phone" inputmode="tel" data-i18n-placeholder="phone_placeholder" placeholder="Enter your phone number" autocomplete="tel">
               </div>
             </div>
 
             <!-- Password Input with Forgot Password & Eye Toggle -->
             <div>
-              <div class="mb-1.5 flex items-center justify-between gap-3">
-                <label for="login-password" class="text-xs font-semibold text-slate-300 login-label" data-i18n="password_label">Password</label>
-                <button type="button" class="text-xs font-medium text-[#35c6e7] hover:underline cursor-pointer" data-message="Password reset is not available here." data-i18n="forgot_password">Forgot password?</button>
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label for="login-password" class="text-xs font-semibold text-slate-200 tracking-wide login-label" data-i18n="password_label">Password</label>
+                <button type="button" class="text-xs font-semibold text-[#00d2ff] hover:text-[#38bdf8] transition-colors cursor-pointer" data-message="Password reset is not available here." data-i18n="forgot_password">Forgot password?</button>
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex-1 flex items-center bg-[#07173d] border border-[#1a3770] rounded-xl overflow-hidden focus-within:border-[#35c6e7] transition shadow-inner px-3.5 py-3">
-                  <!-- Lock SVG icon -->
-                  <svg class="w-4 h-4 text-slate-300 shrink-0 mr-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <div class="flex-1 flex items-center bg-[#08152e] hover:bg-[#0b1c3e] focus-within:bg-[#0d224d] rounded-xl overflow-hidden transition-all duration-200 shadow-inner focus-within:ring-2 focus-within:ring-[#00d2ff]/40 px-4 py-3.5">
+                  <svg class="w-4 h-4 text-[#00d2ff] shrink-0 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0110 0v4" />
                   </svg>
                   <input class="flex-1 bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none min-w-0" type="password" id="login-password" name="password" data-i18n-placeholder="password_placeholder" placeholder="Enter your password" autocomplete="current-password">
                 </div>
                 <!-- Eye Toggle Button -->
-                <button type="button" id="login-toggle-password-btn" class="h-11.5 w-11.5 flex items-center justify-center bg-[#07173d] hover:bg-[#0c2357] border border-[#1a3770] rounded-xl text-slate-300 hover:text-white transition cursor-pointer shrink-0" aria-label="Toggle password visibility" data-toggle-password="login-password">
+                <button type="button" id="login-toggle-password-btn" class="h-12 w-12 flex items-center justify-center bg-[#08152e] hover:bg-[#0d224d] rounded-xl text-slate-300 hover:text-white transition-colors cursor-pointer shrink-0 shadow-inner" aria-label="Toggle password visibility" data-toggle-password="login-password">
                   <svg class="w-5 h-5 eye-open-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -189,15 +190,18 @@
             </div>
 
             <!-- Keep me logged in -->
-            <label class="flex cursor-pointer items-center gap-2.5 text-xs sm:text-sm text-slate-300 pt-1 select-none">
-              <input type="checkbox" id="login-remember-me" class="h-4 w-4 rounded bg-[#07173d] border-[#1a3770] text-[#35c6e7] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#103b82]" checked>
+            <label class="flex cursor-pointer items-center gap-2.5 text-xs sm:text-sm text-slate-300 pt-1 select-none hover:text-white transition-colors">
+              <input type="checkbox" id="login-remember-me" class="h-4 w-4 rounded bg-[#08152e] border-0 text-[#00d2ff] focus:ring-0 focus:ring-offset-0 cursor-pointer accent-[#0077fe]" checked>
               <span data-i18n="keep_logged_in">Keep me logged in</span>
             </label>
 
-            <!-- Submit Button -->
-            <div class="pt-2">
-              <button type="submit" id="login-submit-btn" class="w-full py-3.5 rounded-xl font-bold text-sm sm:text-base text-white bg-[#103b82] hover:bg-[#154699] active:scale-[0.98] transition shadow-lg shadow-blue-900/30 cursor-pointer flex items-center justify-center">
-                <span data-i18n="login_btn" class="login-btn-text">Log in</span>
+            <!-- Professional Submit Button Matching Logo Gradient -->
+            <div class="pt-3">
+              <button type="submit" id="login-submit-btn" class="group w-full py-3.5 px-6 rounded-xl font-bold text-base text-white bg-gradient-to-r from-[#00d2ff] via-[#0077fe] to-[#0055d4] hover:from-[#1ed6ff] hover:to-[#0062f2] active:scale-[0.985] transition-all duration-200 shadow-[0_8px_25px_rgba(0,140,255,0.38)] hover:shadow-[0_10px_32px_rgba(0,180,255,0.5)] cursor-pointer flex items-center justify-center gap-2">
+                <span data-i18n="login_btn" class="login-btn-text tracking-wide">Log in</span>
+                <svg class="w-5 h-5 text-white/90 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
               </button>
             </div>
 
@@ -208,14 +212,14 @@
           <!-- New here? Create an account -->
           <div class="mt-6 text-center text-xs sm:text-sm text-slate-400">
             <span data-i18n="new_here">New here?</span>
-            <button type="button" class="ml-1 font-semibold text-[#35c6e7] hover:underline cursor-pointer" data-view="register" data-i18n="create_account">Create an account</button>
+            <button type="button" class="ml-1 font-semibold text-[#00d2ff] hover:text-[#38bdf8] hover:underline cursor-pointer transition-colors" data-view="register" data-i18n="create_account">Create an account</button>
           </div>
 
           <!-- Footer Links: Terms of Service · Privacy Policy -->
-          <footer class="mt-12 text-center text-xs text-slate-500">
-            <a href="javascript:void(0)" class="hover:text-slate-400 transition" data-i18n="terms_service">Terms of Service</a>
-            <span class="mx-1.5 opacity-60">·</span>
-            <a href="javascript:void(0)" class="hover:text-slate-400 transition" data-i18n="privacy_policy">Privacy Policy</a>
+          <footer class="mt-10 text-center text-xs text-slate-500">
+            <a href="javascript:void(0)" class="hover:text-slate-400 transition-colors" data-i18n="terms_service">Terms of Service</a>
+            <span class="mx-2 opacity-50">·</span>
+            <a href="javascript:void(0)" class="hover:text-slate-400 transition-colors" data-i18n="privacy_policy">Privacy Policy</a>
           </footer>
         </div>
       </div>
@@ -234,7 +238,7 @@
             </select>
           </div>
           <div class="phone-register-brand flex items-center gap-2.5 mb-2">
-            <img src="./pw_newmedia_logo.svg" alt="PW New Media" class="h-9 w-9 rounded-xl shadow-lg object-contain border border-[#3b52b4]/40">
+            <img src="./pw_newmedia_brand_logo.png" alt="PW New Media" class="h-10 w-10 rounded-xl shadow-lg object-contain bg-[#060b17] border border-[#35c6e7]/40">
             <span class="text-xl font-bold tracking-tight text-white">PW New Media</span>
           </div>
           <h1>Welcome to Registration</h1>
@@ -355,7 +359,7 @@
               <!-- Top Bar: Support chat icon (left) & আমার উচ্চতর: 11 (center) -->
               <div class="px-4 pt-4 pb-2 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <img src="./pw_newmedia_logo.svg" alt="PW New Media" class="h-7 w-7 rounded-lg shadow-sm object-contain border border-[#3b52b4]/40">
+                  <img src="./pw_newmedia_brand_logo.png" alt="PW New Media" class="h-7 w-7 rounded-lg shadow-sm object-contain border border-[#3b52b4]/40">
                   <button type="button" class="text-white hover:opacity-80 transition cursor-pointer p-1" aria-label="সাপোর্ট চ্যাট" data-dashboard-message="অনলাইন গ্রাহক সেবা সহায়তা শীঘ্রই চালু হবে।">
                     <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
                       <path fill-rule="evenodd" d="M4.804 21.644A6.707 6.707 0 0 0 6 21.75a6.721 6.721 0 0 0 3.583-1.029c.774.182 1.584.279 2.417.279 5.322 0 9.75-3.97 9.75-9s-4.428-9-9.75-9c-5.322 0-9.75 3.97-9.75 9 0 2.409 1.025 4.587 2.674 6.192.232.226.277.428.254.543a3.73 3.73 0 0 1-.814 1.686.75.75 0 0 0 .444 1.223ZM9 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm4 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" clip-rule="evenodd" />
@@ -608,7 +612,7 @@
                       </button>
 
                       <!-- ৬. সঞ্চয় পরিকল্পনা -->
-                      <button type="button" class="w-full flex items-center justify-between h-[34px] min-h-[34px] transition-opacity active:opacity-70 text-left cursor-pointer bg-transparent border-0 p-0 shadow-none outline-none focus:outline-none" style="background: transparent; border: none; padding: 0; box-shadow: none;" data-dashboard-message="সঞ্চয় পরিকল্পনার বিস্তারিত এখানে উপলভ্য নয়।">
+                      <button type="button" class="w-full flex items-center justify-between h-[34px] min-h-[34px] transition-opacity active:opacity-70 text-left cursor-pointer bg-transparent border-0 p-0 shadow-none outline-none focus:outline-none" style="background: transparent; border: none; padding: 0; box-shadow: none;" data-panel="savings-plan">
                         <div class="flex items-center gap-[16px] min-w-0">
                           <svg viewBox="0 0 24 24" class="w-[23px] h-[23px] shrink-0 text-[#a78bfa]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"/>
@@ -2503,7 +2507,10 @@
             <article class="dashboard-card overflow-hidden p-4 relative" data-record-package="LV0" style="border-color: #1e3a8a; background: linear-gradient(120deg, #0e2764, #08173d); color: var(--color-primary-contrast); box-shadow: 0 8px 24px rgba(14,39,100,0.3);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sky-500/20 text-[#38bdf8]">ফ্রি স্তর</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-sky-500/20 hover:bg-sky-500/30 text-[#38bdf8] transition cursor-pointer select-none" data-view-details="LV0" aria-label="LV0 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV0</p>
                   <h3 class="mt-0.5 text-xl font-bold">০ BDT (ফ্রি)</h3>
                 </div>
@@ -2531,7 +2538,10 @@
             <article class="dashboard-card overflow-hidden p-4" data-record-package="LV1" style="border-color: var(--color-vip-card-blue); background: linear-gradient(120deg, var(--color-vip-card-blue), var(--color-profile-blue)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-profile-blue) 28%, transparent);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white">বেসিক প্যাকেজ</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white transition cursor-pointer select-none" data-view-details="LV1" aria-label="LV1 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV1</p>
                   <h3 class="mt-0.5 text-xl font-bold">৩,৫০০ BDT</h3>
                 </div>
@@ -2559,7 +2569,10 @@
             <article class="dashboard-card overflow-hidden p-4" data-record-package="LV2" style="border-color: var(--color-vip-card-sand); background: linear-gradient(120deg, var(--color-vip-card-sand), var(--color-vip-muted)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-vip-muted) 24%, transparent);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white">স্ট্যান্ডার্ড প্যাকেজ</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white transition cursor-pointer select-none" data-view-details="LV2" aria-label="LV2 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV2</p>
                   <h3 class="mt-0.5 text-xl font-bold">৭,৫০০ BDT</h3>
                 </div>
@@ -2587,7 +2600,10 @@
             <article class="dashboard-card overflow-hidden p-4" data-record-package="LV3" style="border-color: var(--color-vip-frame); background: linear-gradient(120deg, var(--color-vip-frame), var(--color-primary)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-vip-frame) 30%, transparent);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white">সিলভার প্যাকেজ</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white transition cursor-pointer select-none" data-view-details="LV3" aria-label="LV3 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV3</p>
                   <h3 class="mt-0.5 text-xl font-bold">৩৬,০০০ BDT</h3>
                 </div>
@@ -2615,7 +2631,10 @@
             <article class="dashboard-card overflow-hidden p-4" data-record-package="LV4" style="border-color: var(--color-profile-blue-text); background: linear-gradient(120deg, var(--color-profile-blue), var(--color-profile-bg)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-profile-blue-text) 26%, transparent);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white">গোল্ড প্যাকেজ</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white transition cursor-pointer select-none" data-view-details="LV4" aria-label="LV4 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV4</p>
                   <h3 class="mt-0.5 text-xl font-bold">৮৪,০০০ BDT</h3>
                 </div>
@@ -2643,7 +2662,10 @@
             <article class="dashboard-card overflow-hidden p-4" data-record-package="LV5" style="border-color: var(--color-vip-card-purple); background: linear-gradient(120deg, var(--color-vip-card-purple), var(--color-profile-blue)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-vip-card-purple) 28%, transparent);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white">প্রিমিয়াম প্যাকেজ</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white transition cursor-pointer select-none" data-view-details="LV5" aria-label="LV5 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV5</p>
                   <h3 class="mt-0.5 text-xl font-bold">১,৫০,০০০ BDT</h3>
                 </div>
@@ -2671,7 +2693,10 @@
             <article class="dashboard-card overflow-hidden p-4" data-record-package="LV6" style="border-color: var(--color-profile-cyan); background: linear-gradient(120deg, var(--color-profile-cyan), var(--color-profile-blue)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-profile-cyan) 26%, transparent);">
               <div class="flex items-start justify-between gap-3">
                 <div>
-                  <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white">এলিট প্যাকেজ</span>
+                  <button type="button" class="package-view-details-btn inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-medium bg-white/10 hover:bg-white/20 text-sky-200 hover:text-white transition cursor-pointer select-none" data-view-details="LV6" aria-label="LV6 পণ্যের বিস্তারিত দেখুন">
+                    <span>পণ্যের বিস্তারিত দেখুন</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-80 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" /></svg>
+                  </button>
                   <p class="text-xs font-semibold opacity-80 mt-1">LV6</p>
                   <h3 class="mt-0.5 text-xl font-bold">৩,০০,০০০ BDT</h3>
                 </div>
@@ -2694,6 +2719,216 @@
                 </div>
               </div>
             </article>
+          </section>
+
+          <!-- ========================================================= -->
+          <!-- ========================================================= -->
+          <!-- FULL PAGE: PACKAGE DETAILS (ফ্রেশ পেজ, বর্ডার ছাড়া ও প্রফেশনাল ব্যানার) -->
+          <!-- ========================================================= -->
+          <section id="package-detail-panel" class="dashboard-panel -mx-4 -mt-4 -mb-4 min-h-[100dvh] pb-36 relative bg-[#030d24] text-white" aria-label="প্যাকেজের বিস্তারিত তথ্য" hidden style="background-color: #030d24 !important; font-family: 'Noto Sans Bengali', sans-serif;">
+            
+            <!-- TOP NAV BAR -->
+            <div class="sticky top-0 z-30 bg-[#030d24]/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-white/5">
+              <button type="button" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition active:scale-95 cursor-pointer shadow-sm" data-panel="records" aria-label="ফিরে যান">
+                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <h1 class="text-base sm:text-lg font-bold text-white tracking-wide">প্যাকেজ বিবরণী</h1>
+              <button type="button" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition active:scale-95 cursor-pointer text-xs" data-panel="records" aria-label="বন্ধ করুন">
+                ✕
+              </button>
+            </div>
+
+            <!-- DYNAMIC PROFESSIONAL HERO BANNER (প্রতিটি প্যাকেজের নিজস্ব প্রফেশনাল ব্যানার) -->
+            <div class="px-4 pt-3">
+              <div id="page-pkg-hero-banner" class="relative overflow-hidden rounded-2xl p-5 shadow-2xl transition-all duration-300 bg-gradient-to-br from-[#0f4c9c] via-[#125ebf] to-[#08234d]">
+                <!-- Subtle pattern overlay -->
+                <div class="absolute inset-0 opacity-15 pointer-events-none" style="background-image: radial-gradient(#35c6e7 1px, transparent 1px); background-size: 14px 14px;"></div>
+                
+                <div class="relative z-10 flex flex-col justify-between min-h-[140px]">
+                  <!-- Top Row: Badge & Platform Logos -->
+                  <div class="flex items-center justify-between">
+                    <span id="page-pkg-banner-badge" class="px-2.5 py-1 rounded-full text-[11px] font-black tracking-wider uppercase bg-white/20 text-white backdrop-blur-sm">
+                      LV1 · BASIC
+                    </span>
+                    <div class="flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full">
+                      <span class="text-xs" title="TikTok">🎵</span>
+                      <span class="text-[11px] text-red-500 font-bold" title="YouTube">▶</span>
+                      <span class="text-[11px] text-blue-400 font-bold" title="Facebook">f</span>
+                      <span class="text-[10px] text-amber-400 font-black" title="Binance">⚡</span>
+                    </div>
+                  </div>
+
+                  <!-- Middle: Campaign Title & Subtitle -->
+                  <div class="my-3">
+                    <p class="text-[11px] text-sky-200 uppercase font-semibold tracking-widest flex items-center gap-1">
+                      <span>PW NEW MEDIA</span>
+                      <span class="opacity-60">·</span>
+                      <span id="page-pkg-banner-tagline">অফিশিয়াল মিডিয়া ক্যাম্পেইন</span>
+                    </p>
+                    <h2 id="page-pkg-banner-title" class="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+                      সোশ্যাল মিডিয়া প্যাকেজ (LV1)
+                    </h2>
+                  </div>
+
+                  <!-- Bottom Highlight Bar -->
+                  <div class="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+                    <span id="page-pkg-banner-desc" class="text-slate-200 font-medium">
+                      দৈনিক ৬টি কাজ · প্রতি কাজ ৩০ ৳
+                    </span>
+                    <span class="text-emerald-300 font-bold text-[11px] flex items-center gap-1">
+                      <span>✓</span> <span>দৈনিক উত্তোলনযোগ্য</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MAIN CONTENT (ফ্রেশ পেজ, আলাদা কোনো বক্সড বর্ডার ছাড়া) -->
+            <div class="px-4 pt-5 pb-6 space-y-6">
+
+              <!-- TITLE & PRICE SECTION -->
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">নির্ধারিত প্যাকেজ মূল্য</p>
+                <div class="flex items-baseline gap-2 mt-1">
+                  <span id="page-pkg-price" class="text-3xl sm:text-4xl font-black text-[#35c6e7] font-mono">৳ ৩,৫০০</span>
+                  <span class="text-xs text-slate-400 font-medium">/ ৩০ দিন মেয়াদ</span>
+                </div>
+              </div>
+
+              <!-- KEY METRICS (ফ্রেশ লিস্ট, কোনো বক্স বর্ডার নেই) -->
+              <div class="space-y-3 pt-2">
+                <h3 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#35c6e7]"></span>
+                  <span>প্যাকেজের মূল তথ্য</span>
+                </h3>
+
+                <div class="space-y-2 text-xs">
+                  <div class="flex items-center justify-between py-2 border-b border-white/5">
+                    <span class="text-slate-400">উৎপাদনশীলতা (দৈনিক আয়)</span>
+                    <span id="page-pkg-metric-daily" class="font-bold text-white font-mono text-sm">৳ ১৮০</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-white/5">
+                    <span class="text-slate-400">মোট লভ্যাংশ (৩০ দিন)</span>
+                    <span id="page-pkg-metric-monthly" class="font-bold text-emerald-400 font-mono text-sm">৳ ৫,৪০০</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-white/5">
+                    <span class="text-slate-400">সুদের হার</span>
+                    <span id="page-pkg-metric-rate" class="font-bold text-[#35c6e7] font-mono text-sm">৫.১৪%</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-white/5">
+                    <span class="text-slate-400">চক্র (মেয়াদ)</span>
+                    <span class="font-bold text-white font-mono text-sm">৩০ দিন</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2 border-b border-white/5">
+                    <span class="text-slate-400">দৈনিক বরাদ্দকৃত কাজ</span>
+                    <span id="page-pkg-metric-tasks" class="font-bold text-[#35c6e7] font-mono text-sm">৬টি কাজ (প্রতি কাজ ৳ ৩০)</span>
+                  </div>
+                  <div class="flex items-center justify-between py-2">
+                    <span class="text-slate-400">ক্রয়ের পরিমাণ</span>
+                    <span class="font-bold text-white font-mono text-sm">১ ইউনিট</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- PRODUCT INTRO & CALCULATION (পণ্যের সহজ পরিচিতি ও হিসাব) -->
+              <div class="space-y-3 pt-2">
+                <h3 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-[#35c6e7]"></span>
+                  <span>কাজের বিবরণ ও আয়ের হিসাব</span>
+                </h3>
+
+                <div class="text-xs text-slate-300 leading-relaxed space-y-2.5">
+                  <p id="page-pkg-desc-p1">
+                    এই প্যাকেজে আপনার মূল কাজ হলো টিকটক, ফেসবুক ও ইউটিউবের ভিডিওতে লাইক দেওয়া, ভিডিও দেখা এবং চ্যানেল ফলো করা।
+                  </p>
+                  <p id="page-pkg-desc-p2">
+                    প্রতিটি কাজ শেষ করার সাথে সাথে কাজের নির্দিষ্ট পারিশ্রমিক সরাসরি আপনার ব্যালেন্সে জমা হবে। মেয়াদ চলাকালীন প্রতিদিনের উপার্জিত টাকা আপনি কোনো ঝামেলা ছাড়াই নিজের বিকাশ, নগদ কিংবা বাইনান্স (Binance USDT) অ্যাকাউন্টে তাৎক্ষণিক তুলে নিতে পারবেন।
+                  </p>
+                  <p id="page-pkg-desc-p3">
+                    প্যাকেজের মেয়াদ ৩০ দিন। এই ৩০ দিন আপনি প্রতিদিন নিয়মমাফিক কাজ করে নিশ্চিত আয় করতে পারবেন।
+                  </p>
+                </div>
+
+                <!-- Clean Calculation Lines (ফ্রেশ টাইপোগ্রাফি) -->
+                <div class="space-y-1.5 pt-2 text-xs font-mono">
+                  <div class="flex items-center justify-between py-1 text-slate-300 font-sans">
+                    <span>দৈনিক আয়:</span>
+                    <span id="page-pkg-calc-line1" class="font-mono text-[#35c6e7] font-bold">৳ ৩,৫০০ × ৫.১৪% = ৳ ১৮০.০০</span>
+                  </div>
+                  <div class="flex items-center justify-between py-1 text-slate-300 font-sans">
+                    <span>মোট আয় (৩০ দিন):</span>
+                    <span id="page-pkg-calc-line2" class="font-mono text-[#35c6e7] font-bold">৳ ১৮০.০০ × ৩০ দিন = ৳ ৫,৪০০</span>
+                  </div>
+                  <div class="flex items-center justify-between py-1 text-slate-300 font-sans">
+                    <span>মেয়াদ শেষে মোট প্রাপ্তি:</span>
+                    <span id="page-pkg-calc-line3" class="font-mono text-emerald-400 font-bold">৳ ৫,৪০০ লাভ (প্রতিদিন উত্তোলনযোগ্য)</span>
+                  </div>
+                  <p class="text-[11px] text-amber-300/90 font-sans pt-1">
+                    * ক্রয়ের সীমা প্রতি ব্যক্তি সর্বোচ্চ ১টি প্যাকেজ
+                  </p>
+                </div>
+              </div>
+
+              <!-- DEDICATED HOW MONEY IS EARNED SECTION (সহজ ভাষায় অর্থ উপার্জনের নিয়ম) -->
+              <div class="space-y-3 pt-3">
+                <h3 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>আমরা কীভাবে টাকা দিচ্ছি এবং কোম্পানি কীভাবে আয় করছে?</span>
+                </h3>
+
+                <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+                  <div class="space-y-1">
+                    <p class="font-bold text-sky-300 flex items-center gap-1.5">
+                      <span>১.</span> <span>স্পনসর ও কনটেন্ট নির্মাতাদের বাজেট:</span>
+                    </p>
+                    <p class="text-slate-400 pl-4">
+                      বিভিন্ন জনপ্রিয় টিকটকার, ইউটিউব চ্যানেল এবং ব্র্যান্ড প্রতিষ্ঠান তাদের ভিডিওতে ভিউজ ও লাইক বাড়ানোর জন্য আমাদের প্ল্যাটফর্মকে বিজ্ঞাপনী প্রচার তহবিল প্রদান করে।
+                    </p>
+                  </div>
+
+                  <div class="space-y-1">
+                    <p class="font-bold text-sky-300 flex items-center gap-1.5">
+                      <span>২.</span> <span>আপনার প্রতিদিনের সহজ কাজ:</span>
+                    </p>
+                    <p class="text-slate-400 pl-4">
+                      আপনি প্রতিদিন মাত্র ৫-১০ মিনিট সময় নিয়ে বরাদ্দকৃত ভিডিওগুলোতে লাইক ও ফলো করে সহজ কাজগুলো সম্পন্ন করেন এবং স্ক্রিনশট জমা দেন।
+                    </p>
+                  </div>
+
+                  <div class="space-y-1">
+                    <p class="font-bold text-sky-300 flex items-center gap-1.5">
+                      <span>৩.</span> <span>সরাসরি কাজের পারিশ্রমিক:</span>
+                    </p>
+                    <p class="text-slate-400 pl-4">
+                      স্পনসরদের দেওয়া টাকার একটি বড় অংশ সরাসরি আপনাদের মতো পরিশ্রমী সদস্যদের মাঝে কাজের পারিশ্রমিক ও লভ্যাংশ হিসেবে বণ্টন করা হয়।
+                    </p>
+                  </div>
+
+                  <div class="space-y-1">
+                    <p class="font-bold text-emerald-300 flex items-center gap-1.5">
+                      <span>৪.</span> <span>প্রতিদিন নিশ্চিত ও নিরাপদ উত্তোলন:</span>
+                    </p>
+                    <p class="text-slate-400 pl-4">
+                      কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি সাথে সাথে বিকাশ, নগদ অথবা Binance-এ উত্তোলন করতে পারবেন।
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- FIXED BOTTOM PURCHASE BAR (ক্রয় করুন বাটন - z-[10005] দিয়ে নিশ্চিতভাবে উপরে রাখা হয়েছে) -->
+            <div id="page-pkg-bottom-bar" class="fixed bottom-0 inset-x-0 z-[10005] bg-[#030d24] border-t border-white/10 px-4 py-3 flex items-center justify-between shadow-[0_-8px_30px_rgba(0,0,0,0.9)] max-w-[430px] mx-auto" style="display: flex !important;">
+              <div>
+                <p class="text-[10px] text-slate-400 uppercase font-medium">প্যাকেজের মূল্য</p>
+                <div class="font-extrabold text-[#35c6e7] text-xl sm:text-2xl font-mono leading-tight" id="page-pkg-bar-price">
+                  ৳ ৩,৫০০
+                </div>
+              </div>
+              <button type="button" id="page-pkg-buy-btn" class="px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition active:scale-95 cursor-pointer">
+                ক্রয় করুন
+              </button>
+            </div>
           </section>
 
           <section id="platform-tasks-panel" class="dashboard-panel -mx-4 -mt-4 min-h-[calc(100vh-4rem)]" aria-label="TikTok মিশন" hidden>
@@ -3226,13 +3461,145 @@
 
         </main>
 
-        <nav aria-label="প্রধান মেনু" class="fixed inset-x-0 bottom-0 z-[9999] mx-auto grid max-w-[430px] grid-cols-5 border-t px-2 py-2" style="border-color: var(--color-profile-border); background: var(--color-profile-card); display: grid !important;">
+        <nav id="dashboard-bottom-nav" aria-label="প্রধান মেনু" class="fixed inset-x-0 bottom-0 z-[9999] mx-auto grid max-w-[430px] grid-cols-5 border-t px-2 py-2" style="border-color: var(--color-profile-border); background: var(--color-profile-card);">
           <button type="button" class="dashboard-nav-item flex min-h-14 flex-col items-center justify-center gap-1" data-panel="home" aria-label="প্রথম পাতা" aria-current="page"><span class="text-xl" aria-hidden="true">⌂</span><span class="text-[10px] leading-tight">প্রথম পাতা</span></button>
           <button type="button" class="dashboard-nav-item flex min-h-14 flex-col items-center justify-center gap-1" data-panel="vip" aria-label="হল"><span class="text-xl" aria-hidden="true">▦</span><span class="text-[10px] leading-tight">হল</span></button>
           <button type="button" class="dashboard-nav-item flex min-h-14 flex-col items-center justify-center gap-1" data-panel="records" aria-label="সদস্য"><span class="text-xl" aria-hidden="true">◇</span><span class="text-[10px] leading-tight">সদস্য</span></button>
           <button type="button" class="dashboard-nav-item flex min-h-14 flex-col items-center justify-center gap-1" data-panel="tasks" aria-label="টাস্ক"><span class="text-xl" aria-hidden="true">▤</span><span class="text-[10px] leading-tight">টাস্ক</span></button>
           <button type="button" class="dashboard-nav-item flex min-h-14 flex-col items-center justify-center gap-1" data-panel="profile" aria-label="আমার"><span class="text-xl" aria-hidden="true">♙</span><span class="text-[10px] leading-tight">আমার</span></button>
         </nav>
+      </div>
+    </section>
+
+    <!-- SAVINGS PLAN (সঞ্চয় পরিকল্পনা) PANEL - Fresh & Borderless with 3D Flip to Record -->
+    <section id="savings-plan-panel" class="dashboard-panel -mx-4 -mt-4 min-h-screen text-white relative flex flex-col pb-28" style="background: radial-gradient(circle at 50% 10%, #0c2359 0%, #061438 50%, #030d24 100%); color: #ffffff; font-family: 'Noto Sans Bengali', sans-serif;" aria-label="সঞ্চয় পরিকল্পনা" hidden>
+      
+      <!-- Top Sticky Navigation Header (Fresh & Borderless) -->
+      <header class="flex items-center justify-between px-4 py-3.5 bg-[#040e29]/95 sticky top-0 z-20 backdrop-blur-md">
+        <button type="button" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 active:scale-90 transition cursor-pointer flex items-center" data-panel="profile" aria-label="পেছনে যান">
+          <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </button>
+        <h1 class="text-base font-bold text-white tracking-wide">সঞ্চয় পরিকল্পনা</h1>
+        <div class="w-8" aria-hidden="true"></div>
+      </header>
+
+      <div class="px-4 py-3 space-y-4">
+        
+        <!-- User Available Balance Bar (Fresh & Borderless) -->
+        <div class="p-3.5 rounded-2xl bg-[#071536] flex items-center justify-between shadow-xl">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">আপনার উপলব্ধ ব্যালেন্স</p>
+            <p class="text-xl font-extrabold text-[#38bdf8] font-mono mt-0.5" id="savings-user-balance">৳ 0.00</p>
+          </div>
+          <button type="button" class="px-3.5 py-1.5 rounded-xl bg-[#00a651] hover:bg-[#009247] text-white font-bold text-xs shadow-md transition active:scale-95 cursor-pointer" data-panel="payment-method">
+            + রিচার্জ
+          </button>
+        </div>
+
+        <!-- 3D Flip Container: এক কাস্টমার একবার নিবে, নেওয়ার পর পেজ এনিমেশন দিয়ে উলটে রেকর্ড শো হবে -->
+        <div class="savings-flip-viewport">
+          <div id="savings-flip-card" class="savings-flip-card">
+            
+            <!-- FRONT FACE: নতুন সঞ্চয় ইনপুট ফর্ম (বর্ডার ছাড়া, ফ্রেশ ডিজাইন) -->
+            <div id="savings-front-face" class="savings-flip-face savings-flip-front">
+              <div class="p-5 rounded-3xl bg-[#071536] shadow-2xl relative overflow-hidden space-y-4">
+                
+                <!-- Ambient Glow -->
+                <div class="absolute -top-12 -right-12 w-36 h-36 bg-[#1877f2]/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div>
+                  <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                      <span class="w-2.5 h-2.5 rounded-full bg-[#2dd4bf] animate-pulse"></span>
+                      <span>নতুন সঞ্চয় শুরু করুন</span>
+                    </h2>
+                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#1877f2]/25 text-[#60a5fa]">একবারে ৪৫ দিন লাভ সহ</span>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-1">একজন গ্রাহক কেবল একবারই সঞ্চয় করতে পারবেন</p>
+                </div>
+
+                <!-- Terms: মেয়াদ ৪৫ দিন ও প্রফিট দৈনিক ৫% -->
+                <div class="grid grid-cols-2 gap-2.5">
+                  <div class="p-3 rounded-2xl bg-[#050f26] flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-500/15 text-indigo-400 flex items-center justify-center font-bold text-base shrink-0">
+                      📅
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-slate-400 font-medium">পরিকল্পনার মেয়াদ</p>
+                      <p class="text-sm font-extrabold text-white">৪৫ দিন</p>
+                    </div>
+                  </div>
+                  <div class="p-3 rounded-2xl bg-[#050f26] flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center font-bold text-base shrink-0">
+                      📈
+                    </div>
+                    <div>
+                      <p class="text-[10px] text-slate-400 font-medium">প্রফিট রেট</p>
+                      <p class="text-sm font-extrabold text-[#34d399]">দৈনিক ৫%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Input Box: আপনার সঞ্চয় লিখুন (ফ্রেশ ও বর্ডার ছাড়া) -->
+                <div class="space-y-1.5">
+                  <label for="savings-deposit-input" class="text-xs font-semibold text-slate-300 block">
+                    আপনার সঞ্চয় লিখুন
+                  </label>
+                  <div class="relative flex items-center">
+                    <span class="absolute left-3.5 text-lg font-bold text-[#35c6e7] font-mono pointer-events-none">৳</span>
+                    <input type="number" id="savings-deposit-input" inputmode="numeric" placeholder="আপনার সঞ্চয় লিখুন (যেমন: ৩৫০০)" min="100" step="100" class="w-full pl-9 pr-4 py-3 rounded-2xl bg-[#040c21] text-white text-base font-bold placeholder-slate-500 transition-all shadow-inner font-mono outline-none focus:ring-2 focus:ring-[#35c6e7]">
+                  </div>
+                </div>
+
+                <!-- Quick Selection Pills -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+                  <button type="button" class="savings-preset-btn px-3 py-1.5 rounded-xl bg-[#0d214d] hover:bg-[#133275] text-[#93c5fd] font-bold text-xs transition active:scale-95" data-amount="1000">৳ ১,০০০</button>
+                  <button type="button" class="savings-preset-btn px-3 py-1.5 rounded-xl bg-[#0d214d] hover:bg-[#133275] text-[#93c5fd] font-bold text-xs transition active:scale-95" data-amount="2000">৳ ২,০০০</button>
+                  <button type="button" class="savings-preset-btn px-3 py-1.5 rounded-xl bg-[#0d214d] hover:bg-[#133275] text-[#93c5fd] font-bold text-xs transition active:scale-95" data-amount="3500">৳ ৩,৫০০</button>
+                  <button type="button" class="savings-preset-btn px-3 py-1.5 rounded-xl bg-[#0d214d] hover:bg-[#133275] text-[#93c5fd] font-bold text-xs transition active:scale-95" data-amount="5000">৳ ৫,০০০</button>
+                  <button type="button" class="savings-preset-btn px-3 py-1.5 rounded-xl bg-[#0d214d] hover:bg-[#133275] text-[#93c5fd] font-bold text-xs transition active:scale-95" data-amount="10000">৳ ১০,০০০</button>
+                </div>
+
+                <!-- Profit Breakdown: একবারে ৪৫ দিন লাভ সহ প্রফিট -->
+                <div class="p-3.5 rounded-2xl bg-[#050f26] space-y-2 text-xs">
+                  <div class="flex items-center justify-between text-slate-300">
+                    <span>দৈনিক প্রফিট (৫%):</span>
+                    <span class="font-bold text-[#34d399] font-mono" id="savings-calc-daily">৳ ০.০০</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-300">
+                    <span>৪৫ দিনে মোট মুনাফা (২২৫%):</span>
+                    <span class="font-bold text-[#38bdf8] font-mono" id="savings-calc-profit">৳ ০.০০</span>
+                  </div>
+                  <div class="flex items-center justify-between pt-1 font-semibold text-white">
+                    <span>একবারে ৪৫ দিন পর মোট ফেরত:</span>
+                    <span class="font-extrabold text-amber-300 font-mono text-sm" id="savings-calc-total">৳ ০.০০ লাভ সহ</span>
+                  </div>
+                </div>
+
+                <!-- Action Button -->
+                <button type="button" id="savings-submit-btn" class="w-full py-3.5 rounded-2xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-sm shadow-xl shadow-blue-950/60 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                  <span>+ সঞ্চয় নিশ্চিত করুন</span>
+                </button>
+
+                <p class="text-[10.5px] text-slate-400 text-center leading-relaxed">
+                  * সঞ্চয় নেওয়ার পর অ্যাকাউন্টটি স্বয়ংক্রিয়ভাবে লক হয়ে যাবে ও ৪৫ দিন পর সম্পূর্ণ মূলধন ও লাভ একবারে পাওয়া যাবে।
+                </p>
+
+              </div>
+            </div>
+
+            <!-- BACK FACE: স্ক্রিনশটের হুবহু সঞ্চয় রেকর্ড (উলটে শো হবে, আর নেওয়া যাবে না) -->
+            <div id="savings-back-face" class="savings-flip-face savings-flip-back">
+              <div id="savings-record-card-content">
+                <!-- Dynamically populated with active plan matching user screenshot -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </section>
   </main>
@@ -3505,7 +3872,7 @@
       </button>
     </div>
   </div>
-
+ 
   <script src="./i18n.js"></script>
   <script src="./app.js"></script>
   </body>

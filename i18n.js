@@ -216,7 +216,7 @@
       'bdt': 'BDT',
 
       // Home & Headers
-      'brand_name': 'Alo',
+      'brand_name': 'PW New Media',
       'hero_title': 'Bring Fresh Light to Your Daily Earnings',
       'hero_subtitle': 'Welcome to your personal digital earnings platform. Simple, transparent, and built for you.',
       'get_started': 'Get Started Now',
@@ -229,22 +229,32 @@
       'footer_text': 'May every beginning bring you prosperity',
 
       // Login
-      'login_title': 'Sign In to Your Account',
-      'welcome_back': 'Welcome Back',
-      'login_subtitle': 'Enter your credentials to continue right where you left off.',
-      'phone_label': 'Phone Number',
-      'phone_placeholder': 'Enter phone number (+880...)',
+      'login_title': 'Log in to continue to your account.',
+      'welcome_back': 'Welcome back',
+      'login_welcome_back': 'Welcome back',
+      'login_subtitle': 'Log in to continue to your account.',
+      'country_label': 'Country',
+      'country_bd': 'Bangladesh (+880)',
+      'country_in': 'India (+91)',
+      'phone_label': 'Phone number',
+      'phone_placeholder': 'Enter your phone number',
       'password_label': 'Password',
       'password_placeholder': 'Enter your password',
-      'forgot_password': 'Forgot Password?',
+      'forgot_password': 'Forgot password?',
+      'keep_logged_in': 'Keep me logged in',
       'remember_me': 'Keep me logged in',
-      'login_submit': 'Log In Now',
+      'login_btn': 'Log in',
+      'login_submit': 'Log in',
       'demo_login': 'Quick Access with Demo Account',
       'new_here': 'New here?',
-      'create_account': 'Create New Account',
+      'create_account': 'Create an account',
+      'terms_service': 'Terms of Service',
+      'privacy_policy': 'Privacy Policy',
+      'err_valid_phone': 'Enter a valid phone number',
+      'err_enter_password': 'Enter your password',
       'back_to_home': 'Back to Homepage',
       'login_success': 'Login Successful!',
-      'welcome_goldmine': 'Welcome to Gold Mine',
+      'welcome_goldmine': 'Welcome to PW New Media',
 
       // Register
       'register_title': 'Welcome to Gold Mine',
@@ -729,7 +739,8 @@
 
   // Phrases to replace throughout the DOM (Bengali -> Target language)
   const phraseDictionary = {
-    "আলো": { en: "Alo", hi: "PW New Media" },
+    "আলো": { bn: "PW New Media", en: "PW New Media", hi: "PW New Media" },
+    "Alo": { bn: "PW New Media", en: "PW New Media", hi: "PW New Media" },
     "প্রথম পাতা": { en: "Home", hi: "होम" },
     "হল": { en: "Hall", hi: "हॉल" },
     "সদস্য": { en: "VIP", hi: "वीआईपी" },
@@ -1462,7 +1473,7 @@
       if (!sel) return;
       const expectedHtml = isIndia
         ? '<option value="en">English</option><option value="hi">हिन्दी</option>'
-        : '<option value="en">English</option><option value="bn">বাংলা</option>';
+        : '<option value="bn">বাংলা</option><option value="en">English</option>';
       if (sel.innerHTML.trim() !== expectedHtml) {
         sel.innerHTML = expectedHtml;
       }
@@ -1475,10 +1486,12 @@
     const country = getCurrentCountryCode();
     const isInd = (country === 'IN');
     const storedLang = localStorage.getItem('alo_lang');
-    if (isInd) {
-      currentLang = (storedLang === 'en') ? 'en' : 'hi';
+    if (storedLang === 'en' || storedLang === 'bn' || storedLang === 'hi') {
+      currentLang = storedLang;
+    } else if (isInd) {
+      currentLang = 'hi';
     } else {
-      currentLang = (storedLang === 'en') ? 'en' : 'bn';
+      currentLang = 'bn';
     }
   } catch(e) {
     currentLang = 'bn';
@@ -1499,6 +1512,13 @@
     // 1. Update document attributes
     if (document.documentElement) {
       document.documentElement.lang = lang;
+      if (lang === 'bn') {
+        document.documentElement.classList.add('lang-bn');
+        if (document.body) document.body.classList.add('lang-bn');
+      } else {
+        document.documentElement.classList.remove('lang-bn');
+        if (document.body) document.body.classList.remove('lang-bn');
+      }
       if (lang === 'ar') {
         document.documentElement.setAttribute('dir', 'rtl');
       } else {
@@ -1509,7 +1529,7 @@
     // 2. Synchronize all language selectors
     syncCountryLanguageOptions();
 
-    // 3. Update input placeholders
+    // 3. Update input placeholders from placeholderMap
     Object.keys(placeholderMap).forEach(function(id) {
       const el = document.getElementById(id);
       if (el && placeholderMap[id][lang]) {
@@ -1522,6 +1542,13 @@
       const key = el.getAttribute('data-i18n');
       const val = getTranslation(key, lang);
       if (val) el.textContent = val;
+    });
+
+    // 4b. Update elements with data-i18n-placeholder attribute
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n-placeholder');
+      const val = getTranslation(key, lang);
+      if (val) el.placeholder = val;
     });
 
     // 5. Replace text in DOM tree using phraseDictionary
@@ -1686,12 +1713,18 @@
 
   // Automatic MutationObserver to translate dynamically rendered elements (modals, sheets, cards)
   let observerTimeout = null;
+  let isTranslatingObserver = false;
   const domObserver = new MutationObserver(function(mutations) {
-    if (currentLang === 'bn') return;
+    if (isTranslatingObserver) return;
     if (observerTimeout) clearTimeout(observerTimeout);
     observerTimeout = setTimeout(function() {
-      translateDOM(currentLang);
-    }, 50);
+      isTranslatingObserver = true;
+      try {
+        translateDOM(currentLang);
+      } finally {
+        setTimeout(function() { isTranslatingObserver = false; }, 40);
+      }
+    }, 60);
   });
 
   if (document.body) {
