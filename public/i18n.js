@@ -1469,14 +1469,12 @@
     }
 
     const selectors = document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
-    const targetTag = isIndia ? 'IN' : 'BD';
+    const targetTag = 'ALL';
     selectors.forEach(function(sel) {
       if (!sel) return;
       if (sel.dataset.countryTag !== targetTag) {
         sel.dataset.countryTag = targetTag;
-        sel.innerHTML = isIndia
-          ? '<option value="en">English</option><option value="hi">हिन्दी</option>'
-          : '<option value="bn">বাংলা</option><option value="en">English</option>';
+        sel.innerHTML = '<option value="bn">Bengali</option><option value="en">English</option><option value="hi">India</option>';
       }
       if (sel.value !== currentLang) {
         sel.value = currentLang;

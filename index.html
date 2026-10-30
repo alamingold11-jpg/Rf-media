@@ -425,9 +425,9 @@ html, body {
         <nav class="flex items-center gap-2 sm:gap-3" aria-label="প্রধান নেভিগেশন">
           <label class="sr-only" for="language-switch">ভাষা নির্বাচন</label>
           <select id="language-switch" class="rounded-[var(--radius)] border px-2 py-2 text-xs font-semibold sm:px-3 sm:text-sm" style="border-color: var(--color-border); background: var(--color-surface); color: var(--color-text);" aria-label="Select Language">
-            <option value="en" selected>English</option>
-            <option value="bn">বাংলা</option>
-            <option value="hi">हिन्दी</option>
+            <option value="bn" selected>Bengali</option>
+            <option value="en">English</option>
+            <option value="hi">India</option>
           </select>
           <button type="button" class="rounded-[var(--radius)] px-3 py-2 text-sm font-semibold transition hover:bg-[var(--color-accent)] sm:px-4" style="color: var(--color-text);" data-view="login">লগইন</button>
           <button type="button" class="auth-button px-4 py-2.5 text-sm font-semibold sm:px-5" data-view="register">অ্যাকাউন্ট খুলুন</button>
@@ -507,8 +507,9 @@ html, body {
             <div class="relative inline-flex items-center">
               <div class="relative flex items-center bg-[#0a1747]/80 hover:bg-[#0c224a] border border-white/20 rounded-full transition shadow-md backdrop-blur-md">
                 <select id="login-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-[16px] py-2 pl-3 pr-8 rounded-full focus:outline-none">
-                  <option value="bn" class="bg-[#050e21] text-white" selected>বাংলা</option>
+                  <option value="bn" class="bg-[#050e21] text-white" selected>Bengali</option>
                   <option value="en" class="bg-[#050e21] text-white">English</option>
+                  <option value="hi" class="bg-[#050e21] text-white">India</option>
                 </select>
                 <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -616,10 +617,9 @@ html, body {
     <section id="register-view" class="page-view phone-register-page" aria-label="Registration" hidden>
       <div class="phone-register-shell">
         <header class="phone-register-hero pb-7 pt-5 px-5">
-          <!-- Top Row: Back button + clean logo on left, professional language pill on top-right -->
+          <!-- Top Row: clean logo on left, professional language pill on top-right (Back button removed) -->
           <div id="register-top-bar" class="flex items-center justify-between mb-8 relative z-20">
-            <div class="flex items-center gap-3">
-              <button type="button" class="phone-register-back flex items-center justify-center w-10 h-10 rounded-full bg-[#0a1747]/80 hover:bg-[#0c224a] text-white border border-white/20 transition cursor-pointer text-lg font-bold shrink-0 shadow-sm" data-view="login" aria-label="Back to login">←</button>
+            <div class="flex items-center">
               <div class="flex items-center" style="background: transparent !important; border: none !important; box-shadow: none !important;">
                 <img src="logo.png" alt="PW New Media" class="brand-logo block object-contain" style="height: 52px; width: auto; max-width: 160px; background: transparent !important; border: none !important; box-shadow: none !important;">
               </div>
@@ -629,8 +629,9 @@ html, body {
             <div class="relative inline-flex items-center shrink-0">
               <div class="relative flex items-center bg-[#0a1747]/80 hover:bg-[#0c224a] border border-white/20 rounded-full transition shadow-md backdrop-blur-md">
                 <select id="register-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-[15px] py-1.5 pl-3 pr-8 rounded-full focus:outline-none">
-                  <option value="bn" class="bg-[#050e21] text-white" selected>বাংলা</option>
+                  <option value="bn" class="bg-[#050e21] text-white" selected>Bengali</option>
                   <option value="en" class="bg-[#050e21] text-white">English</option>
+                  <option value="hi" class="bg-[#050e21] text-white">India</option>
                 </select>
                 <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
@@ -773,9 +774,9 @@ html, body {
                 <div class="flex items-center">
                   <label class="sr-only" for="profile-language-switch">ভাষা নির্বাচন / Select Language</label>
                   <select id="profile-language-switch" class="page-language-switch language-switcher text-xs font-semibold rounded-lg bg-[#0e2764] border border-[#1d4ed8]/50 text-white px-2 py-1 shadow cursor-pointer outline-none hover:border-[#38bdf8]" aria-label="Select Language">
-                    <option value="en" selected>English</option>
-                    <option value="bn">বাংলা</option>
-                    <option value="hi">हिन्दी</option>
+                    <option value="bn" selected>Bengali</option>
+                    <option value="en">English</option>
+                    <option value="hi">India</option>
                   </select>
                 </div>
               </div>
@@ -2416,9 +2417,9 @@ html, body {
                 </span>
                 <span class="min-w-0 flex-1 text-sm font-semibold">ভাষা পরিবর্তন</span>
                 <select id="personal-language-switch" class="page-language-switch language-switcher text-xs font-semibold rounded-lg bg-[#0e2764] border border-[#1d4ed8]/40 text-white px-2 py-1 cursor-pointer">
-                  <option value="bn">বাংলা</option>
-                  <option value="hi">हिन्दी</option>
+                  <option value="bn" selected>Bengali</option>
                   <option value="en">English</option>
+                  <option value="hi">India</option>
                 </select>
               </div>
             </div>
