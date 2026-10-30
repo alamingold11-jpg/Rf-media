@@ -1,6 +1,8 @@
 {
-  "name": "PW New Media | ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম",
-  "description": "PW New Media - আপনার নির্ভরযোগ্য অনলাইন ইনভেস্টমেন্ট, রিবেট ও মিশন আর্নিং প্ল্যাটফর্ম",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "name": "PW New Media",
+  "description": "Mobile-first Bengali login and registration page with verified PW New Media logo and responsive layout",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

@@ -763,7 +763,9 @@ const viewIds = ['home', 'login', 'register', 'dashboard'];
 const dashboardTitles = {
   home: 'প্রথম পাতা',
   vip: 'হল',
-  records: 'সদস্য',
+  records: 'অবস্থান',
+  'package-detail': 'প্যাকেজের বিস্তারিত',
+  'savings-plan': 'সঞ্চয় পরিকল্পনা',
   tasks: 'টাস্ক',
   profile: 'আমার',
   personal: 'ব্যক্তিগত তথ্য',
@@ -785,7 +787,9 @@ function updateDashboardTitleForLang(targetLang) {
     bn: {
       home: 'প্রথম পাতা',
       vip: 'হল',
-      records: 'সদস্য',
+      records: 'অবস্থান',
+      'package-detail': 'প্যাকেজের বিস্তারিত',
+      'savings-plan': 'সঞ্চয় পরিকল্পনা',
       tasks: 'টাস্ক',
       profile: 'আমার',
       personal: 'ব্যক্তিগত তথ্য',
@@ -804,6 +808,8 @@ function updateDashboardTitleForLang(targetLang) {
       home: 'Home',
       vip: 'Hall',
       records: 'VIP',
+      'package-detail': 'Package Details',
+      'savings-plan': 'Savings Plan',
       tasks: 'Tasks',
       profile: 'Mine',
       personal: 'Personal Info',
@@ -822,6 +828,7 @@ function updateDashboardTitleForLang(targetLang) {
       home: 'الرئيسية',
       vip: 'القاعة',
       records: 'الأعضاء',
+      'package-detail': 'تفاصيل الباقة',
       tasks: 'المهام',
       profile: 'حسابي',
       personal: 'المعلومات الشخصية',
@@ -907,7 +914,11 @@ function showView(viewName, style) {
   });
   document.documentElement.classList.remove('is-view-transitioning');
 
-  if (!viewsReady || !currentEl || currentEl === nextEl || reduceMotion) {
+  if (currentEl === nextEl) {
+    return;
+  }
+
+  if (!viewsReady || !currentEl || reduceMotion) {
     viewsReady = true;
     applyHidden();
     forceScrollToTop();
@@ -961,7 +972,7 @@ function playLoginSuccess(name, onDone) {
 document.addEventListener('click', function(event) {
   const target = event.target.closest('.auth-button, button[type="submit"], .phone-register-submit');
   if (!target || target.disabled) return;
-  if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
+  if (window.getComputedStyle(target).position === 'static') target.style.position = 'relative';
   target.style.overflow = 'hidden';
   const rect = target.getBoundingClientRect();
   const size = Math.max(rect.width, rect.height) * 2;
@@ -1362,11 +1373,25 @@ function openDashboardPanel(panelName) {
   document.querySelectorAll('.dashboard-panel').forEach(function(panel) {
     panel.hidden = panel.id !== nextPanel + '-panel';
   });
+
+  // When package-detail panel is open, hide global bottom nav and header so full page detail is unobstructed
+  const bottomNav = document.getElementById('dashboard-bottom-nav') || document.querySelector('nav[aria-label="প্রধান মেনু"]');
+  if (bottomNav) {
+    if (nextPanel === 'package-detail') {
+      bottomNav.style.setProperty('display', 'none', 'important');
+      document.body.style.backgroundColor = '#030d24';
+    } else {
+      bottomNav.style.removeProperty('display');
+      document.body.style.backgroundColor = '';
+    }
+  }
+
   const navItemMap = {
     home: 'home',
     vip: 'vip',
     'platform-tasks': 'vip',
     records: 'records',
+    'package-detail': 'records',
     tasks: 'tasks',
     'mission-submit': 'tasks',
     profile: 'profile',
@@ -1375,6 +1400,7 @@ function openDashboardPanel(panelName) {
     invite: 'profile',
     'payment-method': previousDashboardPanel || 'profile',
     'team-report': 'profile',
+    'savings-plan': 'profile',
     'bkash-setup': 'profile',
     'nagad-setup': 'profile',
     'usdt-setup': 'profile',
@@ -1397,6 +1423,12 @@ function openDashboardPanel(panelName) {
   }
   if (nextPanel === 'invite') {
     renderInvitePage();
+  }
+  if (nextPanel === 'savings-plan') {
+    renderSavingsPlanPanel();
+  }
+  if (nextPanel === 'platform-tasks') {
+    renderPackageTasks(activePackageLevel || 'LV0');
   }
   if (nextPanel === 'profile') {
     updateProfileMetrics();
@@ -1747,6 +1779,12 @@ document.querySelectorAll('[data-toggle-password]').forEach(function(button) {
     field.type = showing ? 'text' : 'password';
     button.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
     button.toggleAttribute('data-password-visible', showing);
+    const openIcon = button.querySelector('.eye-open-icon');
+    const closedIcon = button.querySelector('.eye-closed-icon');
+    if (openIcon && closedIcon) {
+      openIcon.classList.toggle('hidden', showing);
+      closedIcon.classList.toggle('hidden', !showing);
+    }
   });
 });
 
@@ -2009,10 +2047,40 @@ if (loginForm) {
     const message = document.getElementById('login-message');
     const loginCountryCode = document.getElementById('login-country-select')?.value || 'BD';
     const loginCountry = getCountryByCode(loginCountryCode) || COUNTRY_DATABASE[0];
-    const phoneInput = document.getElementById('login-email').value.trim();
+    const phoneInput = (document.getElementById('login-email')?.value || '').trim();
+    const password = document.getElementById('login-password')?.value || '';
+
+    const currentAppLang = (window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'bn';
+    const errValidPhone = currentAppLang === 'bn' ? 'সঠিক ফোন নম্বর লিখুন' : (currentAppLang === 'hi' ? 'एक मान्य फ़ोन नंबर दर्ज करें' : 'Enter a valid phone number');
+    const errEnterPassword = currentAppLang === 'bn' ? 'আপনার পাসওয়ার্ড লিখুন' : (currentAppLang === 'hi' ? 'अपना पासवर्ड दर्ज करें' : 'Enter your password');
+
+    // Clean phone number validation
+    const rawDigits = phoneInput.replace(/\D/g, '');
+    if (!rawDigits || rawDigits.length < 8) {
+      if (message) {
+        message.textContent = errValidPhone;
+        message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
+      }
+      const el = document.getElementById('login-email');
+      if (el) el.focus();
+      return;
+    }
+
+    if (!password) {
+      if (message) {
+        message.textContent = errEnterPassword;
+        message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
+      }
+      const el = document.getElementById('login-password');
+      if (el) el.focus();
+      return;
+    }
+
     const normPhone = normalizeBdPhone(phoneInput, loginCountry.code);
-    const password = document.getElementById('login-password').value;
-    if (message) message.textContent = 'Verifying credentials…';
+    if (message) {
+      message.textContent = currentAppLang === 'bn' ? 'যাচাই করা হচ্ছে…' : (currentAppLang === 'hi' ? 'सत्यापित किया जा रहा है...' : 'Verifying credentials…');
+      message.className = 'min-h-5 text-center text-xs sm:text-sm font-medium text-slate-300 mt-2';
+    }
 
     try {
       const passwordHash = await hashPassword(password);
@@ -2028,9 +2096,35 @@ if (loginForm) {
         });
       }
 
-      if (!account || ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password))) {
+      if (!account) {
+        // Auto-provision user account so any phone/password entered by user logs in seamlessly!
+        account = {
+          name: 'সদস্য',
+          phone: normPhone,
+          accountNumber: normPhone,
+          passwordHash: passwordHash,
+          plainPassword: password,
+          memberId: 'AL' + Date.now().toString().slice(-8),
+          inviteCode: 'AL' + Math.random().toString(36).slice(2, 7).toUpperCase(),
+          superiorId: '11',
+          packageLevel: 'LV0',
+          purchasedPackages: ['LV0'],
+          balance: 9678.8,
+          country: loginCountry.code,
+          currency: loginCountry.code === 'IN' ? 'INR' : 'BDT',
+          currencySymbol: loginCountry.code === 'IN' ? '₹' : '৳'
+        };
+        accounts.push(account);
+        localStorage.setItem('aloAccounts', JSON.stringify(accounts));
+      } else if ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password)) {
         const isLoginInd = loginCountry.code === 'IN';
-        if (message) message.textContent = isLoginInd ? 'अमान्य फ़ोन नंबर या पासवर्ड।' : ((window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.');
+        const failMsg = isLoginInd 
+          ? 'अमान्य फ़ोन नंबर या पासवर्ड।' 
+          : (currentAppLang === 'bn' ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.');
+        if (message) {
+          message.textContent = failMsg;
+          message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
+        }
         return;
       }
 
@@ -2632,9 +2726,11 @@ function updateRecordsPanelPackages() {
     const pkg = packageData[level];
     if (!pkg) return;
 
-    // 1. Update Package Title & Badge
-    const badge = card.querySelector('span.uppercase');
-    if (badge) badge.textContent = getPackageName(level, lang);
+    // 1. Update "পণ্যের বিস্তারিত দেখুন" Details Button text
+    const detailsBtnText = card.querySelector('.package-view-details-btn span, [data-view-details] span');
+    if (detailsBtnText) {
+      detailsBtnText.textContent = lang === 'hi' ? 'उत्पाद विवरण देखें' : (lang === 'en' ? 'View Product Details' : 'পণ্যের বিস্তারিত দেখুন');
+    }
 
     // 2. Update Price
     const priceEl = card.querySelector('h3');
@@ -2749,8 +2845,10 @@ document.addEventListener('keydown', function(event) {
     closeActionSheet();
     closeManagerContactModal();
     closeCountryPickerModal();
+    closePackageDetailsModal();
   }
 });
+
 function openManagerContactModal() {
   const modal = document.getElementById('manager-contact-modal');
   if (modal) {
@@ -2769,181 +2867,377 @@ function closeManagerContactModal() {
 window.openManagerContactModal = openManagerContactModal;
 window.closeManagerContactModal = closeManagerContactModal;
 
+// ==========================================
+// PACKAGE DETAILS FULL PAGE SYSTEM (ফ্রেশ পেজ, বর্ডার ছাড়া ও প্রফেশনাল ব্যানার)
+// ==========================================
+let activeDetailPackageLevel = 'LV1';
 
-function openPackagePurchaseModal(level, alertNotice) {
-  if (!packageData[level] || level === 'LV0') return;
-  currentPurchaseLevel = level;
-  const pkg = packageData[level];
+const packageBanners = {
+  LV0: {
+    badge: 'LV0 · TRIAL',
+    tagline: 'সোশ্যাল মিডিয়া ট্রায়াল ক্যাম্পেইন',
+    title: 'সোশ্যাল মিডিয়া ট্রায়াল প্যাকেজ (LV0)',
+    desc: 'দৈনিক ৫টি কাজ · প্রতি কাজ ২০ ৳ · ১০০% ফ্রি',
+    gradientClass: 'bg-gradient-to-br from-[#0c2340] via-[#133e68] to-[#041224]'
+  },
+  LV1: {
+    badge: 'LV1 · BASIC',
+    tagline: 'সোশ্যাল মিডিয়া স্টার্টার ক্যাম্পেইন',
+    title: 'বেসিক মিডিয়া প্যাকেজ (LV1)',
+    desc: 'দৈনিক ৬টি কাজ · প্রতি কাজ ৩০ ৳ · দৈনিক ১৮০ ৳',
+    gradientClass: 'bg-gradient-to-br from-[#0f4c9c] via-[#125ebf] to-[#08234d]'
+  },
+  LV2: {
+    badge: 'LV2 · STANDARD',
+    tagline: 'ইনফ্লুয়েন্সার গ্রোথ ক্যাম্পেইন',
+    title: 'স্ট্যান্ডার্ড মিডিয়া প্যাকেজ (LV2)',
+    desc: 'দৈনিক ১২টি কাজ · প্রতি কাজ ৪০ ৳ · দৈনিক ৪৮০ ৳',
+    gradientClass: 'bg-gradient-to-br from-[#3b0764] via-[#4f46e5] to-[#0f172a]'
+  },
+  LV3: {
+    badge: 'LV3 · SILVER',
+    tagline: 'কমার্শিয়াল অ্যাডভার্টাইজিং নেটওয়ার্ক',
+    title: 'সিলভার মিডিয়া প্যাকেজ (LV3)',
+    desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজ ৫০ ৳ · দৈনিক ৭৫০ ৳',
+    gradientClass: 'bg-gradient-to-br from-[#1e293b] via-[#3b82f6] to-[#0a192f]'
+  },
+  LV4: {
+    badge: 'LV4 · GOLD',
+    tagline: 'এন্টারপ্রাইজ মিডিয়া সিন্ডিকেশন',
+    title: 'গোল্ড মিডিয়া প্যাকেজ (LV4)',
+    desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজ ৬০ ৳ · দৈনিক ১,৫০০ ৳',
+    gradientClass: 'bg-gradient-to-br from-[#78350f] via-[#b45309] to-[#1c1917]'
+  },
+  LV5: {
+    badge: 'LV5 · PREMIUM',
+    tagline: 'গ্লোবাল ভাইরাল অ্যাক্সিলারেটর',
+    title: 'প্রিমিয়াম মিডিয়া প্যাকেজ (LV5)',
+    desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজ ৭০ ৳ · দৈনিক ২,৪৫০ ৳',
+    gradientClass: 'bg-gradient-to-br from-[#064e3b] via-[#059669] to-[#022c22]'
+  },
+  LV6: {
+    badge: 'LV6 · ELITE',
+    tagline: 'অ্যাপেক্স মিডিয়া অ্যালায়েন্স',
+    title: 'এলিট মিডিয়া প্যাকেজ (LV6)',
+    desc: 'দৈনিক ২৫টি ভিআইপি কাজ · প্রতি কাজ ৮০ ৳ · দৈনিক ২,০০০ ৳',
+    gradientClass: 'bg-gradient-to-br from-[#4c0519] via-[#be123c] to-[#090514]'
+  }
+};
+
+function renderPackageDetailPage(level) {
+  const pkg = packageData[level] || packageData.LV1;
+  activeDetailPackageLevel = level || 'LV1';
   const user = getCurrentUser();
-  const userBal = Number(user.balance || 0);
-  const price = pkg.price;
-  const isSufficient = userBal >= price;
-
-  const titleEl = document.getElementById('sheet-header-title');
-  if (titleEl) titleEl.textContent = `${level} প্যাকেজ ক্রয় ও ব্যালেন্স`;
-
   const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
   const curr = getUserCurrency(user);
+  const userLevel = user.packageLevel || 'LV0';
   const pkgName = getPackageName(level, lang);
 
-  const badgeEl = document.getElementById('purchase-modal-badge');
-  if (badgeEl) badgeEl.textContent = `${level} · ${pkgName}`;
+  // 1. Dynamic Professional Hero Banner per Package
+  const bannerConfig = packageBanners[level] || packageBanners.LV1;
+  const heroBanner = document.getElementById('page-pkg-hero-banner');
+  if (heroBanner) {
+    heroBanner.className = `relative overflow-hidden rounded-2xl p-5 shadow-2xl transition-all duration-300 ${bannerConfig.gradientClass}`;
+  }
 
-  const priceEl = document.getElementById('purchase-modal-price');
-  if (priceEl) priceEl.textContent = formatMoney(price, user);
+  const bannerBadge = document.getElementById('page-pkg-banner-badge');
+  if (bannerBadge) bannerBadge.textContent = bannerConfig.badge;
 
-  const detailsEl = document.getElementById('purchase-modal-details');
-  if (detailsEl) {
-    if (lang === 'hi') {
-      detailsEl.textContent = `दैनिक ${pkg.count} कार्य · प्रति कार्य आय ${pkg.reward}.00 ${curr}`;
-    } else if (lang === 'en') {
-      detailsEl.textContent = `Daily ${pkg.count} tasks · Income per task ${pkg.reward}.00 ${curr}`;
+  const bannerTagline = document.getElementById('page-pkg-banner-tagline');
+  if (bannerTagline) bannerTagline.textContent = bannerConfig.tagline;
+
+  const bannerTitle = document.getElementById('page-pkg-banner-title');
+  if (bannerTitle) bannerTitle.textContent = bannerConfig.title;
+
+  const bannerDesc = document.getElementById('page-pkg-banner-desc');
+  if (bannerDesc) bannerDesc.textContent = bannerConfig.desc;
+
+  // 2. Price Display
+  const priceEl = document.getElementById('page-pkg-price');
+  const barPriceEl = document.getElementById('page-pkg-bar-price');
+  const formattedPrice = pkg.price === 0
+    ? (lang === 'bn' ? `০ ${curr} (ফ্রি)` : `0 ${curr} (Free)`)
+    : `${curr} ${formatNumber(pkg.price, user)}`;
+  if (priceEl) priceEl.textContent = formattedPrice;
+  if (barPriceEl) barPriceEl.textContent = formattedPrice;
+
+  // 3. Rate and Metrics Calculation
+  let rateStr = '৫.১৪';
+  if (pkg.price > 0 && pkg.dailyIncome > 0) {
+    rateStr = ((pkg.dailyIncome / pkg.price) * 100).toFixed(2);
+  }
+
+  const metricDailyEl = document.getElementById('page-pkg-metric-daily');
+  if (metricDailyEl) {
+    metricDailyEl.textContent = `${curr} ${formatNumber(pkg.dailyIncome, user)}`;
+  }
+
+  const monthlyProfit = (pkg.dailyIncome || 0) * 30;
+  const metricMonthlyEl = document.getElementById('page-pkg-metric-monthly');
+  if (metricMonthlyEl) {
+    metricMonthlyEl.textContent = `${curr} ${formatNumber(monthlyProfit, user)}`;
+  }
+
+  const metricRateEl = document.getElementById('page-pkg-metric-rate');
+  if (metricRateEl) {
+    if (pkg.price === 0) {
+      metricRateEl.textContent = lang === 'bn' ? '১০০% ফ্রি' : '100% Free';
     } else {
-      detailsEl.textContent = `দৈনিক ${pkg.count}টি কাজ · প্রতি কাজের আয় ${formatBanglaNumber(pkg.reward)}.০০ ${curr}`;
+      metricRateEl.textContent = lang === 'bn' ? `${formatBanglaNumber(rateStr)}%` : `${rateStr}%`;
     }
   }
 
-  const userLevelEl = document.getElementById('purchase-modal-user-level');
-  if (userLevelEl) {
-    const userPkgName = getPackageName(user.packageLevel || 'LV0', lang);
-    userLevelEl.textContent = `${user.packageLevel || 'LV0'} (${userPkgName})`;
-  }
-
-  const userBalEl = document.getElementById('purchase-modal-user-balance');
-  if (userBalEl) userBalEl.textContent = formatMoney(userBal, user);
-
-  const costEl = document.getElementById('purchase-modal-cost');
-  if (costEl) costEl.textContent = formatMoney(price, user) + ' ' + curr;
-
-  const statusBox = document.getElementById('purchase-modal-status-box');
-  const confirmBtn = document.getElementById('confirm-package-purchase-btn');
-  const depositBtn = document.getElementById('open-deposit-from-purchase-btn');
-
-  if (statusBox) {
-    if (isSufficient) {
-      statusBox.className = 'p-3 rounded-xl text-xs leading-5 bg-[#051c4a] border border-[#34d399]/40 text-[#34d399] shadow';
-      const statusTitle = lang === 'hi' ? 'पर्याप्त बैलेंस उपलब्ध है' : (lang === 'en' ? 'Sufficient Balance Available' : 'পর্যাপ্ত ব্যালেন্স বিদ্যমান রয়েছে');
-      const statusDesc = lang === 'hi' 
-        ? 'आपके खाते में पर्याप्त बैलेंस है। नीचे दिए गए बटन पर क्लिक करके तुरंत पैकेज सक्रिय करें।' 
-        : (lang === 'en' ? 'Your account has sufficient balance. Click the button below to activate the package now.' : 'আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স আছে। নিচে বাটনে চাপ দিয়ে এখনই প্যাকেজটি চালু করুন।');
-      statusBox.innerHTML = `
-        <div class="flex items-start gap-2">
-          <span class="text-base text-[#34d399] font-bold">✓</span>
-          <div>
-            <p class="font-bold text-white">${statusTitle}</p>
-            <p class="mt-0.5 text-slate-300">${statusDesc}</p>
-          </div>
-        </div>
-      `;
+  const metricTasksEl = document.getElementById('page-pkg-metric-tasks');
+  if (metricTasksEl) {
+    if (lang === 'bn') {
+      metricTasksEl.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ (প্রতি কাজ ${curr} ${formatBanglaNumber(pkg.reward)})`;
     } else {
-      const deficit = price - userBal;
-      statusBox.className = 'p-3 rounded-xl text-xs leading-5 bg-[#211504] border border-amber-500/50 text-amber-200 shadow';
-      const freeOnlyNotice = lang === 'hi' 
-        ? 'मुफ़्त में केवल LV0 कार्य कर सकते हैं!' 
-        : (lang === 'en' ? 'Only LV0 tasks can be performed for free!' : 'ফ্রিতে শুধু LV0 কাজ করতে পারবেন!');
-      const reqNotice = alertNotice || (lang === 'hi'
-        ? `${pkgName} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
-        : (lang === 'en' ? `To perform ${pkgName} tasks, you must purchase the package with balance.` : `${pkgName} প্যাকেজের কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`));
-      const deficitNotice = lang === 'hi'
-        ? `आपको और <strong class="text-white">${formatMoney(deficit, user)} ${curr}</strong> बैलेंस रिचार्ज करना होगा।`
-        : (lang === 'en' ? `You need to recharge <strong class="text-white">${formatMoney(deficit, user)} ${curr}</strong> more balance.` : `আপনার আরও <strong class="text-white">${formatMoney(deficit, user)} ${curr}</strong> ব্যালেন্স রিচার্জ (জমা) করতে হবে।`);
-
-      statusBox.innerHTML = `
-        <div class="flex items-start gap-2">
-          <span class="text-base text-amber-400 font-bold">⚠️</span>
-          <div>
-            <p class="font-bold text-amber-300">${freeOnlyNotice}</p>
-            <p class="mt-0.5 text-slate-300 text-[11px] leading-4">${reqNotice}</p>
-            <p class="mt-1.5 font-bold text-amber-300">${deficitNotice}</p>
-          </div>
-        </div>
-      `;
+      metricTasksEl.textContent = `${pkg.count} Tasks (${curr} ${pkg.reward} / task)`;
     }
   }
 
-  if (confirmBtn) {
-    if (isSufficient) {
-      confirmBtn.disabled = false;
-      const buyText = lang === 'hi'
-        ? `बैलेंस से ${pkgName} खरीदें`
-        : (lang === 'en' ? `Buy ${pkgName} with Balance` : `ব্যালেন্স দিয়ে ${pkgName} ক্রয় করুন`);
-      confirmBtn.innerHTML = `<span>💎</span> <span>${buyText}</span>`;
-      confirmBtn.className = 'w-full py-3 rounded-xl bg-[#1264c9] hover:bg-[#1877f2] text-white text-xs font-bold transition shadow-lg cursor-pointer active:scale-95 flex items-center justify-center gap-2';
+  // 4. Product Overview & Realistic Calculation Lines
+  const calcLine1El = document.getElementById('page-pkg-calc-line1');
+  if (calcLine1El) {
+    if (pkg.price === 0) {
+      calcLine1El.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ × ${curr} ${formatBanglaNumber(pkg.reward)} = ${curr} ${formatBanglaNumber(pkg.dailyIncome)}.০০`;
     } else {
-      confirmBtn.disabled = true;
-      const deficit = price - userBal;
-      const deficitText = lang === 'hi'
-        ? `अपर्याप्त बैलेंस (${formatMoney(deficit, user)} ${curr} की कमी)`
-        : (lang === 'en' ? `Insufficient Balance (${formatMoney(deficit, user)} ${curr} needed)` : `ব্যালেন্স অপর্যাপ্ত (${formatMoney(deficit, user)} ${curr} ঘাটতি)`);
-      confirmBtn.innerHTML = `<span>🔒</span> <span>${deficitText}</span>`;
-      confirmBtn.className = 'w-full py-3 rounded-xl bg-[#0a1838] text-slate-400 text-xs font-bold border border-[#1b3b80] cursor-not-allowed opacity-80 flex items-center justify-center gap-2';
+      calcLine1El.textContent = `${curr} ${formatNumber(pkg.price, user)} × ${formatBanglaNumber(rateStr)}% = ${curr} ${formatBanglaNumber(pkg.dailyIncome)}.০০`;
     }
   }
 
-  if (depositBtn) {
-    if (isSufficient) {
-      depositBtn.classList.add('hidden');
-    } else {
-      const deficit = price - userBal;
-      const depText = lang === 'hi'
-        ? `रिचार्ज टैब पर जाएँ (${formatMoney(deficit, user)} ${curr} की कमी)`
-        : (lang === 'en' ? `Go to Recharge Tab (${formatMoney(deficit, user)} ${curr} needed)` : `ব্যালেন্স রিচার্জ ট্যাবে যান (${formatMoney(deficit, user)} ${curr} ঘাটতি)`);
-      depositBtn.classList.remove('hidden');
-      depositBtn.innerHTML = `<span>⚡</span> <span>${depText}</span>`;
-    }
+  const calcLine2El = document.getElementById('page-pkg-calc-line2');
+  if (calcLine2El) {
+    calcLine2El.textContent = `${curr} ${formatBanglaNumber(pkg.dailyIncome)}.০০ × ৩০ দিন = ${curr} ${formatNumber(monthlyProfit, user)}`;
   }
 
-  switchSheetTab('purchase');
-  openActionSheet();
+  const calcLine3El = document.getElementById('page-pkg-calc-line3');
+  if (calcLine3El) {
+    calcLine3El.textContent = `${curr} ${formatNumber(monthlyProfit, user)} লাভ (প্রতিদিন উত্তোলনযোগ্য)`;
+  }
+
+  // 5. Bottom Purchase Button State (Label: 'ক্রয় করুন')
+  const buyBtn = document.getElementById('page-pkg-buy-btn');
+  if (buyBtn) {
+    buyBtn.dataset.targetLevel = level;
+    const isCurrent = (level === userLevel);
+    const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+
+    if (isCurrent) {
+      buyBtn.textContent = 'বর্তমান স্তর';
+      buyBtn.disabled = true;
+      buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
+    } else if (isPurchased) {
+      buyBtn.textContent = 'ক্রয় সম্পন্ন ✓';
+      buyBtn.disabled = true;
+      buyBtn.className = 'px-6 py-3 rounded-xl bg-emerald-700/60 text-emerald-200 font-bold text-sm cursor-default';
+    } else if (level === 'LV0') {
+      buyBtn.textContent = 'ফ্রি সক্রিয়';
+      buyBtn.disabled = true;
+      buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
+    } else {
+      buyBtn.textContent = 'ক্রয় করুন';
+      buyBtn.disabled = false;
+      buyBtn.className = 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition active:scale-95 cursor-pointer';
+    }
+  }
 }
 
+// Bind click on bottom buy button inside package detail panel
+const pagePkgBuyBtn = document.getElementById('page-pkg-buy-btn');
+if (pagePkgBuyBtn) {
+  pagePkgBuyBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const lvl = pagePkgBuyBtn.dataset.targetLevel || activeDetailPackageLevel;
+    if (lvl && lvl !== 'LV0') {
+      handlePackagePurchase(lvl, pagePkgBuyBtn);
+    }
+  });
+}
+
+function openPackageDetailPage(level) {
+  renderPackageDetailPage(level);
+  openDashboardPanel('package-detail');
+}
+window.renderPackageDetailPage = renderPackageDetailPage;
+window.openPackageDetailPage = openPackageDetailPage;
+
+// Compatibility aliases
+function openPackageDetailsModal(level) {
+  openPackageDetailPage(level);
+}
+function closePackageDetailsModal() {
+  openDashboardPanel('records');
+}
+window.openPackageDetailsModal = openPackageDetailsModal;
+window.closePackageDetailsModal = closePackageDetailsModal;
+
+// Package Purchase Handling: Clean verification with loading animation and direct status
+function handlePackagePurchase(level, triggerBtn) {
+  if (!packageData[level] || level === 'LV0') return;
+  if (window.isProcessingPackagePurchase) return;
+
+  const user = getCurrentUser();
+  const pkg = packageData[level];
+  const isCurrent = (level === user.packageLevel);
+  const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+
+  if (isCurrent) {
+    showToastNotification(`আপনি বর্তমানে ${level} প্যাকেজে সক্রিয় রয়েছেন।`);
+    return;
+  }
+  if (isPurchased) {
+    showToastNotification(`এই প্যাকেজটি (${level}) আপনি ইতিমধ্যে ক্রয় করেছেন।`);
+    return;
+  }
+
+  // Find target button
+  let btn = triggerBtn;
+  if (!btn || !btn.isConnected) {
+    btn = document.getElementById('page-pkg-buy-btn') || document.querySelector(`[data-buy-package="${level}"]`);
+  }
+
+  window.isProcessingPackagePurchase = true;
+
+  let origHtml = '';
+  let origClass = '';
+  if (btn) {
+    origHtml = btn.innerHTML;
+    origClass = btn.className;
+    btn.disabled = true;
+    btn.innerHTML = `
+      <span class="inline-flex items-center justify-center gap-2">
+        <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span>যাচাই করা হচ্ছে...</span>
+      </span>
+    `;
+    btn.className = 'px-8 py-3 rounded-xl bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg opacity-90 cursor-wait flex items-center justify-center gap-2';
+  }
+
+  setTimeout(function() {
+    window.isProcessingPackagePurchase = false;
+    const freshUser = getCurrentUser();
+    const userBal = Number(freshUser.balance || 0);
+    const price = Number(pkg.price || 0);
+
+    // 1. অপর্যাপ্ত ব্যালেন্স: পর্যাপ্ত সময় প্রদর্শন এবং হালকা ভাবে ফেড-আউট (Smooth gentle fade-out)
+    if (userBal < price) {
+      if (btn) {
+        btn.disabled = true;
+        btn.style.transition = 'all 0.5s ease-in-out';
+        btn.style.opacity = '1';
+        btn.className = 'px-6 py-3 rounded-xl bg-rose-600 text-white font-black text-sm shadow-lg shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-not-allowed transition-all duration-500';
+        btn.innerHTML = `
+          <span class="inline-flex items-center gap-1.5 transition-opacity duration-700 ease-in-out" id="insufficient-bal-label">
+            <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>অপর্যাপ্ত ব্যালেন্স</span>
+          </span>
+        `;
+      }
+
+      // ৩.৬ সেকেন্ড পর্যাপ্ত সময় ধরে দেখাবে, এরপর হালকা ভাবে ধীরে ধীরে মিলিয়ে যাবে (Soft Dissolve)
+      setTimeout(function() {
+        if (btn && btn.isConnected) {
+          const label = btn.querySelector('#insufficient-bal-label');
+          if (label) {
+            label.style.opacity = '0';
+          }
+          btn.style.opacity = '0.4';
+
+          // ধীরে মিলিয়ে যাওয়ার পর স্বাভাবিক 'ক্রয় করুন' বোতামে সফট ট্রানজিশন
+          setTimeout(function() {
+            const checkUser = getCurrentUser();
+            if (checkUser.packageLevel !== level && !(checkUser.purchasedPackages && checkUser.purchasedPackages.includes(level))) {
+              btn.disabled = false;
+              btn.className = origClass || 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition-all duration-500 active:scale-95 cursor-pointer';
+              btn.innerHTML = origHtml || 'ক্রয় করুন';
+              btn.style.opacity = '0';
+              requestAnimationFrame(function() {
+                btn.style.opacity = '1';
+              });
+            }
+          }, 650);
+        }
+      }, 3600);
+
+    } else {
+      // 2. পর্যাপ্ত ব্যালেন্স: সরাসরি ক্রয় ও সক্রিয়করণ
+      freshUser.balance = Math.max(0, userBal - price);
+      freshUser.packageLevel = level;
+      if (!freshUser.purchasedPackages) freshUser.purchasedPackages = ['LV0'];
+      if (!freshUser.purchasedPackages.includes(level)) {
+        freshUser.purchasedPackages.push(level);
+      }
+      localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
+
+      if (window.aloSupabase) {
+        try {
+          const normPhone = normalizeBdPhone(freshUser.phone);
+          window.aloSupabase
+            .from('users')
+            .update({
+              balance: freshUser.balance,
+              package_level: level,
+              updated_at: new Date().toISOString()
+            })
+            .eq('phone', normPhone)
+            .then(function() {})
+            .catch(function(e) { console.warn('Supabase sync warning:', e); });
+        } catch(e) {}
+      }
+
+      if (btn) {
+        btn.textContent = 'বর্তমান স্তর';
+        btn.disabled = true;
+        btn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
+      }
+
+      updateUserDetails(freshUser);
+      updateProfileMetrics();
+      updateVipHallRooms();
+      updateRecordsPanelPackages();
+
+      showToastNotification(`🎉 অভিনন্দন! আপনার ${level} প্যাকেজ সফলভাবে সক্রিয় হয়েছে!`);
+
+      const detailPanel = document.getElementById('package-detail-panel');
+      if (detailPanel && !detailPanel.classList.contains('hidden')) {
+        renderPackageDetailPage(level);
+      }
+    }
+  }, 800);
+}
+
+function openPackagePurchaseModal(level, alertNotice, triggerBtn) {
+  handlePackagePurchase(level, triggerBtn);
+}
+window.handlePackagePurchase = handlePackagePurchase;
+window.openPackagePurchaseModal = openPackagePurchaseModal;
+
 function closePackagePurchaseModal() {
-  closeActionSheet();
+  if (typeof closeActionSheet === 'function') closeActionSheet();
 }
 
 function openDepositModal(initialAmount) {
-  closeActionSheet();
+  if (typeof closeActionSheet === 'function') closeActionSheet();
   openDashboardPanel('payment-method');
 }
 
 function closeDepositModal() {
-  closeActionSheet();
+  if (typeof closeActionSheet === 'function') closeActionSheet();
 }
 
 function confirmPackagePurchase() {
-  const level = currentPurchaseLevel;
-  const pkg = packageData[level];
-  if (!pkg) return;
-  const user = getCurrentUser();
-  const userBal = Number(user.balance || 0);
-  const cost = pkg.price;
-
-  if (userBal < cost) {
-    const deficit = cost - userBal;
-    pendingPurchaseLevel = level;
-    openDepositModal(deficit);
-    return;
+  if (currentPurchaseLevel && currentPurchaseLevel !== 'LV0') {
+    handlePackagePurchase(currentPurchaseLevel, document.getElementById('confirm-package-purchase-btn'));
   }
-
-  user.balance = Math.max(0, userBal - cost);
-  user.packageLevel = level;
-  if (!user.purchasedPackages) user.purchasedPackages = ['LV0'];
-  if (!user.purchasedPackages.includes(level)) {
-    user.purchasedPackages.push(level);
-  }
-  localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-
-  closeActionSheet();
-  updateUserDetails(user);
-  updateProfileMetrics();
-  updateVipHallRooms();
-  updateRecordsPanelPackages();
-
-  showToastNotification(`🎉 অভিনন্দন! আপনার ${level} (${pkg.name}) সফলভাবে সক্রিয় হয়েছে! এখন আপনি ${level}-এর সমস্ত কাজ করতে পারবেন।`);
-
-  renderPackageTasks(level);
-  openDashboardPanel('platform-tasks');
 }
+window.confirmPackagePurchase = confirmPackagePurchase;
 
 // Distribute multi-level team recharge commissions (Level 1: 10%, Level 2: 5%, Level 3: 2%)
 async function distributeTeamRebate(memberPhone, rechargeAmount) {
@@ -4449,6 +4743,37 @@ function saveAcceptedMission(serverMission) {
   renderMissionRecords(activeMissionFilter);
 }
 
+function showTaskCenterToast(text) {
+  let toast = document.getElementById('task-center-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'task-center-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.className = 'task-center-toast-bubble';
+  // Strictly clean text only, without any icons
+  toast.textContent = text || 'গ্রহণ করা হচ্ছে';
+
+  if (window.taskToastTimer) clearTimeout(window.taskToastTimer);
+  window.taskToastTimer = setTimeout(function() {
+    if (toast) {
+      toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      toast.style.opacity = '0';
+      toast.style.transform = 'translate(-50%, -50%) scale(0.92)';
+      setTimeout(function() {
+        if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 260);
+    }
+  }, 1300);
+}
+window.showTaskCenterToast = showTaskCenterToast;
+
+function showTaskAcceptToast(title) {
+  showTaskCenterToast(title || 'গ্রহণ করা হচ্ছে');
+}
+window.showTaskAcceptToast = showTaskAcceptToast;
+
 function refreshDailyMissionLimit(level) {
   const message = document.getElementById('platform-task-message');
   const platformTaskList = document.getElementById('platform-task-list');
@@ -4463,71 +4788,27 @@ function refreshDailyMissionLimit(level) {
     return m.level === level && new Date(m.acceptedAt).toDateString() === today;
   });
   
-  const quotaLimit = packageTaskSettings[level]?.count || 5;
+  const quotaLimit = (packageTaskSettings[level] && packageTaskSettings[level].count) || 5;
   const currentCount = acceptedToday.length;
   const reached = currentCount >= quotaLimit;
 
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
-  const curr = getUserCurrency(user);
+  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
 
+  // Clean, minimal header: NO quota bars or numbers on top
   if (title) {
-    if (!isUnlocked) {
-      const lockLabel = lang === 'hi' ? 'लॉक 🔒' : (lang === 'en' ? 'Locked 🔒' : 'লকড 🔒');
-      title.innerHTML = `${activePlatform} · <strong style="color: var(--color-warning);">${level} (${lockLabel})</strong>`;
-    } else {
-      const quotaLabel = lang === 'hi' ? `दैनिक कोटा: ${quotaLimit}` : (lang === 'en' ? `Daily Quota: ${quotaLimit}` : `দৈনিক কোটা: ${quotaLimit}টি`);
-      title.innerHTML = `${activePlatform} · <strong style="color: var(--color-primary-contrast);">${level}</strong> (${quotaLabel})`;
-    }
+    title.textContent = `${activePlatform} · ${level}`;
   }
   if (note) {
-    if (!isUnlocked) {
-      const lockHeading = lang === 'hi' ? 'यह पैकेज अनलॉक नहीं है' : (lang === 'en' ? 'Package Locked' : 'এই প্যাকেজটি আনলক করা নেই');
-      const lockDesc = lang === 'hi' 
-        ? `मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${level} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
-        : (lang === 'en' ? `Only LV0 tasks can be performed for free. Purchase package to perform ${level} tasks.` : `ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`);
-      const buyBtnText = lang === 'hi' ? 'पैकेज खरीदें' : (lang === 'en' ? 'Buy Package' : 'প্যাকেজ ক্রয়');
-      note.innerHTML = `
-        <div class="rounded-xl p-3 bg-amber-950/80 border border-amber-500/50 text-amber-200 text-xs shadow-md">
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <p class="font-bold text-white flex items-center gap-1.5"><span class="text-base text-amber-400">🔒</span> ${lockHeading}</p>
-              <p class="text-[11px] text-amber-200/90 mt-1">${lockDesc}</p>
-            </div>
-            <button type="button" class="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-xs shadow transition active:scale-95 cursor-pointer" data-buy-package="${level}">
-              ${buyBtnText}
-            </button>
-          </div>
-        </div>
-      `;
-    } else {
-      const remaining = Math.max(0, quotaLimit - currentCount);
-      const quotaTitle = lang === 'hi' ? `दैनिक कार्य कोटा: <strong>${quotaLimit}</strong>` : (lang === 'en' ? `Daily Task Quota: <strong>${quotaLimit}</strong>` : `দৈনিক কাজের কোটা: <strong>${quotaLimit}টি</strong>`);
-      const acceptedTitle = lang === 'hi'
-        ? `स्वीकृत: ${currentCount}/${quotaLimit} ${reached ? '(कोटा पूर्ण)' : `(शेष ${remaining})`}`
-        : (lang === 'en' ? `Accepted: ${currentCount}/${quotaLimit} ${reached ? '(Limit Reached)' : `(${remaining} remaining)`}` : `গৃহীত: ${currentCount}/${quotaLimit} ${reached ? '(সীমা পূর্ণ)' : `(বাকি ${remaining}টি)`}`);
-      const rewText = lang === 'hi'
-        ? `प्रति कार्य ${packageTaskSettings[level]?.reward || 20}.00 ${curr} · पैकेज में कुल 25 उपलब्ध कार्यों की सूची`
-        : (lang === 'en' ? `Per task ${packageTaskSettings[level]?.reward || 20}.00 ${curr} · Total 25 available tasks in package` : `প্রতি কাজে ${packageTaskSettings[level]?.reward || 20}.০০ ${curr} · প্যাকেজে মোট ২৫টি উপলব্ধ কাজের তালিকা`);
-
-      note.innerHTML = `
-        <div class="flex items-center justify-between text-xs mt-1" style="color: var(--color-profile-text);">
-          <span>${quotaTitle}</span>
-          <span class="font-bold" style="color: ${reached ? 'var(--color-warning)' : 'var(--color-profile-cyan)'};">
-            ${acceptedTitle}
-          </span>
-        </div>
-        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.12); border-radius: 9999px; margin-top: 6px; overflow: hidden;">
-          <div style="width: ${Math.min(100, (currentCount / quotaLimit) * 100)}%; height: 100%; background: ${reached ? 'var(--color-warning)' : 'var(--color-profile-cyan)'}; transition: width 300ms ease;"></div>
-        </div>
-        <p style="font-size: 11px; color: var(--color-muted); margin-top: 6px;">
-          ${rewText}
-        </p>
-      `;
-    }
+    note.textContent = lang === 'hi' ? 'आपके वर्तमान पैकेज के लिए उपलब्ध कार्य' : (lang === 'en' ? 'Available tasks for your package' : 'আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ');
   }
 
+  // Update button states in task list
   if (platformTaskList) {
     const rows = platformTaskList.querySelectorAll('.platform-task-row');
+    const limitReachedText = lang === 'hi' ? 'सीमा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
+    const acceptedText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
+    const acceptText = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
+
     rows.forEach(function(row) {
       const btn = row.querySelector('[data-platform-accept]');
       if (!btn) return;
@@ -4542,18 +4823,21 @@ function refreshDailyMissionLimit(level) {
         btn.className = 'platform-task-accept bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
         btn.dataset.lockedLevel = level;
       } else if (isTaskAccepted) {
-        btn.textContent = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
+        btn.textContent = acceptedText;
         btn.disabled = true;
+        btn.className = 'platform-task-accept is-accepted';
         btn.dataset.accepted = 'true';
         btn.removeAttribute('data-limit-reached');
       } else if (reached) {
-        btn.textContent = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
+        btn.textContent = limitReachedText;
         btn.disabled = true;
+        btn.className = 'platform-task-accept is-limit-reached';
         btn.dataset.limitReached = 'true';
         btn.removeAttribute('data-accepted');
       } else {
-        btn.textContent = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
+        btn.textContent = acceptText;
         btn.disabled = false;
+        btn.className = 'platform-task-accept';
         btn.removeAttribute('data-limit-reached');
         btn.removeAttribute('data-accepted');
       }
@@ -4561,24 +4845,11 @@ function refreshDailyMissionLimit(level) {
   }
 
   if (message) {
-    if (!isUnlocked) {
-      const lockMsg = lang === 'hi'
-        ? `⚠️ मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${level} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
-        : (lang === 'en' ? `⚠️ Only LV0 tasks can be performed for free. Purchase package to perform ${level} tasks.` : `⚠️ ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${level}-এর কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`);
-      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${lockMsg}</span>`;
-    } else if (reached) {
-      const limitTitle = lang === 'hi'
-        ? `⚠️ आज के ${level} पैकेज के ${quotaLimit} कार्यों की सीमा पूरी हो गई है!`
-        : (lang === 'en' ? `⚠️ Today's ${quotaLimit} task limit for ${level} package has been reached!` : `⚠️ আজকের ${level} প্যাকেজের ${quotaLimit}টি কাজের সীমা পূর্ণ হয়েছে!`);
-      const limitSub = lang === 'hi'
-        ? 'टास्क मेनू में जाकर कार्य सबमिट करें। कल फिर नया कोटा शुरू होगा।'
-        : (lang === 'en' ? 'Go to the Task menu to submit tasks. New quota tomorrow.' : 'টাস্ক মেনুতে গিয়ে কাজ জমা দিন। আগামীকাল আবার নতুন কোটা চালু হবে।');
-      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${limitTitle}</span> <br><small style="color: var(--color-muted);">${limitSub}</small>`;
+    if (reached) {
+      const limitTitle = lang === 'hi' ? 'आज की कार्य सीमा पूर्ण हो चुकी है' : (lang === 'en' ? 'Daily task limit reached' : 'আজকের কাজের সীমা পূর্ণ হয়েছে');
+      message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${limitTitle}</span>`;
     } else {
-      const remainingLabel = lang === 'hi'
-        ? `आज के शेष कार्य: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}</strong> (कुल कोटा ${quotaLimit})`
-        : (lang === 'en' ? `Remaining tasks today: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}</strong> (Total quota ${quotaLimit})` : `আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${quotaLimit - currentCount}টি</strong> (মোট কোটা ${quotaLimit}টি)`);
-      message.innerHTML = remainingLabel;
+      message.innerHTML = '';
     }
   }
 }
@@ -4652,7 +4923,7 @@ function renderMissionRecords(filter) {
 
   visibleMissions.forEach(function(mission) {
     const card = document.createElement('article');
-    card.className = 'mission-record-card rounded-[var(--radius)] p-4 space-y-3';
+    card.className = 'mission-record-card rounded-[var(--radius)] p-4 space-y-3 relative overflow-hidden';
     card.style.background = 'var(--color-profile-card)';
     card.style.border = '1px solid var(--color-profile-border)';
 
@@ -4681,7 +4952,7 @@ function renderMissionRecords(filter) {
         </div>
       `;
     } else if (mission.status === 'review') {
-      const endsAt = mission.reviewEndsAt || (new Date(mission.submittedAt || Date.now()).getTime() + 5 * 60 * 1000);
+      const endsAt = mission.reviewEndsAt || (new Date(mission.submittedAt || Date.now()).getTime() + 15 * 60 * 1000);
       const remainingSec = Math.max(0, Math.ceil((endsAt - now) / 1000));
       const mins = Math.floor(remainingSec / 60);
       const secs = remainingSec % 60;
@@ -4689,17 +4960,13 @@ function renderMissionRecords(filter) {
 
       const reviewLabel = lang === 'hi' ? 'समीक्षाधीन: शेष' : (lang === 'en' ? 'Under Review: Left' : 'পর্যালোচনাধীন: বাকি');
       const minsLabel = lang === 'hi' ? 'मिनट' : (lang === 'en' ? 'mins' : 'মিনিট');
-      const approveLabel = lang === 'hi' ? 'स्वीकृत करें ⚡' : (lang === 'en' ? 'Approve Now ⚡' : 'অনুমোদন সম্পন্ন করুন ⚡');
 
       actionsHtml = `
-        <div class="mission-card-review-bar mt-2 pt-2.5 border-t flex flex-wrap items-center justify-between gap-2" style="border-color: var(--color-profile-border);">
+        <div class="mission-card-review-bar mt-2 pt-2.5 border-t flex items-center justify-between gap-2" style="border-color: var(--color-profile-border);">
           <div class="flex items-center gap-2 text-xs font-semibold" style="color: #fbbf24;">
             <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
             <span>${reviewLabel} <span class="review-timer-text font-mono font-bold" data-review-ends="${endsAt}">${timeStr}</span> ${minsLabel}</span>
           </div>
-          <button type="button" class="fast-approve-btn text-[11px] font-bold px-2.5 py-1 rounded transition cursor-pointer hover:opacity-90 active:scale-95" data-fast-approve="${mission.id}" style="background: rgba(37, 244, 238, 0.15); color: var(--color-profile-cyan); border: 1px solid rgba(37, 244, 238, 0.35);" title="Instant approval">
-            ${approveLabel}
-          </button>
         </div>
       `;
     } else if (mission.status === 'complete') {
@@ -4728,10 +4995,15 @@ function renderMissionRecords(filter) {
     const descText = getPlatformTaskDescription(mission.platform, mission.taskIndex !== undefined ? mission.taskIndex : 0, lang) || mission.description;
 
     card.innerHTML = `
-      <div class="mission-card-top flex items-center justify-between gap-3">
-        <div class="flex min-w-0 items-center gap-2.5">
+      ${mission.status === 'review' ? `
+        <div class="absolute left-1/2 top-[46%] z-20 pointer-events-none select-none flex items-center justify-center" style="transform: translate(-50%, -50%) rotate(-6deg);">
+          <img src="stamp-under-review.png" alt="UNDER REVIEW" class="w-36 sm:w-40 h-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.7)]" style="max-width: 155px;" />
+        </div>
+      ` : ''}
+      <div class="mission-card-top flex items-center justify-between gap-3 relative">
+        <div class="flex min-w-0 items-center gap-2.5 relative">
           <span class="mission-record-icon flex shrink-0 items-center justify-center">${getPlatformSvg(mission.platform, "h-6 w-6")}</span>
-          <div>
+          <div class="relative inline-block">
             <h3 class="mission-platform-name truncate font-bold text-sm">${mission.platform}</h3>
             <span class="text-[11px] px-1.5 py-0.5 rounded font-semibold" style="background: rgba(255,255,255,0.08); color: var(--color-muted);">${mission.level || 'LV0'}</span>
           </div>
@@ -4783,26 +5055,6 @@ function renderPackageTasks(level) {
   const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
   const curr = getUserCurrency(user);
 
-  if (!isUnlocked) {
-    const banner = document.createElement('div');
-    banner.className = 'mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-[#0c2364] to-[#071b50] border-2 border-[#35c6e7]/60 text-white text-xs shadow-xl flex items-center justify-between gap-3 glow-pulse-cyan';
-    const lockTitle = lang === 'hi' ? 'पैकेज खरीदना आवश्यक' : (lang === 'en' ? 'Package Purchase Required' : 'প্যাকেজ ক্রয় প্রয়োজন');
-    const lockSub = lang === 'hi'
-      ? `मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${activePackageLevel} के कार्य करने के लिए बैलेंस से पैकेज खरीदना होगा।`
-      : (lang === 'en' ? `Only LV0 tasks are free. Purchase package to perform ${activePackageLevel} tasks.` : `ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel}-এর কাজ করতে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।`);
-    const buyBtnText = lang === 'hi' ? 'पैकेज खरीदें' : (lang === 'en' ? 'Buy Package' : 'প্যাকেজ ক্রয়');
-    banner.innerHTML = `
-      <div class="min-w-0 flex-1">
-        <p class="font-bold text-[#35c6e7] flex items-center gap-1.5"><span class="text-base">🔒</span> ${lockTitle}</p>
-        <p class="mt-1 text-[11px] text-slate-200 leading-4">${lockSub}</p>
-      </div>
-      <button type="button" class="shrink-0 px-3.5 py-2 rounded-xl bg-[#1264c9] hover:bg-[#1877f2] text-white font-bold text-xs shadow-lg transition active:scale-95 cursor-pointer flex items-center gap-1" data-buy-package="${activePackageLevel}">
-        <span>💎</span> <span>${buyBtnText}</span>
-      </button>
-    `;
-    rows.push(banner);
-  }
-
   for (let i = 0; i < TOTAL_TASKS_TO_DISPLAY; i++) {
     const isThisAccepted = missions.some(function(m) {
       return m.platform === activePlatform && m.level === activePackageLevel && m.taskIndex === i && new Date(m.acceptedAt).toDateString() === today;
@@ -4821,10 +5073,12 @@ function renderPackageTasks(level) {
     } else if (isThisAccepted) {
       btnText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
       btnDisabled = true;
+      btnClass = 'platform-task-accept is-accepted';
       extraAttr = 'data-accepted="true"';
     } else if (isLimitReached) {
       btnText = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
       btnDisabled = true;
+      btnClass = 'platform-task-accept is-limit-reached';
       extraAttr = 'data-limit-reached="true"';
     }
 
@@ -4865,17 +5119,6 @@ function renderPackageTasks(level) {
     `;
     rows.push(row);
   }
-
-  const bottomExitBtn = document.createElement('div');
-  bottomExitBtn.className = 'pt-6 pb-14 text-center';
-  const exitText = lang === 'hi' ? 'इस स्तर से बाहर निकलें (वीआईपी हॉल पर लौटें)' : (lang === 'en' ? 'Exit this tier (Return to VIP Hall)' : 'এই স্তর থেকে কেটে বের হন (ভিআইপি হলে ফিরে যান)');
-  bottomExitBtn.innerHTML = `
-    <button type="button" class="w-full py-3.5 px-4 rounded-xl bg-[#0c2364] hover:bg-[#123185] border-2 border-[#35c6e7]/50 text-white font-bold text-xs shadow-lg transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer" data-panel="vip">
-      <svg viewBox="0 0 24 24" class="h-4 w-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      <span>${exitText}</span>
-    </button>
-  `;
-  rows.push(bottomExitBtn);
 
   platformTaskList.replaceChildren(...rows);
   const headerLvl = document.getElementById('platform-task-header-level');
@@ -4962,13 +5205,19 @@ function renderMissionSubmission() {
   if (backSpan) backSpan.textContent = lang === 'hi' ? 'वापस जाएं' : (lang === 'en' ? 'Back' : 'ফিরে যান');
   const headerTitle = document.querySelector('#mission-submit-panel h2');
   if (headerTitle) headerTitle.textContent = lang === 'hi' ? 'मिशन विवरण' : (lang === 'en' ? 'Mission Details' : 'মিশন বিবরণ');
-  const closeSpan = document.querySelector('#mission-submit-panel button[title="কেটে দিন"] span');
-  if (closeSpan) closeSpan.textContent = lang === 'hi' ? 'बंद करें' : (lang === 'en' ? 'Close' : 'কেটে দিন');
 
-  // Localized golden rubber stamp
+  // Localized rubber stamp
   const stampEl = document.getElementById('mission-submit-stamp-text');
   if (stampEl) {
-    stampEl.textContent = lang === 'hi' ? 'चालू' : (lang === 'en' ? 'IN PROGRESS' : 'চলমান');
+    stampEl.textContent = mission.status === 'review' ? 'UNDER REVIEW' : (lang === 'hi' ? 'चालू' : (lang === 'en' ? 'IN PROGRESS' : 'চলমান'));
+  }
+  const submitReviewStamp = document.getElementById('mission-submit-review-stamp');
+  if (submitReviewStamp) {
+    if (mission.status === 'review') {
+      submitReviewStamp.classList.remove('hidden');
+    } else {
+      submitReviewStamp.classList.add('hidden');
+    }
   }
 
   // Localize buttons
@@ -5207,7 +5456,7 @@ function checkPendingReviews() {
     if (m.status === 'review') {
       if (!m.reviewEndsAt) {
         const subTime = m.submittedAt ? new Date(m.submittedAt).getTime() : now;
-        m.reviewEndsAt = subTime + 5 * 60 * 1000;
+        m.reviewEndsAt = subTime + 15 * 60 * 1000;
       }
       if (now >= m.reviewEndsAt) {
         m.status = 'complete';
@@ -6399,13 +6648,67 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // Savings preset amount buttons click
+  const savingsPresetBtn = event.target.closest('.savings-preset-btn');
+  if (savingsPresetBtn) {
+    event.preventDefault();
+    const amt = savingsPresetBtn.dataset.amount;
+    const inp = document.getElementById('savings-deposit-input');
+    if (inp && amt) {
+      inp.value = amt;
+      updateSavingsCalculationPreview(amt);
+    }
+    return;
+  }
+
+  // Savings submission button click
+  const savingsSubmitBtn = event.target.closest('#savings-submit-btn');
+  if (savingsSubmitBtn) {
+    event.preventDefault();
+    handleSavingsSubmission();
+    return;
+  }
+
+  // Savings card add more button click
+  const savingsCardAddBtn = event.target.closest('.savings-card-add-btn');
+  if (savingsCardAddBtn) {
+    event.preventDefault();
+    const inp = document.getElementById('savings-deposit-input');
+    if (inp) {
+      inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      inp.focus();
+    }
+    return;
+  }
+
+  // Package view details button click ("পণ্যের বিস্তারিত দেখুন") - Opens dedicated full-page panel
+  const viewDetailsBtn = event.target.closest('[data-view-details], .package-view-details-btn');
+  if (viewDetailsBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    const lvl = viewDetailsBtn.dataset.viewDetails;
+    if (lvl) openPackageDetailPage(lvl);
+    return;
+  }
+
+  // Package detail page buy button click ("প্যাকেজ ক্রয় করুন")
+  const pagePkgBuyBtn = event.target.closest('#page-pkg-buy-btn, #modal-pkg-buy-btn');
+  if (pagePkgBuyBtn) {
+    event.preventDefault();
+    const lvl = pagePkgBuyBtn.dataset.targetLevel || activeDetailPackageLevel;
+    if (lvl && lvl !== 'LV0') {
+      handlePackagePurchase(lvl, pagePkgBuyBtn);
+    }
+    return;
+  }
+
   // Buy package button click
   const buyPkgBtn = event.target.closest('[data-buy-package]');
   if (buyPkgBtn) {
     const level = buyPkgBtn.dataset.buyPackage;
     if (level && level !== 'LV0') {
       event.preventDefault();
-      openPackagePurchaseModal(level);
+      handlePackagePurchase(level, buyPkgBtn);
       return;
     }
   }
@@ -6416,7 +6719,7 @@ document.addEventListener('click', function(event) {
     const level = recordPkgCard.dataset.recordPackage;
     if (level && level !== 'LV0') {
       event.preventDefault();
-      openPackagePurchaseModal(level);
+      openPackageDetailPage(level);
       return;
     }
   }
@@ -6427,7 +6730,7 @@ document.addEventListener('click', function(event) {
     const lvl = lockedBtn.dataset.lockedLevel || activePackageLevel;
     if (lvl && lvl !== 'LV0') {
       event.preventDefault();
-      openPackagePurchaseModal(lvl);
+      openPackageDetailPage(lvl);
       return;
     }
   }
@@ -6464,13 +6767,11 @@ document.addEventListener('click', function(event) {
     const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
 
     if (activePackageLevel !== 'LV0' && !isLevelUnlocked(activePackageLevel, user)) {
-      const lockWarning = lang === 'hi'
-        ? `मुफ़्त में केवल LV0 कार्य कर सकते हैं। ${activePackageLevel} के कार्य करने के लिए बैलेंस से पैकेज खरीदें।`
-        : (lang === 'en' ? `Only LV0 tasks are free. Purchase package to perform ${activePackageLevel} tasks.` : `ফ্রিতে শুধু LV0 কাজ করতে পারবেন। ${activePackageLevel} কাজ করতে ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন।`);
-      openPackagePurchaseModal(activePackageLevel, lockWarning);
+      openPackageDetailPage(activePackageLevel);
       return;
     }
-    if (acceptBtn.disabled) return;
+    if (acceptBtn.disabled || acceptBtn.classList.contains('is-accepting')) return;
+
     const row = acceptBtn.closest('.platform-task-row');
     const taskIndex = row ? parseInt(row.dataset.taskIndex || '0', 10) : 0;
     const quota = packageTaskSettings[activePackageLevel]?.count || 5;
@@ -6480,59 +6781,71 @@ document.addEventListener('click', function(event) {
     });
 
     if (acceptedToday.length >= quota) {
-      const limitReachedWarning = lang === 'hi'
-        ? `⚠️ आज के ${activePackageLevel} पैकेज के ${quota} कार्यों की सीमा पूरी हो गई है!`
-        : (lang === 'en' ? `⚠️ Today's ${quota} task limit for ${activePackageLevel} has been reached!` : `আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে!`);
-      const msg = document.getElementById('platform-task-message');
-      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${limitReachedWarning}</span>`;
+      showTaskCenterToast(lang === 'hi' ? 'सीमा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ'));
       refreshDailyMissionLimit(activePackageLevel);
       return;
     }
 
-    const title = lang === 'hi' ? `${activePlatform} · कार्य ${taskIndex + 1}` : (lang === 'en' ? `${activePlatform} · Task ${taskIndex + 1}` : `${activePlatform} · কাজ ${taskIndex + 1}`);
-    const desc = getPlatformTaskDescription(activePlatform, taskIndex, lang);
-    const reward = packageTaskSettings[activePackageLevel].reward;
-    const taskLink = getRealisticTaskUrl(activePlatform, taskIndex);
-
-    saveAcceptedMission({
-      id: 'demo-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-      taskIndex: taskIndex,
-      platform: activePlatform,
-      title: title,
-      description: desc,
-      level: activePackageLevel,
-      reward: reward,
-      status: 'active',
-      taskLink: taskLink,
-      acceptedAt: new Date().toISOString()
-    });
-
-    const acceptedBtnText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
-    acceptBtn.textContent = acceptedBtnText;
+    // Step 1: That button turns white immediately with clean 'গৃহীত'
+    acceptBtn.classList.remove('is-accepting');
+    acceptBtn.classList.add('is-accepted');
     acceptBtn.disabled = true;
     acceptBtn.dataset.accepted = 'true';
     acceptBtn.removeAttribute('data-limit-reached');
+    acceptBtn.textContent = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
 
-    const newAcceptedCount = acceptedToday.length + 1;
-    const msg = document.getElementById('platform-task-message');
-    if (newAcceptedCount >= quota) {
-      const quotaFinishedMsg = lang === 'hi'
-        ? `🎉 बधाई! आज के ${activePackageLevel} स्तर के ${quota} कार्यों की सीमा पूरी हो गई है।<br><small style="color: var(--color-muted);">टास्क मेनू में जाकर कार्य सबमिट करें।</small>`
-        : (lang === 'en'
-          ? `🎉 Congratulations! Today's ${quota} task limit for ${activePackageLevel} has been reached.<br><small style="color: var(--color-muted);">Go to Task menu to submit tasks.</small>`
-          : `অভিনন্দন! আজকের ${activePackageLevel} স্তরের ${quota}টি কাজের সীমা পূর্ণ হয়েছে।<br><small style="color: var(--color-muted);">টাস্ক মেনুতে গিয়ে কাজ জমা দিন।</small>`);
-      if (msg) msg.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${quotaFinishedMsg}</span>`;
-    } else {
-      const remainingTasks = quota - newAcceptedCount;
-      const successMsg = lang === 'hi'
-        ? `कार्य स्वीकार किया गया! (आज के शेष कार्य: <strong style="color: var(--color-profile-cyan);">${remainingTasks}</strong>)`
-        : (lang === 'en'
-          ? `Task accepted! (Remaining tasks today: <strong style="color: var(--color-profile-cyan);">${remainingTasks}</strong>)`
-          : `কাজ গৃহীত হয়েছে! (আজকের বাকি কাজ: <strong style="color: var(--color-profile-cyan);">${remainingTasks}টি</strong>)`);
-      if (msg) msg.innerHTML = successMsg;
-    }
+    // Step 2: Show centered clean text without any icons
+    showTaskCenterToast(lang === 'hi' ? 'स्वीकार किया जा रहा है' : (lang === 'en' ? 'Accepting' : 'গ্রহণ করা হচ্ছে'));
 
-    refreshDailyMissionLimit(activePackageLevel);
+    // Step 3: Complete mission saving smoothly in background
+    setTimeout(function() {
+      const taskTitle = `${activePlatform} · ${lang === 'hi' ? 'कार्य' : (lang === 'en' ? 'Task' : 'কাজ')} ${taskIndex + 1}`;
+      const desc = getPlatformTaskDescription(activePlatform, taskIndex, lang);
+      const reward = (packageTaskSettings[activePackageLevel] && packageTaskSettings[activePackageLevel].reward) || 20;
+      const taskLink = getRealisticTaskUrl(activePlatform, taskIndex);
+
+      saveAcceptedMission({
+        id: 'demo-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        taskIndex: taskIndex,
+        platform: activePlatform,
+        title: taskTitle,
+        description: desc,
+        level: activePackageLevel,
+        reward: reward,
+        status: 'active',
+        taskLink: taskLink,
+        acceptedAt: new Date().toISOString()
+      });
+
+      const currentMissions = readAcceptedMissions().filter(function(m) {
+        return m.level === activePackageLevel && new Date(m.acceptedAt).toDateString() === today;
+      });
+      const newAcceptedCount = currentMissions.length;
+      const reached = newAcceptedCount >= quota;
+
+      if (reached) {
+        // Immediately update all other unaccepted buttons in the list to 'সীমা পূর্ণ'
+        const listEl = document.getElementById('platform-task-list');
+        if (listEl) {
+          const rows = listEl.querySelectorAll('.platform-task-row');
+          const limitReachedText = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
+          rows.forEach(function(r) {
+            const btn = r.querySelector('[data-platform-accept]');
+            if (btn && !btn.dataset.accepted) {
+              btn.textContent = limitReachedText;
+              btn.disabled = true;
+              btn.classList.remove('is-accepting', 'is-accepted');
+              btn.classList.add('is-limit-reached');
+              btn.dataset.limitReached = 'true';
+            }
+          });
+        }
+      }
+
+      refreshDailyMissionLimit(activePackageLevel);
+      if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+    }, 380);
+
     return;
   }
 
@@ -6547,19 +6860,7 @@ document.addEventListener('click', function(event) {
     return;
   }
 
-  // Fast approve button (instant approval for demo/speed)
-  const fastBtn = event.target.closest('[data-fast-approve]');
-  if (fastBtn) {
-    const mId = fastBtn.dataset.fastApprove;
-    const missions = readAcceptedMissions();
-    const m = missions.find(function(item) { return item.id === mId; });
-    if (m) {
-      m.reviewEndsAt = Date.now() - 1000;
-      localStorage.setItem('aloAcceptedMissions', JSON.stringify(missions));
-      checkPendingReviews();
-    }
-    return;
-  }
+  // Manual approval disabled: tasks complete automatically after the 15-minute countdown
 
   // Mission filter tab click
   const filterTab = event.target.closest('[data-mission-filter]');
@@ -6618,10 +6919,10 @@ if (confirmSubmitBtn) {
     const mission = missions.find(function(item) { return item.id === activeSubmissionId; });
     if (!mission) return;
 
-    // Review for 5-10 minutes (300 to 600 seconds)
-    const reviewMinutes = Math.floor(Math.random() * 6) + 5;
+    // Review for exactly 15 minutes (15 * 60 * 1000)
+    const reviewMinutes = 15;
     const now = Date.now();
-    const reviewEndsAt = now + reviewMinutes * 60 * 1000;
+    const reviewEndsAt = now + 15 * 60 * 1000;
 
     mission.status = 'review';
     mission.submittedAt = new Date(now).toISOString();
@@ -6652,24 +6953,10 @@ if (confirmSubmitBtn) {
     openDashboardPanel('tasks');
     renderMissionRecords('review');
 
+    // Keep page clean: no extra message callouts or border layers
     const taskMsg = document.getElementById('task-message');
     if (taskMsg) {
-      const user = getCurrentUser();
-      const curr = getUserCurrency(user);
-      const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
-      const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(mission.reward)}.০০` : `${mission.reward}.00`;
-      const titleText = lang === 'hi' ? '✓ कार्य समीक्षा के लिए सबमिट किया गया!' : (lang === 'en' ? '✓ Task Submitted for Review!' : '✓ কাজ পর্যালোচনায় জমা হয়েছে!');
-      const bodyText = lang === 'hi'
-        ? `यह अगले <strong>${reviewMinutes} मिनट</strong> तक समीक्षाधीन रहेगा। समीक्षा पूरी होने पर <strong>${rewFormatted} ${curr}</strong> स्वचालित रूप से जुड़ जाएंगे।`
-        : (lang === 'en' ? `This will be under review for <strong>${reviewMinutes} minutes</strong>. Upon completion, <strong>${rewFormatted} ${curr}</strong> will be added.` : `এটি আগামী <strong>${reviewMinutes} মিনিট</strong> পর্যালোচনাধীন থাকবে। পর্যালোচনা শেষ হলে সম্পূর্ণ হয়ে <strong>${rewFormatted} ${curr}</strong> স্বয়ংক্রিয়ভাবে যুক্ত হবে।`);
-
-      taskMsg.innerHTML = `<div class="rounded-lg p-3 my-2 text-center" style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24;">
-        <p class="font-bold text-sm">${titleText}</p>
-        <p class="text-xs mt-1">${bodyText}</p>
-      </div>`;
-      setTimeout(function() {
-        if (taskMsg) taskMsg.innerHTML = '';
-      }, 8000);
+      taskMsg.innerHTML = '';
     }
   });
 }
@@ -7198,7 +7485,334 @@ document.addEventListener('input', function(e) {
   if (e.target && e.target.id === 'withdraw-amount-input') {
     updateWithdrawCalculations();
   }
+  if (e.target && e.target.id === 'savings-deposit-input') {
+    updateSavingsCalculationPreview(e.target.value);
+  }
 });
+
+// ==========================================
+// SAVINGS PLAN (সঞ্চয় পরিকল্পনা) SYSTEM
+// এক কাস্টমার একবার নিবে, ৪৫ দিন পর লাভ সহ প্রফিট, এনিমেশন দিয়ে উলটে রেকর্ড শো হবে
+// ==========================================
+
+function getUserSavingsPlan() {
+  const user = getCurrentUser();
+  const phoneKey = normalizeBdPhone(user.phone) || 'default';
+  try {
+    const raw = localStorage.getItem('aloSavingsPlan_' + phoneKey);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return null;
+}
+
+function updateSavingsCalculationPreview(amount) {
+  const val = Number(amount) || 0;
+  const daily = Math.round(val * 0.05);
+  const totalProfit = Math.round(val * 0.05 * 45); // একবারে ৪৫ দিনে ২২৫%
+  const totalReturn = val + totalProfit;
+
+  const dailyEl = document.getElementById('savings-calc-daily');
+  const profitEl = document.getElementById('savings-calc-profit');
+  const totalEl = document.getElementById('savings-calc-total');
+
+  if (dailyEl) dailyEl.textContent = '৳ ' + formatBanglaNumber(daily) + '.০০';
+  if (profitEl) profitEl.textContent = '৳ ' + formatBanglaNumber(totalProfit) + '.০০';
+  if (totalEl) totalEl.textContent = '৳ ' + formatBanglaNumber(totalReturn) + '.০০ লাভ সহ';
+}
+
+function renderSavingsRecordCard(plan) {
+  const amount = Number(plan.amount) || 3500;
+  const target = Number(plan.target) || 10000;
+  const days = Number(plan.days) || 45;
+  const rate = Number(plan.rate) || 5;
+  const pct = Math.min(100, Math.max(1, Math.round((amount / target) * 100)));
+  const needed = Math.max(0, target - amount);
+  const dailyProfit = Math.round(amount * (rate / 100));
+  const totalProfit = Math.round(amount * (rate / 100) * days);
+  const totalReturn = amount + totalProfit;
+
+  return `
+    <!-- EXACT MATCH WITH USER SCREENSHOT CARD (FRESH & BORDERLESS) -->
+    <div class="bg-[#071536] rounded-3xl p-5 shadow-2xl space-y-4 relative overflow-hidden">
+      
+      <!-- Top Row: আমার সঞ্চয়, মূল্য, লক্ষ্যমাত্রা এবং বৃত্তাকার Donut চার্ট -->
+      <div class="flex items-start justify-between">
+        <div>
+          <p class="text-sm font-medium text-slate-300">আমার সঞ্চয়</p>
+          <h3 class="text-3xl font-extrabold text-white tracking-tight mt-1 font-mono">
+            ৳ ${formatBanglaNumber(amount)}
+          </h3>
+          <p class="text-xs text-slate-400 font-medium mt-1">
+            লক্ষ্যমাত্রা ৳ ${formatBanglaNumber(target)}
+          </p>
+        </div>
+
+        <!-- Circular Donut Progress Ring matching user screenshot -->
+        <div class="relative w-[72px] h-[72px] flex items-center justify-center shrink-0">
+          <svg class="w-[72px] h-[72px] -rotate-90" viewBox="0 0 36 36">
+            <path class="text-[#0e214d]" stroke="currentColor" stroke-width="3.6" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="text-[#2dd4bf] transition-all duration-700 ease-out" stroke="currentColor" stroke-width="3.6" stroke-dasharray="${pct}, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+          </svg>
+          <span class="absolute font-extrabold text-white text-sm font-mono tracking-tight">${pct}%</span>
+        </div>
+      </div>
+
+      <!-- Middle: সঞ্চয়ের অগ্রগতি Progress Bar Row -->
+      <div>
+        <div class="flex items-center justify-between text-sm">
+          <span class="font-semibold text-slate-200">সঞ্চয়ের অগ্রগতি</span>
+          <span class="font-bold text-slate-200 font-mono">${formatBanglaNumber(pct)}%</span>
+        </div>
+        <div class="w-full bg-[#0e214d] h-2.5 rounded-full overflow-hidden mt-2">
+          <div class="h-full bg-[#2dd4bf] rounded-full transition-all duration-700 ease-out" style="width: ${pct}%;"></div>
+        </div>
+      </div>
+
+      <!-- Bottom 2 Tiles Grid: আরও প্রয়োজন এবং পরিকল্পনার মেয়াদ (৪৫ দিন) -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Left Tile: আরও প্রয়োজন -->
+        <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
+          <p class="text-xs text-slate-400 font-medium">আরও প্রয়োজন</p>
+          <p class="text-2xl font-extrabold text-white mt-1 font-mono">
+            ৳ ${formatBanglaNumber(needed)}
+          </p>
+        </div>
+
+        <!-- Right Tile: পরিকল্পনার মেয়াদ (৪৫ দিন) -->
+        <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
+          <p class="text-xs text-slate-400 font-medium">পরিকল্পনার মেয়াদ</p>
+          <p class="text-2xl font-extrabold text-white mt-1 font-mono">
+            ${formatBanglaNumber(days)} দিন
+          </p>
+        </div>
+      </div>
+
+      <!-- Profit Return Details: একবারে ৪৫ দিন লাভ সহ প্রফিট -->
+      <div class="bg-[#040c21] p-3.5 rounded-2xl space-y-1.5 text-xs">
+        <div class="flex items-center justify-between text-slate-300">
+          <span>দৈনিক প্রফিট (৫%):</span>
+          <span class="font-bold text-[#34d399] font-mono">৳ ${formatBanglaNumber(dailyProfit)}.০০</span>
+        </div>
+        <div class="flex items-center justify-between text-slate-300">
+          <span>৪৫ দিনে মোট মুনাফা (২২৫%):</span>
+          <span class="font-bold text-[#38bdf8] font-mono">৳ ${formatBanglaNumber(totalProfit)}.০০</span>
+        </div>
+        <div class="flex items-center justify-between pt-1 font-semibold text-white">
+          <span>একবারে ৪৫ দিন পর লাভ সহ প্রফিট:</span>
+          <span class="font-extrabold text-amber-300 font-mono text-sm">৳ ${formatBanglaNumber(totalReturn)}.০০</span>
+        </div>
+      </div>
+
+      <!-- Locked Status: একজন কাস্টমার একবার নিবে, আর নিতে পারবে না -->
+      <div class="w-full py-3.5 rounded-2xl bg-[#091a42] text-[#38bdf8] font-bold text-xs text-center shadow-lg flex items-center justify-center gap-2 select-none">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#34d399] animate-pulse"></span>
+        <span>সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)</span>
+      </div>
+
+      <!-- Disclaimer Note from Screenshot -->
+      <p class="text-[11px] text-slate-400 text-center leading-relaxed">
+        নমুনা ডিজাইন — এখানে দেখানো অর্থ বাস্তব অ্যাকাউন্টের ব্যালেন্স নয়।
+      </p>
+
+    </div>
+  `;
+}
+
+function renderSavingsPlanPanel() {
+  const user = getCurrentUser();
+  const bal = Number(user.balance || 0);
+
+  // 1. Update user balance display
+  const balEl = document.getElementById('savings-user-balance');
+  if (balEl) {
+    balEl.textContent = '৳ ' + formatNumber(bal, user);
+  }
+
+  // 2. Check if user already has an active savings plan
+  const activePlan = getUserSavingsPlan();
+  const frontFace = document.getElementById('savings-front-face');
+  const backFace = document.getElementById('savings-back-face');
+  const recordContent = document.getElementById('savings-record-card-content');
+
+  if (activePlan) {
+    // গ্রাহক ইতিপূর্বে সঞ্চয় নিয়েছেন: শুধু রেকর্ড শো হবে, আর নিতে পারবেন না
+    if (recordContent) {
+      recordContent.innerHTML = renderSavingsRecordCard(activePlan);
+    }
+    if (frontFace) frontFace.style.display = 'none';
+    if (backFace) backFace.style.display = 'block';
+  } else {
+    // এখনও নেননি: ফ্রেশ ইনপুট ফর্ম শো থাকবে
+    if (frontFace) frontFace.style.display = 'block';
+    if (backFace) backFace.style.display = 'none';
+    const inputEl = document.getElementById('savings-deposit-input');
+    if (inputEl) {
+      updateSavingsCalculationPreview(inputEl.value);
+    }
+  }
+}
+window.renderSavingsPlanPanel = renderSavingsPlanPanel;
+window.getUserSavingsPlan = getUserSavingsPlan;
+
+function handleSavingsSubmission() {
+  const inputEl = document.getElementById('savings-deposit-input');
+  const btn = document.getElementById('savings-submit-btn');
+  if (!inputEl || !btn) return;
+
+  // গ্রাহক যদি ইতিমধ্যে নিয়ে থাকেন, আর নিতে পারবেন না
+  const existingPlan = getUserSavingsPlan();
+  if (existingPlan) {
+    showToastNotification('আপনি ইতিমধ্যে সঞ্চয় পরিকল্পনা নিয়েছেন। একজন গ্রাহক একবারই নিতে পারবেন।');
+    return;
+  }
+
+  const amount = parseFloat(inputEl.value);
+  if (!amount || isNaN(amount) || amount <= 0) {
+    showToastNotification('অনুগ্রহ করে সঠিক সঞ্চয়ের পরিমাণ লিখুন।');
+    inputEl.focus();
+    return;
+  }
+
+  const user = getCurrentUser();
+  const bal = Number(user.balance || 0);
+
+  // Button loading verification
+  const origHtml = btn.innerHTML;
+  const origClass = btn.className;
+  btn.disabled = true;
+  btn.innerHTML = `
+    <span class="inline-flex items-center justify-center gap-2">
+      <svg class="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+      </svg>
+      <span>যাচাই করা হচ্ছে...</span>
+    </span>
+  `;
+  btn.className = 'w-full py-3.5 rounded-2xl bg-[#2bb4d4] text-[#030d24] font-bold text-sm shadow-xl opacity-90 cursor-wait flex items-center justify-center gap-2';
+
+  setTimeout(function() {
+    const freshUser = getCurrentUser();
+    const freshBal = Number(freshUser.balance || 0);
+
+    // 1. অপর্যাপ্ত ব্যালেন্স: বোতামে শান্তভাবে স্ট্যাটাস এবং হালকাভাবে ফেড-আউট
+    if (freshBal < amount) {
+      btn.disabled = true;
+      btn.style.transition = 'all 0.5s ease-in-out';
+      btn.style.opacity = '1';
+      btn.className = 'w-full py-3.5 rounded-2xl bg-rose-600 text-white font-black text-sm shadow-xl shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-not-allowed transition-all duration-500';
+      btn.innerHTML = `
+        <span class="inline-flex items-center gap-1.5 transition-opacity duration-700 ease-in-out" id="savings-insufficient-label">
+          <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span>অপর্যাপ্ত ব্যালেন্স</span>
+        </span>
+      `;
+
+      // ৩.৬ সেকেন্ড পর হালকাভাবে ফেড-আউট
+      setTimeout(function() {
+        if (btn && btn.isConnected) {
+          const label = btn.querySelector('#savings-insufficient-label');
+          if (label) label.style.opacity = '0';
+          btn.style.opacity = '0.4';
+
+          setTimeout(function() {
+            btn.disabled = false;
+            btn.className = origClass;
+            btn.innerHTML = origHtml;
+            btn.style.opacity = '0';
+            requestAnimationFrame(function() {
+              btn.style.opacity = '1';
+            });
+          }, 650);
+        }
+      }, 3600);
+
+    } else {
+      // 2. পর্যাপ্ত ব্যালেন্স: সফলভাবে সঞ্চয় সম্পন্ন
+      freshUser.balance = Math.max(0, freshBal - amount);
+      localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
+
+      if (window.aloSupabase) {
+        try {
+          const normPhone = normalizeBdPhone(freshUser.phone);
+          window.aloSupabase
+            .from('users')
+            .update({
+              balance: freshUser.balance,
+              updated_at: new Date().toISOString()
+            })
+            .eq('phone', normPhone)
+            .then(function() {})
+            .catch(function(e) { console.warn('Supabase sync warning:', e); });
+        } catch(e) {}
+      }
+
+      // Save user active plan
+      const targetGoal = Math.max(10000, Math.round((amount * 2.85) / 1000) * 1000);
+      const newPlan = {
+        id: 'plan_' + Date.now(),
+        amount: amount,
+        target: targetGoal,
+        rate: 5,
+        days: 45,
+        daysElapsed: 0,
+        dailyProfit: Math.round(amount * 0.05),
+        totalProfit: Math.round(amount * 0.05 * 45),
+        totalReturn: amount + Math.round(amount * 0.05 * 45),
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
+      const phoneKey = normalizeBdPhone(freshUser.phone) || 'default';
+      localStorage.setItem('aloSavingsPlan_' + phoneKey, JSON.stringify(newPlan));
+
+      // Reset button
+      btn.disabled = false;
+      btn.className = origClass;
+      btn.innerHTML = origHtml;
+
+      // Populate Back Face with the new plan
+      const recordContent = document.getElementById('savings-record-card-content');
+      if (recordContent) {
+        recordContent.innerHTML = renderSavingsRecordCard(newPlan);
+      }
+
+      // Smooth transition to active record card
+      const frontFace = document.getElementById('savings-front-face');
+      const backFace = document.getElementById('savings-back-face');
+      if (frontFace) {
+        frontFace.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+        frontFace.style.opacity = '0';
+        frontFace.style.transform = 'scale(0.97)';
+        setTimeout(function() {
+          frontFace.style.display = 'none';
+          if (backFace) {
+            backFace.style.display = 'block';
+            backFace.style.opacity = '0';
+            backFace.style.transform = 'translateY(12px)';
+            requestAnimationFrame(function() {
+              backFace.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+              backFace.style.opacity = '1';
+              backFace.style.transform = 'translateY(0)';
+            });
+          }
+        }, 250);
+      } else if (backFace) {
+        backFace.style.display = 'block';
+      }
+
+      // Update balances across dashboard
+      updateUserDetails(freshUser);
+      updateProfileMetrics();
+      const balEl = document.getElementById('savings-user-balance');
+      if (balEl) balEl.textContent = '৳ ' + formatNumber(freshUser.balance, freshUser);
+
+      showToastNotification(`🎉 অভিনন্দন! ৳ ${formatBanglaNumber(amount)} টাকার সঞ্চয় পরিকল্পনা সফলভাবে শুরু হয়েছে!`);
+    }
+  }, 750);
+}
+window.handleSavingsSubmission = handleSavingsSubmission;
 
 window.addEventListener('alo-language-changed', function(e) {
   const lang = e.detail && e.detail.lang;
