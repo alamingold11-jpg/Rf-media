@@ -1329,6 +1329,11 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
 window.executeVipRewardClaim = executeVipRewardClaim;
 
 function forceScrollToTop(targetPanelId) {
+  const loginView = document.getElementById('login-view');
+  const regView = document.getElementById('register-view');
+  if ((loginView && !loginView.hidden) || (regView && !regView.hidden)) {
+    return;
+  }
   if (document.activeElement && typeof document.activeElement.blur === 'function') {
     try {
       document.activeElement.blur();
@@ -1873,19 +1878,23 @@ function selectRegistrationCountry(code) {
     phoneInput.maxLength = country.phoneLen || 15;
   }
 
-  // 4. Automatically switch website language to Hindi for India, Bengali for BD!
-  if (country.code === 'IN') {
+  // 4. Automatically switch website language if needed (without unnecessary re-triggers)
+  const curLangReg = (window.aloI18n && typeof window.aloI18n.getLanguage === 'function') ? window.aloI18n.getLanguage() : 'bn';
+  if (country.code === 'IN' && curLangReg === 'bn') {
     if (typeof setAppLanguage === 'function') {
       setAppLanguage('hi');
     }
-  } else if (country.code === 'BD') {
+  } else if (country.code === 'BD' && curLangReg === 'hi') {
     if (typeof setAppLanguage === 'function') {
       setAppLanguage('bn');
     }
   }
 
-  // Re-render country list in modal to update checkmark
-  renderCountryList();
+  // Re-render country list only if modal is visible
+  const cModal = document.getElementById('country-picker-modal');
+  if (cModal && !cModal.classList.contains('hidden')) {
+    renderCountryList();
+  }
 }
 
 function selectLoginCountry(code) {
@@ -1905,11 +1914,12 @@ function selectLoginCountry(code) {
     emailInp.maxLength = country.phoneLen || 15;
   }
 
-  if (country.code === 'IN') {
+  const curLang = (window.aloI18n && typeof window.aloI18n.getLanguage === 'function') ? window.aloI18n.getLanguage() : 'bn';
+  if (country.code === 'IN' && curLang === 'bn') {
     if (typeof setAppLanguage === 'function') {
       setAppLanguage('hi');
     }
-  } else if (country.code === 'BD') {
+  } else if (country.code === 'BD' && curLang === 'hi') {
     if (typeof setAppLanguage === 'function') {
       setAppLanguage('bn');
     }
@@ -1921,16 +1931,8 @@ window.selectRegistrationCountry = selectRegistrationCountry;
 window.selectLoginCountry = selectLoginCountry;
 window.getCountryByCode = getCountryByCode;
 
-// Immediate global event delegation for country dropdown (change & input)
+// Immediate global event delegation for country dropdown (change only, no duplicate input spam)
 document.addEventListener('change', function(e) {
-  if (e.target && e.target.id === 'login-country-select') {
-    selectLoginCountry(e.target.value);
-  }
-  if (e.target && e.target.id === 'register-country-select') {
-    selectRegistrationCountry(e.target.value);
-  }
-});
-document.addEventListener('input', function(e) {
   if (e.target && e.target.id === 'login-country-select') {
     selectLoginCountry(e.target.value);
   }
@@ -2470,14 +2472,15 @@ if (registerForm) {
 
 const sendSmsBtn = document.getElementById('send-sms-code');
 if (sendSmsBtn) {
+  let smsCountdownInterval = null;
   sendSmsBtn.addEventListener('click', function() {
     const phoneInput = document.getElementById('register-phone');
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const message = document.getElementById('register-message');
     const cleanPhone = phone.replace(/\D/g, '');
-    const targetLang = localStorage.getItem('alo_lang') || 'en';
+    const targetLang = localStorage.getItem('alo_lang') || 'bn';
 
-    if (!cleanPhone || cleanPhone.length < 10) {
+    if (!cleanPhone || cleanPhone.length < 8) {
       if (message) message.textContent = targetLang === 'bn' ? 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।' : 'Please enter a valid phone number to receive verification code.';
       if (phoneInput) phoneInput.focus();
       return;
@@ -2485,8 +2488,27 @@ if (sendSmsBtn) {
 
     demoSmsCode = String(Math.floor(100000 + Math.random() * 900000));
     const smsInput = document.getElementById('register-sms-code');
-    if (smsInput) smsInput.value = demoSmsCode;
+    if (smsInput) {
+      smsInput.value = demoSmsCode;
+      smsInput.focus();
+    }
     if (message) message.textContent = targetLang === 'bn' ? ('✅ যাচাইকরণ কোড পাঠানো হয়েছে: ' + demoSmsCode) : ('✅ Verification code sent: ' + demoSmsCode);
+
+    sendSmsBtn.disabled = true;
+    let secondsLeft = 60;
+    const originalText = targetLang === 'bn' ? 'যাচাইকরণ কোড পাঠান' : 'Send Code';
+    sendSmsBtn.textContent = targetLang === 'bn' ? `পুনরায় পাঠান (${secondsLeft}s)` : `Resend (${secondsLeft}s)`;
+    clearInterval(smsCountdownInterval);
+    smsCountdownInterval = setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        clearInterval(smsCountdownInterval);
+        sendSmsBtn.disabled = false;
+        sendSmsBtn.textContent = originalText;
+      } else {
+        sendSmsBtn.textContent = targetLang === 'bn' ? `পুনরায় পাঠান (${secondsLeft}s)` : `Resend (${secondsLeft}s)`;
+      }
+    }, 1000);
   });
 }
 
@@ -7821,10 +7843,15 @@ window.addEventListener('alo-language-changed', function(e) {
     user.language = lang;
     localStorage.setItem('aloSignedInUser', JSON.stringify(user));
   }
-  if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
-  if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
-  if (typeof updateUserDetails === 'function') updateUserDetails(user);
-  if (typeof renderCountryList === 'function') renderCountryList();
+  if (user) {
+    if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+    if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+    if (typeof updateUserDetails === 'function') updateUserDetails(user);
+  }
+  const cModal = document.getElementById('country-picker-modal');
+  if (cModal && !cModal.classList.contains('hidden')) {
+    if (typeof renderCountryList === 'function') renderCountryList();
+  }
 });
 
 if (document.readyState === 'loading') {

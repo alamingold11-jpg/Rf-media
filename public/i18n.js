@@ -71,8 +71,8 @@
       'welcome_goldmine': 'PW New Media এ স্বাগতম',
 
       // Register
-      'register_title': 'স্বর্ণের খনিতে স্বাগতম',
-      'register_subtitle': 'আপনার নির্ভরযোগ্য ডিজিটাল আয়ের প্ল্যাটফর্ম',
+      'register_title': 'নিবন্ধন করুন',
+      'register_subtitle': 'অ্যাকাউন্ট তৈরি করতে আপনার বিবরণ লিখুন',
       'sms_code_label': 'এসএমএস যাচাইকরণ কোড',
       'sms_code_placeholder': 'এসএমএস যাচাইকরণ কোড লিখুন',
       'send_sms_code': 'যাচাইকরণ কোড পাঠান',
@@ -257,8 +257,8 @@
       'welcome_goldmine': 'Welcome to PW New Media',
 
       // Register
-      'register_title': 'Welcome to Gold Mine',
-      'register_subtitle': 'Your Trusted Digital Income Platform',
+      'register_title': 'Register for PW New Media',
+      'register_subtitle': 'Enter your details to create an account',
       'sms_code_label': 'SMS Verification Code',
       'sms_code_placeholder': 'Enter SMS verification code',
       'send_sms_code': 'Send Code',
@@ -1469,15 +1469,18 @@
     }
 
     const selectors = document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
+    const targetTag = isIndia ? 'IN' : 'BD';
     selectors.forEach(function(sel) {
       if (!sel) return;
-      const expectedHtml = isIndia
-        ? '<option value="en">English</option><option value="hi">हिन्दी</option>'
-        : '<option value="bn">বাংলা</option><option value="en">English</option>';
-      if (sel.innerHTML.trim() !== expectedHtml) {
-        sel.innerHTML = expectedHtml;
+      if (sel.dataset.countryTag !== targetTag) {
+        sel.dataset.countryTag = targetTag;
+        sel.innerHTML = isIndia
+          ? '<option value="en">English</option><option value="hi">हिन्दी</option>'
+          : '<option value="bn">বাংলা</option><option value="en">English</option>';
       }
-      sel.value = currentLang;
+      if (sel.value !== currentLang) {
+        sel.value = currentLang;
+      }
     });
   }
 
@@ -1628,19 +1631,20 @@
         window.updateProfileMetrics();
       }
     } catch(e) {}
-
-    // Dispatch global event
-    window.dispatchEvent(new CustomEvent('alo-language-changed', { detail: { lang: lang } }));
   }
 
   function setAppLanguage(newLang) {
+    const prevLang = currentLang;
     const country = getCurrentCountryCode();
     const allowed = getCountryAllowedLanguages(country);
 
     if (!newLang || !allowed.includes(newLang)) {
       newLang = (country === 'IN') ? 'hi' : 'bn';
     }
+
+    const changed = (prevLang !== newLang);
     currentLang = newLang;
+
     try {
       localStorage.setItem('alo_lang', newLang);
       const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
@@ -1653,14 +1657,19 @@
     syncCountryLanguageOptions(country);
     translateDOM(newLang);
 
-    try {
-      if (typeof window.refreshAllMissionsAndMetrics === 'function') {
-        window.refreshAllMissionsAndMetrics();
-      }
-      if (typeof window.updateProfileMetrics === 'function') {
-        window.updateProfileMetrics();
-      }
-    } catch(e) {}
+    if (changed) {
+      try {
+        if (typeof window.refreshAllMissionsAndMetrics === 'function') {
+          window.refreshAllMissionsAndMetrics();
+        }
+        if (typeof window.updateProfileMetrics === 'function') {
+          window.updateProfileMetrics();
+        }
+      } catch(e) {}
+
+      // Dispatch global event only on real language changes
+      window.dispatchEvent(new CustomEvent('alo-language-changed', { detail: { lang: newLang } }));
+    }
 
     console.log('[i18n] Language set to:', newLang, 'Country:', country);
   }
@@ -1690,7 +1699,7 @@
           setAppLanguage(selected);
         });
       }
-      if (sel) sel.value = currentLang;
+      if (sel && sel.value !== currentLang) sel.value = currentLang;
     });
   }
 
@@ -1703,36 +1712,6 @@
   } else {
     bindLanguageSelectors();
     translateDOM(currentLang);
-  }
-
-  // Periodic check to ensure newly injected elements or modals are translated if language != 'bn'
-  setInterval(function() {
-    bindLanguageSelectors();
-  }, 2000);
-
-
-  // Automatic MutationObserver to translate dynamically rendered elements (modals, sheets, cards)
-  let observerTimeout = null;
-  let isTranslatingObserver = false;
-  const domObserver = new MutationObserver(function(mutations) {
-    if (isTranslatingObserver) return;
-    if (observerTimeout) clearTimeout(observerTimeout);
-    observerTimeout = setTimeout(function() {
-      isTranslatingObserver = true;
-      try {
-        translateDOM(currentLang);
-      } finally {
-        setTimeout(function() { isTranslatingObserver = false; }, 40);
-      }
-    }, 60);
-  });
-
-  if (document.body) {
-    domObserver.observe(document.body, { childList: true, subtree: true });
-  } else {
-    document.addEventListener('DOMContentLoaded', function() {
-      domObserver.observe(document.body, { childList: true, subtree: true });
-    });
   }
 
 })();
