@@ -29,6 +29,9 @@
       'status': 'অবস্থা',
       'date': 'তারিখ',
       'bdt': 'BDT',
+      'customer_service_title': 'গ্রাহক সেবা',
+      'customer_service_direct': 'সরাসরি সমাধান',
+      'customer_service_telegram': 'ব্যক্তিগত যোগাযোগ মাধ্যম টেলিগ্রাম',
 
       // Home & Headers
       'brand_name': 'PW New Media',
@@ -214,6 +217,9 @@
       'status': 'Status',
       'date': 'Date',
       'bdt': 'BDT',
+      'customer_service_title': 'Customer Service',
+      'customer_service_direct': 'Direct Solution',
+      'customer_service_telegram': 'Personal Telegram Support',
 
       // Home & Headers
       'brand_name': 'PW New Media',
@@ -400,6 +406,9 @@
       'status': 'स्थिति',
       'date': 'दिनांक',
       'bdt': 'INR',
+      'customer_service_title': 'ग्राहक सेवा',
+      'customer_service_direct': 'सीधा समाधान',
+      'customer_service_telegram': 'व्यक्तिगत टेलीग्राम समर्थन',
 
       // Home & Headers
       'brand_name': 'PW New Media',
@@ -1277,12 +1286,12 @@
     "প্রতি কাজ:": { en: "Per Task:", hi: "प्रति कार्य:" },
     "প্রতি কাজ": { en: "Per Task", hi: "प्रति कार्य" },
     "প্রতি কাজের আয়": { en: "Income Per Task", hi: "प्रति कार्य आय" },
-    "৫টি": { en: "5", hi: "5" },
-    "৬টি": { en: "6", hi: "6" },
-    "১২টি": { en: "12", hi: "12" },
-    "১৫টি": { en: "15", hi: "15" },
-    "২৫টি": { en: "25", hi: "25" },
-    "৩৫টি": { en: "35", hi: "35" },
+    "৫টি": { en: "5 tasks", hi: "5 कार्य" },
+    "৬টি": { en: "6 tasks", hi: "6 कार्य" },
+    "১২টি": { en: "12 tasks", hi: "12 कार्य" },
+    "১৫টি": { en: "15 tasks", hi: "15 कार्य" },
+    "২৫টি": { en: "25 tasks", hi: "25 कार्य" },
+    "৩৫টি": { en: "35 tasks", hi: "35 कार्य" },
     "প্যাকেজ বিবরণ": { en: "Package Details", hi: "पैकेज विवरण" },
     "বাস্তব টাকা নয়": { en: "Virtual credits, not real money", hi: "वास्तविक धन नहीं है" },
     "পরিমাণ": { en: "Amount", hi: "राशि" },
@@ -1564,6 +1573,14 @@
           if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'CODE' || tag === 'PRE') {
             return NodeFilter.FILTER_REJECT;
           }
+          // Strictly protect user dynamic account information, phone numbers, and invite codes
+          if (parent.closest && parent.closest(
+            '#profile-account-number, #profile-invite-code, #profile-member-id, #dashboard-user-name, ' +
+            '#balance-display, #usdt-balance-display, [data-profile-value], .notranslate, [data-no-translate], ' +
+            'input, textarea, select'
+          )) {
+            return NodeFilter.FILTER_REJECT;
+          }
           const text = node.nodeValue.trim();
           if (!text || text.length < 2) return NodeFilter.FILTER_SKIP;
           return NodeFilter.FILTER_ACCEPT;
@@ -1586,6 +1603,9 @@
 
       // Check Bengali original phrases
       phrases.forEach(function(phrase) {
+        // Skip purely numeric phrases or single digits from blanket string replace
+        if (/^\d+$/.test(phrase) || phrase.length < 2) return;
+
         if (val.includes(phrase)) {
           const target = lang === 'bn' ? phrase : (phraseDictionary[phrase][lang] || phrase);
           if (phrase !== target) {
@@ -1596,13 +1616,15 @@
           // If already in English or Hindi, allow switching back or between them
           const enVal = phraseDictionary[phrase].en;
           const hiVal = phraseDictionary[phrase].hi;
-          if (enVal && val.includes(enVal)) {
+
+          // Never reverse-replace bare digits or short words under 3 chars
+          if (enVal && !/^\d+$/.test(enVal.trim()) && enVal.trim().length >= 3 && val.includes(enVal)) {
             const target = lang === 'bn' ? phrase : (phraseDictionary[phrase][lang] || enVal);
             if (enVal !== target) {
               val = val.split(enVal).join(target);
               changed = true;
             }
-          } else if (hiVal && val.includes(hiVal)) {
+          } else if (hiVal && !/^\d+$/.test(hiVal.trim()) && hiVal.trim().length >= 3 && val.includes(hiVal)) {
             const target = lang === 'bn' ? phrase : (phraseDictionary[phrase][lang] || hiVal);
             if (hiVal !== target) {
               val = val.split(hiVal).join(target);
