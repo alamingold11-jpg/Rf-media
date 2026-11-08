@@ -850,6 +850,109 @@
     "দলের মোট আকার": { en: "Total Team Size", hi: "टीम का कुल आकार" },
     "নতুন দল নম্বর": { en: "New Members (24h)", hi: "नए सदस्य (24 घंटे)" },
     "আমার দল": { en: "My Team", hi: "मेरी टीम" },
+    "প্রথম স্তর": { en: "Tier 1", hi: "पहला स्तर" },
+    "দ্বিতীয় স্তর": { en: "Tier 2", hi: "दूसरा स्तर" },
+    "তৃতীয় স্তর": { en: "Tier 3", hi: "तीसरा स्तर" },
+    "এই স্তরে এখনো কোনো সদস্য যুক্ত হয়নি": { en: "No members joined in this tier yet", hi: "इस स्तर में अभी कोई सदस्य नहीं जुड़ा है" },
+    " জন": { en: " members", hi: " सदस्य" },
+    "উত্তোলন পাসওয়ার্ড": { en: "Withdrawal Password", hi: "निकासी पासवर्ड" },
+    "ফান্ড পাসওয়ার্ড": { en: "Fund Password", hi: "फंड पासवर्ड" },
+    "উত্তোলন পাসওয়ার্ড লিখুন": { en: "Enter withdrawal password", hi: "निकासी पासवर्ड दर्ज करें" },
+    "৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন": { en: "Enter 6-digit withdrawal password", hi: "6-अंकीय निकासी पासवर्ड दर्ज करें" },
+    "কনফার্ম পাসওয়ার্ড": { en: "Confirm Password", hi: "कन्फर्म पासवर्ड" },
+    "কনফার্ম পাসওয়ার্ড লিখুন": { en: "Enter confirm password", hi: "कन्फर्म पासवर्ड दर्ज करें" },
+    "৬ ডিজিটের পাসওয়ার্ড কনফার্ম করুন": { en: "Confirm 6-digit password", hi: "6-अंकीय पासवर्ड कन्फर्म करें" },
+    "কার্যপ্রণালী সফলভাবে জমা দেওয়া হয়েছে": { en: "Operation submitted successfully", hi: "प्रक्रिया सफलतापूर्वक सबमिट की गई" },
+    "✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)": { en: "✓ Permanently Saved (One-time)", hi: "✓ स्थायी रूप से सुरक्षित (एक बार)" },
+    "🔒 সংরক্ষিত": { en: "🔒 Saved", hi: "🔒 सुरक्षित" },
+    "আপনার ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সফলভাবে এককালীন সংরক্ষণ করা হয়েছে। এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়।": { en: "Your 6-digit withdrawal password has been permanently saved. It cannot be changed or edited.", hi: "आपका 6-अंकीय निकासी पासवर्ड स्थायी रूप से सुरक्षित कर दिया गया है। इसे अब बदला या संपादित नहीं किया जा सकता।" },
+    "পছন্দ করুন": { en: "Select Method", hi: "चुनें" },
+    "বিকাশ সেট নেই": { en: "bKash Not Bound", hi: "bKash सेट नहीं है" },
+    "নগদ সেট নেই": { en: "Nagad Not Bound", hi: "Nagad सेट नहीं है" },
+    "USDT সেট নেই": { en: "USDT Not Bound", hi: "USDT सेट नहीं है" },
+    "প্রত্যাহার পদ্ধতি": { en: "Withdrawal Method", hi: "निकासी विधि" },
+    "তোলা টাকার পরিমাণ": { en: "Withdrawal Amount", hi: "निकासी राशि" },
+    "তোলা টাকার": { en: "Withdrawal", hi: "निकासी" },
+    "পরিমাণ": { en: "Amount", hi: "राशि" },
+    "প্রত্যাহার পরিমাণ লিখুন দয়া করে": { en: "Please enter withdrawal amount", hi: "कृपया निकासी राशि दर्ज करें" },
+    "অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন": { en: "Please enter fund password", hi: "कृपया फंड पासवर्ड दर्ज करें" },
+    "৬ ডিজিটের ফান্ডের পাসওয়ার্ড লিখুন": { en: "Enter 6-digit fund password", hi: "6-अंकीय फंड पासवर्ड दर्ज करें" },
+    "মাসিক উত্তোলন 0 frecuencia": { en: "Monthly withdrawal 0 frequency", hi: "मासिक निकासी 0 आवृत्ति" },
+    "BDT উত্তোলন 48-96 ঘণ্টার মধ্যে আসে": { en: "BDT withdrawal arrives within 48-96 hours", hi: "BDT निकासी 48-96 घंटों के भीतर आती है" },
+    "USDT প্রত্যাহার 12 ঘণ্টার মধ্যে আসে": { en: "USDT withdrawal arrives within 12 hours", hi: "USDT निकासी 12 घंटों के भीतर आती है" },
+    "দলের তথ্য লোড হচ্ছে…": { en: "Loading team info...", hi: "टीम की जानकारी लोड हो रही है..." },
+    "অবস্থান": { en: "VIP", hi: "वीआईपी" },
+    "ভিআইপি হল": { en: "VIP Hall", hi: "वीआईपी हॉल" },
+    "উত্তোলন": { en: "Withdraw", hi: "निकासी" },
+    "হোম": { en: "Home", hi: "होम" },
+    "ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম": { en: "Investment & Mission Platform", hi: "निवेश एवं मिशन प्लेटफॉर्म" },
+    "প্রতিদিনের কাজে আনুন": { en: "Bring to Daily Earnings", hi: "दैनिक आय में लाएं" },
+    "ভারত (+91)": { en: "India (+91)", hi: "भारत (+91)" },
+    "সাইন আপ করুন": { en: "Sign Up", hi: "साइन अप करें" },
+    "নিবন্ধন করুন": { en: "Register", hi: "पंजीकरण करें" },
+    "শুরু করুন": { en: "Get Started", hi: "शुरू करें" },
+    "এখনই শুরু করুন": { en: "Start Now", hi: "अभी शुरू करें" },
+    "রিওয়ার্ড জিতুন": { en: "Win Rewards", hi: "रिवॉर्ड जीतें" },
+    "দ্রুত পেমেন্ট": { en: "Fast Payment", hi: "त्वरित भुगतान" },
+    "নির্ভরযোগ্য সিস্টেম": { en: "Reliable System", hi: "विश्वसनीय प्रणाली" },
+    "সহজ কাজ": { en: "Easy Tasks", hi: "सरल कार्य" },
+    "একসাথে আয় করুন": { en: "Earn Together", hi: "साथ में कमाएं" },
+    "রেফার করুন": { en: "Refer Now", hi: "रेफर करें" },
+    "পূর্ববর্তী ব্যানার": { en: "Previous Slide", hi: "पिछला स्लाइड" },
+    "পরবর্তী ব্যানার": { en: "Next Slide", hi: "अगला स्लाइड" },
+    "সরাসরি সমাধান": { en: "Direct Solution", hi: "प्रत्यक्ष समाधान" },
+    "বন্ধুদের স্ক্যান করতে": { en: "Scan to Invite Friends", hi: "दोस्तों को स्कैन कराएं" },
+    "আমন্ত্রণ করুন": { en: "Invite", hi: "आमंत्रित करें" },
+    "আমন্ত্রণ": { en: "Invitation", hi: "निमंत्रण" },
+    "বন্ধুরা": { en: "Friends", hi: "मित्र" },
+    "বন্ধুদের ভিআইপি লেভেল আপগ্রেড করতে আমন্ত্রণ করুন": { en: "Invite friends to upgrade VIP level", hi: "मित्रों को वीआईपी अपग्रेड करने के लिए आमंत्रित करें" },
+    "মাসিক বেতন": { en: "Monthly Salary", hi: "मासिक वेतन" },
+    "অগ্রগতি": { en: "Progress", hi: "प्रगति" },
+    "বোনাস সক্রিয়করণ": { en: "Bonus Activation", hi: "बोनस सक्रियण" },
+    "প্রকৃত": { en: "Actual", hi: "वास्तविक" },
+    "অবস্থা": { en: "Status", hi: "स्थिति" },
+    "তারিখ": { en: "Date", hi: "दिनांक" },
+    "সংরক্ষণ": { en: "Save", hi: "सुरक्षित करें" },
+    "ক্রয় করুন": { en: "Buy Now", hi: "खरीदें" },
+    "করুন": { en: "Do", hi: "करें" },
+    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", hi: "बचत योजना" },
+    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", hi: "बचत योजना" },
+    "পার্স": { en: "Wallet", hi: "वॉलेट" },
+    "নতুন সঞ্চয় শুরু করুন": { en: "Start New Savings", hi: "नई बचत शुरू करें" },
+    "একবারে ৪৫ দিন লাভ সহ": { en: "In 45 days with full profit", hi: "45 दिनों में पूरे लाभ के साथ" },
+    "একজন গ্রাহক কেবল একবারই সঞ্চয় করতে পারবেন": { en: "Each member can participate in savings plan only once", hi: "प्रत्येक सदस्य केवल एक बार बचत योजना ले सकता है" },
+    "পরিকল্পনার মেয়াদ": { en: "Plan Duration", hi: "योजना अवधि" },
+    "৪৫ দিন": { en: "45 Days", hi: "45 दिन" },
+    "প্রফিট রেট": { en: "Profit Rate", hi: "लाभ दर" },
+    "দৈনিক ৫%": { en: "Daily 5%", hi: "दैनिक 5%" },
+    "দৈনিক প্রফিট (৫%):": { en: "Daily Profit (5%):", hi: "दैनिक लाभ (5%):" },
+    "৪৫ দিনে মোট মুনাফা (২২৫%):": { en: "Total 45-Day Profit (225%):", hi: "45 दिनों में कुल लाभ (225%):" },
+    "একবারে ৪৫ দিন পর মোট ফেরত:": { en: "Total Return After 45 Days:", hi: "45 दिन बाद कुल वापसी:" },
+    "লাভ সহ": { en: "With Profit", hi: "लाभ सहित" },
+    "অনলাইন সাপোর্ট সক্রিয় (24/7)": { en: "Online Support Active (24/7)", hi: "ऑनलाइन सहायता सक्रिय (24/7)" },
+    "অনলাইন লাইভ মেসেজ পাঠান": { en: "Send Live Message Online", hi: "ऑनलाइन लाइव संदेश भेजें" },
+    "অফিশিয়াল মিডিয়া ক্যাম্পেইন": { en: "Official Media Campaign", hi: "आधिकारिक मीडिया अभियान" },
+    "দৈনিক উত্তোলনযোগ্য": { en: "Daily Withdrawable", hi: "दैनिक निकासी योग्य" },
+    "সুদের হার": { en: "Interest Rate", hi: "ब्याज दर" },
+    "চক্র (মেয়াদ)": { en: "Cycle (Duration)", hi: "चक्र (अवधि)" },
+    "৩০ দিন": { en: "30 Days", hi: "30 दिन" },
+    "দৈনিক বরাদ্দকৃত কাজ": { en: "Daily Assigned Tasks", hi: "दैनिक सौंपे गए कार्य" },
+    "১ ইউনিট": { en: "1 Unit", hi: "1 यूनिट" },
+    "কাজের বিবরণ ও আয়ের হিসাব": { en: "Task Details & Income Calculation", hi: "कार्य विवरण एवं आय गणना" },
+    "মেয়াদ শেষে মোট প্রাপ্তি:": { en: "Total Return at Maturity:", hi: "परिपक्वता पर कुल प्राप्ति:" },
+    "লাভ (প্রতিদিন উত্তোলনযোগ্য)": { en: "Profit (Daily Withdrawable)", hi: "लाभ (दैनिक निकासी योग्य)" },
+    "আমরা কীভাবে টাকা দিচ্ছি এবং কোম্পানি কীভাবে আয় করছে?": { en: "How we pay and how the company earns?", hi: "हम भुगतान कैसे करते हैं और कंपनी कैसे कमाती है?" },
+    "স্পনসর ও কনটেন্ট নির্মাতাদের বাজেট:": { en: "Sponsors & Content Creators Budget:", hi: "प्रायोजकों और सामग्री निर्माताओं का बजट:" },
+    "আপনার প্রতিদিনের সহজ কাজ:": { en: "Your Daily Easy Tasks:", hi: "आपके दैनिक सरल कार्य:" },
+    "সরাসরি কাজের পারিশ্রমিক:": { en: "Direct Task Compensation:", hi: "प्रत्यक्ष कार्य पारिश्रमिक:" },
+    "প্রতিদিন নিশ্চিত ও নিরাপদ উত্তোলন:": { en: "Daily Guaranteed & Secure Withdrawal:", hi: "दैनिक सुनिश्चित एवं सुरक्षित निकासी:" },
+    "প্রকৃত নাম": { en: "Real Name", hi: "असली नाम" },
+    "আপনার আসল পূর্ণ নাম লিখুন": { en: "Enter your real full name", hi: "अपना असली पूरा नाम दर्ज करें" },
+    "বিকাশ অ্যাকাউন্ট": { en: "bKash Account", hi: "bKash खाता" },
+    "বিকাশ Personal": { en: "bKash Personal", hi: "bKash व्यक्तिगत" },
+    "নগদ Personal": { en: "Nagad Personal", hi: "Nagad व्यक्तिगत" },
+    "অ্যাকাউন্ট যুক্ত নেই": { en: "Account not linked", hi: "खाता लिंक नहीं है" },
+    "আপনার উত্তোলনের মাধ্যম নির্বাচন করুন অথবা নতুন সেট করুন": { en: "Select your withdrawal method or set up a new one", hi: "अपना निकासी माध्यम चुनें या नया सेट करें" },
     "স্তর 1": { en: "Tier 1", hi: "टीयर 1" },
     "স্তর 2": { en: "Tier 2", hi: "टीयर 2" },
     "স্তর 3": { en: "Tier 3", hi: "टीयर 3" },
@@ -1454,19 +1557,14 @@
   }
 
   function getCountryAllowedLanguages(countryCode) {
-    const c = countryCode || getCurrentCountryCode();
-    // BD users: ONLY English (en) and Bengali (bn). Hindi (hi) is prohibited.
-    // IN users: ONLY English (en) and Hindi (hi). Bengali (bn) is prohibited.
-    return (c === 'IN') ? ['en', 'hi'] : ['en', 'bn'];
+    return ['bn', 'en', 'hi'];
   }
 
   function syncCountryLanguageOptions(countryCode) {
     const c = countryCode || getCurrentCountryCode();
-    const isIndia = (c === 'IN');
-    const allowed = isIndia ? ['en', 'hi'] : ['en', 'bn'];
-
+    const allowed = ['bn', 'en', 'hi'];
     if (!allowed.includes(currentLang)) {
-      currentLang = isIndia ? 'hi' : 'bn';
+      currentLang = 'bn';
       try {
         localStorage.setItem('alo_lang', currentLang);
         const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
@@ -1483,7 +1581,7 @@
       if (!sel) return;
       if (sel.dataset.countryTag !== targetTag) {
         sel.dataset.countryTag = targetTag;
-        sel.innerHTML = '<option value="bn">Bengali</option><option value="en">English</option><option value="hi">India</option>';
+        sel.innerHTML = '<option value="bn">Bengali</option><option value="en">English</option><option value="hi">India (हिन्दी)</option>';
       }
       if (sel.value !== currentLang) {
         sel.value = currentLang;
@@ -1656,10 +1754,9 @@
   function setAppLanguage(newLang) {
     const prevLang = currentLang;
     const country = getCurrentCountryCode();
-    const allowed = getCountryAllowedLanguages(country);
-
+    const allowed = ['bn', 'en', 'hi'];
     if (!newLang || !allowed.includes(newLang)) {
-      newLang = (country === 'IN') ? 'hi' : 'bn';
+      newLang = 'bn';
     }
 
     const changed = (prevLang !== newLang);
@@ -1722,6 +1819,13 @@
       if (sel && sel.value !== currentLang) sel.value = currentLang;
     });
   }
+
+  // Global delegated listener ensures dynamic selects always trigger
+  document.addEventListener('change', function(e) {
+    if (e.target && (e.target.matches && e.target.matches('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher'))) {
+      setAppLanguage(e.target.value);
+    }
+  });
 
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {

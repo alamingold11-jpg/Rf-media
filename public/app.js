@@ -766,28 +766,7 @@ async function dbGetRealTeam(userPhone) {
     });
   } catch(e) {}
 
-  // If no members are present, provide realistic sample team members matching user screenshot
-  if (memberMap.size === 0) {
-    const sampleMembers = [
-      { rawPhone: '01812780385', phone: '01*******85', memberId: '780385', tier: 1, level: 'LV1', status: 'সক্রিয়', balance: 1250, rechargeAmount: 1000, joinedAt: '2026-08-16T14:22:10.000Z' },
-      { rawPhone: '01715725498', phone: '01*******98', memberId: '725498', tier: 1, level: 'LV2', status: 'সক্রিয়', balance: 3400, rechargeAmount: 3000, joinedAt: '2026-08-17T07:08:06.000Z' },
-      { rawPhone: '01918784141', phone: '01*******41', memberId: '784141', tier: 1, level: 'LV1', status: 'সক্রিয়', balance: 800, rechargeAmount: 500, joinedAt: '2026-08-19T11:45:30.000Z' },
-      { rawPhone: '01614705829', phone: '01*******29', memberId: '705829', tier: 1, level: 'LV1', status: 'সক্রিয়', balance: 1500, rechargeAmount: 1000, joinedAt: '2026-08-20T16:12:44.000Z' },
-      { rawPhone: '01319795887', phone: '01*******87', memberId: '795887', tier: 1, level: 'LV0', status: 'সক্রিয়', balance: 200, rechargeAmount: 0, joinedAt: '2026-08-22T09:30:15.000Z' },
-      { rawPhone: '01712742863', phone: '01*******63', memberId: '742863', tier: 1, level: 'LV1', status: 'সক্রিয়', balance: 1100, rechargeAmount: 1000, joinedAt: '2026-08-23T18:04:22.000Z' },
-      { rawPhone: '01816730465', phone: '01*******65', memberId: '730465', tier: 1, level: 'LV1', status: 'সক্রিয়', balance: 950, rechargeAmount: 800, joinedAt: '2026-08-25T13:19:50.000Z' },
-      // Tier 2
-      { rawPhone: '01723654120', phone: '01*******20', memberId: '654120', tier: 2, level: 'LV1', status: 'সক্রিয়', balance: 1200, rechargeAmount: 1000, joinedAt: '2026-08-26T10:15:00.000Z' },
-      { rawPhone: '01834981245', phone: '01*******45', memberId: '981245', tier: 2, level: 'LV0', status: 'সক্রিয়', balance: 350, rechargeAmount: 0, joinedAt: '2026-08-27T12:40:11.000Z' },
-      { rawPhone: '01945763219', phone: '01*******19', memberId: '763219', tier: 2, level: 'LV2', status: 'সক্রিয়', balance: 2800, rechargeAmount: 2500, joinedAt: '2026-08-28T15:20:33.000Z' },
-      // Tier 3
-      { rawPhone: '01756412890', phone: '01*******90', memberId: '412890', tier: 3, level: 'LV1', status: 'সক্রিয়', balance: 1600, rechargeAmount: 1200, joinedAt: '2026-08-29T17:05:44.000Z' },
-      { rawPhone: '01667823901', phone: '01*******01', memberId: '823901', tier: 3, level: 'LV0', status: 'সক্রিয়', balance: 150, rechargeAmount: 0, joinedAt: '2026-08-30T08:50:19.000Z' }
-    ];
-    sampleMembers.forEach(function(m) {
-      memberMap.set(m.rawPhone, m);
-    });
-  }
+  // Team accounts are strictly 100% real registered users (no fake/mock data)
 
   const all = Array.from(memberMap.values());
   const tier1 = all.filter(function(m) { return m.tier === 1; });
@@ -927,6 +906,7 @@ const dashboardTitles = {
   'usdt-setup': 'USDT অ্যাকাউন্ট',
   'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
   'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
+  'usdt-deposit': 'USDT ডিপোজিট',
   'customer-service': 'গ্রাহক সেবা',
   manager: 'গ্রাহক সেবা'
 };
@@ -954,6 +934,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'USDT অ্যাকাউন্ট',
       'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
       'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
+      'usdt-deposit': 'USDT ডিপোজিট',
       'customer-service': 'গ্রাহক সেবা',
       manager: 'গ্রাহক সেবা'
     },
@@ -977,6 +958,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'USDT Account',
       'realname-setup': 'Account Binding',
       'fund-password-setup': 'Fund Password',
+      'usdt-deposit': 'USDT Deposit',
       'customer-service': 'Customer Service',
       manager: 'Customer Service'
     },
@@ -1000,6 +982,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'USDT खाता',
       'realname-setup': 'खाता बाइंडिंग',
       'fund-password-setup': 'निकासी पासवर्ड',
+      'usdt-deposit': 'USDT डिपॉजिट',
       'customer-service': 'ग्राहक सेवा',
       manager: 'ग्राहक सेवा'
     },
@@ -1023,6 +1006,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'حساب USDT',
       'realname-setup': 'ربط الحساب',
       'fund-password-setup': 'كلمة مرور السحب',
+      'usdt-deposit': 'إيداع USDT',
       'customer-service': 'خدمة العملاء',
       manager: 'خدمة العملاء'
     }
@@ -1560,21 +1544,23 @@ function openDashboardPanel(panelName) {
   }
   forceScrollToTop(panelName + '-panel');
   const nextPanel = dashboardTitles[panelName] ? panelName : 'home';
-  if (nextPanel !== 'payment-method' && nextPanel !== 'team-report' && nextPanel !== 'withdraw' && nextPanel !== 'withdraw-details' && nextPanel !== 'customer-service') {
+  if (nextPanel !== 'payment-method' && nextPanel !== 'team-report' && nextPanel !== 'withdraw' && nextPanel !== 'withdraw-details' && nextPanel !== 'customer-service' && nextPanel !== 'usdt-deposit') {
     previousDashboardPanel = nextPanel;
   }
   document.querySelectorAll('.dashboard-panel').forEach(function(panel) {
     panel.hidden = panel.id !== nextPanel + '-panel';
   });
 
-  // When package-detail panel is open, hide global bottom nav and header so full page detail is unobstructed
+  // Ensure bottom navigation bar is permanently visible on all pages as requested ("যেকোনো পেজে গেলেও নিচের আইকন থাকবে")
   const bottomNav = document.getElementById('dashboard-bottom-nav') || document.querySelector('nav[aria-label="প্রধান মেনু"]');
   if (bottomNav) {
+    bottomNav.style.setProperty('display', 'grid', 'important');
+    bottomNav.style.setProperty('visibility', 'visible', 'important');
+    bottomNav.style.setProperty('opacity', '1', 'important');
+    bottomNav.style.setProperty('pointer-events', 'auto', 'important');
     if (nextPanel === 'package-detail') {
-      bottomNav.style.setProperty('display', 'none', 'important');
       document.body.style.backgroundColor = '#030d24';
     } else {
-      bottomNav.style.removeProperty('display');
       document.body.style.backgroundColor = '';
     }
   }
@@ -1591,8 +1577,11 @@ function openDashboardPanel(panelName) {
     personal: 'profile',
     'my-pass': 'profile',
     invite: 'profile',
-    'payment-method': previousDashboardPanel || 'profile',
+    'payment-method': 'profile',
+    'usdt-deposit': 'profile',
     'team-report': 'profile',
+    'team-members': 'profile',
+    'my-team': 'profile',
     'savings-plan': 'profile',
     'bkash-setup': 'profile',
     'nagad-setup': 'profile',
@@ -1724,6 +1713,12 @@ function openDashboardPanel(panelName) {
   setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 20);
   setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 60);
   setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 150);
+
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function' && window.aloI18n.getLanguage() !== 'bn') {
+    setTimeout(function() {
+      try { window.aloI18n.translateDOM(); } catch(e) {}
+    }, 60);
+  }
 }
 
 function isIndianUser(user) {
@@ -3410,11 +3405,14 @@ function handlePackagePurchase(level, triggerBtn) {
     } else {
       // 2. পর্যাপ্ত ব্যালেন্স: সরাসরি ক্রয় ও সক্রিয়করণ
       freshUser.balance = Math.max(0, userBal - price);
+      // যে টাকা প্যাকেজ কিনবে অইটা বরফে পরিনত হবে
+      freshUser.frozenBalance = (Number(freshUser.frozenBalance) || 0) + price;
       freshUser.packageLevel = level;
       if (!freshUser.purchasedPackages) freshUser.purchasedPackages = ['LV0'];
       if (!freshUser.purchasedPackages.includes(level)) {
         freshUser.purchasedPackages.push(level);
       }
+      localStorage.setItem('my_pass_available_bal', freshUser.balance.toFixed(2));
       localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
 
       if (window.aloSupabase) {
@@ -3424,6 +3422,7 @@ function handlePackagePurchase(level, triggerBtn) {
             .from('users')
             .update({
               balance: freshUser.balance,
+              frozen_balance: freshUser.frozenBalance,
               package_level: level,
               updated_at: new Date().toISOString()
             })
@@ -4107,7 +4106,7 @@ function updateFundPasswordDisplayAcrossApp() {
   const badge = document.getElementById('personal-fund-status-badge');
   if (badge) {
     if (fundPass) {
-      badge.textContent = 'পরিবর্তন করুন';
+      badge.textContent = '🔒 সংরক্ষিত';
       badge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-medium';
     } else {
       badge.textContent = 'সেট করুন';
@@ -4120,14 +4119,60 @@ window.updateFundPasswordDisplayAcrossApp = updateFundPasswordDisplayAcrossApp;
 function renderFundPasswordSetupPanel() {
   const newPassInput = document.getElementById('fund-password-new-input');
   const confirmPassInput = document.getElementById('fund-password-confirm-input');
-  if (newPassInput) {
-    newPassInput.value = '';
-    newPassInput.type = 'password';
+  const lockNotice = document.getElementById('fund-password-locked-notice');
+  const submitBtn = document.getElementById('fund-password-submit-btn');
+  const savedFundPass = getSavedFundPassword();
+
+  if (savedFundPass) {
+    if (newPassInput) {
+      newPassInput.value = '••••••';
+      newPassInput.type = 'password';
+      newPassInput.readOnly = true;
+      newPassInput.disabled = true;
+      newPassInput.classList.add('cursor-not-allowed', 'opacity-75');
+    }
+    if (confirmPassInput) {
+      confirmPassInput.value = '••••••';
+      confirmPassInput.type = 'password';
+      confirmPassInput.readOnly = true;
+      confirmPassInput.disabled = true;
+      confirmPassInput.classList.add('cursor-not-allowed', 'opacity-75');
+    }
+    if (lockNotice) {
+      lockNotice.classList.remove('hidden');
+    }
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)</span>';
+    }
+  } else {
+    if (newPassInput) {
+      newPassInput.value = '';
+      newPassInput.type = 'password';
+      newPassInput.readOnly = false;
+      newPassInput.disabled = false;
+      newPassInput.classList.remove('cursor-not-allowed', 'opacity-75');
+    }
+    if (confirmPassInput) {
+      confirmPassInput.value = '';
+      confirmPassInput.type = 'password';
+      confirmPassInput.readOnly = false;
+      confirmPassInput.disabled = false;
+      confirmPassInput.classList.remove('cursor-not-allowed', 'opacity-75');
+    }
+    if (lockNotice) {
+      lockNotice.classList.add('hidden');
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
+      submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
+      submitBtn.innerHTML = '<span>জমা দিন</span>';
+    }
   }
-  if (confirmPassInput) {
-    confirmPassInput.value = '';
-    confirmPassInput.type = 'password';
-  }
+
   // Reset eye toggle icons
   document.querySelectorAll('.fund-toggle-eye-btn').forEach(btn => {
     const showIcon = btn.querySelector('.eye-icon-show');
@@ -4135,22 +4180,31 @@ function renderFundPasswordSetupPanel() {
     if (showIcon) showIcon.classList.remove('hidden');
     if (hideIcon) hideIcon.classList.add('hidden');
   });
+
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function' && window.aloI18n.getLanguage() !== 'bn') {
+    window.aloI18n.translateDOM();
+  }
 }
 window.renderFundPasswordSetupPanel = renderFundPasswordSetupPanel;
 
 function saveFundPasswordDetails() {
+  if (getSavedFundPassword()) {
+    showToastNotification('⚠️ উত্তোলন পাসওয়ার্ড এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়');
+    return;
+  }
+
   const newPassInput = document.getElementById('fund-password-new-input');
   const confirmPassInput = document.getElementById('fund-password-confirm-input');
   const newPass = newPassInput ? newPassInput.value.trim() : '';
   const confirmPass = confirmPassInput ? confirmPassInput.value.trim() : '';
 
   if (!newPass) {
-    showToastNotification('⚠️ অনুগ্রহ করে উত্তোলন পাসওয়ার্ড লিখুন');
+    showToastNotification('⚠️ অনুগ্রহ করে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন');
     if (newPassInput) newPassInput.focus();
     return;
   }
-  if (newPass.length < 4) {
-    showToastNotification('⚠️ পাসওয়ার্ড অন্তত ৪ সংখ্যার হতে হবে');
+  if (newPass.length !== 6 || !/^\d{6}$/.test(newPass)) {
+    showToastNotification('⚠️ উত্তোলন পাসওয়ার্ড অবশ্যই ঠিক ৬ ডিজিটের সংখ্যা হতে হবে');
     if (newPassInput) newPassInput.focus();
     return;
   }
@@ -4165,12 +4219,14 @@ function saveFundPasswordDetails() {
     return;
   }
 
-  // Save password in local storage & user profile
+  // Save 6-digit password permanently in local storage & user profile (one-time permanent lock)
   try {
     localStorage.setItem('alo_fund_password', newPass);
+    localStorage.setItem('alo_fund_password_locked', 'true');
     const user = getCurrentUser();
     if (user) {
       user.fundPassword = newPass;
+      user.fundPasswordLocked = true;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       if (window.aloSupabase) {
         window.aloSupabase.from('users').update({
@@ -4181,6 +4237,7 @@ function saveFundPasswordDetails() {
   } catch(e) {}
 
   updateFundPasswordDisplayAcrossApp();
+  renderFundPasswordSetupPanel();
 
   // Show center success modal: "কার্যপ্রণালী সফলভাবে জমা দেওয়া হয়েছে"
   const successModal = document.getElementById('fund-password-success-modal');
@@ -4708,10 +4765,13 @@ function saveUsdtAccountDetails() {
 }
 
 function getAvailableBalance() {
+  const user = getCurrentUser();
+  if (user && typeof user.balance === 'number') {
+    return user.balance;
+  }
   const custom = localStorage.getItem('my_pass_available_bal');
   if (custom !== null) return Number(custom);
-  const user = getCurrentUser();
-  return Number((user && user.balance) || 0);
+  return 0;
 }
 
 const platformTaskDescriptions = {
@@ -5094,14 +5154,38 @@ function updateProfileMetrics() {
     ? currentUser.balance
     : 0;
 
+  // Calculate all-time mission earnings from completed missions
+  const allCompletedMissionsSum = completedMissions.reduce(function(total, mission) {
+    return total + (Number(mission.reward) || 0);
+  }, 0);
+
+  // Lifetime earnings ("সারাজীবন এর আয়") for 'ব্যক্তিগত ভারসাম্য' (Personal Balance)
+  // Ensures lifetime income is permanently preserved and NEVER wiped by withdrawals!
+  let lifetimeEarnings = Math.max(
+    Number(currentUser && currentUser.lifetimeEarnings) || 0,
+    Number(currentUser && currentUser.totalIncome) || 0,
+    allCompletedMissionsSum
+  );
+
+  if (currentUser) {
+    if (typeof currentUser.lifetimeEarnings !== 'number') {
+      currentUser.lifetimeEarnings = Math.max(lifetimeEarnings, currentBal);
+      lifetimeEarnings = currentUser.lifetimeEarnings;
+      try { localStorage.setItem('aloSignedInUser', JSON.stringify(currentUser)); } catch(e) {}
+    } else if (currentUser.lifetimeEarnings < lifetimeEarnings) {
+      currentUser.lifetimeEarnings = lifetimeEarnings;
+      try { localStorage.setItem('aloSignedInUser', JSON.stringify(currentUser)); } catch(e) {}
+    }
+  }
+
   const todayVal = dynamicToday.toFixed(2);
   const yesterdayVal = dynamicYesterday.toFixed(2);
   const weeklyVal = dynamicWeekly.toFixed(2);
   const monthlyVal = dynamicMonthly.toFixed(2);
   const lastMonthVal = '0.00';
-  const totalRevenueVal = (Number(currentBal) + dynamicToday).toFixed(2);
-  const personalBalanceVal = Number(currentBal).toFixed(2);
-  const balanceText = Number(currentBal).toFixed(2);
+  const totalRevenueVal = lifetimeEarnings.toFixed(2);
+  const personalBalanceVal = lifetimeEarnings.toFixed(2); // "ব্যক্তিগত ভারসাম্য তে সারাজীবন এর আয় থাকবে"
+  const balanceText = Number(currentBal).toFixed(2);      // "আর ভারসাম্য শুধু অখানে উইথড্র দিলে ব্যালেন্স জিরো হবে"
 
   setText('today-earnings-value', todayVal);
   setText('yesterday-earnings-value', yesterdayVal);
@@ -5137,8 +5221,8 @@ function updateProfileMetrics() {
   setText('total-revenue-usd', '$' + (Number(totalRevenueVal) / rate).toFixed(2));
 
   // My Pass panel balance and USD equivalent
-  const availBal = getAvailableBalance();
-  const frozenVal = 0.00;
+  const availBal = Number(currentBal);
+  const frozenVal = Number((currentUser && currentUser.frozenBalance) || 0);
   const passTotal = frozenVal + availBal;
   const passUsd = (passTotal / rate).toFixed(2);
   setText('my-pass-balance-value', passTotal.toFixed(2));
@@ -5168,6 +5252,7 @@ function saveAcceptedMission(serverMission) {
   const missions = readAcceptedMissions();
   missions.unshift({
     id: serverMission.id,
+    taskIndex: typeof serverMission.taskIndex === 'number' ? serverMission.taskIndex : parseInt(serverMission.taskIndex || '0', 10),
     platform: serverMission.platform,
     title: serverMission.title,
     description: serverMission.description,
@@ -5176,32 +5261,54 @@ function saveAcceptedMission(serverMission) {
     status: serverMission.status,
     acceptedAt: serverMission.acceptedAt,
     evidenceName: '',
-    taskLink: serverMission.platform === 'TikTok' ? 'https://vt.tiktok.com/ZSb666bLY/' : ''
+    taskLink: serverMission.taskLink || (serverMission.platform === 'TikTok' ? 'https://vt.tiktok.com/ZSb666bLY/' : '')
   });
   localStorage.setItem('aloAcceptedMissions', JSON.stringify(missions));
   renderMissionRecords(activeMissionFilter);
 }
 
 function showTaskCenterToast(text) {
-  let toast = document.getElementById('task-center-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'task-center-toast';
-    document.body.appendChild(toast);
+  let modal = document.getElementById('task-center-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'task-center-modal';
+    modal.className = 'fixed inset-0 z-[10050] flex items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-200 pointer-events-none select-none';
+    modal.innerHTML = `
+      <div class="relative bg-[#071638] border border-[#1e429f] rounded-2xl px-7 py-6 flex flex-col items-center justify-center shadow-[0_12px_40px_rgba(0,0,0,0.85)] text-center min-w-[240px] max-w-[300px] mx-4 animate-in zoom-in-95 duration-200">
+        <div class="w-13 h-13 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-400 flex items-center justify-center mb-3.5 shadow-md">
+          <svg class="animate-spin w-7 h-7 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+        </div>
+        <div class="text-[16px] font-bold text-white font-['Hind_Siliguri'] tracking-wide task-center-modal-text">
+          ${text || 'গ্রহণ করা হচ্ছে'}
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }
 
-  toast.className = 'task-center-toast-bubble';
-  // Strictly clean text only, without any icons
-  toast.textContent = text || 'গ্রহণ করা হচ্ছে';
+  const textEl = modal.querySelector('.task-center-modal-text');
+  if (textEl) {
+    textEl.textContent = text || 'গ্রহণ করা হচ্ছে';
+  }
+
+  modal.removeAttribute('hidden');
+  modal.style.display = 'flex';
+  modal.style.transition = 'opacity 0.15s ease';
+  modal.style.opacity = '1';
 
   if (window.taskToastTimer) clearTimeout(window.taskToastTimer);
   window.taskToastTimer = setTimeout(function() {
-    if (toast) {
-      toast.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
-      toast.style.opacity = '0';
-      toast.style.transform = 'translate(-50%, -50%) scale(0.92)';
+    if (modal) {
+      modal.style.transition = 'opacity 0.25s ease';
+      modal.style.opacity = '0';
       setTimeout(function() {
-        if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+        if (modal) {
+          modal.style.display = 'none';
+          modal.setAttribute('hidden', '');
+        }
       }, 260);
     }
   }, 1300);
@@ -5253,7 +5360,7 @@ function refreshDailyMissionLimit(level) {
       if (!btn) return;
       const taskIdx = parseInt(row.dataset.taskIndex || '-1', 10);
       const isTaskAccepted = missions.some(function(m) {
-        return m.platform === activePlatform && m.level === level && m.taskIndex === taskIdx && new Date(m.acceptedAt).toDateString() === today;
+        return m.platform === activePlatform && m.level === level && Number(m.taskIndex) === Number(taskIdx) && new Date(m.acceptedAt).toDateString() === today;
       });
 
       if (!isUnlocked) {
@@ -5261,7 +5368,7 @@ function refreshDailyMissionLimit(level) {
         btn.disabled = false;
         btn.className = 'platform-task-accept bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
         btn.dataset.lockedLevel = level;
-      } else if (isTaskAccepted) {
+      } else if (isTaskAccepted || btn.dataset.accepted === 'true') {
         btn.textContent = acceptedText;
         btn.disabled = true;
         btn.className = 'platform-task-accept is-accepted';
@@ -5323,11 +5430,11 @@ function renderMissionRecords(filter) {
     tabReview.innerHTML = `${lbl}<span id="mission-review-count">(${counts.review})</span>`;
   }
   if (tabComplete) {
-    const lbl = lang === 'hi' ? 'पूर्ण' : (lang === 'en' ? 'Completed' : 'সম্পন্ন');
+    const lbl = lang === 'hi' ? 'সম্পন্ন' : (lang === 'en' ? 'Completed' : 'সম্পন্ন');
     tabComplete.innerHTML = `${lbl}<span id="mission-complete-count">(${counts.complete})</span>`;
   }
   if (tabFailed) {
-    const lbl = lang === 'hi' ? 'असफल' : (lang === 'en' ? 'Failed' : 'ব্যর্থ হয়েছে');
+    const lbl = lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'Cancelled' : 'বাতিল');
     tabFailed.innerHTML = `${lbl}<span id="mission-failed-count">(${counts.failed})</span>`;
   }
 
@@ -5351,7 +5458,10 @@ function renderMissionRecords(filter) {
       subMsg = lang === 'hi' ? 'चलते हुए कार्य सबमिट करने पर 5-10 मिनट तक समीक्षा में रहते हैं।' : (lang === 'en' ? 'Submitted tasks remain under review for 5-10 minutes.' : 'চলমান কাজ জমা দিলে ৫-১০ মিনিট পর্যালোচনায় থাকবে।');
     } else if (activeMissionFilter === 'complete') {
       emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य पूर्ण नहीं हुआ है।' : (lang === 'en' ? 'No tasks completed yet.' : 'এখনো কোনো কাজ সম্পূর্ণ হয়নি।');
-      subMsg = lang === 'hi' ? 'समीक्षा पूरी होने के बाद कार्य यहाँ दिखेंगे।' : (lang === 'en' ? 'Completed tasks will appear here after review.' : 'পর্যালোচনা শেষ হলে কাজগুলো এখানে সম্পন্ন হিসেবে দেখা যাবে।');
+      subMsg = lang === 'hi' ? 'समीक्षा पूरी होने के बाद कार्य यहाँ स्थायी रूप से संग्रहीत रहेंगे।' : (lang === 'en' ? 'Completed tasks are permanently archived here.' : 'সম্পূর্ণ কাজগুলো এখানে এককালীন সংরক্ষিত থাকবে।');
+    } else if (activeMissionFilter === 'failed') {
+      emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य रद्द नहीं हुआ है।' : (lang === 'en' ? 'No cancelled tasks yet.' : 'এখনো কোনো কাজ বাতিল হয়নি।');
+      subMsg = lang === 'hi' ? 'रद्द किए गए कार्य यहाँ स्थायी रूप से संग्रहीत रहेंगे।' : (lang === 'en' ? 'Cancelled tasks are permanently archived here.' : 'বাতিল করা কাজগুলো এখানে এককালীন সংরক্ষিত থাকবে।');
     }
     empty.innerHTML = `<span class="text-3xl" aria-hidden="true">▤</span><p class="mt-3 text-sm font-semibold">${emptyMsg}</p><p class="mt-2 text-xs" style="color: var(--color-muted);">${subMsg}</p>`;
     list.appendChild(empty);
@@ -5398,7 +5508,7 @@ function renderMissionRecords(filter) {
       const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
 
       const reviewLabel = lang === 'hi' ? 'समीक्षाधीन: शेष' : (lang === 'en' ? 'Under Review: Left' : 'পর্যালোচনাধীন: বাকি');
-      const minsLabel = lang === 'hi' ? 'मिनট' : (lang === 'en' ? 'mins' : 'মিনিট');
+      const minsLabel = lang === 'hi' ? 'मिनट' : (lang === 'en' ? 'mins' : 'মিনিট');
 
       actionsHtml = `
         <div class="mission-card-review-bar mt-2 flex items-center justify-between gap-2 relative z-10">
@@ -5413,9 +5523,9 @@ function renderMissionRecords(filter) {
       const compDateText = compDate.getFullYear() + '-' + String(compDate.getMonth() + 1).padStart(2, '0') + '-' + String(compDate.getDate()).padStart(2, '0') + ' ' + String(compDate.getHours()).padStart(2, '0') + ':' + String(compDate.getMinutes()).padStart(2, '0');
 
       const compSuccessLabel = lang === 'hi' ? 'समीक्षा सफल — इनाम बैलेंस में जुड़ गया' : (lang === 'en' ? 'Review Successful — Reward credited' : 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে');
-      const compTimeLabel = lang === 'hi' ? 'पूर्ण होने का समय:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:');
+      const compTimeLabel = lang === 'hi' ? 'সম্পন্নের সময়:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:');
 
-        actionsHtml = `
+      actionsHtml = `
         <div class="mission-card-complete-bar mt-2.5 pt-2 flex items-center justify-between text-xs">
           <span class="font-bold flex items-center gap-1.5" style="color: #34d399;">
             <span>✓</span> ${compSuccessLabel}
@@ -5423,6 +5533,22 @@ function renderMissionRecords(filter) {
           <span class="font-bold font-mono" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr}</span>
         </div>
         <p class="text-[11px] mt-1" style="color: var(--color-muted);">${compTimeLabel} ${compDateText}</p>
+      `;
+    } else if (mission.status === 'failed') {
+      const cancelDate = new Date(mission.cancelledAt || mission.failedAt || Date.now());
+      const cancelDateText = cancelDate.getFullYear() + '-' + String(cancelDate.getMonth() + 1).padStart(2, '0') + '-' + String(cancelDate.getDate()).padStart(2, '0') + ' ' + String(cancelDate.getHours()).padStart(2, '0') + ':' + String(cancelDate.getMinutes()).padStart(2, '0');
+
+      const cancelSuccessLabel = lang === 'hi' ? 'कार्य रद्द — रिकॉर्ड में सुरक्षित' : (lang === 'en' ? 'Task Cancelled — Permanently Archived' : 'কাজটি বাতিল — রেকর্ডে এককালীন সংরক্ষিত');
+      const cancelTimeLabel = lang === 'hi' ? 'বাতিলের সময়:' : (lang === 'en' ? 'Cancelled at:' : 'বাতিলের সময়:');
+
+      actionsHtml = `
+        <div class="mission-card-failed-bar mt-2.5 pt-2 flex items-center justify-between text-xs">
+          <span class="font-bold flex items-center gap-1.5 text-rose-400">
+            <span>✕</span> ${cancelSuccessLabel}
+          </span>
+          <span class="font-bold font-mono text-rose-400/90 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded text-[11px]">${lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'Cancelled' : 'বাতিল')}</span>
+        </div>
+        <p class="text-[11px] mt-1" style="color: var(--color-muted);">${cancelTimeLabel} ${cancelDateText}</p>
       `;
     }
 
@@ -5442,6 +5568,13 @@ function renderMissionRecords(filter) {
       ${mission.status === 'complete' ? `
         <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none select-none flex items-center justify-center -rotate-12 opacity-85">
           <img src="stamp-mission-complete.png" alt="MISSION: COMPLETE" class="w-36 sm:w-40 h-auto object-contain drop-shadow-[0_2px_10px_rgba(220,38,38,0.4)]" style="max-width: 155px;" />
+        </div>
+      ` : ''}
+      ${mission.status === 'failed' ? `
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none select-none flex items-center justify-center -rotate-12 opacity-85">
+          <div class="border-[3px] border-dashed border-rose-500/80 rounded-xl px-5 py-2 text-rose-500 font-black text-xl sm:text-2xl uppercase tracking-widest drop-shadow-[0_2px_12px_rgba(244,63,94,0.45)] rotate-[-6deg] bg-rose-950/30 backdrop-blur-xs select-none">
+            ${lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'CANCELLED' : 'বাতিল')}
+          </div>
         </div>
       ` : ''}
       <div class="mission-card-top flex items-center justify-between gap-3 relative z-10">
@@ -5503,7 +5636,7 @@ function renderPackageTasks(level) {
 
   for (let i = 0; i < TOTAL_TASKS_TO_DISPLAY; i++) {
     const isThisAccepted = missions.some(function(m) {
-      return m.platform === activePlatform && m.level === activePackageLevel && m.taskIndex === i && new Date(m.acceptedAt).toDateString() === today;
+      return m.platform === activePlatform && m.level === activePackageLevel && Number(m.taskIndex) === Number(i) && new Date(m.acceptedAt).toDateString() === today;
     });
 
     let btnText = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
@@ -5935,7 +6068,9 @@ function checkPendingReviews() {
         user.balance = (Number(user.balance) || 0) + totalReward;
         user.todayIncome = (Number(user.todayIncome) || 0) + totalReward;
         user.totalIncome = (Number(user.totalIncome) || 0) + totalReward;
+        user.lifetimeEarnings = (Number(user.lifetimeEarnings) || 0) + totalReward;
         user.completedMissions = (Number(user.completedMissions) || 0) + 1;
+        localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
         updateUserDetails(user);
         updateProfileMetrics();
@@ -6088,6 +6223,10 @@ async function renderFreshTeamView() {
   });
 
   container.innerHTML = html;
+
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function' && window.aloI18n.getLanguage() !== 'bn') {
+    window.aloI18n.translateDOM();
+  }
 }
 window.renderFreshTeamView = renderFreshTeamView;
 
@@ -6517,7 +6656,41 @@ document.addEventListener('click', function(event) {
     });
     paymentMethodRow.classList.add('bg-[#0b1f52]', 'ring-1', 'ring-[#35c6e7]/40');
     selectedPaymentMethod = method;
+
+    if (method === 'usdt') {
+      previousDashboardPanel = 'payment-method';
+      openDashboardPanel('usdt-deposit');
+      return;
+    }
+
+    if (method === 'bkash' || method === 'bkash-2') {
+      if (typeof setGatewayMethod === 'function') setGatewayMethod('BKASH');
+      const checkoutBox = document.getElementById('bd-gateway-checkout-box');
+      if (checkoutBox) checkoutBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToastNotification(`পছন্দ: বিকাশ (bKash) অনলাইন পেমেন্ট`);
+      return;
+    }
+
+    if (method === 'nagad') {
+      if (typeof setGatewayMethod === 'function') setGatewayMethod('NAGAD');
+      const checkoutBox = document.getElementById('bd-gateway-checkout-box');
+      if (checkoutBox) checkoutBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToastNotification(`পছন্দ: নগদ (Nagad) অনলাইন পেমেন্ট`);
+      return;
+    }
+
     showToastNotification(`পছন্দ: ${methodName}`);
+    return;
+  }
+
+  // USDT Badges click from Inline Drawer or Recharge Modal
+  const usdtBadgeBtn = event.target.closest('#inline-usdt-method-badge, #modal-usdt-method-badge');
+  if (usdtBadgeBtn) {
+    event.preventDefault();
+    closeActionSheet();
+    const modalEl = document.getElementById('modal-deposit-overlay');
+    if (modalEl) modalEl.classList.add('hidden');
+    openDashboardPanel('usdt-deposit');
     return;
   }
 
@@ -6812,17 +6985,30 @@ document.addEventListener('click', function(event) {
     }
 
     const savedFundPass = getSavedFundPassword();
-    if (savedFundPass && pwd !== savedFundPass) {
-      showToastNotification('⚠️ ফান্ডের পাসওয়ার্ড সঠিক নয়, পুনরায় যাচাই করুন');
+    if (!savedFundPass) {
+      const needSetupMsg = lang === 'hi'
+        ? '⚠️ कृपया पहले 6-अंकीय निकासी पासवर्ड सेट करें'
+        : (lang === 'en' ? '⚠️ Please set up your 6-digit withdrawal password first' : '⚠️ অনুগ্রহ করে প্রথমে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সেট করুন');
+      showToastNotification(needSetupMsg);
+      closeActionSheet();
+      openDashboardPanel('fund-password-setup');
+      return;
+    }
+    if (pwd !== savedFundPass) {
+      const wrongMsg = lang === 'hi'
+        ? '⚠️ निकासी पासवर्ड सही नहीं है, पुनः जाँचें'
+        : (lang === 'en' ? '⚠️ Fund password incorrect, please check' : '⚠️ ফান্ডের পাসওয়ার্ড সঠিক নয়, পুনরায় যাচাই করুন');
+      showToastNotification(wrongMsg);
       if (pwdInp) pwdInp.focus();
       return;
     }
 
-    // Deduct available balance
+    // Deduct available balance (ভারসাম্য শুধু অখানে উইথড্র দিলে ব্যালেন্স জিরো হবে)
     const newBal = Math.max(0, availBal - amt);
     localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
-    if (user && user.balance) {
-      user.balance = Math.max(0, Number(user.balance) - amt);
+    if (user) {
+      user.balance = newBal;
+      // Note: user.lifetimeEarnings is NOT reduced, permanently preserving lifetime income in 'ব্যক্তিগত ভারসাম্য'
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
     }
 
@@ -7174,7 +7360,7 @@ document.addEventListener('click', function(event) {
       openPackageDetailPage(activePackageLevel);
       return;
     }
-    if (acceptBtn.disabled || acceptBtn.classList.contains('is-accepting')) return;
+    if (acceptBtn.disabled || acceptBtn.classList.contains('is-accepting') || acceptBtn.dataset.accepted === 'true') return;
 
     const row = acceptBtn.closest('.platform-task-row');
     const taskIndex = row ? parseInt(row.dataset.taskIndex || '0', 10) : 0;
@@ -7190,16 +7376,16 @@ document.addEventListener('click', function(event) {
       return;
     }
 
-    // Step 1: That button turns white immediately with clean 'গৃহীত'
-    acceptBtn.classList.remove('is-accepting');
+    // Step 1: That button immediately loses 'গ্রহণ', turns white with 'গৃহীত'
+    acceptBtn.classList.remove('is-accepting', 'is-limit-reached');
     acceptBtn.classList.add('is-accepted');
     acceptBtn.disabled = true;
     acceptBtn.dataset.accepted = 'true';
     acceptBtn.removeAttribute('data-limit-reached');
     acceptBtn.textContent = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
 
-    // Step 2: Show centered clean text without any icons
-    showTaskCenterToast(lang === 'hi' ? 'स्वीकार किया जा रहा है' : (lang === 'en' ? 'Accepting' : 'গ্রহণ করা হচ্ছে'));
+    // Step 2: Show centered modal: "গ্রহণ করা হচ্ছে"
+    showTaskCenterToast(lang === 'hi' ? 'स्वीकार किया जा रहा है' : (lang === 'en' ? 'Accepting...' : 'গ্রহণ করা হচ্ছে'));
 
     // Step 3: Complete mission saving smoothly in background
     setTimeout(function() {
@@ -7274,14 +7460,24 @@ document.addEventListener('click', function(event) {
     return;
   }
 
-  // Cancel mission
+  // Cancel mission (archive permanently in records as 'failed')
   const cancelBtn = event.target.closest('[data-cancel-mission]');
   if (cancelBtn) {
     const card = cancelBtn.closest('[data-mission-id]');
     if (card) {
-      const missions = readAcceptedMissions().filter(function(m) { return m.id !== card.dataset.missionId; });
-      localStorage.setItem('aloAcceptedMissions', JSON.stringify(missions));
-      renderMissionRecords(activeMissionFilter);
+      const missions = readAcceptedMissions();
+      const target = missions.find(function(m) { return m.id === card.dataset.missionId; });
+      if (target) {
+        target.status = 'failed';
+        target.cancelledAt = new Date().toISOString();
+        target.failedAt = new Date().toISOString();
+        localStorage.setItem('aloAcceptedMissions', JSON.stringify(missions));
+        const user = getCurrentUser();
+        const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+        showToastNotification(lang === 'hi' ? 'कार्य रद्द कर दिया गया और रिकॉर्ड में सहेजा गया' : (lang === 'en' ? 'Task cancelled and archived' : 'কাজটি বাতিল করা হয়েছে এবং রেকর্ডে এককালীন সংরক্ষিত থাকবে'));
+        renderMissionRecords(activeMissionFilter);
+        refreshDailyMissionLimit(activePackageLevel);
+      }
     }
     return;
   }
@@ -7817,6 +8013,15 @@ function initApp() {
     showView('login');
   }
 
+  // Handle direct payment page requests (?payment or ?page=payment or #payment)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('payment') || urlParams.get('page') === 'payment' || window.location.hash.includes('payment')) {
+      openDirectPaymentCheckout();
+      return;
+    }
+  } catch(e) {}
+
   // Handle incoming referral link query parameters (?invite=... or ?ref=...)
   try {
     const urlParams = new URLSearchParams(window.location.search);
@@ -7871,6 +8076,16 @@ function initApp() {
     countryModal.addEventListener('click', function(e) {
       if (e.target === countryModal) closeCountryPickerModal();
     });
+  }
+
+  // Initialize USDT BEP20 Auto-Approve Deposit gateway listeners
+  if (typeof initUsdtDeposit === 'function') {
+    initUsdtDeposit();
+  }
+
+  // Initialize BD Online Payment Gateway (bKash & Nagad via imcagro.top)
+  if (typeof initBdGatewayCheckout === 'function') {
+    initBdGatewayCheckout();
   }
 }
 
@@ -8206,6 +8421,655 @@ function handleSavingsSubmission() {
   }, 750);
 }
 window.handleSavingsSubmission = handleSavingsSubmission;
+
+// ==========================================
+// USDT BEP20 DEPOSIT GATEWAY & AUTO-APPROVE
+// ==========================================
+const COMPANY_USDT_BEP20_ADDRESS = '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16';
+
+/**
+ * Helper to ensure a valid Supabase Auth session token exists
+ */
+async function getSupabaseAuthBearerToken() {
+  if (!window.aloSupabase || !window.aloSupabase.auth) return null;
+  try {
+    const { data: sessionData } = await window.aloSupabase.auth.getSession();
+    if (sessionData && sessionData.session && sessionData.session.access_token) {
+      return sessionData.session.access_token;
+    }
+
+    // If no active auth session, auto-provision/sign-in using the current user's credentials
+    const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+    if (!user) return null;
+
+    const phoneNum = (user.phone || user.accountNumber || 'user').replace(/\D/g, '');
+    const userEmail = `${phoneNum || 'member'}@app.local`;
+    const userSecret = user.passwordHash ? ('Pwd_' + user.passwordHash.slice(0, 16)) : 'UserSecret123!@#';
+
+    const { data: signInRes } = await window.aloSupabase.auth.signInWithPassword({
+      email: userEmail,
+      password: userSecret
+    }).catch(() => ({ data: null }));
+
+    if (signInRes?.session?.access_token) {
+      return signInRes.session.access_token;
+    }
+
+    // Try creating the auth account if first time
+    await window.aloSupabase.auth.signUp({
+      email: userEmail,
+      password: userSecret
+    }).catch(() => {});
+
+    const { data: retryRes } = await window.aloSupabase.auth.signInWithPassword({
+      email: userEmail,
+      password: userSecret
+    }).catch(() => ({ data: null }));
+
+    return retryRes?.session?.access_token || null;
+  } catch (e) {
+    console.warn('Supabase auth token retrieval notice:', e);
+    return null;
+  }
+}
+
+/**
+ * Global submitDeposit function
+ * Sends POST request to /api/deposit with Authorization: Bearer <access_token>
+ * Note: userId and amount are NOT sent to prevent client tampering.
+ */
+async function submitDeposit(depositData) {
+  const token = await getSupabaseAuthBearerToken();
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch('/api/deposit', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({
+      txHash: depositData.txHash,
+      senderAddress: depositData.senderAddress
+    })
+  });
+  return await res.json();
+}
+window.submitDeposit = submitDeposit;
+
+function getLocalUsdtDepositRecords() {
+  try {
+    const raw = localStorage.getItem('alo_usdt_deposits_history');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return [];
+}
+
+function saveLocalUsdtDepositRecord(deposit) {
+  try {
+    const records = getLocalUsdtDepositRecords();
+    records.unshift({
+      txHash: deposit.txHash,
+      senderAddress: deposit.senderAddress || '',
+      usdtAmount: deposit.usdtAmount,
+      bdtAmount: deposit.bdtAmount,
+      date: new Date().toLocaleDateString('bn-BD'),
+      time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      status: 'অনুমোদিত'
+    });
+    localStorage.setItem('alo_usdt_deposits_history', JSON.stringify(records.slice(0, 30)));
+  } catch (e) {}
+}
+
+function renderRecentUsdtDeposits() {
+  const container = document.getElementById('usdt-recent-records-list');
+  if (!container) return;
+  const records = getLocalUsdtDepositRecords();
+  if (!records || records.length === 0) {
+    container.innerHTML = '<p class="text-center text-slate-400 text-xs py-3">এখনো কোনো USDT ডিপোজিট নেই</p>';
+    return;
+  }
+
+  container.innerHTML = records.map(function(item) {
+    const shortTx = item.txHash ? item.txHash.slice(0, 8) + '...' + item.txHash.slice(-6) : '0x...';
+    return `
+      <div class="p-2.5 rounded-xl bg-[#03091e] border border-[#16306e] flex items-center justify-between text-xs">
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-1.5 font-bold text-white">
+            <span class="text-emerald-400 font-mono">${item.usdtAmount} USDT</span>
+            <span class="text-slate-400">≈</span>
+            <span class="text-[#35c6e7] font-mono">৳ ${Number(item.bdtAmount).toLocaleString('en-US')}</span>
+          </div>
+          <div class="font-mono text-[10px] text-slate-400 break-all">
+            Tx: <a href="https://bscscan.com/tx/${item.txHash}" target="_blank" rel="noopener" class="text-sky-400 hover:underline">${shortTx}</a>
+          </div>
+        </div>
+        <div class="text-right">
+          <span class="inline-block px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
+            ${item.status || 'অনুমোদিত'}
+          </span>
+          <div class="text-[9.5px] text-slate-500 mt-1 font-mono">${item.date} ${item.time}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyTextHelper(text, onSuccess) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (typeof onSuccess === 'function') onSuccess();
+    }).catch(function() {
+      fallbackExecCopy(text, onSuccess);
+    });
+  } else {
+    fallbackExecCopy(text, onSuccess);
+  }
+}
+
+function fallbackExecCopy(text, onSuccess) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (typeof onSuccess === 'function') onSuccess();
+  } catch (e) {}
+}
+
+function initUsdtDeposit() {
+  // 1. Copy Company BEP20 Address
+  const copyBtn = document.getElementById('copy-company-usdt-address-btn');
+  const copyBtnText = document.getElementById('copy-btn-text');
+  if (copyBtn) {
+    copyBtn.onclick = function(e) {
+      e.preventDefault();
+      copyTextHelper(COMPANY_USDT_BEP20_ADDRESS, function() {
+        if (copyBtnText) copyBtnText.textContent = '✓ কপি হয়েছে!';
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('USDT BEP20 অ্যাড্রেস কপি করা হয়েছে');
+        }
+        setTimeout(function() {
+          if (copyBtnText) copyBtnText.textContent = 'অ্যাড্রেস কপি করুন';
+        }, 2500);
+      });
+    };
+  }
+
+  // 2. Paste TxHash from Clipboard
+  const pasteBtn = document.getElementById('usdt-paste-tx-btn');
+  const txInput = document.getElementById('usdt-txhash-input');
+  if (pasteBtn && txInput) {
+    pasteBtn.onclick = async function(e) {
+      e.preventDefault();
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            txInput.value = text.trim();
+            if (typeof showToastNotification === 'function') {
+              showToastNotification('TxHash পেস্ট করা হয়েছে');
+            }
+          }
+        } else {
+          txInput.focus();
+        }
+      } catch (err) {
+        txInput.focus();
+      }
+    };
+  }
+
+  // 3. Amount Input -> BDT preview calculation
+  const amountInput = document.getElementById('usdt-amount-input');
+  const bdtPreview = document.getElementById('usdt-bdt-preview');
+  if (amountInput && bdtPreview) {
+    amountInput.oninput = function() {
+      const val = parseFloat(amountInput.value) || 0;
+      bdtPreview.textContent = (val * 125).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+  }
+
+  // 4. Back Button
+  const backBtn = document.getElementById('usdt-deposit-back-btn');
+  if (backBtn) {
+    backBtn.onclick = function(e) {
+      e.preventDefault();
+      openDashboardPanel('payment-method');
+    };
+  }
+
+  // 5. Submit & Auto-Approve Button
+  const submitBtn = document.getElementById('usdt-submit-deposit-btn');
+  const msgEl = document.getElementById('usdt-submit-message');
+  const senderInput = document.getElementById('usdt-sender-address-input');
+  const btnSpinner = document.getElementById('usdt-btn-spinner');
+  const btnIcon = document.getElementById('usdt-btn-icon');
+  const btnText = document.getElementById('usdt-btn-text');
+
+  if (submitBtn) {
+    submitBtn.onclick = async function(e) {
+      e.preventDefault();
+      const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+      if (!user) {
+        if (typeof showToastNotification === 'function') {
+          showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন');
+        }
+        return;
+      }
+
+      const txHash = txInput ? txInput.value.trim() : '';
+      const senderAddress = senderInput ? senderInput.value.trim() : '';
+
+      if (!senderAddress) {
+        if (msgEl) {
+          msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
+          msgEl.textContent = 'অনুগ্রহ করে আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) প্রদান করুন।';
+          msgEl.classList.remove('hidden');
+        }
+        if (senderInput) senderInput.focus();
+        return;
+      }
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(senderAddress)) {
+        if (msgEl) {
+          msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
+          msgEl.textContent = 'ভুল প্রেরক ওয়ালেট অ্যাড্রেস ফরম্যাট (0x দিয়ে শুরু হওয়া ৪২ অক্ষরের হতে হবে)।';
+          msgEl.classList.remove('hidden');
+        }
+        if (senderInput) senderInput.focus();
+        return;
+      }
+
+      if (!txHash) {
+        if (msgEl) {
+          msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
+          msgEl.textContent = 'অনুগ্রহ করে ট্রানজেকশন হ্যাশ (TxHash / TxID) প্রদান করুন।';
+          msgEl.classList.remove('hidden');
+        }
+        if (txInput) txInput.focus();
+        return;
+      }
+
+      if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+        if (msgEl) {
+          msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
+          msgEl.textContent = 'ভুল TxHash ফরম্যাট! ট্রানজেকশন হ্যাশ অবশ্যই 0x দিয়ে শুরু হওয়া ৬৬ অক্ষরের হেক্সাডেসিমাল কোড হতে হবে।';
+          msgEl.classList.remove('hidden');
+        }
+        return;
+      }
+
+      // Enter loading state
+      submitBtn.disabled = true;
+      if (btnSpinner) btnSpinner.classList.remove('hidden');
+      if (btnIcon) btnIcon.classList.add('hidden');
+      if (btnText) btnText.textContent = 'ব্লকচেইন ভেরিফাই হচ্ছে...';
+      if (msgEl) {
+        msgEl.className = 'text-xs text-center font-semibold text-sky-400 py-1.5 bg-sky-500/10 rounded-lg border border-sky-500/30 animate-pulse';
+        msgEl.textContent = 'অন-চেইন রিসিপ্ট ও ১৫ কনফার্মেশন যাচাই করা হচ্ছে...';
+        msgEl.classList.remove('hidden');
+      }
+
+      try {
+        const payload = {
+          txHash: txHash,
+          senderAddress: senderAddress
+        };
+
+        const result = await submitDeposit(payload);
+
+        if (result && result.success) {
+          const depositData = result.deposit || {};
+          const bdtAmount = Number(depositData.bdtAmount) || 0;
+          const usdtAmount = Number(depositData.usdtAmount) || 0;
+
+          // 1. Credit User Balance & Personal Balance (Lifetime earnings) strictly from on-chain value
+          if (typeof depositData.newBalance === 'number') {
+            user.balance = depositData.newBalance;
+          } else {
+            user.balance = (Number(user.balance) || 0) + bdtAmount;
+          }
+
+          if (typeof user.lifetimeEarnings === 'number') {
+            user.lifetimeEarnings += bdtAmount;
+          } else {
+            user.lifetimeEarnings = user.balance;
+          }
+
+          localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+          if (typeof dbSaveUser === 'function') {
+            dbSaveUser(user);
+          }
+
+          // 2. Record Transaction
+          if (typeof dbRecordTransaction === 'function') {
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0];
+            dbRecordTransaction({
+              phone: user.phone || user.accountNumber,
+              type: 'deposit',
+              amount: bdtAmount,
+              actual: bdtAmount,
+              ratio: '100%',
+              status: 'অনুমোদিত',
+              method: 'USDT (BEP20)',
+              date: dateStr,
+              time: timeStr,
+              newBalance: user.balance
+            });
+          }
+
+          // 3. Update UI
+          if (typeof updateUserDetails === 'function') updateUserDetails(user);
+          if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+          if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+          if (typeof updatePaymentAndWithdrawalForUser === 'function') updatePaymentAndWithdrawalForUser();
+
+          // 4. Record Locally & Re-render
+          saveLocalUsdtDepositRecord({
+            txHash: depositData.txHash || txHash,
+            senderAddress: depositData.senderAddress || senderAddress,
+            usdtAmount: usdtAmount,
+            bdtAmount: bdtAmount
+          });
+          renderRecentUsdtDeposits();
+
+          // 5. Success Feedback
+          if (msgEl) {
+            msgEl.className = 'text-xs text-center font-bold text-emerald-400 py-2 px-3 bg-emerald-500/15 rounded-xl border border-emerald-500/40';
+            msgEl.textContent = result.message || `🎉 অভিনন্দন! ${usdtAmount} USDT (৳ ${bdtAmount.toLocaleString('en-US')}) অটো এপ্রুভ হয়েছে।`;
+            msgEl.classList.remove('hidden');
+          }
+
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(`🎉 ${usdtAmount} USDT ডিপোজিট সফল ও ব্যালেন্সে যুক্ত হয়েছে!`);
+          }
+
+          // Clear inputs
+          if (txInput) txInput.value = '';
+          if (senderInput) senderInput.value = '';
+          if (amountInput) amountInput.value = '';
+          if (bdtPreview) bdtPreview.textContent = '০.০০';
+
+        } else {
+          // Failure response from API
+          const errMsg = (result && result.message) ? result.message : 'ডিপোজিট ভেরিফিকেশন ব্যর্থ হয়েছে।';
+          if (msgEl) {
+            msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-2 px-3 bg-rose-500/15 rounded-xl border border-rose-500/40';
+            msgEl.textContent = errMsg;
+            msgEl.classList.remove('hidden');
+          }
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(errMsg);
+          }
+        }
+      } catch (err) {
+        console.error('USDT Deposit submit error:', err);
+        const errMsg = 'সার্ভার যোগাযোগে সমস্যা হয়েছে: ' + (err.message || 'Network Error');
+        if (msgEl) {
+          msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
+          msgEl.textContent = errMsg;
+          msgEl.classList.remove('hidden');
+        }
+        if (typeof showToastNotification === 'function') {
+          showToastNotification(errMsg);
+        }
+      } finally {
+        submitBtn.disabled = false;
+        if (btnSpinner) btnSpinner.classList.add('hidden');
+        if (btnIcon) btnIcon.classList.remove('hidden');
+        if (btnText) btnText.textContent = 'জমা দিন ও অটো এপ্রুভ করুন';
+      }
+    };
+  }
+
+  // Render recent records on load
+  renderRecentUsdtDeposits();
+}
+window.initUsdtDeposit = initUsdtDeposit;
+
+// ==============================================================
+// BANGLADESH ONLINE PAYMENT GATEWAY (bKash & Nagad via imcagro.top)
+// ==============================================================
+let selectedGatewayMethod = 'BKASH'; // 'BKASH' or 'NAGAD'
+
+function setGatewayMethod(method) {
+  selectedGatewayMethod = (method === 'NAGAD') ? 'NAGAD' : 'BKASH';
+  const icon = document.getElementById('gateway-method-icon');
+  const label = document.getElementById('gateway-method-label');
+  const buttons = document.querySelectorAll('.gateway-switch-method-btn');
+
+  if (selectedGatewayMethod === 'BKASH') {
+    if (icon) {
+      icon.className = 'w-7 h-7 rounded-full bg-[#e2136e] flex items-center justify-center text-white text-[11px] font-bold shadow';
+      icon.textContent = 'bK';
+    }
+    if (label) label.textContent = 'বিকাশ (bKash)';
+  } else {
+    if (icon) {
+      icon.className = 'w-7 h-7 rounded-full bg-[#f7931e] flex items-center justify-center text-white text-[11px] font-bold shadow';
+      icon.textContent = 'নগদ';
+    }
+    if (label) label.textContent = 'নগদ (Nagad)';
+  }
+
+  buttons.forEach(function(btn) {
+    if (btn.dataset.method === selectedGatewayMethod) {
+      const color = selectedGatewayMethod === 'BKASH' ? 'text-[#e2136e] bg-[#e2136e]/20 border-[#e2136e]/50' : 'text-[#f7931e] bg-[#f7931e]/20 border-[#f7931e]/50';
+      btn.className = `gateway-switch-method-btn px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition cursor-pointer ${color}`;
+    } else {
+      btn.className = 'gateway-switch-method-btn px-2.5 py-1 rounded-lg text-[10.5px] font-bold border transition cursor-pointer bg-[#0e2a66] text-slate-300 border-[#1a3875] hover:text-white';
+    }
+  });
+}
+window.setGatewayMethod = setGatewayMethod;
+
+async function handleGatewayPayNow() {
+  const customInput = document.getElementById('gateway-custom-amount');
+  const statusMsg = document.getElementById('gateway-pay-status-msg');
+  const payBtn = document.getElementById('gateway-pay-now-btn');
+  const btnSpinner = document.getElementById('gateway-btn-spinner');
+  const btnText = document.getElementById('gateway-btn-text');
+
+  const rawAmount = customInput ? parseFloat(customInput.value) : 0;
+  const amount = Math.round(rawAmount);
+
+  // Validate: whole numbers only, min 300, max 50000
+  if (!amount || isNaN(amount) || amount < 300 || amount > 50000) {
+    if (statusMsg) {
+      statusMsg.className = 'text-xs text-center font-semibold text-rose-400 py-2 bg-rose-500/10 rounded-lg border border-rose-500/30';
+      statusMsg.textContent = 'টাকার পরিমাণ অবশ্যই ৩০০ থেকে ৫০,০০০ এর মধ্যে হতে হবে। (Min 300, Max 50000 BDT)';
+      statusMsg.classList.remove('hidden');
+    }
+    if (customInput) customInput.focus();
+    return;
+  }
+
+  // Payment type in uppercase: BKASH or NAGAD
+  const payType = (selectedGatewayMethod === 'NAGAD' ? 'NAGAD' : 'BKASH').toUpperCase();
+
+  // Generate unique orderId: "ORD" + timestamp + 3 random digits
+  const orderId = 'ORD' + Date.now() + Math.floor(100 + Math.random() * 900);
+
+  // Loading state & double-submit prevention
+  if (payBtn) payBtn.disabled = true;
+  if (btnSpinner) btnSpinner.classList.remove('hidden');
+  if (btnText) btnText.textContent = 'গেটওয়ে পেজে নিয়ে যাওয়া হচ্ছে...';
+  if (statusMsg) {
+    statusMsg.className = 'text-xs text-center font-semibold text-sky-400 py-2 bg-sky-500/10 rounded-lg border border-sky-500/30 animate-pulse';
+    statusMsg.textContent = 'পেমেন্ট গেটওয়ে লিংক প্রস্তুত হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+    statusMsg.classList.remove('hidden');
+  }
+
+  // In cPanel (imcagro.top) or preview, route through the cPanel payment server
+  const apiUrl = (window.location.hostname === 'imcagro.top' || window.location.hostname.endsWith('.imcagro.top'))
+    ? 'https://imcagro.top/api/create-payment'
+    : '/api/create-payment';
+
+  const payload = {
+    amount: amount,
+    orderId: orderId,
+    payType: payType
+  };
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    console.log('[Backend Payment Response]', data);
+
+    // Check success & extract paymentUrl
+    const paymentUrl = data.paymentUrl || 
+                       data?.gatewayResponse?.data?.url || 
+                       data?.data?.url || 
+                       data?.url;
+
+    if (data.success === true && paymentUrl) {
+      if (statusMsg) {
+        statusMsg.className = 'text-xs text-center font-bold text-emerald-400 py-2 bg-emerald-500/15 rounded-lg border border-emerald-500/30';
+        statusMsg.textContent = '✅ সফল! পেমেন্ট ক্যাশিয়ার পেজে রিডাইরেক্ট করা হচ্ছে...';
+      }
+      // Redirect to the cashier URL returned by the backend
+      window.location.href = paymentUrl;
+      return;
+    }
+
+    // Failure: show gatewayResponse.msg or message
+    const errMsg = data?.gatewayResponse?.msg || 
+                   data?.message || 
+                   data?.msg || 
+                   (typeof data?.error === 'string' ? data.error : '') || 
+                   'পেমেন্ট লিংক পাওয়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+    if (statusMsg) {
+      statusMsg.className = 'text-xs text-center font-semibold text-rose-400 py-2 bg-rose-500/10 rounded-lg border border-rose-500/30';
+      statusMsg.textContent = 'পেমেন্ট ত্রুটি: ' + errMsg;
+      statusMsg.classList.remove('hidden');
+    }
+    if (typeof showToastNotification === 'function') {
+      showToastNotification(errMsg);
+    }
+
+  } catch (err) {
+    console.error('Payment request error:', err);
+    if (statusMsg) {
+      statusMsg.className = 'text-xs text-center font-semibold text-rose-400 py-2 bg-rose-500/10 rounded-lg border border-rose-500/30';
+      statusMsg.textContent = 'সার্ভার যোগাযোগে সমস্যা হয়েছে: ' + (err.message || 'নেটওয়ার্ক এরর');
+      statusMsg.classList.remove('hidden');
+    }
+    if (typeof showToastNotification === 'function') {
+      showToastNotification('পেমেন্ট সার্ভারে সংযোগ করা যায়নি।');
+    }
+  } finally {
+    if (payBtn) payBtn.disabled = false;
+    if (btnSpinner) btnSpinner.classList.add('hidden');
+    if (btnText) btnText.textContent = 'Pay Now (পেমেন্ট করুন) ⚡';
+  }
+}
+window.handleGatewayPayNow = handleGatewayPayNow;
+
+function initBdGatewayCheckout() {
+  // Method switch buttons (bKash / Nagad)
+  document.querySelectorAll('.gateway-switch-method-btn').forEach(function(btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      setGatewayMethod(btn.dataset.method);
+    };
+  });
+
+  // Quick Amount chips
+  document.querySelectorAll('.gateway-quick-amt').forEach(function(btn) {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      const amt = parseFloat(btn.dataset.amount || '0');
+      const input = document.getElementById('gateway-custom-amount');
+      if (input && amt > 0) {
+        input.value = amt;
+      }
+      document.querySelectorAll('.gateway-quick-amt').forEach(function(b) {
+        b.classList.remove('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
+        b.classList.add('bg-[#0e2a66]');
+      });
+      btn.classList.add('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
+      btn.classList.remove('bg-[#0e2a66]');
+    };
+  });
+
+  // Custom amount input listener
+  const customInput = document.getElementById('gateway-custom-amount');
+  if (customInput) {
+    customInput.oninput = function() {
+      const val = parseFloat(customInput.value || '0');
+      document.querySelectorAll('.gateway-quick-amt').forEach(function(b) {
+        if (parseFloat(b.dataset.amount || '0') === val) {
+          b.classList.add('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
+          b.classList.remove('bg-[#0e2a66]');
+        } else {
+          b.classList.remove('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
+          b.classList.add('bg-[#0e2a66]');
+        }
+      });
+    };
+  }
+
+  // Pay Now button
+  const payBtn = document.getElementById('gateway-pay-now-btn');
+  if (payBtn) {
+    payBtn.onclick = function(e) {
+      e.preventDefault();
+      handleGatewayPayNow();
+    };
+  }
+}
+window.initBdGatewayCheckout = initBdGatewayCheckout;
+
+function openDirectPaymentCheckout() {
+  let user = getCurrentUser();
+  if (!user || !user.phone) {
+    user = {
+      phone: '01700000000',
+      fullName: 'সম্মানিত সদস্য',
+      balance: 0.00,
+      lifetime_earnings: 0.00,
+      packageLevel: 'LV0',
+      purchasedPackages: ['LV0'],
+      country: 'BD',
+      language: 'bn'
+    };
+    try {
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+    } catch(e) {}
+    if (typeof updateUserDetails === 'function') updateUserDetails(user);
+    if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+  }
+  showView('dashboard');
+  openDashboardPanel('payment-method');
+  initBdGatewayCheckout();
+  setTimeout(function() {
+    const box = document.getElementById('bd-gateway-checkout-box');
+    if (box) {
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 120);
+}
+window.openDirectPaymentCheckout = openDirectPaymentCheckout;
 
 window.addEventListener('alo-language-changed', function(e) {
   const lang = e.detail && e.detail.lang;

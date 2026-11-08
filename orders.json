@@ -1,0 +1,25 @@
+{
+  "PW17938971070267120": {
+    "out_trade_no": "PW17938971070267120",
+    "phone": "01712345678",
+    "amount": 500,
+    "pay_type": "BKASH",
+    "status": "paid",
+    "transaction_Id": "S10002B2BB1694CFC609E6AC23D9F0D81C2851A96B18C",
+    "pay_url": "https://sandbox.okexpay.dev/Cashier/Index/S10002B2BB1694CFC609E6AC23D9F0D81C2851A96B18C",
+    "is_sandbox": true,
+    "createdAt": "2026-11-05T16:45:07.405Z",
+    "paidAt": "2026-11-05T16:45:19.022Z"
+  },
+  "PW17938976169495787": {
+    "out_trade_no": "PW17938976169495787",
+    "phone": "01811223344",
+    "amount": 1000,
+    "pay_type": "BKASH",
+    "status": "pending",
+    "transaction_Id": "S10003CF2F15741908C0372C9E4A2B9084BEA6F3FF48A",
+    "pay_url": "/pay/cashier?out_trade_no=PW17938976169495787",
+    "is_sandbox": true,
+    "createdAt": "2026-11-05T16:53:37.214Z"
+  }
+}
