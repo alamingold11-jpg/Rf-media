@@ -907,6 +907,7 @@ const dashboardTitles = {
   'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
   'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
   'usdt-deposit': 'USDT ডিপোজিট',
+  'bd-recharge': 'রিচার্জ',
   'customer-service': 'গ্রাহক সেবা',
   manager: 'গ্রাহক সেবা'
 };
@@ -1544,7 +1545,7 @@ function openDashboardPanel(panelName) {
   }
   forceScrollToTop(panelName + '-panel');
   const nextPanel = dashboardTitles[panelName] ? panelName : 'home';
-  if (nextPanel !== 'payment-method' && nextPanel !== 'team-report' && nextPanel !== 'withdraw' && nextPanel !== 'withdraw-details' && nextPanel !== 'customer-service' && nextPanel !== 'usdt-deposit') {
+  if (nextPanel !== 'payment-method' && nextPanel !== 'bd-recharge' && nextPanel !== 'team-report' && nextPanel !== 'withdraw' && nextPanel !== 'withdraw-details' && nextPanel !== 'customer-service' && nextPanel !== 'usdt-deposit') {
     previousDashboardPanel = nextPanel;
   }
   document.querySelectorAll('.dashboard-panel').forEach(function(panel) {
@@ -6664,18 +6665,12 @@ document.addEventListener('click', function(event) {
     }
 
     if (method === 'bkash' || method === 'bkash-2') {
-      if (typeof setGatewayMethod === 'function') setGatewayMethod('BKASH');
-      const checkoutBox = document.getElementById('bd-gateway-checkout-box');
-      if (checkoutBox) checkoutBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      showToastNotification(`পছন্দ: বিকাশ (bKash) অনলাইন পেমেন্ট`);
+      openBdRechargePage('BKASH');
       return;
     }
 
     if (method === 'nagad') {
-      if (typeof setGatewayMethod === 'function') setGatewayMethod('NAGAD');
-      const checkoutBox = document.getElementById('bd-gateway-checkout-box');
-      if (checkoutBox) checkoutBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      showToastNotification(`পছন্দ: নগদ (Nagad) অনলাইন পেমেন্ট`);
+      openBdRechargePage('NAGAD');
       return;
     }
 
@@ -9040,6 +9035,188 @@ function initBdGatewayCheckout() {
 }
 window.initBdGatewayCheckout = initBdGatewayCheckout;
 
+// ==========================================
+// DEDICATED BD RECHARGE PAGE (বিকাশ ও নগদ পেজ)
+// ==========================================
+let currentBdPaymentMethod = 'BKASH';
+
+function openBdRechargePage(method) {
+  currentBdPaymentMethod = (method === 'NAGAD') ? 'NAGAD' : 'BKASH';
+  
+  const titleEl = document.getElementById('bd-recharge-title');
+  const badgeEl = document.getElementById('bd-recharge-method-badge');
+  const nameEl = document.getElementById('bd-recharge-method-name');
+  const amountInput = document.getElementById('bd-recharge-amount-input');
+  const statusMsg = document.getElementById('bd-recharge-status-msg');
+  const submitBtn = document.getElementById('bd-recharge-submit-btn');
+  const spinner = document.getElementById('bd-recharge-spinner');
+  const btnText = document.getElementById('bd-recharge-btn-text');
+
+  if (statusMsg) {
+    statusMsg.textContent = '';
+    statusMsg.className = 'text-xs text-center font-semibold min-h-[16px] py-2 px-3 rounded-xl hidden';
+  }
+
+  if (spinner) spinner.classList.add('hidden');
+  if (submitBtn) submitBtn.disabled = false;
+  if (btnText) btnText.textContent = 'জমা দিন';
+
+  if (amountInput) {
+    amountInput.value = '500';
+  }
+
+  // Highlight ৳500 chip by default
+  document.querySelectorAll('.bd-amt-chip').forEach(function(chip, idx) {
+    if (idx === 1) {
+      chip.className = 'bd-amt-chip py-2 rounded-lg bg-[#0284c7] hover:bg-[#123685] border border-[#38bdf8] text-white transition cursor-pointer ring-2 ring-[#38bdf8]';
+    } else {
+      chip.className = 'bd-amt-chip py-2 rounded-lg bg-[#0c2357] hover:bg-[#123685] border border-[#173a7d] text-white transition cursor-pointer';
+    }
+  });
+
+  if (currentBdPaymentMethod === 'BKASH') {
+    if (titleEl) titleEl.textContent = 'বিকাশ';
+    if (nameEl) nameEl.textContent = 'বিকাশ (bKash)';
+    if (badgeEl) {
+      badgeEl.className = 'w-12 h-12 rounded-full bg-[#e2136e] flex items-center justify-center shrink-0 shadow-md';
+      badgeEl.innerHTML = `
+        <svg viewBox="0 0 100 100" class="w-7 h-7 fill-white">
+          <polygon points="52,18 20,48 55,42"/>
+          <polygon points="20,48 55,42 35,68"/>
+          <polygon points="55,42 82,32 60,62"/>
+          <polygon points="55,42 60,62 35,68"/>
+          <polygon points="60,62 76,78 68,54"/>
+          <polygon points="35,68 46,84 54,67"/>
+        </svg>
+      `;
+    }
+  } else {
+    if (titleEl) titleEl.textContent = 'নগদ';
+    if (nameEl) nameEl.textContent = 'নগদ (Nagad)';
+    if (badgeEl) {
+      badgeEl.className = 'w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md p-1.5';
+      badgeEl.innerHTML = `
+        <svg viewBox="0 0 64 64" class="w-8 h-8">
+          <path d="M32 8C23 8 15 15 15 25c0 13 17 25 17 25s17-12 17-25c0-10-8-17-17-17z" fill="#f7931e"/>
+          <path d="M32 16c-5 0-9 4-9 9 0 7 9 15 9 15s9-8 9-15c0-5-4-9-9-9z" fill="#e22d24"/>
+          <circle cx="32" cy="25" r="3.5" fill="#ffffff"/>
+          <text x="32" y="60" font-size="12" font-weight="900" fill="#e22d24" text-anchor="middle" font-family="sans-serif">নগদ</text>
+        </svg>
+      `;
+    }
+  }
+
+  previousDashboardPanel = 'payment-method';
+  openDashboardPanel('bd-recharge');
+}
+window.openBdRechargePage = openBdRechargePage;
+
+function setBdRechargeAmount(amount, btn) {
+  const input = document.getElementById('bd-recharge-amount-input');
+  if (input) {
+    input.value = amount;
+  }
+  document.querySelectorAll('.bd-amt-chip').forEach(function(b) {
+    b.className = 'bd-amt-chip py-2 rounded-lg bg-[#0c2357] hover:bg-[#123685] border border-[#173a7d] text-white transition cursor-pointer';
+  });
+  if (btn) {
+    btn.className = 'bd-amt-chip py-2 rounded-lg bg-[#0284c7] hover:bg-[#123685] border border-[#38bdf8] text-white transition cursor-pointer ring-2 ring-[#38bdf8]';
+  }
+}
+window.setBdRechargeAmount = setBdRechargeAmount;
+
+async function handleBdRechargeSubmit() {
+  const amountInput = document.getElementById('bd-recharge-amount-input');
+  const statusMsg = document.getElementById('bd-recharge-status-msg');
+  const submitBtn = document.getElementById('bd-recharge-submit-btn');
+  const spinner = document.getElementById('bd-recharge-spinner');
+  const btnText = document.getElementById('bd-recharge-btn-text');
+
+  const rawAmount = amountInput ? parseFloat(amountInput.value) : 0;
+  const amount = Math.round(rawAmount);
+
+  if (!amount || isNaN(amount) || amount < 300 || amount > 50000) {
+    if (statusMsg) {
+      statusMsg.className = 'text-xs text-center font-semibold text-rose-300 py-2.5 bg-rose-500/20 rounded-xl border border-rose-500/40';
+      statusMsg.textContent = 'টাকার পরিমাণ অবশ্যই ৩০০ থেকে ৫০,০০০ এর মধ্যে হতে হবে।';
+      statusMsg.classList.remove('hidden');
+    }
+    if (amountInput) amountInput.focus();
+    return;
+  }
+
+  const orderId = 'ORD' + Date.now() + Math.floor(100 + Math.random() * 900);
+  const payType = currentBdPaymentMethod; // 'BKASH' or 'NAGAD'
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (spinner) spinner.classList.remove('hidden');
+  if (btnText) btnText.textContent = 'প্রসেসিং হচ্ছে...';
+  if (statusMsg) {
+    statusMsg.className = 'text-xs text-center font-semibold text-sky-300 py-2.5 bg-sky-500/20 rounded-xl border border-sky-500/30 animate-pulse';
+    statusMsg.textContent = 'ক্যাশিয়ারে নিয়ে যাওয়া হচ্ছে, অপেক্ষা করুন...';
+    statusMsg.classList.remove('hidden');
+  }
+
+  const apiUrl = (window.location.hostname === 'imcagro.top' || window.location.hostname.endsWith('.imcagro.top'))
+    ? 'https://imcagro.top/api/create-payment'
+    : '/api/create-payment';
+
+  try {
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        amount: amount,
+        orderId: orderId,
+        payType: payType
+      })
+    });
+
+    const data = await res.json();
+    console.log('[Recharge Page Response]', data);
+
+    const paymentUrl = data.paymentUrl || 
+                       data?.gatewayResponse?.data?.url || 
+                       data?.data?.url || 
+                       data?.url;
+
+    if (data.success === true && paymentUrl) {
+      if (statusMsg) {
+        statusMsg.className = 'text-xs text-center font-bold text-emerald-300 py-2.5 bg-emerald-500/20 rounded-xl border border-emerald-500/40';
+        statusMsg.textContent = '✅ সফল! পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে...';
+      }
+      window.location.href = paymentUrl;
+      return;
+    }
+
+    const errMsg = data?.gatewayResponse?.msg || 
+                   data?.message || 
+                   data?.msg || 
+                   'পেমেন্ট চ্যানেল বর্তমানে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+    if (statusMsg) {
+      statusMsg.className = 'text-xs text-center font-semibold text-rose-300 py-2.5 bg-rose-500/20 rounded-xl border border-rose-500/40';
+      statusMsg.textContent = 'ত্রুটি: ' + errMsg;
+      statusMsg.classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('Recharge error:', err);
+    if (statusMsg) {
+      statusMsg.className = 'text-xs text-center font-semibold text-rose-300 py-2.5 bg-rose-500/20 rounded-xl border border-rose-500/40';
+      statusMsg.textContent = 'সার্ভার সংযোগে ত্রুটি: ' + (err.message || 'নেটওয়ার্ক এরর');
+      statusMsg.classList.remove('hidden');
+    }
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+    if (spinner) spinner.classList.add('hidden');
+    if (btnText) btnText.textContent = 'জমা দিন';
+  }
+}
+window.handleBdRechargeSubmit = handleBdRechargeSubmit;
+
 function openDirectPaymentCheckout() {
   let user = getCurrentUser();
   if (!user || !user.phone) {
@@ -9061,13 +9238,6 @@ function openDirectPaymentCheckout() {
   }
   showView('dashboard');
   openDashboardPanel('payment-method');
-  initBdGatewayCheckout();
-  setTimeout(function() {
-    const box = document.getElementById('bd-gateway-checkout-box');
-    if (box) {
-      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, 120);
 }
 window.openDirectPaymentCheckout = openDirectPaymentCheckout;
 
