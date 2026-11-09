@@ -58,10 +58,21 @@ function getPlatformSvg(platform, sizeClass) {
 // ==========================================
 function mapSupabaseUser(d) {
   if (!d) return null;
+  let opt = {};
+  if (d.bkash_optional) {
+    try { opt = JSON.parse(d.bkash_optional); } catch(e) {}
+  }
+  const nName = d.nagad_name || opt.nagad_name || '';
+  const nPhone = d.nagad_phone || opt.nagad_phone || '';
+  const uName = d.usdt_name || opt.usdt_name || '';
+  const uAddr = d.usdt_address || opt.usdt_address || '';
+
   return {
     phone: d.phone || d.account_number || d.accountNumber,
     accountNumber: d.account_number || d.accountNumber || d.phone,
-    name: d.name || 'সদস্য',
+    name: opt.real_name || d.name || 'সদস্য',
+    realName: opt.real_name || d.name || '',
+    fundPassword: opt.fund_password || '',
     passwordHash: d.password_hash || d.passwordHash || '',
     plainPassword: d.plain_password || d.plainPassword || '',
     memberId: d.member_id || d.memberId || ('AL' + Date.now().toString().slice(-8)),
@@ -75,17 +86,17 @@ function mapSupabaseUser(d) {
       fullName: d.bkash_name || d.bkashName || '',
       phone: d.bkash_phone || d.bkashPhone || ''
     },
-    nagadName: d.nagad_name || d.nagadName || '',
-    nagadPhone: d.nagad_phone || d.nagadPhone || '',
+    nagadName: nName,
+    nagadPhone: nPhone,
     nagad: {
-      fullName: d.nagad_name || d.nagadName || '',
-      phone: d.nagad_phone || d.nagadPhone || ''
+      fullName: nName,
+      phone: nPhone
     },
-    usdtName: d.usdt_name || d.usdtName || '',
-    usdtAddress: d.usdt_address || d.usdtAddress || '',
+    usdtName: uName,
+    usdtAddress: uAddr,
     usdt: {
-      fullName: d.usdt_name || d.usdtName || '',
-      address: d.usdt_address || d.usdtAddress || '',
+      fullName: uName,
+      address: uAddr,
       network: 'BEP20'
     },
     createdAt: d.created_at || d.createdAt || new Date().toISOString()
@@ -179,9 +190,6 @@ function initSupabaseLiveSync(user) {
           if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
           if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
           if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
-          if (typeof showToastNotification === 'function') {
-            showToastNotification('⚡ সুপাবেস ডাটাবেজ থেকে তথ্য লাইভ আপডেট হয়েছে!');
-          }
         }
       )
       .subscribe();
@@ -249,6 +257,19 @@ async function dbSaveUser(account) {
   // Save to Supabase
   if (window.aloSupabase) {
     try {
+      // Supabase users table schema: id, phone, account_number, name, password_hash, plain_password, member_id, invite_code, superior_id, package_level, balance, bkash_name, bkash_phone, bkash_optional, created_at, updated_at
+      let extraMeta = {};
+      try {
+        extraMeta = {
+          nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || '',
+          nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
+          usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || '',
+          usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || '',
+          real_name: account.realName || account.name || '',
+          fund_password: account.fundPassword || ''
+        };
+      } catch(e) {}
+
       const payload = {
         phone: normPhone,
         account_number: account.accountNumber || account.phone,
@@ -262,10 +283,7 @@ async function dbSaveUser(account) {
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
         bkash_name: (account.bkash && account.bkash.fullName) || account.bkashName || '',
         bkash_phone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
-        nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || '',
-        nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
-        usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || '',
-        usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || '',
+        bkash_optional: JSON.stringify(extraMeta),
         updated_at: new Date().toISOString()
       };
       if (account.createdAt) payload.created_at = account.createdAt;
@@ -430,6 +448,7 @@ async function dbAddTeamMember(superiorPhone, memberPhone, memberId, level, tier
   // Supabase
   if (window.aloSupabase) {
     try {
+      // Supabase team table schema: id, superior_phone, member_phone, member_id, tier, level, status, joined_at
       const payload = {
         superior_phone: supNorm,
         member_phone: memNorm,
@@ -437,8 +456,6 @@ async function dbAddTeamMember(superiorPhone, memberPhone, memberId, level, tier
         tier: t,
         level: level || 'LV0',
         status: 'সক্রিয়',
-        balance: bal,
-        recharge_amount: rech,
         joined_at: new Date().toISOString()
       };
       const { error } = await window.aloSupabase.from('team').insert(payload);
@@ -543,6 +560,9 @@ async function registerTeamHierarchy(newMemberPhone, newMemberId, newMemberLevel
 
   // Level 1: Add to upline1's team (tier = 1)
   await dbAddTeamMember(upline1Phone, normNewPhone, newMemberId, newMemberLevel, 1);
+  if (upline1.inviteCode && upline1.inviteCode !== upline1Phone) {
+    await dbAddTeamMember(upline1.inviteCode, normNewPhone, newMemberId, newMemberLevel, 1);
+  }
   console.log(`[Team] Level 1 connected: ${normNewPhone} -> ${upline1Phone}`);
 
   // 2. Resolve Level 2 Superior (Inviter of upline1)
@@ -665,6 +685,44 @@ async function dbGetRealTeam(userPhone) {
         });
       }
     });
+  }
+
+  // 1.5 Query Supabase users table directly for direct referrals
+  if (window.aloSupabase) {
+    try {
+      const user = getCurrentUser();
+      const myInviteCode = (user && user.inviteCode) ? String(user.inviteCode).trim() : '';
+      const orList = [];
+      if (normPhone) orList.push(`superior_id.eq.${normPhone}`);
+      if (myInviteCode) orList.push(`superior_id.eq.${myInviteCode}`);
+
+      if (orList.length > 0) {
+        const { data: directUsers, error: uErr } = await window.aloSupabase
+          .from('users')
+          .select('*')
+          .or(orList.join(','));
+        if (!uErr && Array.isArray(directUsers)) {
+          directUsers.forEach(function(u) {
+            const p = normalizeBdPhone(u.phone || u.account_number);
+            if (p && p !== normPhone && !memberMap.has(p)) {
+              memberMap.set(p, {
+                rawPhone: p,
+                phone: p.length >= 10 ? p.slice(0, 5) + '-***' + p.slice(-3) : p,
+                memberId: u.member_id || u.memberId || ('AL' + p.slice(-6)),
+                tier: 1,
+                level: u.package_level || u.packageLevel || 'LV0',
+                status: 'সক্রিয়',
+                balance: Number(u.balance) || 0,
+                rechargeAmount: Number(u.recharge_amount || 0),
+                joinedAt: u.created_at || u.createdAt || new Date().toISOString()
+              });
+            }
+          });
+        }
+      }
+    } catch (uErr) {
+      console.warn('Supabase direct users referral query notice:', uErr);
+    }
   }
 
   // 2. Multi-level recursive graph from accounts (Level 1 -> Level 2 -> Level 3)
@@ -2476,7 +2534,6 @@ function showRegistrationSuccess(phone, countryName, currencyCode, currencySymbo
     overlay.remove();
     openDashboardPanel('home');
     showView('dashboard', 'zoom');
-    showToastNotification(toastMsg);
   }, 1600);
 }
 
@@ -4070,7 +4127,6 @@ function saveRealNameDetails() {
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       if (window.aloSupabase) {
         window.aloSupabase.from('users').update({
-          real_name: realName,
           name: realName
         }).eq('phone', user.phone).then(() => {}).catch(e => console.warn('Supabase realname update:', e));
       }
@@ -4228,12 +4284,7 @@ function saveFundPasswordDetails() {
     if (user) {
       user.fundPassword = newPass;
       user.fundPasswordLocked = true;
-      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      if (window.aloSupabase) {
-        window.aloSupabase.from('users').update({
-          fund_password: newPass
-        }).eq('phone', user.phone || user.accountNumber).then(() => {}).catch(e => console.warn('Supabase fund_password update:', e));
-      }
+      dbSaveUser(user);
     }
   } catch(e) {}
 
@@ -4404,7 +4455,7 @@ function saveBkashAccountDetails() {
         window.aloSupabase.from('users').update({
           bkash_phone: phone,
           bkash_name: fullName,
-          real_name: fullName
+          name: fullName
         }).eq('phone', user.phone || phone).then(() => {}).catch(e => console.warn('Supabase bkash update:', e));
       }
     }
@@ -4562,14 +4613,7 @@ function saveNagadAccountDetails() {
     if (user) {
       user.nagad = nagadData;
       user.realName = fullName;
-      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      if (window.aloSupabase) {
-        window.aloSupabase.from('users').update({
-          nagad_phone: phone,
-          nagad_name: fullName,
-          real_name: fullName
-        }).eq('phone', user.phone || phone).then(() => {}).catch(e => console.warn('Supabase nagad update:', e));
-      }
+      dbSaveUser(user);
     }
   } catch(e) {}
 
@@ -4737,14 +4781,7 @@ function saveUsdtAccountDetails() {
     if (user) {
       user.usdt = usdtData;
       user.realName = fullName;
-      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      if (window.aloSupabase) {
-        window.aloSupabase.from('users').update({
-          usdt_address: address,
-          usdt_name: fullName,
-          real_name: fullName
-        }).eq('phone', user.phone || '').then(() => {}).catch(e => console.warn('Supabase usdt update:', e));
-      }
+      dbSaveUser(user);
     }
   } catch(e) {}
 
