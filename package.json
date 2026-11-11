@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "lint": "node --check public/app.js",
     "preview": "vite preview"
   },
   "dependencies": {

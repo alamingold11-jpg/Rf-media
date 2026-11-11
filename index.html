@@ -447,6 +447,54 @@ html, body {
   box-shadow: none !important;
 }
 
+/* Universal Bengali Typography, Tabular Numerals & Tactile Touch Response */
+body, button, input, select, textarea {
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, -apple-system, sans-serif !important;
+  font-feature-settings: 'tnum' 1, 'kern' 1;
+}
+
+body {
+  background-color: #040e2d;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.tabular-nums, [data-balance], [data-currency], .metric-number, .font-mono, #bd-recharge-amount-input {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+button:active:not(:disabled), .cursor-pointer:active {
+  transform: scale(0.975);
+  transition: transform 0.08s ease;
+}
+
+/* Borderless Corner Language Switcher ("ভাষার অপশনের ডিজান টা আরো উপরে এক কোনায় থাকবে বর্ডার ছাড়া") */
+.corner-language-container {
+  position: absolute !important;
+  top: 0.65rem !important;
+  right: 0.85rem !important;
+  z-index: 50 !important;
+}
+.corner-language-container .language-pill-borderless {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: rgba(3, 11, 35, 0.4) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+.corner-language-container select.page-language-switch,
+#login-language-switch,
+#register-language-switch,
+#profile-language-switch,
+#personal-language-switch {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 </style>
   <script type="module" src="/src/init.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-DNTUc__U.css">
@@ -541,27 +589,32 @@ html, body {
           <path d="M210 70 L216 90 L210 110 L204 90 Z" fill="#ffffff" opacity="0.35"/>
         </svg>
 
+        <!-- Borderless Top-Right Corner Language Switcher (আরো উপরে এক কোনায়, সম্পূর্ণ বর্ডার ছাড়া) -->
+        <div class="corner-language-container absolute top-2.5 right-3.5 z-40 flex items-center">
+          <div class="language-pill-borderless relative flex items-center bg-black/25 hover:bg-black/40 rounded-full px-2.5 py-1 transition backdrop-blur-md cursor-pointer group" style="border: none !important; outline: none !important; box-shadow: none !important;">
+            <svg class="w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0 opacity-90 group-hover:opacity-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <select id="login-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-[13.5px] pr-4 focus:outline-none" style="border: none !important; outline: none !important; box-shadow: none !important;">
+              <option value="bn" class="bg-[#050e21] text-white" selected>Bengali</option>
+              <option value="en" class="bg-[#050e21] text-white">English</option>
+              <option value="hi" class="bg-[#050e21] text-white">India</option>
+            </select>
+            <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 group-hover:text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </div>
+        </div>
+
         <!-- Top Section (Header + Hero) -->
-        <div class="relative z-10 px-6 pt-7 pb-6 flex flex-col">
+        <div class="relative z-10 px-6 pt-5 pb-6 flex flex-col">
           <!-- Header -->
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center justify-between mb-4">
             <!-- Logo with NO box, NO border, NO container background -->
             <div class="flex items-center" style="background: transparent !important; border: none !important; box-shadow: none !important;">
               <img src="logo.png" alt="PW New Media" class="brand-logo block object-contain" style="height: 62px; width: auto; max-width: 170px; background: transparent !important; border: none !important; box-shadow: none !important;">
-            </div>
-
-            <!-- Language selector pill -->
-            <div class="relative inline-flex items-center">
-              <div class="relative flex items-center bg-[#0a1747]/80 hover:bg-[#0c224a] border border-white/20 rounded-full transition shadow-md backdrop-blur-md">
-                <select id="login-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-[16px] py-2 pl-3 pr-8 rounded-full focus:outline-none">
-                  <option value="bn" class="bg-[#050e21] text-white" selected>Bengali</option>
-                  <option value="en" class="bg-[#050e21] text-white">English</option>
-                  <option value="hi" class="bg-[#050e21] text-white">India</option>
-                </select>
-                <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                </svg>
-              </div>
             </div>
           </div>
 
@@ -662,27 +715,32 @@ html, body {
     </section>
 
     <section id="register-view" class="page-view phone-register-page" aria-label="Registration" hidden>
-      <div class="phone-register-shell">
-        <header class="phone-register-hero pb-7 pt-5 px-5">
-          <!-- Top Row: clean logo on left, professional language pill on top-right (Back button removed) -->
-          <div id="register-top-bar" class="flex items-center justify-between mb-8 relative z-20">
+      <div class="phone-register-shell relative">
+        <header class="phone-register-hero pb-7 pt-5 px-5 relative">
+          <!-- Borderless Top-Right Corner Language Switcher (আরো উপরে এক কোনায়, সম্পূর্ণ বর্ডার ছাড়া) -->
+          <div class="corner-language-container absolute top-2.5 right-3.5 z-40 flex items-center">
+            <div class="language-pill-borderless relative flex items-center bg-black/25 hover:bg-black/40 rounded-full px-2.5 py-1 transition backdrop-blur-md cursor-pointer group" style="border: none !important; outline: none !important; box-shadow: none !important;">
+              <svg class="w-3.5 h-3.5 text-cyan-400 mr-1.5 shrink-0 opacity-90 group-hover:opacity-100" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              <select id="register-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-[13.5px] pr-4 focus:outline-none" style="border: none !important; outline: none !important; box-shadow: none !important;">
+                <option value="bn" class="bg-[#050e21] text-white" selected>Bengali</option>
+                <option value="en" class="bg-[#050e21] text-white">English</option>
+                <option value="hi" class="bg-[#050e21] text-white">India</option>
+              </select>
+              <svg class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-300 group-hover:text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Top Row: clean logo (Back button removed) -->
+          <div id="register-top-bar" class="flex items-center justify-between mb-8 relative z-20 pt-2">
             <div class="flex items-center">
               <div class="flex items-center" style="background: transparent !important; border: none !important; box-shadow: none !important;">
                 <img src="logo.png" alt="PW New Media" class="brand-logo block object-contain" style="height: 52px; width: auto; max-width: 160px; background: transparent !important; border: none !important; box-shadow: none !important;">
-              </div>
-            </div>
-
-            <!-- Professional Language selector pill identical to login -->
-            <div class="relative inline-flex items-center shrink-0">
-              <div class="relative flex items-center bg-[#0a1747]/80 hover:bg-[#0c224a] border border-white/20 rounded-full transition shadow-md backdrop-blur-md">
-                <select id="register-language-switch" class="page-language-switch language-switcher appearance-none cursor-pointer bg-transparent text-white font-semibold text-[15px] py-1.5 pl-3 pr-8 rounded-full focus:outline-none">
-                  <option value="bn" class="bg-[#050e21] text-white" selected>Bengali</option>
-                  <option value="en" class="bg-[#050e21] text-white">English</option>
-                  <option value="hi" class="bg-[#050e21] text-white">India</option>
-                </select>
-                <svg class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                </svg>
               </div>
             </div>
           </div>
@@ -820,7 +878,7 @@ html, body {
                 </h2>
                 <div class="flex items-center">
                   <label class="sr-only" for="profile-language-switch">ভাষা নির্বাচন / Select Language</label>
-                  <select id="profile-language-switch" class="page-language-switch language-switcher text-xs font-semibold rounded-lg bg-[#0e2764] border border-[#1d4ed8]/50 text-white px-2 py-1 shadow cursor-pointer outline-none hover:border-[#38bdf8]" aria-label="Select Language">
+                  <select id="profile-language-switch" class="page-language-switch language-switcher text-xs font-semibold rounded-lg bg-black/25 text-white px-2 py-1 shadow-none cursor-pointer outline-none hover:text-[#38bdf8]" style="border: none !important; outline: none !important;" aria-label="Select Language">
                     <option value="bn" selected>Bengali</option>
                     <option value="en">English</option>
                     <option value="hi">India</option>
@@ -1187,7 +1245,7 @@ html, body {
                           <!-- TikTok 3D Icon -->
                           <div class="w-8 h-10 sm:w-11 sm:h-13 rounded-xl bg-gradient-to-b from-[#181820] to-[#050508] border border-white/20 p-1.5 shadow-xl flex items-center justify-center -rotate-6 transition-transform hover:rotate-0 hover:scale-105">
                             <svg viewBox="0 0 24 24" class="w-full h-full" fill="none">
-                              <path fill="#FE2C55" d="M19.5 6.7a4.8 4.8 0 0 1-3.7-4.2V2h-3.5v13.7a2.9 2.9 0 0 1-2.9 2.9 2.9 2.9 0 0 1-2.9-2.9 2.9 2.9 0 0 1 2.9-2.9c.3 0 .6 0 .9.1V9.4a6.3 6.3 0 0 0-.9-.1A6.3 6.3 0 0 0 3 15.7a6.3 6.3 0 0 0 6.3 6.3 6.3 6.3 0 0 0 6.4-6.3V9.8a8.2 8.2 0 0 0 4.8 1.5V7.9c-.3 0-.7-.1-1-.2Z"/>
+                              <path fill="#FE2C55" d="M19.5 6.7a4.8 4.8 0 0 1-3.7-4.2V2h-3.5v13.7a2.9 2.9 0 0 1-2.9 2.9 2.9 2.9 0 0 1-2.9-2.9 2.9 2.9 0 0 1 2.9-2.9c.3 0 .6 0 .9.1V9.4a6.3 6.3 0 0 0-.9-.1A6.3 6.3 0 0 0 3 15.7a6.3 6.3 0 0 0 6.4-6.3V9.8a8.2 8.2 0 0 0 4.8 1.5V7.9c-.3 0-.7-.1-1-.2Z"/>
                               <path fill="#25F4EE" d="M18.9 6a4.8 4.8 0 0 1-3.8-4.2V1.3h-3.4v13.7a2.9 2.9 0 0 1-2.9 2.9 2.9 2.9 0 0 1-2.9-2.9 2.9 2.9 0 0 1 2.9-2.9c.3 0 .6 0 .9.1V8.7a6.3 6.3 0 0 0-.9-.1A6.3 6.3 0 0 0 2.3 15a6.3 6.3 0 0 0 6.4 6.3 6.3 6.3 0 0 0 6.3-6.3V9.1a8.2 8.2 0 0 0 4.8 1.5V7.2c-.3 0-.6-.1-.9-.2Z"/>
                             </svg>
                           </div>
@@ -2476,7 +2534,7 @@ html, body {
                   </svg>
                 </span>
                 <span class="min-w-0 flex-1 text-sm font-semibold">ভাষা পরিবর্তন</span>
-                <select id="personal-language-switch" class="page-language-switch language-switcher text-xs font-semibold rounded-lg bg-[#0e2764] border border-[#1d4ed8]/40 text-white px-2 py-1 cursor-pointer">
+                <select id="personal-language-switch" class="page-language-switch language-switcher text-xs font-semibold rounded-lg bg-black/25 text-white px-2 py-1 cursor-pointer outline-none shadow-none" style="border: none !important; outline: none !important;">
                   <option value="bn" selected>Bengali</option>
                   <option value="en">English</option>
                   <option value="hi">India</option>
@@ -3949,7 +4007,7 @@ html, body {
 
           </section>
 
-          <!-- USDT DEPOSIT SCREEN (BEP20 Auto-Approve Payment Gateway) -->
+          <!-- USDT DEPOSIT SCREEN (Exact Match with user screenshot Screenshot_20261110_235515_7677f68a.jpg) -->
           <section id="usdt-deposit-panel" class="dashboard-panel -mx-4 -mt-4 min-h-screen text-white relative flex flex-col overflow-y-auto pb-28" style="background: radial-gradient(circle at 50% 90%, #061952 0%, #040e2d 45%, #02071d 100%); font-family: 'Hind Siliguri', sans-serif;" aria-label="USDT Deposit" hidden>
             
             <!-- Top Navigation Header -->
@@ -3959,114 +4017,163 @@ html, body {
                   <path d="m15 18-6-6 6-6"></path>
                 </svg>
               </button>
-              <h1 class="text-base font-bold text-white tracking-wide">USDT ডিপোজিট (BEP20)</h1>
-              <div class="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-[11px] font-bold font-mono">
-                1 USDT ≈ ৳125
-              </div>
+              <h1 class="text-base font-bold text-white tracking-wide">Deposit</h1>
+              <div class="w-7" aria-hidden="true"></div>
             </header>
 
-            <div class="p-4 space-y-4">
+            <div class="p-4 space-y-4 max-w-md mx-auto w-full">
 
-              <!-- BEP20 Network & Warning Card -->
-              <div class="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/40 text-xs">
-                <div class="flex items-center gap-2 text-amber-300 font-bold mb-1.5">
-                  <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-400 text-slate-900 font-black text-xs">!</span>
-                  <span>নেটওয়ার্ক: BNB Smart Chain (BEP20)</span>
+              <!-- 1. Asset Card: USDT (Tether USD) -->
+              <div class="p-3.5 rounded-2xl bg-[#071a48] border border-[#143270] flex items-center justify-between shadow-lg">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-11 h-11 rounded-full bg-[#26a17b] flex items-center justify-center shrink-0 shadow-md p-2">
+                    <svg viewBox="0 0 32 32" class="w-6 h-6 fill-white">
+                      <path d="M17.9 14.9v-2.3h5.7V9.4H8.4v3.2h5.7v2.3c-4.9.2-8.6 1.4-8.6 2.8 0 1.4 3.7 2.6 8.6 2.8v5.8h3.8v-5.8c4.9-.2 8.6-1.4 8.6-2.8 0-1.4-3.7-2.6-8.6-2.8zm0 4.3c-3.7-.2-6.5-1-6.5-1.9 0-.9 2.8-1.7 6.5-1.9v3.8zm3.8-1.9c0 .9-2.8 1.7-6.5 1.9v-3.8c3.7.2 6.5 1 6.5 1.9z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 class="text-base font-extrabold text-white leading-tight">USDT</h2>
+                    <p class="text-xs text-[#8da0be] mt-0.5 font-normal">Tether USD</p>
+                  </div>
                 </div>
-                <p class="text-[11.5px] text-slate-200 leading-relaxed">
-                  শুধুমাত্র <strong>BEP20 (BSC)</strong> নেটওয়ার্কের মাধ্যমে USDT পাঠাবেন। অন্য কোনো নেটওয়ার্ক (যেমন TRC20 বা ERC20) ব্যবহার করলে ফান্ড স্থায়ীভাবে হারিয়ে যাবে।
-                </p>
+                <div>
+                  <span class="px-3 py-1 rounded-full bg-[#0e2764] border border-[#1d4ed8]/40 text-[#8da0be] text-xs font-semibold">Deposit</span>
+                </div>
               </div>
 
-              <!-- Company Deposit Address & QR Card -->
-              <div class="p-4 rounded-2xl bg-[#06153a] border border-[#1b3e85] shadow-xl text-center">
-                <div class="flex items-center justify-between mb-3 text-xs">
-                  <span class="text-slate-400 font-semibold">অফিশিয়াল কোম্পানি ওয়ালেট অ্যাড্রেস:</span>
-                  <span class="px-2 py-0.5 rounded-md bg-[#26a17b]/20 text-[#26a17b] font-bold text-[10.5px]">BEP20 (USDT)</span>
+              <!-- Initial Selection View (Hidden when Deposit is clicked) -->
+              <div id="usdt-pre-deposit-view" class="space-y-4">
+                <!-- 2. Segmented Mode Switcher: Crypto transfer | Binance Pay -->
+                <div class="p-1 rounded-2xl bg-[#051133] border border-[#122e6b] grid grid-cols-2 gap-1 text-xs font-bold select-none">
+                  <button type="button" id="usdt-tab-crypto" onclick="selectUsdtMode('crypto')" class="py-2.5 px-3 rounded-xl bg-[#0e2764] text-white shadow-md border border-[#1d4ed8]/50 flex items-center justify-center gap-2 cursor-pointer transition">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 text-[#38bdf8]" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>
+                    </svg>
+                    <span>Crypto transfer</span>
+                  </button>
+                  <button type="button" id="usdt-tab-binance" onclick="selectUsdtMode('binance')" class="py-2.5 px-3 rounded-xl text-[#8da0be] hover:text-white flex items-center justify-center gap-2 cursor-pointer transition">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 fill-[#f3ba2f]">
+                      <polygon points="12,2 15.5,5.5 12,9 8.5,5.5"/>
+                      <polygon points="5.5,8.5 9,12 5.5,15.5 2,12"/>
+                      <polygon points="18.5,8.5 22,12 18.5,15.5 15,12"/>
+                      <polygon points="12,15 15.5,18.5 12,22 8.5,18.5"/>
+                      <polygon points="12,10 14,12 12,14 10,12"/>
+                    </svg>
+                    <span>Binance Pay</span>
+                  </button>
+                </div>
+
+                <!-- 3. Network Selection Section (ONLY BEP20) -->
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-[#8da0be] tracking-wide">Network</h3>
+                    <span class="text-[11px] font-mono text-[#f3ba2f] font-semibold">1 USDT ≈ ৳125 BDT</span>
+                  </div>
+
+                  <!-- Only BEP20 Card (Selected & Active) -->
+                  <div class="p-3.5 rounded-2xl bg-[#092055] border-2 border-[#f3ba2f] shadow-lg shadow-[#f3ba2f]/10 flex items-center justify-between transition cursor-pointer select-none">
+                    <div class="flex items-center gap-3.5 min-w-0">
+                      <div class="w-11 h-11 rounded-full bg-[#f3ba2f]/15 border border-[#f3ba2f]/40 flex items-center justify-center shrink-0 p-2 shadow-inner">
+                        <svg viewBox="0 0 120 120" class="w-7 h-7 fill-[#f3ba2f]">
+                          <polygon points="60,15 72.8,27.8 47.2,53.4 34.4,40.6"/>
+                          <polygon points="72.8,27.8 85.6,40.6 60,66.2 47.2,53.4"/>
+                          <polygon points="85.6,40.6 98.4,53.4 72.8,79 60,66.2"/>
+                          <polygon points="98.4,53.4 111.2,66.2 85.6,91.8 72.8,79"/>
+                          <polygon points="34.4,40.6 47.2,53.4 21.6,79 8.8,66.2"/>
+                          <polygon points="47.2,53.4 60,66.2 34.4,91.8 21.6,79"/>
+                          <polygon points="60,66.2 72.8,79 47.2,104.6 34.4,91.8"/>
+                          <polygon points="72.8,79 85.6,91.8 60,117.4 47.2,104.6"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div class="flex items-center gap-2">
+                          <h4 class="text-base font-extrabold text-white leading-tight">BEP20</h4>
+                          <span class="px-2 py-0.5 rounded-full bg-[#f3ba2f]/20 text-[#f3ba2f] text-[10px] font-bold">Recommended</span>
+                        </div>
+                        <p class="text-xs text-amber-300/80 font-medium mt-0.5">BNB Chain</p>
+                      </div>
+                    </div>
+                    <div class="w-6 h-6 rounded-full bg-[#f3ba2f] text-[#071a48] flex items-center justify-center font-bold text-xs shadow-md shrink-0">
+                      ✓
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4. Deposit Action Button -->
+                <button 
+                  type="button" 
+                  id="usdt-deposit-action-btn" 
+                  onclick="toggleUsdtDepositDrawer()" 
+                  class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#e05638] via-[#e24a2c] to-[#d4381b] hover:from-[#eb6042] hover:to-[#db4024] text-white text-base font-bold shadow-lg shadow-[#e24a2c]/30 active:scale-[0.98] transition flex items-center justify-center gap-2 cursor-pointer tracking-wide"
+                >
+                  <span>Deposit</span>
+                  <svg viewBox="0 0 24 24" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                </button>
+
+                <!-- 5. Network Information Box (Matching Screenshot) -->
+                <div class="p-3.5 rounded-2xl bg-[#06153a] border border-[#1b3e85] shadow-md flex items-start gap-3">
+                  <div class="w-6 h-6 rounded-full bg-[#38bdf8]/15 border border-[#38bdf8]/30 text-[#38bdf8] flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold font-serif">
+                    i
+                  </div>
+                  <div class="space-y-1">
+                    <h5 class="text-xs font-bold text-white tracking-wide">USDT · BEP20</h5>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                      Send at least 10.00 USDT through the selected network (BEP20). Your balance updates after the transfer is detected and credited.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 6. BEP20 Wallet Address & QR Code Card (Revealed on Deposit click, Deposit button is hidden) -->
+              <div id="usdt-deposit-details-card" class="p-4 rounded-2xl bg-[#06153a] border border-[#1b3e85] shadow-xl text-center space-y-3.5 hidden">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-300 font-bold">BEP20 Deposit Address:</span>
+                  <span class="px-2 py-0.5 rounded-md bg-[#f3ba2f]/20 text-[#f3ba2f] font-bold text-[10.5px]">BNB Chain (BEP20)</span>
                 </div>
 
                 <!-- QR Code Display -->
-                <div class="w-36 h-36 mx-auto mb-3.5 p-2 bg-white rounded-2xl shadow-lg flex items-center justify-center">
-                  <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16" alt="USDT BEP20 QR Code" class="w-full h-full object-contain" loading="lazy">
+                <div class="w-40 h-40 mx-auto p-2.5 bg-white rounded-2xl shadow-lg flex items-center justify-center relative">
+                  <img id="usdt-deposit-qrcode-img" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16" alt="USDT BEP20 QR Code" class="w-full h-full object-contain" loading="lazy">
+                  <div id="usdt-qr-loading-spinner" class="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center hidden">
+                    <span class="w-6 h-6 border-3 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></span>
+                  </div>
                 </div>
 
                 <!-- Address Text & Copy Button -->
-                <div class="bg-[#03091e] p-3 rounded-xl border border-[#122e6b] text-left mb-3">
-                  <div class="text-[10px] text-slate-400 mb-1">ডিপোজিট ওয়ালেট অ্যাড্রেস (BEP20):</div>
+                <div class="bg-[#03091e] p-3 rounded-xl border border-[#122e6b] text-left">
+                  <div class="flex items-center justify-between text-[10px] text-slate-400 mb-1">
+                    <span>Deposit Address (BEP20):</span>
+                    <span id="usdt-address-status-badge" class="text-emerald-400 font-semibold">Live Address</span>
+                  </div>
                   <div id="company-bep20-address-text" class="font-mono text-xs text-[#38bdf8] font-bold break-all select-all leading-relaxed">0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16</div>
                 </div>
 
-                <button type="button" id="copy-company-usdt-address-btn" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white text-xs font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
+                <button type="button" id="copy-company-usdt-address-btn" class="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-sm font-bold shadow-md active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
                   <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                  <span id="copy-btn-text">অ্যাড্রেস কপি করুন</span>
+                  <span id="copy-btn-text">Copy Address</span>
                 </button>
-              </div>
 
-              <!-- Deposit Submission Form (Instant Auto-Approve) -->
-              <div class="p-4 rounded-2xl bg-[#06153a] border border-[#1b3e85] shadow-xl space-y-3.5">
-                <div class="flex items-center gap-2 text-sm font-bold text-white border-b border-[#122e6b] pb-2">
-                  <span class="text-emerald-400 text-base">⚡</span>
-                  <span>স্বয়ংক্রিয় ডিপোজিট ভেরিফিকেশন (Auto-Approve)</span>
-                </div>
-
-                <!-- Input 1: Sender BEP20 Wallet Address -->
-                <div>
-                  <label for="usdt-sender-address-input" class="block text-xs font-semibold text-slate-300 mb-1">
-                    আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address): <span class="text-red-400">*</span>
-                  </label>
-                  <input type="text" id="usdt-sender-address-input" placeholder="0x... (যে ওয়ালেট থেকে পাঠিয়েছেন)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#03091e] border border-[#18397a] text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-[#35c6e7] transition">
-                  <p class="text-[10px] text-slate-400 mt-1">ব্লকচেইন লগের 'from' অ্যাড্রেসের সাথে এটি হুবহু মিলতে হবে</p>
-                </div>
-
-                <!-- Input 2: Transaction Hash (TxID) -->
-                <div>
-                  <div class="flex items-center justify-between mb-1">
-                    <label for="usdt-txhash-input" class="text-xs font-semibold text-slate-300">
-                      ট্রানজেকশন হ্যাশ (TxID / TxHash): <span class="text-red-400">*</span>
-                    </label>
-                    <button type="button" id="usdt-paste-tx-btn" class="text-[11px] text-[#35c6e7] hover:underline cursor-pointer">ক্লিপবোর্ড থেকে পেস্ট</button>
+                <!-- Real-Time On-Chain USDT Balance Check (from cPanel BSC Backend) -->
+                <div class="p-3 rounded-xl bg-[#03091e] border border-[#143270] flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span class="text-slate-300 font-medium">Balance:</span>
+                    <span id="usdt-live-balance-text" class="text-emerald-400 font-mono font-bold">0.00 USDT</span>
                   </div>
-                  <input type="text" id="usdt-txhash-input" placeholder="0x... (৬৬ অক্ষরের ট্রানজেকশন হ্যাশ)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#03091e] border border-[#18397a] text-white text-xs font-mono placeholder-slate-500 focus:outline-none focus:border-[#35c6e7] transition">
-                  <p class="text-[10px] text-slate-400 mt-1">কমপক্ষে ১৫ কনফার্মেশন সম্পন্ন হওয়া ট্রানজেকশন হ্যাশ</p>
+                  <button type="button" id="usdt-refresh-balance-btn" onclick="checkUserUsdtDepositBalance({ showToast: true })" class="px-3 py-1.5 rounded-lg bg-[#0e2764] hover:bg-[#153a8a] text-[#38bdf8] text-xs font-semibold flex items-center gap-1 active:scale-95 transition cursor-pointer">
+                    <span id="usdt-balance-refresh-spinner" class="w-3 h-3 border-2 border-[#38bdf8]/30 border-t-[#38bdf8] rounded-full animate-spin hidden"></span>
+                    <span id="usdt-balance-refresh-text">Check Balance ↺</span>
+                  </button>
                 </div>
 
-                <!-- Input 3: USDT Amount (Preview only) -->
-                <div>
-                  <label for="usdt-amount-input" class="block text-xs font-semibold text-slate-300 mb-1">
-                    USDT আনুমানিক পরিমাণ (প্রিভিউ ক্যালকুলেটর):
-                  </label>
-                  <div class="relative">
-                    <input type="number" id="usdt-amount-input" min="1" step="0.01" placeholder="যেমন: 10, 50, 100" class="w-full pl-3.5 pr-16 py-2.5 rounded-xl bg-[#03091e] border border-[#18397a] text-white text-xs font-mono font-bold placeholder-slate-500 focus:outline-none focus:border-[#35c6e7] transition">
-                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-emerald-400 font-bold text-xs">USDT</div>
-                  </div>
-                  <div class="mt-1.5 flex justify-between text-[11px] text-slate-300">
-                    <span>সমমূল্য ব্যালেন্স (১ USDT = ৳১২৫):</span>
-                    <span class="font-bold text-emerald-400 font-mono">৳ <span id="usdt-bdt-preview">০.০০</span> BDT</span>
-                  </div>
-                  <p class="text-[9.5px] text-slate-400 mt-1 italic leading-normal">
-                    * ব্যালেন্সে কেবল অন-চেইন ট্রান্সফার ইভেন্টের আসল ভ্যালু (÷10¹⁸) জমা হবে।
-                  </p>
-                </div>
-
-                <!-- Status Feedback Message -->
-                <div id="usdt-submit-message" class="text-xs text-center font-semibold min-h-[18px] hidden"></div>
-
-                <!-- Submit Button -->
-                <button type="button" id="usdt-submit-deposit-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white text-sm font-bold shadow-[0_4px_20px_rgba(16,185,129,0.35)] active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer">
-                  <span id="usdt-btn-spinner" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin hidden"></span>
-                  <span id="usdt-btn-icon">⚡</span>
-                  <span id="usdt-btn-text">জমা দিন ও অটো এপ্রুভ করুন</span>
-                </button>
-              </div>
-
-              <!-- Recent USDT Submissions / Records -->
-              <div class="p-4 rounded-2xl bg-[#06153a] border border-[#1b3e85] shadow-xl">
-                <div class="flex items-center justify-between mb-3 text-xs">
-                  <span class="font-bold text-white">সাম্প্রতিক USDT ডিপোজিট রেকর্ড:</span>
-                  <span class="text-[10.5px] text-slate-400 font-mono">Blockchain Verified</span>
-                </div>
-                <div id="usdt-recent-records-list" class="space-y-2 text-xs">
-                  <p class="text-center text-slate-400 text-xs py-3">এখনো কোনো USDT ডিপোজিট নেই</p>
+                <!-- Return / Change network link -->
+                <div class="pt-1">
+                  <button type="button" onclick="showUsdtSelectionView()" class="w-full py-2 text-xs text-[#8da0be] hover:text-[#38bdf8] transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+                    <span>অন্য নেটওয়ার্ক বা পরিবর্তন করুন</span>
+                  </button>
                 </div>
               </div>
 

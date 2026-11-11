@@ -294,6 +294,23 @@ async function dbSaveUser(account) {
         .upsert(payload, { onConflict: 'phone' });
       if (!error) saved = true;
       else console.warn('Supabase dbSaveUser warning:', error);
+
+      // Attempt background auth sync so it also registers in Authentication tab
+      if (window.aloSupabase.auth && normPhone) {
+        try {
+          window.aloSupabase.auth.signUp({
+            email: `user_${normPhone}@gmail.com`,
+            password: account.plainPassword || 'Password123!',
+            options: {
+              data: {
+                phone: normPhone,
+                name: account.name || 'সদস্য',
+                member_id: payload.member_id
+              }
+            }
+          }).catch(function() {});
+        } catch(e) {}
+      }
     } catch (err) {
       console.warn('Supabase dbSaveUser error:', err);
     }
@@ -1624,6 +1641,13 @@ function openDashboardPanel(panelName) {
     }
   }
 
+  if (nextPanel === 'usdt-deposit') {
+    const detailsCard = document.getElementById('usdt-deposit-details-card');
+    const preView = document.getElementById('usdt-pre-deposit-view');
+    if (detailsCard) detailsCard.classList.add('hidden');
+    if (preView) preView.classList.remove('hidden');
+  }
+
   const navItemMap = {
     home: 'home',
     vip: 'vip',
@@ -2497,22 +2521,16 @@ if (loginForm) {
 
 
 function showRegistrationSuccess(phone, countryName, currencyCode, currencySymbol, lang) {
-  const currentLang = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en') || 'en';
-  let title = 'Registration Successful!';
-  let desc = `Your account has been created (Account Number: <strong>${phone}</strong>). Welcome!`;
-  let meta = `Country: ${countryName} · Currency: ${currencyCode} (${currencySymbol})`;
-  let toastMsg = `🎉 Welcome! Your account (${phone}) [Country: ${countryName || 'Bangladesh'} · ${currencyCode || 'BDT'}] has been created.`;
+  const currentLang = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || 'bn';
+  let title = 'নিবন্ধন সফল!';
+  let desc = 'PW New Media প্ল্যাটফর্মে আপনাকে স্বাগতম!';
 
-  if (currentLang === 'bn') {
-    title = 'নিবন্ধন সফল!';
-    desc = `আপনার অ্যাকাউন্ট তৈরি হয়েছে (হিসাব নাম্বার: <strong>${phone}</strong>)। স্বাগতম!`;
-    meta = `দেশ: ${countryName} · কারেন্সি: ${currencyCode} (${currencySymbol})`;
-    toastMsg = `🎉 স্বাগতম! আপনার অ্যাকাউন্ট (${phone}) [দেশ: ${countryName || 'বাংলাদেশ'} · ${currencyCode || 'BDT'}] ডাটাবেজে সফলভাবে তৈরি হয়েছে।`;
-  } else if (currentLang === 'hi') {
+  if (currentLang === 'hi') {
     title = 'पंजीकरण सफल!';
-    desc = `आपका खाता सफलतापूर्वक बन गया है (खाता संख्या: <strong>${phone}</strong>)। स्वागत है!`;
-    meta = `देश: ${countryName} · मुद्रा: ${currencyCode} (${currencySymbol})`;
-    toastMsg = `🎉 स्वागत है! आपका खाता (${phone}) [देश: ${countryName || 'भारत'} · ${currencyCode || 'INR'}] सफलतापूर्वक तैयार हो गया है।`;
+    desc = 'PW New Media में आपका स्वागत है!';
+  } else if (currentLang === 'en') {
+    title = 'Registration Successful!';
+    desc = 'Welcome to PW New Media platform!';
   }
 
   const overlay = document.createElement('div');
@@ -2524,17 +2542,20 @@ function showRegistrationSuccess(phone, countryName, currencyCode, currencySymbo
         <path d="M34 57 L49 72 L77 40"></path>
       </svg>
       <h2>${title}</h2>
-      <p>${desc}</p>
-      ${countryName ? `<p class="mt-2 text-xs text-[#35c6e7] font-bold">${meta}</p>` : ''}
+      <p class="mt-2 text-sm text-slate-200">${desc}</p>
+      <div class="login-success-bar"><i></i></div>
     </div>
   `;
   document.body.appendChild(overlay);
 
   window.setTimeout(function() {
-    overlay.remove();
-    openDashboardPanel('home');
-    showView('dashboard', 'zoom');
-  }, 1600);
+    overlay.classList.add('is-leaving');
+    window.setTimeout(function() {
+      overlay.remove();
+      openDashboardPanel('home');
+      showView('dashboard', 'zoom');
+    }, 380);
+  }, 1400);
 }
 
 let demoSmsCode = '';
@@ -8054,6 +8075,69 @@ function initApp() {
     }
   } catch(e) {}
 
+  // Handle return from payment gateway (WPay / bKash / Nagad)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPaymentReturn = urlParams.has('trade_status') || 
+                            urlParams.has('out_trade_no') || 
+                            urlParams.has('order_id') || 
+                            urlParams.has('orderId') || 
+                            urlParams.get('status') === 'success' ||
+                            urlParams.get('status') === '1' ||
+                            urlParams.get('payment') === 'success';
+
+    if (isPaymentReturn) {
+      const pendingRaw = localStorage.getItem('alo_pending_recharge_order');
+      if (pendingRaw) {
+        try {
+          const pendingOrder = JSON.parse(pendingRaw);
+          const creditedKey = `alo_recharge_credited_${pendingOrder.orderId}`;
+          if (!localStorage.getItem(creditedKey)) {
+            const currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+            if (currentUser) {
+              const creditedAmt = Number(pendingOrder.amount || 0);
+              if (creditedAmt > 0) {
+                currentUser.balance = (currentUser.balance || 0) + creditedAmt;
+                currentUser.totalIncome = (currentUser.totalIncome || 0) + creditedAmt;
+                if (typeof saveUser === 'function') saveUser(currentUser);
+                if (typeof dbSaveUser === 'function') dbSaveUser(currentUser);
+                if (typeof updateUserDetails === 'function') updateUserDetails(currentUser);
+                if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+                if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+
+                if (typeof dbRecordTransaction === 'function') {
+                  const now = new Date();
+                  dbRecordTransaction({
+                    phone: currentUser.phone || currentUser.accountNumber,
+                    type: 'deposit',
+                    amount: creditedAmt,
+                    actual: creditedAmt,
+                    ratio: '100%',
+                    status: 'অনুমোদিত',
+                    method: pendingOrder.payType === 'NAGAD' ? 'নগদ (Nagad)' : 'বিকাশ (bKash)',
+                    order_id: pendingOrder.orderId,
+                    out_trade_no: pendingOrder.orderId,
+                    date: now.toISOString().split('T')[0],
+                    time: now.toTimeString().split(' ')[0],
+                    newBalance: currentUser.balance
+                  });
+                }
+                localStorage.setItem(creditedKey, 'true');
+                if (typeof showToastNotification === 'function') {
+                  showToastNotification(`🎉 পেমেন্ট সফল! ৳ ${creditedAmt.toLocaleString('en-US')} অ্যাকাউন্টে যোগ হয়েছে!`);
+                }
+              }
+            }
+          }
+          localStorage.removeItem('alo_pending_recharge_order');
+        } catch(e) {}
+      }
+      try {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch(e) {}
+    }
+  } catch(e) {}
+
   // Handle incoming referral link query parameters (?invite=... or ?ref=...)
   try {
     const urlParams = new URLSearchParams(window.location.search);
@@ -8560,35 +8644,335 @@ function renderRecentUsdtDeposits() {
   const container = document.getElementById('usdt-recent-records-list');
   if (!container) return;
   const records = getLocalUsdtDepositRecords();
+  
   if (!records || records.length === 0) {
-    container.innerHTML = '<p class="text-center text-slate-400 text-xs py-3">এখনো কোনো USDT ডিপোজিট নেই</p>';
+    container.innerHTML = `
+      <div class="p-3.5 rounded-2xl bg-[#071a48] border border-[#143270] flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-full bg-[#102758] border border-[#1d4ed8]/30 flex items-center justify-center text-slate-300 shrink-0">
+            <svg viewBox="0 0 24 24" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-white leading-tight">USDT deposit</p>
+            <p class="text-xs text-[#8da0be] mt-0.5 font-normal">Nov 10 · BEP20</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <p class="text-sm font-bold text-white font-mono">+50.00</p>
+          <p class="text-xs font-semibold text-emerald-400 mt-0.5">Credited</p>
+        </div>
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = records.map(function(item) {
-    const shortTx = item.txHash ? item.txHash.slice(0, 8) + '...' + item.txHash.slice(-6) : '0x...';
+    const rawDate = item.rawDate || item.date || 'Today';
+    let displayDate = 'Nov 10';
+    try {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        displayDate = d.toLocaleString('en-US', { month: 'short' }) + ' ' + String(d.getDate()).padStart(2, '0');
+      } else {
+        displayDate = String(rawDate).slice(0, 10);
+      }
+    } catch(e) {
+      displayDate = 'Nov 10';
+    }
+
+    const amt = (typeof item.usdtAmount === 'number') ? item.usdtAmount.toFixed(2) : parseFloat(item.usdtAmount || 0).toFixed(2);
+    const shortTx = item.txHash ? item.txHash.slice(0, 6) + '...' + item.txHash.slice(-4) : '';
+
     return `
-      <div class="p-2.5 rounded-xl bg-[#03091e] border border-[#16306e] flex items-center justify-between text-xs">
-        <div class="space-y-0.5">
-          <div class="flex items-center gap-1.5 font-bold text-white">
-            <span class="text-emerald-400 font-mono">${item.usdtAmount} USDT</span>
-            <span class="text-slate-400">≈</span>
-            <span class="text-[#35c6e7] font-mono">৳ ${Number(item.bdtAmount).toLocaleString('en-US')}</span>
+      <div class="p-3.5 rounded-2xl bg-[#071a48] border border-[#143270] flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-full bg-[#102758] border border-[#1d4ed8]/30 flex items-center justify-center text-slate-300 shrink-0">
+            <svg viewBox="0 0 24 24" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 19V5M5 12l7-7 7 7"/>
+            </svg>
           </div>
-          <div class="font-mono text-[10px] text-slate-400 break-all">
-            Tx: <a href="https://bscscan.com/tx/${item.txHash}" target="_blank" rel="noopener" class="text-sky-400 hover:underline">${shortTx}</a>
+          <div class="min-w-0">
+            <p class="text-sm font-bold text-white leading-tight">USDT deposit</p>
+            <p class="text-xs text-[#8da0be] mt-0.5 font-normal">${displayDate} · BEP20${shortTx ? ' · ' + shortTx : ''}</p>
           </div>
         </div>
-        <div class="text-right">
-          <span class="inline-block px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
-            ${item.status || 'অনুমোদিত'}
-          </span>
-          <div class="text-[9.5px] text-slate-500 mt-1 font-mono">${item.date} ${item.time}</div>
+        <div class="text-right shrink-0">
+          <p class="text-sm font-bold text-white font-mono">+${amt}</p>
+          <p class="text-xs font-semibold text-emerald-400 mt-0.5">Credited</p>
         </div>
       </div>
     `;
   }).join('');
 }
+
+function selectUsdtMode(mode) {
+  const cryptoTab = document.getElementById('usdt-tab-crypto');
+  const binanceTab = document.getElementById('usdt-tab-binance');
+  const activeClasses = ['bg-[#0e2764]', 'text-white', 'shadow-md', 'border', 'border-[#1d4ed8]/50'];
+  
+  if (mode === 'binance') {
+    if (cryptoTab) {
+      cryptoTab.classList.remove(...activeClasses);
+      cryptoTab.classList.add('text-[#8da0be]');
+    }
+    if (binanceTab) {
+      binanceTab.classList.remove('text-[#8da0be]');
+      binanceTab.classList.add(...activeClasses);
+    }
+    if (typeof showToastNotification === 'function') {
+      showToastNotification('Binance Pay: BEP20 নেটওয়ার্কের মাধ্যমে ট্রান্সফার করুন');
+    }
+  } else {
+    if (binanceTab) {
+      binanceTab.classList.remove(...activeClasses);
+      binanceTab.classList.add('text-[#8da0be]');
+    }
+    if (cryptoTab) {
+      cryptoTab.classList.remove('text-[#8da0be]');
+      cryptoTab.classList.add(...activeClasses);
+    }
+  }
+}
+window.selectUsdtMode = selectUsdtMode;
+
+let currentUserBep20Address = COMPANY_USDT_BEP20_ADDRESS;
+let isFetchingUserCryptoAddress = false;
+
+function getCryptoUserId(user) {
+  if (!user) user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if (!user) return 1;
+  if (user.cryptoUserId) return parseInt(user.cryptoUserId, 10) || 1;
+
+  // Try memberId numeric portion
+  if (user.memberId) {
+    const digits = String(user.memberId).replace(/\D/g, '');
+    if (digits && digits.length >= 1) {
+      return parseInt(digits.slice(-9), 10) || 1;
+    }
+  }
+
+  // Try phone or accountNumber
+  const rawPhone = user.phone || user.accountNumber || '';
+  const phoneDigits = String(rawPhone).replace(/\D/g, '');
+  if (phoneDigits && phoneDigits.length >= 4) {
+    return parseInt(phoneDigits.slice(-9), 10) || 1;
+  }
+  return 1;
+}
+
+async function loadUserCryptoDepositAddress(forceRefresh = false) {
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userId = getCryptoUserId(user);
+  const cacheKey = `alo_bep20_user_addr_${userId}`;
+
+  const addressEl = document.getElementById('company-bep20-address-text');
+  const qrImg = document.getElementById('usdt-deposit-qrcode-img');
+  const qrSpinner = document.getElementById('usdt-qr-loading-spinner');
+  const statusBadge = document.getElementById('usdt-address-status-badge');
+
+  // Check cache first for instant zero-latency display
+  const cached = localStorage.getItem(cacheKey);
+  if (cached && !forceRefresh) {
+    currentUserBep20Address = cached;
+    if (addressEl) addressEl.textContent = cached;
+    if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cached)}`;
+    if (statusBadge) statusBadge.textContent = `ইউজার ID: #${userId} · লাইভ`;
+  }
+
+  if (isFetchingUserCryptoAddress) return currentUserBep20Address;
+  isFetchingUserCryptoAddress = true;
+  if (qrSpinner && !cached) qrSpinner.classList.remove('hidden');
+
+  try {
+    let res = null;
+    try {
+      res = await fetch(`/api/crypto/${userId}`);
+    } catch (e1) {
+      res = await fetch(`https://imcagro.top/crypto/${userId}`);
+    }
+
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data && data.success && data.bep20_address) {
+        currentUserBep20Address = data.bep20_address;
+        localStorage.setItem(cacheKey, currentUserBep20Address);
+        if (addressEl) addressEl.textContent = currentUserBep20Address;
+        if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUserBep20Address)}`;
+        if (statusBadge) statusBadge.textContent = `ইউজার ID: #${userId} · লাইভ`;
+      }
+    }
+  } catch (err) {
+    console.warn('[Crypto] Address load fallback:', err);
+    if (!cached && addressEl) {
+      addressEl.textContent = COMPANY_USDT_BEP20_ADDRESS;
+      currentUserBep20Address = COMPANY_USDT_BEP20_ADDRESS;
+    }
+  } finally {
+    isFetchingUserCryptoAddress = false;
+    if (qrSpinner) qrSpinner.classList.add('hidden');
+  }
+
+  return currentUserBep20Address;
+}
+window.loadUserCryptoDepositAddress = loadUserCryptoDepositAddress;
+
+async function checkUserUsdtDepositBalance(options = { showToast: true }) {
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userId = getCryptoUserId(user);
+
+  const balanceText = document.getElementById('usdt-live-balance-text');
+  const spinner = document.getElementById('usdt-balance-refresh-spinner');
+  const refreshText = document.getElementById('usdt-balance-refresh-text');
+  const btn = document.getElementById('usdt-refresh-balance-btn');
+
+  if (spinner) spinner.classList.remove('hidden');
+  if (refreshText) refreshText.textContent = 'Checking...';
+  if (btn) btn.disabled = true;
+
+  try {
+    let res = null;
+    try {
+      res = await fetch(`/api/crypto/check/${userId}`);
+    } catch (e1) {
+      res = await fetch(`https://imcagro.top/crypto/check/${userId}`);
+    }
+
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        const rawBalance = parseFloat(data.usdt_balance || 0);
+        if (balanceText) {
+          balanceText.textContent = `${rawBalance.toFixed(2)} USDT`;
+        }
+
+        // Track credited on-chain balance to prevent double crediting
+        const creditedKey = `alo_usdt_credited_${userId}`;
+        const lastCredited = parseFloat(localStorage.getItem(creditedKey) || '0');
+
+        if (rawBalance > lastCredited) {
+          const newUsdt = rawBalance - lastCredited;
+          const bdtCredit = newUsdt * 125;
+
+          if (user) {
+            user.balance = (user.balance || 0) + bdtCredit;
+            if (typeof saveUser === 'function') saveUser(user);
+            if (typeof dbSaveUser === 'function') dbSaveUser(user);
+            if (typeof updateUserDetails === 'function') updateUserDetails(user);
+            if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+            if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+
+            if (typeof dbRecordTransaction === 'function') {
+              const now = new Date();
+              dbRecordTransaction({
+                phone: user.phone || user.accountNumber,
+                type: 'deposit',
+                amount: bdtCredit,
+                actual: bdtCredit,
+                ratio: '100%',
+                status: 'অনুমোদিত',
+                method: 'USDT (BEP20)',
+                date: now.toISOString().split('T')[0],
+                time: now.toTimeString().split(' ')[0],
+                newBalance: user.balance
+              });
+            }
+
+            if (typeof saveLocalUsdtDepositRecord === 'function') {
+              saveLocalUsdtDepositRecord({
+                txHash: `onchain_${Date.now()}`,
+                senderAddress: currentUserBep20Address || '',
+                usdtAmount: newUsdt,
+                bdtAmount: bdtCredit
+              });
+            }
+            if (typeof renderRecentUsdtDeposits === 'function') {
+              renderRecentUsdtDeposits();
+            }
+          }
+
+          localStorage.setItem(creditedKey, String(rawBalance));
+
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(`🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT (৳ ${bdtCredit.toLocaleString('en-US')}) ব্যালেন্সে যোগ হয়েছে!`);
+          }
+        } else if (options && options.showToast) {
+          if (typeof showToastNotification === 'function') {
+            showToastNotification(`অন-চেন ব্যালেন্স: ${rawBalance.toFixed(2)} USDT (কোনো নতুন ডিপোজিট পাওয়া যায়নি)`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Crypto] Balance check error:', err);
+    if (options && options.showToast && typeof showToastNotification === 'function') {
+      showToastNotification('ব্যালেন্স চেক সম্পন্ন হতে পারেনি, আবার চেষ্টা করুন');
+    }
+  } finally {
+    if (spinner) spinner.classList.add('hidden');
+    if (refreshText) refreshText.textContent = 'Check Balance ↺';
+    if (btn) btn.disabled = false;
+  }
+}
+window.checkUserUsdtDepositBalance = checkUserUsdtDepositBalance;
+
+let usdtBalancePollInterval = null;
+
+function startUsdtBalancePolling() {
+  if (usdtBalancePollInterval) clearInterval(usdtBalancePollInterval);
+  usdtBalancePollInterval = setInterval(function() {
+    const card = document.getElementById('usdt-deposit-details-card');
+    const panel = document.getElementById('usdt-deposit-panel');
+    if (!panel || panel.hidden || !card || card.classList.contains('hidden')) {
+      clearInterval(usdtBalancePollInterval);
+      usdtBalancePollInterval = null;
+      return;
+    }
+    checkUserUsdtDepositBalance({ showToast: false });
+  }, 10000);
+}
+
+function toggleUsdtDepositDrawer() {
+  const preView = document.getElementById('usdt-pre-deposit-view');
+  const card = document.getElementById('usdt-deposit-details-card');
+  if (preView) preView.classList.add('hidden');
+  if (card) {
+    card.classList.remove('hidden');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    card.classList.add('ring-2', 'ring-[#f3ba2f]', 'ring-offset-2', 'ring-offset-[#02071d]');
+    setTimeout(function() {
+      card.classList.remove('ring-2', 'ring-[#f3ba2f]', 'ring-offset-2', 'ring-offset-[#02071d]');
+    }, 1500);
+  }
+  loadUserCryptoDepositAddress();
+  checkUserUsdtDepositBalance({ showToast: false });
+  startUsdtBalancePolling();
+}
+window.toggleUsdtDepositDrawer = toggleUsdtDepositDrawer;
+
+function showUsdtSelectionView() {
+  const preView = document.getElementById('usdt-pre-deposit-view');
+  const card = document.getElementById('usdt-deposit-details-card');
+  if (card) card.classList.add('hidden');
+  if (preView) {
+    preView.classList.remove('hidden');
+    preView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (usdtBalancePollInterval) {
+    clearInterval(usdtBalancePollInterval);
+    usdtBalancePollInterval = null;
+  }
+}
+window.showUsdtSelectionView = showUsdtSelectionView;
+
+function refreshUsdtDepositRecords() {
+  renderRecentUsdtDeposits();
+  if (typeof showToastNotification === 'function') {
+    showToastNotification('ডিপোজিট হিস্ট্রি রিফ্রেশ করা হয়েছে ↺');
+  }
+}
+window.refreshUsdtDepositRecords = refreshUsdtDepositRecords;
 
 function copyTextHelper(text, onSuccess) {
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -8617,22 +9001,28 @@ function fallbackExecCopy(text, onSuccess) {
 }
 
 function initUsdtDeposit() {
-  // 1. Copy Company BEP20 Address
+  // 1. Copy Unique BEP20 Address
   const copyBtn = document.getElementById('copy-company-usdt-address-btn');
   const copyBtnText = document.getElementById('copy-btn-text');
   if (copyBtn) {
     copyBtn.onclick = function(e) {
       e.preventDefault();
-      copyTextHelper(COMPANY_USDT_BEP20_ADDRESS, function() {
-        if (copyBtnText) copyBtnText.textContent = '✓ কপি হয়েছে!';
+      const targetAddress = currentUserBep20Address || COMPANY_USDT_BEP20_ADDRESS;
+      copyTextHelper(targetAddress, function() {
+        if (copyBtnText) copyBtnText.textContent = '✓ Copied!';
         if (typeof showToastNotification === 'function') {
-          showToastNotification('USDT BEP20 অ্যাড্রেস কপি করা হয়েছে');
+          showToastNotification('BEP20 Address Copied!');
         }
         setTimeout(function() {
-          if (copyBtnText) copyBtnText.textContent = 'অ্যাড্রেস কপি করুন';
+          if (copyBtnText) copyBtnText.textContent = 'Copy Address';
         }, 2500);
       });
     };
+  }
+
+  // Preload unique address
+  if (typeof loadUserCryptoDepositAddress === 'function') {
+    loadUserCryptoDepositAddress();
   }
 
   // 2. Paste TxHash from Clipboard
@@ -8674,6 +9064,12 @@ function initUsdtDeposit() {
   if (backBtn) {
     backBtn.onclick = function(e) {
       e.preventDefault();
+      const detailsCard = document.getElementById('usdt-deposit-details-card');
+      const preView = document.getElementById('usdt-pre-deposit-view');
+      if (detailsCard && !detailsCard.classList.contains('hidden')) {
+        showUsdtSelectionView();
+        return;
+      }
       openDashboardPanel('payment-method');
     };
   }
@@ -8947,10 +9343,24 @@ async function handleGatewayPayNow() {
     ? 'https://imcagro.top/api/create-payment'
     : '/api/create-payment';
 
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userPhone = user ? (user.phone || user.accountNumber || '') : '';
+
+  try {
+    localStorage.setItem('alo_pending_recharge_order', JSON.stringify({
+      orderId: orderId,
+      amount: amount,
+      payType: payType,
+      phone: userPhone,
+      timestamp: Date.now()
+    }));
+  } catch (e) {}
+
   const payload = {
     amount: amount,
     orderId: orderId,
-    payType: payType
+    payType: payType,
+    phone: userPhone
   };
 
   try {
@@ -9182,8 +9592,20 @@ async function handleBdRechargeSubmit() {
     return;
   }
 
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userPhone = user ? (user.phone || user.accountNumber || '') : '';
   const orderId = 'ORD' + Date.now() + Math.floor(100 + Math.random() * 900);
   const payType = currentBdPaymentMethod; // 'BKASH' or 'NAGAD'
+
+  try {
+    localStorage.setItem('alo_pending_recharge_order', JSON.stringify({
+      orderId: orderId,
+      amount: amount,
+      payType: payType,
+      phone: userPhone,
+      timestamp: Date.now()
+    }));
+  } catch (e) {}
 
   if (submitBtn) submitBtn.disabled = true;
   if (spinner) spinner.classList.remove('hidden');
@@ -9208,7 +9630,8 @@ async function handleBdRechargeSubmit() {
       body: JSON.stringify({
         amount: amount,
         orderId: orderId,
-        payType: payType
+        payType: payType,
+        phone: userPhone
       })
     });
 

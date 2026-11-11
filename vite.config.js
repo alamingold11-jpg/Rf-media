@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import depositHandler from './api/deposit.js';
 import createPaymentHandler from './api/create-payment.js';
 import notifyHandler from './api/notify.js';
+import cryptoHandler from './api/crypto.js';
 
 function apiDepositPlugin() {
   return {
@@ -13,7 +14,7 @@ function apiDepositPlugin() {
           req.url = '/checkout.html';
           return next();
         }
-        if (url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify') {
+        if (url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify' || url.pathname.startsWith('/api/crypto')) {
           let bodyStr = '';
           req.on('data', chunk => { bodyStr += chunk; });
           req.on('end', async () => {
@@ -43,7 +44,9 @@ function apiDepositPlugin() {
             };
 
             try {
-              if (url.pathname === '/api/deposit') {
+              if (url.pathname.startsWith('/api/crypto')) {
+                await cryptoHandler(req, res);
+              } else if (url.pathname === '/api/deposit') {
                 await depositHandler(req, res);
               } else if (url.pathname === '/api/create-payment') {
                 await createPaymentHandler(req, res);

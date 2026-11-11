@@ -63,6 +63,8 @@ export default async function handler(req, res) {
           ratio: '0%',
           status: 'মুলতবি (Pending)',
           method: payType === 'NAGAD' ? 'নগদ (Nagad)' : 'বিকাশ (bKash)',
+          order_id: orderId,
+          out_trade_no: orderId,
           date: new Date().toISOString().split('T')[0],
           time: new Date().toTimeString().split(' ')[0],
           created_at: new Date().toISOString()
@@ -77,7 +79,8 @@ export default async function handler(req, res) {
     const cpanelPayload = JSON.stringify({
       amount: rawAmount,
       orderId: orderId,
-      payType: payType
+      payType: payType,
+      phone: phone
     });
 
     console.log(`[Payment Proxy] Forwarding to cPanel (${CPANEL_PAYMENT_URL}):`, cpanelPayload);

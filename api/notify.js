@@ -64,6 +64,23 @@ export default async function handler(req, res) {
       // Payment Successful!
       const supabase = getSupabaseAdminClient();
       if (supabase) {
+        // Find phone from transactions if not present in callback attach
+        let targetPhone = phone;
+        if (!targetPhone && outTradeNo) {
+          try {
+            const { data: txRecord } = await supabase
+              .from('transactions')
+              .select('phone, amount')
+              .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`)
+              .maybeSingle();
+            if (txRecord && txRecord.phone) {
+              targetPhone = txRecord.phone;
+            }
+          } catch (lookupErr) {
+            console.warn('[WPay Callback] Transaction phone lookup warning:', lookupErr.message);
+          }
+        }
+
         // Update transaction in Supabase
         await supabase
           .from('transactions')
@@ -71,27 +88,54 @@ export default async function handler(req, res) {
             status: 'অনুমোদিত',
             updated_at: new Date().toISOString()
           })
-          .eq('out_trade_no', outTradeNo)
+          .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`)
           .catch(() => {});
 
-        // Increment user balance
-        if (phone) {
-          const { data: userProfile } = await supabase
-            .from('profiles')
-            .select('id, balance, lifetime_earnings')
-            .eq('phone', phone)
-            .maybeSingle();
+        // Increment user balance in 'users' table
+        if (targetPhone) {
+          try {
+            const { data: uData } = await supabase
+              .from('users')
+              .select('id, balance, total_income, phone')
+              .eq('phone', targetPhone)
+              .maybeSingle();
 
-          if (userProfile) {
-            await supabase
-              .from('profiles')
-              .update({
-                balance: (parseFloat(userProfile.balance || 0) + amount),
-                lifetime_earnings: (parseFloat(userProfile.lifetime_earnings || 0) + amount),
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', userProfile.id);
+            if (uData) {
+              const currentBal = parseFloat(uData.balance || 0);
+              const currentIncome = parseFloat(uData.total_income || 0);
+              await supabase
+                .from('users')
+                .update({
+                  balance: (currentBal + amount),
+                  total_income: (currentIncome + amount),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', uData.id);
+              console.log(`[WPay Callback] User ${targetPhone} 'users' table balance updated: ${currentBal} -> ${currentBal + amount}`);
+            }
+          } catch (userErr) {
+            console.warn('[WPay Callback] Users table update warning:', userErr.message);
           }
+
+          // Also update 'profiles' table if it exists
+          try {
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('id, balance, lifetime_earnings')
+              .eq('phone', targetPhone)
+              .maybeSingle();
+
+            if (userProfile) {
+              await supabase
+                .from('profiles')
+                .update({
+                  balance: (parseFloat(userProfile.balance || 0) + amount),
+                  lifetime_earnings: (parseFloat(userProfile.lifetime_earnings || 0) + amount),
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', userProfile.id);
+            }
+          } catch (pErr) {}
         }
       }
       console.log(`[WPay Callback] Order ${outTradeNo} successfully credited ${amount} BDT!`);
