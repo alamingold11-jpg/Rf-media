@@ -1,0 +1,23 @@
+{
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/crypto/check/:userId",
+      "destination": "/api/crypto?action=check&userId=:userId"
+    },
+    {
+      "source": "/api/crypto/:userId",
+      "destination": "/api/crypto?action=address&userId=:userId"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

@@ -389,11 +389,11 @@ async function dbFindInviter(codeOrPhone) {
   // Check Supabase
   if (window.aloSupabase) {
     try {
-      // By invite_code
+      // By invite_code (case-insensitive)
       let { data } = await window.aloSupabase
         .from('users')
         .select('*')
-        .eq('invite_code', raw)
+        .ilike('invite_code', raw)
         .maybeSingle();
       if (data) return mapSupabaseUser(data);
 
@@ -568,19 +568,19 @@ async function registerTeamHierarchy(newMemberPhone, newMemberId, newMemberLevel
 
   // 1. Resolve Level 1 Superior (Direct Referral)
   const upline1 = await dbFindInviter(enteredInviteCode);
-  if (!upline1) {
-    console.log('No registered upline found for invite code:', enteredInviteCode);
-    return;
-  }
-  const upline1Phone = normalizeBdPhone(upline1.phone || upline1.accountNumber);
-  if (!upline1Phone || upline1Phone === normNewPhone) return;
+  const upline1Phone = upline1 ? normalizeBdPhone(upline1.phone || upline1.accountNumber) : '';
 
-  // Level 1: Add to upline1's team (tier = 1)
-  await dbAddTeamMember(upline1Phone, normNewPhone, newMemberId, newMemberLevel, 1);
-  if (upline1.inviteCode && upline1.inviteCode !== upline1Phone) {
+  // Level 1: ALWAYS register to team database with enteredInviteCode!
+  if (enteredInviteCode) {
+    await dbAddTeamMember(enteredInviteCode, normNewPhone, newMemberId, newMemberLevel, 1);
+  }
+  if (upline1Phone && upline1Phone !== enteredInviteCode) {
+    await dbAddTeamMember(upline1Phone, normNewPhone, newMemberId, newMemberLevel, 1);
+  }
+  if (upline1 && upline1.inviteCode && upline1.inviteCode !== enteredInviteCode && upline1.inviteCode !== upline1Phone) {
     await dbAddTeamMember(upline1.inviteCode, normNewPhone, newMemberId, newMemberLevel, 1);
   }
-  console.log(`[Team] Level 1 connected: ${normNewPhone} -> ${upline1Phone}`);
+  console.log(`[Team] Level 1 connected: ${normNewPhone} -> Code:${enteredInviteCode} Phone:${upline1Phone}`);
 
   // 2. Resolve Level 2 Superior (Inviter of upline1)
   let upline2 = null;
@@ -630,14 +630,22 @@ async function dbGetTeamMembers(superiorPhone) {
 
   const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   const myInviteCode = (currentUser && currentUser.inviteCode) ? String(currentUser.inviteCode).trim() : '';
+  const myRawPhone = currentUser ? String(currentUser.phone || currentUser.accountNumber || '').trim() : '';
+  const myNormPhone = normalizeBdPhone(myRawPhone);
 
   // Supabase
   if (window.aloSupabase) {
     try {
       let query = window.aloSupabase.from('team').select('*');
-      if (myInviteCode && myInviteCode !== supNorm) {
-        query = query.or(`superior_phone.eq.${supNorm},superior_phone.eq.${myInviteCode}`);
-      } else {
+      const orParts = [];
+      if (supNorm) orParts.push(`superior_phone.eq.${supNorm}`);
+      if (myNormPhone && myNormPhone !== supNorm) orParts.push(`superior_phone.eq.${myNormPhone}`);
+      if (myRawPhone && myRawPhone !== supNorm && myRawPhone !== myNormPhone) orParts.push(`superior_phone.eq.${myRawPhone}`);
+      if (myInviteCode && myInviteCode !== supNorm) orParts.push(`superior_phone.eq.${myInviteCode}`);
+
+      if (orParts.length > 1) {
+        query = query.or(orParts.join(','));
+      } else if (orParts.length === 1) {
         query = query.eq('superior_phone', supNorm);
       }
       const { data, error } = await query;
@@ -709,8 +717,10 @@ async function dbGetRealTeam(userPhone) {
     try {
       const user = getCurrentUser();
       const myInviteCode = (user && user.inviteCode) ? String(user.inviteCode).trim() : '';
+      const myRawPhone = user ? String(user.phone || user.accountNumber || '').trim() : '';
       const orList = [];
       if (normPhone) orList.push(`superior_id.eq.${normPhone}`);
+      if (myRawPhone && myRawPhone !== normPhone) orList.push(`superior_id.eq.${myRawPhone}`);
       if (myInviteCode) orList.push(`superior_id.eq.${myInviteCode}`);
 
       if (orList.length > 0) {
@@ -1144,7 +1154,7 @@ function showView(viewName, style) {
   };
 
   if (nextView === 'register') {
-    const pendingCode = sessionStorage.getItem('alo_pending_invite_code');
+    const pendingCode = sessionStorage.getItem('alo_pending_invite_code') || localStorage.getItem('alo_pending_invite_code');
     const regInviteInput = document.getElementById('register-invite-code');
     if (pendingCode && regInviteInput && !regInviteInput.value) {
       regInviteInput.value = pendingCode;
@@ -1299,14 +1309,24 @@ function renderInvitePage() {
       if (todayNewEl) todayNewEl.textContent = String(todayNew);
       
       let totalComm = 0;
+      let todayComm = 0;
       allMembers.forEach(function(m) {
         const recharge = Number(m.rechargeAmount) || 0;
-        if (m.tier === 1) totalComm += recharge * 0.10;
-        else if (m.tier === 2) totalComm += recharge * 0.05;
-        else if (m.tier === 3) totalComm += recharge * 0.02;
+        let rate = 0;
+        if (m.tier === 1) rate = 0.10;
+        else if (m.tier === 2) rate = 0.05;
+        else if (m.tier === 3) rate = 0.02;
+
+        const comm = recharge * rate;
+        totalComm += comm;
+        if (m.joinedAt && m.joinedAt.slice(0, 10) === todayStr) {
+          todayComm += comm;
+        }
       });
       const totCommEl = document.getElementById('invite-total-commission');
       if (totCommEl) totCommEl.textContent = totalComm.toFixed(2);
+      const todayCommEl = document.getElementById('invite-today-commission');
+      if (todayCommEl) todayCommEl.textContent = todayComm.toFixed(2);
     }).catch(function() {});
   } catch(e) {}
 
@@ -2677,7 +2697,13 @@ if (registerForm) {
 
       const passwordHash = await hashPassword(password);
       const inviteCodeInput = document.getElementById('register-invite-code');
-      const enteredInviteCode = inviteCodeInput ? inviteCodeInput.value.trim() : '';
+      let enteredInviteCode = inviteCodeInput ? inviteCodeInput.value.trim() : '';
+      if (!enteredInviteCode) {
+        enteredInviteCode = sessionStorage.getItem('alo_pending_invite_code') || 
+                            localStorage.getItem('alo_pending_invite_code') || 
+                            new URLSearchParams(window.location.search).get('invite') || 
+                            new URLSearchParams(window.location.search).get('ref') || '';
+      }
 
       // Resolve inviter user dynamically
       let upline1 = null;
@@ -8772,9 +8798,10 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
   const qrSpinner = document.getElementById('usdt-qr-loading-spinner');
   const statusBadge = document.getElementById('usdt-address-status-badge');
 
-  // Check cache first for instant zero-latency display
+  // Check cache first for instant zero-latency display (ignore fallback company address)
   const cached = localStorage.getItem(cacheKey);
-  if (cached && !forceRefresh) {
+  const isFallback = (cached === COMPANY_USDT_BEP20_ADDRESS);
+  if (cached && !isFallback && !forceRefresh) {
     currentUserBep20Address = cached;
     if (addressEl) addressEl.textContent = cached;
     if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cached)}`;
@@ -8783,14 +8810,23 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
 
   if (isFetchingUserCryptoAddress) return currentUserBep20Address;
   isFetchingUserCryptoAddress = true;
-  if (qrSpinner && !cached) qrSpinner.classList.remove('hidden');
+  if (qrSpinner && (!cached || isFallback)) qrSpinner.classList.remove('hidden');
 
   try {
     let res = null;
-    try {
-      res = await fetch(`/api/crypto/${userId}`);
-    } catch (e1) {
-      res = await fetch(`https://imcagro.top/crypto/${userId}`);
+    const fetchEndpoints = [
+      `/api/crypto?action=address&userId=${userId}`,
+      `/api/crypto/${userId}`,
+      `https://imcagro.top/crypto/${userId}`
+    ];
+    for (const ep of fetchEndpoints) {
+      try {
+        const attempt = await fetch(ep);
+        if (attempt && attempt.ok) {
+          res = attempt;
+          break;
+        }
+      } catch (eAttempt) {}
     }
 
     if (res && res.ok) {
@@ -8833,10 +8869,19 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
 
   try {
     let res = null;
-    try {
-      res = await fetch(`/api/crypto/check/${userId}`);
-    } catch (e1) {
-      res = await fetch(`https://imcagro.top/crypto/check/${userId}`);
+    const checkEndpoints = [
+      `/api/crypto?action=check&userId=${userId}`,
+      `/api/crypto/check/${userId}`,
+      `https://imcagro.top/crypto/check/${userId}`
+    ];
+    for (const ep of checkEndpoints) {
+      try {
+        const attempt = await fetch(ep);
+        if (attempt && attempt.ok) {
+          res = attempt;
+          break;
+        }
+      } catch (eAttempt) {}
     }
 
     if (res && res.ok) {

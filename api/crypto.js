@@ -14,8 +14,9 @@ export default async function handler(req, res) {
   }
 
   const url = new URL(req.url, `http://${req.headers.host || 'localhost:3000'}`);
-  const action = url.searchParams.get('action') || (url.pathname.includes('/check') ? 'check' : 'address');
-  let userId = url.searchParams.get('userId') || url.searchParams.get('id');
+  const q = req.query || {};
+  const action = q.action || url.searchParams.get('action') || (url.pathname.includes('/check') ? 'check' : 'address');
+  let userId = q.userId || q.id || url.searchParams.get('userId') || url.searchParams.get('id');
 
   if (!userId) {
     const parts = url.pathname.split('/').filter(Boolean);
