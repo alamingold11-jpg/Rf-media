@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Control Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#f8fafc] text-slate-900 antialiased">
+
+  <!-- =========================================================
+       ADMIN LOGIN SCREEN (Clean Minimal Light)
+  ========================================================== -->
+  <div id="admin-login-screen" class="min-h-screen flex items-center justify-center p-4 bg-[#f8fafc]">
+    <div class="w-full max-w-sm bg-white rounded-xl p-7 shadow-sm">
+      <div class="mb-6 pb-4 border-b border-slate-100">
+        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Admin Login</h1>
+        <p class="text-xs text-slate-500 mt-1">Sign in to manage users, recharges &amp; withdrawals</p>
+      </div>
+
+      <form id="admin-login-form" class="space-y-4">
+        <div>
+          <label for="login-username" class="block text-xs font-medium text-slate-600 mb-1.5">Username</label>
+          <input id="login-username" type="text" required autocomplete="username" placeholder="admin"
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400 transition" />
+        </div>
+
+        <div>
+          <label for="login-password" class="block text-xs font-medium text-slate-600 mb-1.5">Password</label>
+          <input id="login-password" type="password" required autocomplete="current-password" placeholder="Enter password"
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400 transition" />
+        </div>
+
+        <div id="login-error-box" class="hidden text-xs font-medium text-rose-600 py-1"></div>
+
+        <button type="submit"
+          class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-lg transition cursor-pointer">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+        <span>Default: <code class="font-mono text-slate-600">admin</code> / <code class="font-mono text-slate-600">Admin@2026</code></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MAIN ADMIN WORKSPACE
+  ========================================================== -->
+  <div id="admin-app-shell" class="hidden min-h-screen flex">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/30 z-30 hidden lg:hidden" onclick="toggleMobileSidebar(false)"></div>
+
+    <!-- Left Navigation Sidebar -->
+    <aside id="admin-sidebar"
+      class="fixed lg:sticky top-0 left-0 z-40 h-screen w-60 bg-white border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-200 -translate-x-full lg:translate-x-0 shrink-0">
+      <div>
+        <!-- Brand Header -->
+        <div class="h-14 px-5 flex items-center justify-between border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-slate-900 tracking-tight">Admin Console</span>
+          </div>
+          <button type="button" onclick="toggleMobileSidebar(false)" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="p-3 space-y-0.5">
+          <button type="button" data-nav="overview" onclick="switchSection('overview')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold text-slate-900 bg-slate-100 transition cursor-pointer">
+            <span>Overview</span>
+          </button>
+
+          <button type="button" data-nav="recharges" onclick="switchSection('recharges')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Recharges</span>
+            <span id="nav-pending-recharges" class="font-mono text-xs text-amber-600 font-semibold tabular-nums">0</span>
+          </button>
+
+          <button type="button" data-nav="withdrawals" onclick="switchSection('withdrawals')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Withdrawals</span>
+            <span id="nav-pending-withdrawals" class="font-mono text-xs text-amber-600 font-semibold tabular-nums">0</span>
+          </button>
+
+          <button type="button" data-nav="users" onclick="switchSection('users')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Users</span>
+            <span id="nav-total-users" class="font-mono text-xs text-slate-400 tabular-nums">0</span>
+          </button>
+
+          <button type="button" data-nav="commissions" onclick="switchSection('commissions')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Team &amp; Rebates</span>
+          </button>
+
+          <button type="button" data-nav="platform" onclick="switchSection('platform')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Platform Rules</span>
+          </button>
+
+          <button type="button" data-nav="settings" onclick="switchSection('settings')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Settings</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Footer Quick Info -->
+      <div class="p-4 border-t border-slate-100 text-xs text-slate-500 space-y-2">
+        <div class="flex items-center justify-between">
+          <span>Admin</span>
+          <span id="sidebar-admin-name" class="font-mono text-slate-800 font-medium">admin</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>Updated</span>
+          <span id="last-sync-time" class="font-mono text-slate-400 tabular-nums">--:--:--</span>
+        </div>
+        <button type="button" onclick="adminSignOut()"
+          class="w-full mt-2 py-1.5 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition cursor-pointer">
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <div class="flex-1 min-w-0 flex flex-col">
+      <!-- Top Header Bar -->
+      <header class="sticky top-0 z-20 h-14 bg-white/95 backdrop-blur border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <button type="button" onclick="toggleMobileSidebar(true)" class="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <h2 id="topbar-title" class="text-sm sm:text-base font-bold text-slate-900 truncate">Overview</h2>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" onclick="openManualAdjustModal()"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer">
+            + Add Balance
+          </button>
+          <button type="button" id="refresh-data-btn" onclick="refreshAllData(true)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white transition cursor-pointer">
+            <svg id="refresh-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </header>
+
+      <!-- Workspace Content -->
+      <main class="flex-1 p-4 sm:p-6 space-y-6 max-w-[1360px] w-full mx-auto">
+
+        <!-- =================================================
+             SECTION: OVERVIEW
+        ================================================== -->
+        <section id="section-overview" class="space-y-6">
+          <!-- 6 Core KPI Metrics (Clean Fresh Cards, no heavy borders) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
+              <div class="text-xs font-medium text-slate-500">Total Users</div>
+              <div id="kpi-total-users" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">0</div>
+              <div class="mt-1.5 text-xs text-slate-500 font-mono">
+                <span id="kpi-active-vips" class="text-slate-700">0</span> Paid · <span id="kpi-free-users" class="text-slate-500">0</span> Free
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 shadow-xs">
+              <div class="flex items-center justify-between text-xs font-medium text-slate-500">
+                <span>Today Users</span>
+                <span id="kpi-today-date-label" class="font-mono text-slate-400">TODAY</span>
+              </div>
+              <div id="kpi-today-users" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">0</div>
+              <div class="mt-1.5 text-xs text-slate-500">Joined today</div>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 shadow-xs">
+              <div class="text-xs font-medium text-slate-500">Total Recharge</div>
+              <div id="kpi-total-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
+              <div class="mt-1.5 text-xs text-slate-500 font-mono">
+                <span id="kpi-total-recharge-count" class="text-slate-700">0</span> Approved · <span id="kpi-pending-recharge-count" class="text-amber-600">0</span> Pending
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 shadow-xs">
+              <div class="text-xs font-medium text-slate-500">Today Recharge</div>
+              <div id="kpi-today-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
+              <div class="mt-1.5 text-xs text-slate-500 font-mono">
+                <span id="kpi-today-recharge-count" class="text-slate-700">0</span> Approved today
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 shadow-xs">
+              <div class="text-xs font-medium text-slate-500">Total Withdrawal</div>
+              <div id="kpi-total-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
+              <div class="mt-1.5 text-xs text-slate-500 font-mono">
+                <span id="kpi-total-withdraw-count" class="text-slate-700">0</span> Total · <span id="kpi-pending-withdraw-count" class="text-amber-600">0</span> Pending
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 shadow-xs">
+              <div class="text-xs font-medium text-slate-500">Today Withdrawal</div>
+              <div id="kpi-today-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
+              <div class="mt-1.5 text-xs text-slate-500 font-mono">
+                <span id="kpi-today-withdraw-count" class="text-slate-700">0</span> Requests today
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Queues -->
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div class="bg-white rounded-xl shadow-xs overflow-hidden flex flex-col">
+              <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">Pending Recharges</h3>
+                  <p class="text-xs text-slate-500">Waiting for confirmation</p>
+                </div>
+                <button type="button" onclick="switchSection('recharges')" class="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">
+                  View all →
+                </button>
+              </div>
+              <div id="overview-pending-recharges" class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                <div class="p-6 text-center text-xs text-slate-400">Loading...</div>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-xs overflow-hidden flex flex-col">
+              <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900">Pending Withdrawals</h3>
+                  <p class="text-xs text-slate-500">Requests awaiting payout review</p>
+                </div>
+                <button type="button" onclick="switchSection('withdrawals')" class="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">
+                  View all →
+                </button>
+              </div>
+              <div id="overview-pending-withdrawals" class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                <div class="p-6 text-center text-xs text-slate-400">Loading...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Latest Users -->
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Recent Users</h3>
+                <p class="text-xs text-slate-500">Latest registered accounts</p>
+              </div>
+              <button type="button" onclick="switchSection('users')" class="text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">
+                Manage users →
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th class="py-3 px-4">User</th>
+                    <th class="py-3 px-4">ID / Level</th>
+                    <th class="py-3 px-4 text-right">Balance</th>
+                    <th class="py-3 px-4">Joined</th>
+                    <th class="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="overview-recent-users-body" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: RECHARGES
+        ================================================== -->
+        <section id="section-recharges" class="hidden space-y-4">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1" id="recharge-filter-tabs">
+              <button type="button" data-filter="all" onclick="setRechargeFilter('all')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white cursor-pointer">All</button>
+              <button type="button" data-filter="pending" onclick="setRechargeFilter('pending')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Pending</button>
+              <button type="button" data-filter="approved" onclick="setRechargeFilter('approved')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Approved</button>
+              <button type="button" data-filter="rejected" onclick="setRechargeFilter('rejected')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Rejected</button>
+              <button type="button" data-filter="today" onclick="setRechargeFilter('today')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Today</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <input id="recharge-search-input" type="text" oninput="renderRechargesTable()" placeholder="Search phone, order ID..."
+                class="w-full sm:w-64 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
+              <button type="button" onclick="openManualAdjustModal('deposit')"
+                class="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+                + Add Recharge
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th class="py-3 px-4">Order / Date</th>
+                    <th class="py-3 px-4">User</th>
+                    <th class="py-3 px-4">Method</th>
+                    <th class="py-3 px-4 text-right">Amount</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recharges-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: WITHDRAWALS
+        ================================================== -->
+        <section id="section-withdrawals" class="hidden space-y-4">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1" id="withdraw-filter-tabs">
+              <button type="button" data-filter="all" onclick="setWithdrawFilter('all')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white cursor-pointer">All</button>
+              <button type="button" data-filter="pending" onclick="setWithdrawFilter('pending')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Pending</button>
+              <button type="button" data-filter="approved" onclick="setWithdrawFilter('approved')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Approved</button>
+              <button type="button" data-filter="rejected" onclick="setWithdrawFilter('rejected')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Rejected</button>
+              <button type="button" data-filter="today" onclick="setWithdrawFilter('today')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Today</button>
+            </div>
+            <div>
+              <input id="withdraw-search-input" type="text" oninput="renderWithdrawalsTable()" placeholder="Search phone, wallet, name..."
+                class="w-full sm:w-72 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th class="py-3 px-4">Date / Time</th>
+                    <th class="py-3 px-4">User Info</th>
+                    <th class="py-3 px-4">Payout Wallet</th>
+                    <th class="py-3 px-4 text-right">Amount / Net</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="withdrawals-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: USERS
+        ================================================== -->
+        <section id="section-users" class="hidden space-y-4">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="user-search-input" type="text" oninput="renderUsersTable()" placeholder="Search phone, name, member ID..."
+                class="w-full sm:w-72 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
+              <select id="user-level-filter" onchange="renderUsersTable()"
+                class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:border-slate-400">
+                <option value="ALL">All Levels</option>
+                <option value="TODAY">Joined Today</option>
+                <option value="LV0">LV0 (Free)</option>
+                <option value="LV1">LV1</option>
+                <option value="LV2">LV2</option>
+                <option value="LV3">LV3</option>
+                <option value="LV4">LV4</option>
+                <option value="LV5">LV5</option>
+                <option value="LV6">LV6</option>
+              </select>
+            </div>
+            <div class="text-xs text-slate-500 font-mono">
+              <span id="users-showing-count" class="text-slate-800 font-semibold">0</span> accounts
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th class="py-3 px-4">Phone / Name</th>
+                    <th class="py-3 px-4">ID / Superior</th>
+                    <th class="py-3 px-4">Level</th>
+                    <th class="py-3 px-4 text-right">Balance</th>
+                    <th class="py-3 px-4">Wallets</th>
+                    <th class="py-3 px-4">Joined</th>
+                    <th class="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: COMMISSIONS
+        ================================================== -->
+        <section id="section-commissions" class="hidden space-y-4">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Team Rebates &amp; Commissions</h3>
+              <p class="text-xs text-slate-500">Referral commission ledger</p>
+            </div>
+            <input id="commission-search-input" type="text" oninput="renderCommissionsTable()" placeholder="Filter by phone..."
+              class="w-full sm:w-64 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th class="py-3 px-4">Date</th>
+                    <th class="py-3 px-4">Phone</th>
+                    <th class="py-3 px-4">Details</th>
+                    <th class="py-3 px-4 text-right">Amount</th>
+                    <th class="py-3 px-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="commissions-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: PLATFORM RULES
+        ================================================== -->
+        <section id="section-platform" class="hidden space-y-4">
+          <div class="bg-white rounded-xl p-5 shadow-xs">
+            <div class="border-b border-slate-100 pb-3.5 mb-5">
+              <h3 class="text-sm font-bold text-slate-900">Platform Rules &amp; Live Website Settings</h3>
+              <p class="text-xs text-slate-500">Changes saved here update the live user website immediately</p>
+            </div>
+
+            <form id="platform-controls-form" class="space-y-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Withdrawals Status</label>
+                  <select id="pc-withdraw-enabled"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+                    <option value="true">Enabled (Open)</option>
+                    <option value="false">Paused (Disabled)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Min Withdrawal (BDT)</label>
+                  <input id="pc-min-withdraw" type="number" min="1" step="1" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Net Payout Ratio (%)</label>
+                  <input id="pc-withdraw-ratio" type="number" min="1" max="100" step="0.1" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Min Recharge (BDT)</label>
+                  <input id="pc-min-recharge" type="number" min="1" step="1" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-slate-100">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">USDT Rate (BDT)</label>
+                  <input id="pc-usdt-rate" type="number" min="1" step="0.01" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Company USDT (BEP20) Address</label>
+                  <input id="pc-usdt-address" type="text" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Telegram Support Link</label>
+                  <input id="pc-telegram-url" type="url" required placeholder="https://t.me/..."
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Manager ID</label>
+                  <input id="pc-manager-id" type="text" placeholder="#PW-MANAGER-8802"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex justify-end">
+                <button type="submit" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+                  Save Rules
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: SETTINGS
+        ================================================== -->
+        <section id="section-settings" class="hidden space-y-5">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="bg-white rounded-xl p-5 shadow-xs space-y-4">
+              <div class="border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900">Admin Credentials</h3>
+                <p class="text-xs text-slate-500">Update login username and password for this browser</p>
+              </div>
+              <form id="settings-credentials-form" class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Admin Username</label>
+                  <input id="settings-admin-username" type="text" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">New Password</label>
+                  <input id="settings-admin-password" type="password" placeholder="Leave blank to keep current"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+                  Save Credentials
+                </button>
+              </form>
+            </div>
+
+            <div class="bg-white rounded-xl p-5 shadow-xs space-y-4">
+              <div class="border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900">Database Connection</h3>
+                <p class="text-xs text-slate-500">Pre-configured Supabase connection settings</p>
+              </div>
+              <form id="settings-db-form" class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Supabase URL</label>
+                  <input id="settings-sb-url" type="url" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Supabase API Key</label>
+                  <input id="settings-sb-key" type="password" required
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+                    Reconnect
+                  </button>
+                  <button type="button" onclick="resetDatabaseDefaults()" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer">
+                    Reset Default
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">CSV Exports</h3>
+              <p class="text-xs text-slate-500">Download spreadsheet backups</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" onclick="exportCsv('users')" class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-800 cursor-pointer">Users CSV</button>
+              <button type="button" onclick="exportCsv('deposit')" class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-800 cursor-pointer">Recharges CSV</button>
+              <button type="button" onclick="exportCsv('withdraw')" class="px-3.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-800 cursor-pointer">Withdrawals CSV</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL: EDIT USER
+  ========================================================== -->
+  <div id="edit-user-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[1px]">
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Edit User</h3>
+          <p id="edit-user-subtitle" class="text-xs text-slate-500 font-mono mt-0.5">-</p>
+        </div>
+        <button type="button" onclick="closeEditUserModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="edit-user-form" class="p-5 space-y-5 overflow-y-auto">
+        <input type="hidden" id="edit-user-phone-key" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Balance (BDT)</label>
+            <input id="edit-user-balance" type="number" step="0.01" required
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Package Level</label>
+            <select id="edit-user-level"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+              <option value="LV0">LV0 (Free)</option>
+              <option value="LV1">LV1 (৳5,500)</option>
+              <option value="LV2">LV2 (৳15,000)</option>
+              <option value="LV3">LV3 (৳40,000)</option>
+              <option value="LV4">LV4 (৳100,000)</option>
+              <option value="LV5">LV5 (৳220,000)</option>
+              <option value="LV6">LV6 (৳500,000)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Quick Balance</label>
+            <div class="flex gap-1.5">
+              <button type="button" onclick="quickBumpBalance(500)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-semibold cursor-pointer">+500</button>
+              <button type="button" onclick="quickBumpBalance(1000)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-semibold cursor-pointer">+1k</button>
+              <button type="button" onclick="quickBumpBalance(-500)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-rose-600 text-xs font-mono font-semibold cursor-pointer">-500</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Name</label>
+            <input id="edit-user-name" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Superior ID</label>
+            <input id="edit-user-superior" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Account Status</label>
+            <select id="edit-user-status"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+              <option value="active">Active</option>
+              <option value="banned">Suspended / Banned</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Login Password</label>
+            <input id="edit-user-password" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Fund Password</label>
+            <input id="edit-user-fundpass" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">bKash Phone</label>
+            <input id="edit-user-bkash-phone" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">bKash Name</label>
+            <input id="edit-user-bkash-name" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Nagad Phone</label>
+            <input id="edit-user-nagad-phone" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">USDT (BEP20) Address</label>
+            <input id="edit-user-usdt-address" type="text"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+          <button type="button" onclick="deleteEditedUser()"
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer">
+            Delete Account
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeEditUserModal()"
+              class="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer">
+              Cancel
+            </button>
+            <button type="submit"
+              class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL: MANUAL RECHARGE
+  ========================================================== -->
+  <div id="manual-adjust-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[1px]">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900">Add Recharge / Balance</h3>
+        <button type="button" onclick="closeManualAdjustModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form id="manual-adjust-form" class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">User Phone</label>
+          <input id="manual-user-phone" type="text" required placeholder="e.g. 01712345678"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (BDT)</label>
+            <input id="manual-amount" type="number" step="0.01" min="1" required placeholder="500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Method</label>
+            <select id="manual-method"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+              <option value="bKash [Admin Approved]">bKash (Admin)</option>
+              <option value="Nagad [Admin Approved]">Nagad (Admin)</option>
+              <option value="USDT BEP20 [Admin Approved]">USDT BEP20</option>
+              <option value="System Bonus [Admin]">System Bonus</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" onclick="closeManualAdjustModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-xs font-medium text-slate-700 cursor-pointer">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">Credit &amp; Approve</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       MODAL: WITHDRAWAL DETAILS
+  ========================================================== -->
+  <div id="inspect-withdraw-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[1px]">
+    <div class="w-full max-w-lg bg-white rounded-xl shadow-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Withdrawal Details</h3>
+          <p id="inspect-wd-subtitle" class="text-xs text-slate-500 font-mono mt-0.5">-</p>
+        </div>
+        <button type="button" onclick="closeInspectModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="inspect-wd-body" class="p-5 space-y-4 text-sm"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="admin-toast" class="fixed bottom-5 right-5 z-[60] hidden max-w-sm bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium"></div>
+
+  <script src="/admin-config.js"></script>
+  <script src="/admin-panel.js"></script>
+</body>
+</html>

@@ -96,22 +96,20 @@ export default async function handler(req, res) {
           try {
             const { data: uData } = await supabase
               .from('users')
-              .select('id, balance, total_income, phone')
+              .select('id, balance, phone')
               .eq('phone', targetPhone)
               .maybeSingle();
 
             if (uData) {
               const currentBal = parseFloat(uData.balance || 0);
-              const currentIncome = parseFloat(uData.total_income || 0);
               await supabase
                 .from('users')
                 .update({
                   balance: (currentBal + amount),
-                  total_income: (currentIncome + amount),
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', uData.id);
-              console.log(`[WPay Callback] User ${targetPhone} 'users' table balance updated: ${currentBal} -> ${currentBal + amount}`);
+              console.log(`[WPay Callback] User ${targetPhone} balance updated: ${currentBal} -> ${currentBal + amount}`);
             }
           } catch (userErr) {
             console.warn('[WPay Callback] Users table update warning:', userErr.message);

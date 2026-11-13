@@ -1743,7 +1743,7 @@ button:active:not(:disabled), .cursor-pointer:active {
               </article>
               <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV6" tabindex="0" role="button" aria-label="LV6 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-vip-card-purple), var(--color-profile-blue)); color: var(--color-primary-contrast);">
                 <p class="text-sm font-bold">LV6</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">25</strong></p>
+                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">50</strong></p>
               </article>
             </div>
           </section>
@@ -1884,234 +1884,412 @@ button:active:not(:disabled), .cursor-pointer:active {
               </div>
             </div>
 
-            <!-- VIP SALARY & LEVEL UPGRADE SECTION (Matches Screenshot_20261018_202650.jpg) -->
-            <div class="mx-auto max-w-md mt-10 pb-8 text-left">
-              <!-- Section Title matching screenshot -->
-              <div class="text-center mb-6 px-2">
-                <h2 class="text-lg sm:text-[20px] font-extrabold text-[#35c6e7] tracking-tight leading-snug drop-shadow-[0_2px_14px_rgba(53,198,231,0.35)]">
-                  বন্ধুদের ভিআইপি লেভেল আপগ্রেড করতে আমন্ত্রণ করুন
-                </h2>
-                <p class="mt-2 text-xs sm:text-[13px] text-slate-300/80 leading-relaxed max-w-xs mx-auto">
-                  আমন্ত্রিত সদস্যদের লেভেল আপগ্রেডের সাথে সাথে নিয়মিত আকর্ষণীয় মাসিক বেতন ও নগদ বোনাস সক্রিয় করুন
-                </p>
-              </div>
+            <!-- SVG DEFS FOR 3D METALLIC SALARY ICONS -->
+            <svg width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
+              <defs>
+                <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#9be3ff"/>
+                  <stop offset="55%" stop-color="#2f9bff"/>
+                  <stop offset="100%" stop-color="#1559d6"/>
+                </linearGradient>
+                <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fff2a8"/>
+                  <stop offset="50%" stop-color="#ffc93c"/>
+                  <stop offset="100%" stop-color="#e08a00"/>
+                </linearGradient>
+                <linearGradient id="gW" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="100%" stop-color="#a9d8ff"/>
+                </linearGradient>
+              </defs>
+            </svg>
 
-              <!-- List of VIP Salary Upgrade Cards (Scrollable & Animated) -->
-              <div class="space-y-4" id="invite-vip-salary-cards-container">
-                <!-- VIP 1 -->
-                <div class="invite-vip-card rounded-2xl p-4 sm:p-4.5 bg-[#08183e]/95 border border-[#1b3b82] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#35c6e7]/50" data-card-tier="VIP 1">
-                  <!-- Header: VIP 1 & ৳ 1,300.00 -->
-                  <div class="flex items-center justify-between">
-                    <span class="text-base sm:text-lg font-extrabold text-white tracking-wide">VIP 1</span>
-                    <span class="text-base sm:text-lg font-bold text-[#35c6e7] font-mono tracking-tight drop-shadow-[0_0_8px_rgba(53,198,231,0.35)]">৳ 1,300.00</span>
+            <!-- SALARY & LEVEL UPGRADE SECTION (আপনার অর্জন, আপনার সম্মান) -->
+            <style>
+              .salary-page-wrap {
+                background: radial-gradient(circle at 50% 0%, rgba(39, 196, 255, 0.35), transparent 55%),
+                            radial-gradient(circle at 100% 100%, rgba(77, 255, 184, 0.18), transparent 50%),
+                            linear-gradient(180deg, #0a1f6b 0%, #06124a 100%) !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 20px !important;
+              }
+              .salary-clean-h1 {
+                animation: salaryH1Float 5s ease-in-out infinite;
+                text-shadow: 0 8px 24px rgba(39, 196, 255, 0.38);
+              }
+              .salary-row {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 10px !important;
+                padding: 12px 6px !important;
+                margin: 6px 0 !important;
+                border: none !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                transform-style: preserve-3d;
+                transition: transform 0.15s ease-out;
+              }
+              .salary-row:first-child {
+                border-top: none !important;
+              }
+              .salary-ico {
+                flex: 0 0 44px !important;
+                width: 44px !important;
+                height: 44px !important;
+                min-width: 44px !important;
+                max-width: 44px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.4)) !important;
+                transform: translateZ(30px);
+                animation: salaryIcoSpin 4s ease-in-out infinite;
+              }
+              .salary-pos {
+                flex: 0 0 76px !important;
+                width: 76px !important;
+                min-width: 76px !important;
+                max-width: 76px !important;
+                font-weight: 700 !important;
+                font-size: 16.5px !important;
+                color: #ffffff !important;
+                white-space: nowrap !important;
+                transform: translateZ(20px);
+              }
+              .salary-desc {
+                flex: 1 1 auto !important;
+                min-width: 0 !important;
+                font-size: 13.5px !important;
+                line-height: 1.45 !important;
+                color: rgba(255, 255, 255, 0.95) !important;
+                padding: 0 4px !important;
+              }
+              .salary-desc b {
+                color: #27c4ff !important;
+              }
+              .salary-desc .prog {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                margin-top: 6px !important;
+                width: 100% !important;
+              }
+              .salary-desc .bar {
+                flex: 1 1 auto !important;
+                height: 8px !important;
+                border-radius: 99px !important;
+                background: rgba(255, 255, 255, 0.15) !important;
+                overflow: hidden !important;
+                box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.4) !important;
+              }
+              .salary-desc .fill {
+                height: 100% !important;
+                border-radius: 99px !important;
+                background: linear-gradient(90deg, #27c4ff, #4dffb8) !important;
+                box-shadow: 0 0 10px rgba(77, 255, 184, 0.7) !important;
+              }
+              .salary-desc .pct {
+                flex: 0 0 auto !important;
+                font-size: 12px !important;
+                font-weight: 700 !important;
+                min-width: 36px !important;
+                text-align: right !important;
+                color: #4dffb8 !important;
+              }
+              .salary-pay {
+                flex: 0 0 94px !important;
+                width: 94px !important;
+                min-width: 94px !important;
+                max-width: 94px !important;
+                height: auto !important;
+                min-height: unset !important;
+                background: linear-gradient(135deg, #2aa7ff, #1fd0ff) !important;
+                color: #041a5c !important;
+                border-radius: 16px 4px 16px 4px !important;
+                padding: 6px 8px !important;
+                text-align: center !important;
+                box-shadow: 0 0 18px rgba(39, 196, 255, 0.75) !important;
+                border: none !important;
+                cursor: pointer !important;
+                user-select: none !important;
+                transform: translateZ(30px);
+                transition: transform 0.15s ease, filter 0.3s ease, box-shadow 0.3s ease !important;
+                box-sizing: border-box !important;
+              }
+              .salary-pay:active {
+                transform: translateZ(30px) scale(0.95) !important;
+              }
+              .salary-pay small {
+                display: block !important;
+                font-size: 11px !important;
+                font-weight: 600 !important;
+                line-height: 1.2 !important;
+                color: inherit !important;
+              }
+              .salary-pay strong {
+                display: block !important;
+                font-size: 18px !important;
+                font-weight: 700 !important;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+                line-height: 1.2 !important;
+                color: inherit !important;
+              }
+              @keyframes salaryIcoSpin {
+                0%, 60%, 100% { transform: translateZ(30px) rotateY(0); }
+                80% { transform: translateZ(30px) rotateY(360deg); }
+              }
+              @keyframes salaryH1Float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+              }
+            </style>
+
+            <div class="salary-page-wrap w-full max-w-[560px] mx-auto mt-6 mb-8 px-3.5 py-6 rounded-3xl relative text-left" style="color: #fff;">
+              <h2 class="salary-clean-h1 text-center text-[26px] sm:text-[30px] font-bold text-white mt-2 mb-1.5 leading-[1.3]">
+                আপনার অর্জন, <span class="text-[#27c4ff]">আপনার সম্মান</span>
+              </h2>
+              <p class="text-center text-[14px] sm:text-[15px] text-white/95 mb-6 font-normal">
+                নির্ধারিত লক্ষ্য পূরণ করে পদমর্যাদা ও মাসিক বেতন অর্জন করুন।
+              </p>
+
+              <div class="salary-rows-list space-y-1" id="invite-vip-salary-cards-container">
+                <!-- অবস্থান ১: তারা-সহ ব্যক্তি -->
+                <div class="salary-row" data-salary-idx="0" data-vip-tier="অবস্থান ১">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <circle cx="22" cy="14" r="8" fill="url(#gB)"/>
+                      <path d="M6 42c0-10 7-16 16-16s16 6 16 16z" fill="url(#gB)"/>
+                      <polygon points="38,26 40.6,31.4 46.4,32.2 42.2,36.2 43.2,42 38,39.2 32.8,42 33.8,36.2 29.6,32.2 35.4,31.4" fill="url(#gG)"/>
+                    </svg>
                   </div>
-
-                  <!-- Description with vertical accent line -->
-                  <div class="flex gap-3 items-stretch mt-3">
-                    <div class="w-1 sm:w-1.5 rounded-full bg-gradient-to-b from-[#35c6e7] via-[#1d6fe9] to-[#0ea5e9] shrink-0"></div>
-                    <p class="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-200 font-normal">
-                      আপনার যদি ৩ জন বা তার বেশি A-লেভেল সদস্য থাকে এবং তারা প্রত্যেকে ৳ 800 বা তার বেশি মূল্যের পণ্য ভাড়া নেন তাহলে আপনি VIP1 পদে উন্নীত হতে পারবেন এবং একই সঙ্গে ৳ 1,000 মাসিক বেতন ও ৳ 300 নগদ পুরস্কার পাবেন
-                    </p>
-                  </div>
-
-                  <!-- Divider line -->
-                  <div class="border-t border-[#132c66] my-3.5"></div>
-
-                  <!-- Progress -->
-                  <div class="space-y-1.5 mb-3.5">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                      <span class="text-slate-300">অগ্রগতি</span>
-                      <span class="text-[#35c6e7] font-mono invite-vip-progress-text" data-tier-progress="VIP 1">0%</span>
+                  <div class="salary-pos">অবস্থান ১</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম স্তরে ৩ জন সক্রিয় সদস্য যুক্ত হলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
                     </div>
-                    <div class="w-full h-1.5 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a]">
-                      <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-700 invite-vip-progress-bar" data-tier-bar="VIP 1" style="width: 0%;"></div>
-                    </div>
                   </div>
-
-                  <!-- Claim Action Buttons (Pure text clean layout without icons) -->
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 1" data-reward-type="cash" data-reward-amount="300" data-required-members="3">
-                      <span class="invite-btn-top">নগদ বোনাস ৳ 300.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 1" data-reward-type="salary" data-reward-amount="1000" data-required-members="3">
-                      <span class="invite-btn-top">মাসিক বেতন ৳ 1,000.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ১" data-reward-type="salary" data-reward-amount="1000" data-required-members="3">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ১,০০০</strong>
+                  </button>
                 </div>
 
-                <!-- VIP 2 -->
-                <div class="invite-vip-card rounded-2xl p-4 sm:p-4.5 bg-[#08183e]/95 border border-[#1b3b82] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#35c6e7]/50" data-card-tier="VIP 2">
-                  <div class="flex items-center justify-between">
-                    <span class="text-base sm:text-lg font-extrabold text-white tracking-wide">VIP 2</span>
-                    <span class="text-base sm:text-lg font-bold text-[#35c6e7] font-mono tracking-tight drop-shadow-[0_0_8px_rgba(53,198,231,0.35)]">৳ 2,500.00</span>
+                <!-- অবস্থান ২: রিবন ব্যাজ -->
+                <div class="salary-row" data-salary-idx="1" data-vip-tier="অবস্থান ২">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <polygon points="13,30 7,45 16,42 20,47 25,31" fill="#1b66e0"/>
+                      <polygon points="35,30 41,45 32,42 28,47 23,31" fill="#2f9bff"/>
+                      <circle cx="24" cy="18" r="15" fill="url(#gB)"/>
+                      <circle cx="24" cy="18" r="10.5" fill="#1a63de"/>
+                      <polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gW)"/>
+                    </svg>
                   </div>
-                  <div class="flex gap-3 items-stretch mt-3">
-                    <div class="w-1 sm:w-1.5 rounded-full bg-gradient-to-b from-[#35c6e7] via-[#1d6fe9] to-[#0ea5e9] shrink-0"></div>
-                    <p class="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-200 font-normal">
-                      আপনার যদি ৫ জন বা তার বেশি A-লেভেল সদস্য থাকে এবং তাদের ভাড়া নেওয়া সরঞ্জামের মূল্য ৳ 800 বা তার বেশি হয় তাহলে আপনি VIP2 স্তরে উন্নীত হবেন এবং ৳ 1,800 বেতনসহ ৳ 700 নগদ পুরস্কার পাবেন
-                    </p>
-                  </div>
-                  <div class="border-t border-[#132c66] my-3.5"></div>
-                  <div class="space-y-1.5 mb-3.5">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                      <span class="text-slate-300">অগ্রগতি</span>
-                      <span class="text-[#35c6e7] font-mono invite-vip-progress-text" data-tier-progress="VIP 2">0%</span>
+                  <div class="salary-pos">অবস্থান ২</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ৫ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
                     </div>
-                    <div class="w-full h-1.5 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a]">
-                      <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-700 invite-vip-progress-bar" data-tier-bar="VIP 2" style="width: 0%;"></div>
-                    </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 2" data-reward-type="cash" data-reward-amount="700" data-required-members="5">
-                      <span class="invite-btn-top">নগদ বোনাস ৳ 700.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 2" data-reward-type="salary" data-reward-amount="1800" data-required-members="5">
-                      <span class="invite-btn-top">মাসিক বেতন ৳ 1,800.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ২" data-reward-type="salary" data-reward-amount="1800" data-required-members="5">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ১,৮০০</strong>
+                  </button>
                 </div>
 
-                <!-- VIP 3 -->
-                <div class="invite-vip-card rounded-2xl p-4 sm:p-4.5 bg-[#08183e]/95 border border-[#1b3b82] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#35c6e7]/50" data-card-tier="VIP 3">
-                  <div class="flex items-center justify-between">
-                    <span class="text-base sm:text-lg font-extrabold text-white tracking-wide">VIP 3</span>
-                    <span class="text-base sm:text-lg font-bold text-[#35c6e7] font-mono tracking-tight drop-shadow-[0_0_8px_rgba(53,198,231,0.35)]">৳ 4,800.00</span>
+                <!-- অবস্থান ৩: মুকুট -->
+                <div class="salary-row" data-salary-idx="2" data-vip-tier="অবস্থান ৩">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <path d="M5 36V13l11 11 8-15 8 15 11-11v23z" fill="url(#gB)"/>
+                      <rect x="5" y="38" width="38" height="7" rx="2.5" fill="url(#gB)"/>
+                      <circle cx="5" cy="12" r="3" fill="url(#gG)"/>
+                      <circle cx="24" cy="8" r="3" fill="url(#gG)"/>
+                      <circle cx="43" cy="12" r="3" fill="url(#gG)"/>
+                    </svg>
                   </div>
-                  <div class="flex gap-3 items-stretch mt-3">
-                    <div class="w-1 sm:w-1.5 rounded-full bg-gradient-to-b from-[#35c6e7] via-[#1d6fe9] to-[#0ea5e9] shrink-0"></div>
-                    <p class="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-200 font-normal">
-                      আপনার যদি ৮ জন বা তার বেশি A-লেভেল সদস্য থাকে তাদের মধ্যে অন্তত ১ জন VIP1 বা তার চেয়ে উচ্চ স্তরে পৌঁছান এবং তাদের ভাড়া নেওয়া পণ্যের মূল্য ৳ 800 বা তার বেশি হয় তাহলে আপনি VIP3 স্তরে উন্নীত হবেন এবং ৳ 3,200 বেতনসহ ৳ 1,600 নগদ পুরস্কার পাবেন
-                    </p>
-                  </div>
-                  <div class="border-t border-[#132c66] my-3.5"></div>
-                  <div class="space-y-1.5 mb-3.5">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                      <span class="text-slate-300">অগ্রগতি</span>
-                      <span class="text-[#35c6e7] font-mono invite-vip-progress-text" data-tier-progress="VIP 3">0%</span>
+                  <div class="salary-pos">অবস্থান ৩</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ৮ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
                     </div>
-                    <div class="w-full h-1.5 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a]">
-                      <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-700 invite-vip-progress-bar" data-tier-bar="VIP 3" style="width: 0%;"></div>
-                    </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 3" data-reward-type="cash" data-reward-amount="1600" data-required-members="8">
-                      <span class="invite-btn-top">নগদ বোনাস ৳ 1,600.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 3" data-reward-type="salary" data-reward-amount="3200" data-required-members="8">
-                      <span class="invite-btn-top">মাসিক বেতন ৳ 3,200.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ৩" data-reward-type="salary" data-reward-amount="2500" data-required-members="8">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ২,৫০০</strong>
+                  </button>
                 </div>
 
-                <!-- VIP 4 -->
-                <div class="invite-vip-card rounded-2xl p-4 sm:p-4.5 bg-[#08183e]/95 border border-[#1b3b82] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#35c6e7]/50" data-card-tier="VIP 4">
-                  <div class="flex items-center justify-between">
-                    <span class="text-base sm:text-lg font-extrabold text-white tracking-wide">VIP 4</span>
-                    <span class="text-base sm:text-lg font-bold text-[#35c6e7] font-mono tracking-tight drop-shadow-[0_0_8px_rgba(53,198,231,0.35)]">৳ 9,900.00</span>
+                <!-- অবস্থান ৪: হীরা -->
+                <div class="salary-row" data-salary-idx="3" data-vip-tier="অবস্থান ৪">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <polygon points="11,8 37,8 46,19 24,45 2,19" fill="url(#gB)"/>
+                      <polygon points="11,8 37,8 46,19 2,19" fill="#fff" opacity=".3"/>
+                      <path d="M2 19h44M17 19l7-11 7 11-7 26z" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" fill="none"/>
+                    </svg>
                   </div>
-                  <div class="flex gap-3 items-stretch mt-3">
-                    <div class="w-1 sm:w-1.5 rounded-full bg-gradient-to-b from-[#35c6e7] via-[#1d6fe9] to-[#0ea5e9] shrink-0"></div>
-                    <p class="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-200 font-normal">
-                      আপনার যদি ১২ জন বা তার বেশি A-লেভেল সদস্য থাকে তাদের মধ্যে অন্তত ২ জন VIP2 বা তার চেয়ে উচ্চ স্তরে পৌঁছান এবং তাদের ভাড়া নেওয়া পণ্যের মূল্য ৳ 800 বা তার বেশি হয় তাহলে আপনি VIP4 স্তরে উন্নীত হবেন এবং ৳ 6,700 বেতনসহ ৳ 3,200 নগদ পুরস্কার পাবেন
-                    </p>
-                  </div>
-                  <div class="border-t border-[#132c66] my-3.5"></div>
-                  <div class="space-y-1.5 mb-3.5">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                      <span class="text-slate-300">অগ্রগতি</span>
-                      <span class="text-[#35c6e7] font-mono invite-vip-progress-text" data-tier-progress="VIP 4">0%</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a]">
-                      <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-700 invite-vip-progress-bar" data-tier-bar="VIP 4" style="width: 0%;"></div>
+                  <div class="salary-pos">অবস্থান ৪</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ১৫ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
                     </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 4" data-reward-type="cash" data-reward-amount="3200" data-required-members="12">
-                      <span class="invite-btn-top">নগদ বোনাস ৳ 3,200.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 4" data-reward-type="salary" data-reward-amount="6700" data-required-members="12">
-                      <span class="invite-btn-top">মাসিক বেতন ৳ 6,700.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ৪" data-reward-type="salary" data-reward-amount="3200" data-required-members="15">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ৩,২০০</strong>
+                  </button>
                 </div>
 
-                <!-- VIP 5 -->
-                <div class="invite-vip-card rounded-2xl p-4 sm:p-4.5 bg-[#08183e]/95 border border-[#1b3b82] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#35c6e7]/50" data-card-tier="VIP 5">
-                  <div class="flex items-center justify-between">
-                    <span class="text-base sm:text-lg font-extrabold text-white tracking-wide">VIP 5</span>
-                    <span class="text-base sm:text-lg font-bold text-[#35c6e7] font-mono tracking-tight drop-shadow-[0_0_8px_rgba(53,198,231,0.35)]">৳ 20,700.00</span>
+                <!-- অবস্থান ৫: রকেট -->
+                <div class="salary-row" data-salary-idx="4" data-vip-tier="অবস্থান ৫">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <g transform="rotate(40 24 24)">
+                        <path d="M24 2c8 6 11 16 9 30H15C13 18 16 8 24 2z" fill="url(#gW)"/>
+                        <path d="M24 2c8 6 11 16 9 30H24z" fill="#8cc8ff" opacity=".6"/>
+                        <circle cx="24" cy="16" r="4.5" fill="url(#gB)"/>
+                        <path d="M15 24l-7 10 7-2zM33 24l7 10-7-2z" fill="#1f7be0"/>
+                        <path d="M19 32h10l-5 13z" fill="url(#gG)"/>
+                      </g>
+                    </svg>
                   </div>
-                  <div class="flex gap-3 items-stretch mt-3">
-                    <div class="w-1 sm:w-1.5 rounded-full bg-gradient-to-b from-[#35c6e7] via-[#1d6fe9] to-[#0ea5e9] shrink-0"></div>
-                    <p class="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-200 font-normal">
-                      আপনার যদি ১৫ জন বা তার বেশি A-লেভেল সদস্য থাকে যার মধ্যে ৩ জন VIP4 সদস্য অন্তর্ভুক্ত থাকে এবং তাদের ভাড়া নেওয়া পণ্যের মূল্য ৳ 800 বা তার বেশি হয় তাহলে আপনি VIP5 স্তরে উন্নীত হবেন এবং ৳ 14,000 মাসিক বেতনসহ ৳ 6,700 নগদ পুরস্কার পাবেন
-                    </p>
-                  </div>
-                  <div class="border-t border-[#132c66] my-3.5"></div>
-                  <div class="space-y-1.5 mb-3.5">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                      <span class="text-slate-300">অগ্রগতি</span>
-                      <span class="text-[#35c6e7] font-mono invite-vip-progress-text" data-tier-progress="VIP 5">0%</span>
+                  <div class="salary-pos">অবস্থান ৫</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ২৫ জন বা তার বেশি <b>A ও B-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
                     </div>
-                    <div class="w-full h-1.5 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a]">
-                      <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-700 invite-vip-progress-bar" data-tier-bar="VIP 5" style="width: 0%;"></div>
-                    </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 5" data-reward-type="cash" data-reward-amount="6700" data-required-members="15">
-                      <span class="invite-btn-top">নগদ বোনাস ৳ 6,700.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 5" data-reward-type="salary" data-reward-amount="14000" data-required-members="15">
-                      <span class="invite-btn-top">মাসিক বেতন ৳ 14,000.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ৫" data-reward-type="salary" data-reward-amount="4000" data-required-members="25">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ৪,০০০</strong>
+                  </button>
                 </div>
 
-                <!-- VIP 6 -->
-                <div class="invite-vip-card rounded-2xl p-4 sm:p-4.5 bg-[#08183e]/95 border border-[#1b3b82] shadow-xl relative overflow-hidden transition-all duration-300 hover:border-[#35c6e7]/50" data-card-tier="VIP 6">
-                  <div class="flex items-center justify-between">
-                    <span class="text-base sm:text-lg font-extrabold text-white tracking-wide">VIP 6</span>
-                    <span class="text-base sm:text-lg font-bold text-[#35c6e7] font-mono tracking-tight drop-shadow-[0_0_8px_rgba(53,198,231,0.35)]">৳ 45,000.00</span>
+                <!-- অবস্থান ৬: ঢাল -->
+                <div class="salary-row" data-salary-idx="5" data-vip-tier="অবস্থান ৬">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <path d="M24 3l17 6v13c0 11-7 19-17 23C14 41 7 33 7 22V9z" fill="url(#gB)"/>
+                      <path d="M24 8l12 4.5V22c0 8-5 14-12 17.5C17 36 12 30 12 22v-9.5z" fill="#1a63de"/>
+                      <polygon points="24,15 26.4,20.3 32,21 27.8,24.8 29,30.5 24,27.6 19,30.5 20.2,24.8 16,21 21.6,20.3" fill="url(#gW)"/>
+                    </svg>
                   </div>
-                  <div class="flex gap-3 items-stretch mt-3">
-                    <div class="w-1 sm:w-1.5 rounded-full bg-gradient-to-b from-[#35c6e7] via-[#1d6fe9] to-[#0ea5e9] shrink-0"></div>
-                    <p class="text-[13px] sm:text-[13.5px] leading-relaxed text-slate-200 font-normal">
-                      আপনার যদি ২০ জন বা তার বেশি A-লেভেল সদস্য থাকে যার মধ্যে ৪ জন VIP5 সদস্য অন্তর্ভুক্ত থাকে এবং তাদের ভাড়া নেওয়া পণ্যের মূল্য ৳ 800 বা তার বেশি হয় তাহলে আপনি VIP6 স্তরে উন্নীত হবেন এবং ৳ 30,000 মাসিক বেতনসহ ৳ 15,000 নগদ পুরস্কার পাবেন
-                    </p>
-                  </div>
-                  <div class="border-t border-[#132c66] my-3.5"></div>
-                  <div class="space-y-1.5 mb-3.5">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                      <span class="text-slate-300">অগ্রগতি</span>
-                      <span class="text-[#35c6e7] font-mono invite-vip-progress-text" data-tier-progress="VIP 6">0%</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a]">
-                      <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-700 invite-vip-progress-bar" data-tier-bar="VIP 6" style="width: 0%;"></div>
+                  <div class="salary-pos">অবস্থান ৬</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ৪০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
                     </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-2.5">
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 6" data-reward-type="cash" data-reward-amount="15000" data-required-members="20">
-                      <span class="invite-btn-top">নগদ বোনাস ৳ 15,000.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
-                    <button type="button" class="invite-claim-btn" data-vip-tier="VIP 6" data-reward-type="salary" data-reward-amount="30000" data-required-members="20">
-                      <span class="invite-btn-top">মাসিক বেতন ৳ 30,000.00</span>
-                      <span class="invite-btn-main">গ্রহণ করুন</span>
-                    </button>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ৬" data-reward-type="salary" data-reward-amount="5500" data-required-members="40">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ৫,৫০০</strong>
+                  </button>
+                </div>
+
+                <!-- অবস্থান ৭: ট্রফি -->
+                <div class="salary-row" data-salary-idx="6" data-vip-tier="অবস্থান ৭">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <path d="M14 6h20v13c0 7-4.5 12-10 12s-10-5-10-12z" fill="url(#gG)"/>
+                      <path d="M14 10H6c0 8 3 12 9 13M34 10h8c0 8-3 12-9 13" stroke="#f0a800" stroke-width="3" fill="none"/>
+                      <rect x="21" y="31" width="6" height="8" fill="#e08a00"/>
+                      <rect x="14" y="39" width="20" height="6" rx="2" fill="url(#gG)"/>
+                    </svg>
                   </div>
+                  <div class="salary-pos">অবস্থান ৭</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ৭০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
+                    </div>
+                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ৭" data-reward-type="salary" data-reward-amount="7000" data-required-members="70">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ৭,০০০</strong>
+                  </button>
+                </div>
+
+                <!-- অবস্থান ৮: সোনালি মেডেল -->
+                <div class="salary-row" data-salary-idx="7" data-vip-tier="অবস্থান ৮">
+                  <div class="salary-ico">
+                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                      <polygon points="12,30 7,46 16,42 21,47 26,31" fill="#1b66e0"/>
+                      <polygon points="36,30 41,46 32,42 27,47 22,31" fill="#2f9bff"/>
+                      <circle cx="24" cy="18" r="16" fill="url(#gG)"/>
+                      <circle cx="24" cy="18" r="11" fill="#1a63de"/>
+                      <polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gG)"/>
+                    </svg>
+                  </div>
+                  <div class="salary-pos">অবস্থান ৮</div>
+                  <div class="salary-desc">
+                    <div>আপনার প্রথম ১০০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div class="prog">
+                      <div class="bar">
+                        <div class="fill" style="width: 0%;"></div>
+                      </div>
+                      <span class="pct">০%</span>
+                    </div>
+                  </div>
+                  <button type="button" class="salary-pay" data-vip-tier="অবস্থান ৮" data-reward-type="salary" data-reward-amount="10000" data-required-members="100">
+                    <small>🔒 মাসিক বেতন</small>
+                    <strong>৳ ১০,০০০</strong>
+                  </button>
                 </div>
               </div>
             </div>
+
+            <script>
+              (function() {
+                // Interactive 3D tilt on salary rows
+                document.querySelectorAll('.salary-row').forEach(function(r) {
+                  function tilt(e) {
+                    var b = r.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
+                    var x = (p.clientX - b.left) / b.width - 0.5, y = (p.clientY - b.top) / b.height - 0.5;
+                    r.style.transform = 'rotateY(' + (x * 12) + 'deg) rotateX(' + (-y * 12) + 'deg)';
+                  }
+                  function reset() {
+                    r.style.transform = 'rotateY(0deg) rotateX(0deg)';
+                  }
+                  r.addEventListener('pointermove', tilt);
+                  r.addEventListener('pointerleave', reset);
+                  r.addEventListener('touchmove', tilt, { passive: true });
+                  r.addEventListener('touchend', reset);
+                });
+              })();
+            </script>
 
             <!-- VIP BONUS REAL ACTIVATION MODAL -->
             <div id="invite-vip-claim-modal" class="fixed inset-0 z-[10010] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm transition-opacity duration-200" style="display: none;" hidden>
@@ -2122,8 +2300,8 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <div class="flex items-center justify-between border-b border-[#142d66] pb-3 mb-4">
                   <div class="flex items-center gap-2">
                     <div>
-                      <h3 class="text-base font-bold text-white leading-tight" id="invite-modal-tier-title">VIP 1 বোনাস সক্রিয়করণ</h3>
-                      <p class="text-[11px] text-[#35c6e7]" id="invite-modal-reward-type">নগদ পুরস্কার</p>
+                      <h3 class="text-base font-bold text-white leading-tight" id="invite-modal-tier-title">অবস্থান ১ মাসিক বেতন</h3>
+                      <p class="text-[11px] text-[#35c6e7]" id="invite-modal-reward-type">নির্ধারিত লক্ষ্য পূরণ বেতন</p>
                     </div>
                   </div>
                   <button type="button" id="invite-modal-close-btn" class="p-1 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer">
@@ -2133,15 +2311,15 @@ button:active:not(:disabled), .cursor-pointer:active {
 
                 <!-- Reward Amount Highlight -->
                 <div class="bg-[#05112e] rounded-xl p-3.5 border border-[#142d66] text-center mb-4">
-                  <p class="text-[11px] text-slate-400">পুরস্কারের পরিমাণ</p>
-                  <p class="text-2xl font-extrabold text-[#35c6e7] font-mono mt-0.5" id="invite-modal-amount-display">৳ 300.00</p>
+                  <p class="text-[11px] text-slate-400">বেতনের পরিমাণ</p>
+                  <p class="text-2xl font-extrabold text-[#35c6e7] font-mono mt-0.5" id="invite-modal-amount-display">৳ ১,০০০.০০</p>
                 </div>
 
                 <!-- Requirement & Progress Info -->
                 <div class="space-y-2 text-xs mb-4">
                   <div class="flex items-center justify-between font-semibold">
-                    <span class="text-slate-300">প্রয়োজনীয় A-লেভেল সদস্য:</span>
-                    <span class="text-white font-mono" id="invite-modal-req-display">৩ জন (প্যাকেজ ≥ ৳ 800)</span>
+                    <span class="text-slate-300">প্রয়োজনীয় সক্রিয় সদস্য:</span>
+                    <span class="text-white font-mono" id="invite-modal-req-display">৩ জন সক্রিয় সদস্য</span>
                   </div>
                   <div class="flex items-center justify-between font-semibold">
                     <span class="text-slate-300">আপনার বর্তমান অগ্রগতি:</span>
@@ -2153,22 +2331,20 @@ button:active:not(:disabled), .cursor-pointer:active {
                 </div>
 
                 <div class="p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/30 text-[11.5px] text-slate-300 leading-relaxed mb-4">
-                  আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। তারা ৳ ৮০০ বা তার বেশি প্যাকেজ নিলেই আপনার অগ্রগতি সম্পন্ন হবে এবং অগ্রগতি ১০০% হলে স্বয়ংক্রিয়ভাবে সরাসরি মূল ব্যালেন্সে টাকা গ্রহণ করতে পারবেন।
+                  আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। নির্ধারিত সক্রিয় সদস্য পূরণ হলেই আপনার অবস্থান সক্রিয় হবে এবং মাসিক বেতন সরাসরি মূল ব্যালেন্সে গ্রহণ করতে পারবেন।
                 </div>
 
                 <!-- Action Buttons in Modal -->
                 <div class="space-y-2.5" id="invite-modal-actions-container">
                   <!-- Real Direct Claim Button -->
-                  <button type="button" id="invite-modal-claim-btn" class="w-full py-3 rounded-xl font-bold text-sm transition cursor-pointer active:scale-95 flex items-center justify-center gap-2 bg-[#1877f2] hover:bg-[#2080ff] text-white shadow-lg shadow-blue-600/30">
-                    <span>সরাসরি ব্যালেন্সে গ্রহণ করুন</span>
+                  <button type="button" id="invite-modal-claim-btn" class="w-full py-3.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-800/90 text-slate-400 border border-slate-700/60 cursor-not-allowed select-none" disabled>
+                    <span>🔒 শর্ত পূরণ হয়নি (লকড)</span>
                   </button>
 
-                  <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button type="button" id="invite-modal-copy-link-btn" class="py-2.5 px-2 rounded-xl text-xs font-semibold text-center transition cursor-pointer active:scale-95 bg-[#0e214d] hover:bg-[#15316e] border border-[#1b3e85] text-[#38bdf8] flex items-center justify-center">
-                      <span>লিংক কপি করুন</span>
-                    </button>
-                    <button type="button" id="invite-modal-test-add-btn" class="py-2.5 px-2 rounded-xl text-xs font-semibold text-center transition cursor-pointer active:scale-95 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 flex items-center justify-center">
-                      <span>টেস্ট সক্রিয় (+১)</span>
+                  <div class="pt-1">
+                    <button type="button" id="invite-modal-copy-link-btn" class="w-full py-3 px-3 rounded-xl text-xs font-bold text-center transition cursor-pointer active:scale-95 bg-[#0e214d] hover:bg-[#15316e] border border-[#1b3e85] text-[#38bdf8] flex items-center justify-center gap-2">
+                      <svg viewBox="0 0 24 24" class="w-4 h-4 text-[#38bdf8]" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+                      <span>আমন্ত্রণ লিংক কপি করুন</span>
                     </button>
                   </div>
                 </div>
@@ -4658,6 +4834,90 @@ button:active:not(:disabled), .cursor-pointer:active {
       <!-- Countries List (Bangladesh and India) -->
       <div id="country-list-container" class="p-3 space-y-2 max-h-[60vh] overflow-y-auto">
       </div>
+    </div>
+  </div>
+
+  <!-- TEAM MEMBER REAL DETAIL MODAL (মোবাইলে পারফেক্ট ফিট, কোনো বর্ডার ছাড়া, প্রফেশনাল বটম শিট) -->
+  <div id="team-member-detail-modal" class="fixed inset-0 z-[10025] flex items-end justify-center backdrop-blur-xs transition-all duration-300" style="display: none; background: rgba(2, 6, 23, 0.55);" hidden aria-modal="true" role="dialog" aria-labelledby="team-modal-name">
+    <!-- Backdrop dismiss area -->
+    <div id="team-member-modal-backdrop" class="absolute inset-0 cursor-pointer" aria-label="বন্ধ করুন"></div>
+
+    <!-- Modal Content Sheet: Width exactly matches mobile app container (max-w-[430px]), anchored cleanly at the bottom without overflowing -->
+    <div class="relative z-10 w-full max-w-[430px] mx-auto rounded-t-[28px] rounded-b-none border-t border-white/10 p-5 pb-7 text-white select-none shadow-[0_-12px_40px_rgba(0,0,0,0.85)]" style="background: linear-gradient(180deg, #091f54 0%, #05143d 60%, #030d2a 100%); font-family: 'Hind Siliguri', system-ui, -apple-system, sans-serif !important;">
+      
+      <!-- Top Drag Bar & Close Button -->
+      <div class="flex items-center justify-between pb-2">
+        <div class="w-10 h-1 rounded-full bg-white/20 mx-auto" id="team-modal-drag-handle" title="বন্ধ করতে টানুন"></div>
+        <button type="button" id="close-team-member-modal-btn" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white border-0 flex items-center justify-center transition active:scale-90 cursor-pointer shadow-sm -mr-1" aria-label="বন্ধ করুন">
+          <svg class="w-3.5 h-3.5 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Member Profile Header -->
+      <div class="flex items-center gap-3.5 mt-1">
+        <!-- Profile Rabbit Avatar (আমাদের প্রোফাইল) -->
+        <div class="w-12 h-12 rounded-xl overflow-hidden bg-[#091f50] border border-white/10 shrink-0 shadow-md">
+          <img id="team-modal-avatar" src="/assets/rabbit_avatar-DZmseAUF.jpg" alt="প্রোফাইল অ্যাভাটার" class="w-full h-full object-cover rounded-xl" onerror="this.src='/team_avatar.png'" />
+        </div>
+        <div class="flex-1 min-w-0 pr-2">
+          <!-- Tier Tag & Status Badge in one clean line -->
+          <div class="flex items-center gap-2">
+            <span id="team-modal-tier" class="px-2 py-0.5 rounded bg-[#38bdf8]/20 text-[#38bdf8] font-bold text-[11px] font-['Hind_Siliguri']">L1</span>
+            <span id="team-modal-status-badge" class="inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#0d2766] text-slate-300 font-['Hind_Siliguri']">
+              নিষ্ক্রিয়
+            </span>
+          </div>
+          <!-- Account Number (হিসাব নাম্বার) -->
+          <div class="mt-1 flex items-baseline gap-1 text-sm font-bold text-white font-['Hind_Siliguri'] truncate">
+            <span>হিসাব নাম্বার:</span>
+            <span id="team-modal-name" class="font-mono text-slate-100 tracking-wider">017*****000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Stats in 2x2 Grid (বর্ডার ও রুম ছাড়া, সরাসরি ব্যাকগ্রাউন্ডে টেক্সট) -->
+      <div class="grid grid-cols-2 gap-x-4 gap-y-4 mt-4 pt-3.5 border-t border-white/10 font-['Hind_Siliguri']">
+        <!-- 1: ভারসাম্য -->
+        <div class="space-y-0.5">
+          <span class="text-[11px] text-slate-300 font-bold block">ভারসাম্য</span>
+          <div>
+            <span id="team-modal-balance-bdt" class="text-lg sm:text-xl font-bold text-white tracking-tight">৳ 0.00</span>
+          </div>
+          <div id="team-modal-balance-usdt" class="text-[11px] text-[#38bdf8] font-bold font-mono">≈ 0.00 USDT</div>
+        </div>
+
+        <!-- 2: বন্ধু সংখ্যা -->
+        <div class="space-y-0.5">
+          <span class="text-[11px] text-slate-300 font-bold block">বন্ধু সংখ্যা</span>
+          <div class="flex items-baseline gap-1">
+            <span id="team-modal-referral-val" class="text-lg sm:text-xl font-bold text-white tracking-tight">০</span>
+            <span id="team-modal-referral-sub" class="text-xs font-bold text-slate-300">জন</span>
+          </div>
+          <div class="text-[11px] text-emerald-400 font-bold">সক্রিয় সদস্য</div>
+        </div>
+
+        <!-- 3: আমানত -->
+        <div class="space-y-0.5">
+          <span class="text-[11px] text-slate-300 font-bold block">আমানত</span>
+          <div>
+            <span id="team-modal-deposit-bdt" class="text-lg sm:text-xl font-bold text-rose-400 tracking-tight">৳ 0.00</span>
+          </div>
+          <div id="team-modal-deposit-usdt" class="text-[11px] text-[#38bdf8] font-bold font-mono">≈ 0.00 USDT</div>
+        </div>
+
+        <!-- 4: প্রত্যাহার -->
+        <div class="space-y-0.5">
+          <span class="text-[11px] text-slate-300 font-bold block">প্রত্যাহার</span>
+          <div>
+            <span id="team-modal-withdraw-bdt" class="text-lg sm:text-xl font-bold text-white tracking-tight">৳ 0.00</span>
+          </div>
+          <div id="team-modal-withdraw-usdt" class="text-[11px] text-[#38bdf8] font-bold font-mono">≈ 0.00 USDT</div>
+        </div>
+      </div>
+
     </div>
   </div>
 

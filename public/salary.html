@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>আপনার অর্জন, আপনার সম্মান</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg1: #0a1f6b;
+  --bg2: #06124a;
+  --text: #ffffff;
+  --accent: #27c4ff;
+  --card1: #2aa7ff;
+  --card2: #1fd0ff;
+  --cardtext: #041a5c;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(39, 196, 255, 0.38), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(77, 255, 184, 0.20), transparent 50%),
+    linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 16px 36px;
+  perspective: 1000px;
+}
+h1 {
+  text-align: center;
+  font-size: 30px;
+  margin: 12px 0 6px;
+  line-height: 1.3;
+  font-weight: 700;
+  animation: float 5s ease-in-out infinite;
+  text-shadow: 0 8px 24px rgba(39, 196, 255, 0.4);
+}
+h1 span {
+  color: var(--accent);
+}
+.sub {
+  text-align: center;
+  font-size: 15px;
+  margin: 0 0 24px;
+  opacity: 0.95;
+  font-weight: 400;
+  color: #e2e8f0;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  margin: 10px 0;
+  border-radius: 18px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.15s ease-out, box-shadow 0.2s;
+  opacity: 0;
+  animation: flipIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: calc(var(--i, 0) * 0.12s);
+}
+.row:hover {
+  box-shadow: none;
+}
+.pay, .ico {
+  transform: translateZ(30px);
+}
+.ico {
+  width: 44px;
+  height: 44px;
+  text-align: center;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin3d 4.5s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.35s);
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45));
+}
+.ico svg {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+.pos {
+  font-weight: 700;
+  font-size: 17px;
+  width: 78px;
+  flex: none;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+.desc {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 1.45;
+  border-left: none;
+  padding-left: 6px;
+  color: #f1f5f9;
+}
+.desc b {
+  color: var(--accent);
+  font-weight: 700;
+}
+.prog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.4);
+}
+.fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #27c4ff, #4dffb8);
+  box-shadow: 0 0 10px rgba(77, 255, 184, 0.7);
+  transition: width 0.1s linear;
+}
+.pct {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 36px;
+  text-align: right;
+  color: #4dffb8;
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.pay {
+  flex: none;
+  background: linear-gradient(135deg, var(--card1), var(--card2));
+  color: var(--cardtext);
+  border-radius: 16px 4px 16px 4px;
+  padding: 6px 12px;
+  text-align: center;
+  min-width: 94px;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  user-select: none;
+  transition: filter 0.6s, opacity 0.6s, box-shadow 0.6s, transform 0.18s;
+}
+.pay:active {
+  transform: translateZ(30px) scale(0.96);
+}
+.pay small {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.pay strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-family: 'Hind Siliguri', sans-serif;
+}
+.row:not(.done) .pay {
+  filter: grayscale(1) brightness(0.7);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.row:not(.done) .pay small::before {
+  content: '🔒 ';
+}
+.row.done .pay {
+  filter: none;
+  opacity: 1;
+  pointer-events: auto;
+  box-shadow: 0 0 20px rgba(39, 196, 255, 0.75);
+}
+
+@keyframes flipIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px) rotateX(-70deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  }
+}
+@keyframes spin3d {
+  0%, 60%, 100% {
+    transform: translateZ(30px) rotateY(0deg);
+  }
+  80% {
+    transform: translateZ(30px) rotateY(360deg);
+  }
+}
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotateX(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotateX(6deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row, .ico, h1 {
+    animation: none;
+    opacity: 1;
+  }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
+  <defs>
+    <!-- Cyan to Royal Blue 3D Gradient -->
+    <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9be3ff"/>
+      <stop offset="55%" stop-color="#2f9bff"/>
+      <stop offset="100%" stop-color="#1559d6"/>
+    </linearGradient>
+    <!-- Gold / Amber 3D Gradient -->
+    <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff2a8"/>
+      <stop offset="50%" stop-color="#ffc93c"/>
+      <stop offset="100%" stop-color="#e08a00"/>
+    </linearGradient>
+    <!-- Shiny White / Pearl Gradient -->
+    <linearGradient id="gW" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#a9d8ff"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <h1>আপনার অর্জন, <span>আপনার সম্মান</span></h1>
+  <p class="sub">নির্ধারিত লক্ষ্য পূরণ করে পদমর্যাদা ও মাসিক বেতন অর্জন করুন।</p>
+
+  <!-- ১) তারা-সহ ব্যক্তি (Person with Star) -->
+  <div class="row" style="--i:0;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <circle cx="22" cy="14" r="8" fill="url(#gB)"/>
+        <path d="M6 42c0-10 7-16 16-16s16 6 16 16z" fill="url(#gB)"/>
+        <polygon points="38,26 40.6,31.4 46.4,32.2 42.2,36.2 43.2,42 38,39.2 32.8,42 33.8,36.2 29.6,32.2 35.4,31.4" fill="url(#gG)"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ১</div>
+    <div class="desc">
+      <div>আপনার প্রথম স্তরে ৩ জন সক্রিয় সদস্য যুক্ত হলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ১,০০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ১,০০০</strong>
+    </button>
+  </div>
+
+  <!-- ২) রিবন ব্যাজ (Ribbon Badge) -->
+  <div class="row" style="--i:1;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <polygon points="13,30 7,45 16,42 20,47 25,31" fill="#1b66e0"/>
+        <polygon points="35,30 41,45 32,42 28,47 23,31" fill="#2f9bff"/>
+        <circle cx="24" cy="18" r="15" fill="url(#gB)"/>
+        <circle cx="24" cy="18" r="10.5" fill="#1a63de"/>
+        <polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gW)"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ২</div>
+    <div class="desc">
+      <div>আপনার প্রথম ৫ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ১,৮০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ১,৮০০</strong>
+    </button>
+  </div>
+
+  <!-- ৩) মুকুট (Crown) -->
+  <div class="row" style="--i:2;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <path d="M5 36V13l11 11 8-15 8 15 11-11v23z" fill="url(#gB)"/>
+        <rect x="5" y="38" width="38" height="7" rx="2.5" fill="url(#gB)"/>
+        <circle cx="5" cy="12" r="3" fill="url(#gG)"/>
+        <circle cx="24" cy="8" r="3" fill="url(#gG)"/>
+        <circle cx="43" cy="12" r="3" fill="url(#gG)"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ৩</div>
+    <div class="desc">
+      <div>আপনার প্রথম ৮ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ২,৫০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ২,৫০০</strong>
+    </button>
+  </div>
+
+  <!-- ৪) হীরা (Diamond) -->
+  <div class="row" style="--i:3;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <polygon points="11,8 37,8 46,19 24,45 2,19" fill="url(#gB)"/>
+        <polygon points="11,8 37,8 46,19 2,19" fill="#fff" opacity=".3"/>
+        <path d="M2 19h44M17 19l7-11 7 11-7 26z" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ৪</div>
+    <div class="desc">
+      <div>আপনার প্রথম ১৫ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ৩,২০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ৩,২০০</strong>
+    </button>
+  </div>
+
+  <!-- ৫) রকেট (Rocket) -->
+  <div class="row" style="--i:4;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <g transform="rotate(40 24 24)">
+          <path d="M24 2c8 6 11 16 9 30H15C13 18 16 8 24 2z" fill="url(#gW)"/>
+          <path d="M24 2c8 6 11 16 9 30H24z" fill="#8cc8ff" opacity=".6"/>
+          <circle cx="24" cy="16" r="4.5" fill="url(#gB)"/>
+          <path d="M15 24l-7 10 7-2zM33 24l7 10-7-2z" fill="#1f7be0"/>
+          <path d="M19 32h10l-5 13z" fill="url(#gG)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ৫</div>
+    <div class="desc">
+      <div>আপনার প্রথম ২৫ জন বা তার বেশি <b>A ও B-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ৪,০০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ৪,০০০</strong>
+    </button>
+  </div>
+
+  <!-- ৬) ঢাল (Shield) -->
+  <div class="row" style="--i:5;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <path d="M24 3l17 6v13c0 11-7 19-17 23C14 41 7 33 7 22V9z" fill="url(#gB)"/>
+        <path d="M24 8l12 4.5V22c0 8-5 14-12 17.5C17 36 12 30 12 22v-9.5z" fill="#1a63de"/>
+        <polygon points="24,15 26.4,20.3 32,21 27.8,24.8 29,30.5 24,27.6 19,30.5 20.2,24.8 16,21 21.6,20.3" fill="url(#gW)"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ৬</div>
+    <div class="desc">
+      <div>আপনার প্রথম ৪০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ৫,৫০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ৫,৫০০</strong>
+    </button>
+  </div>
+
+  <!-- ৭) ট্রফি (Trophy) -->
+  <div class="row" style="--i:6;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <path d="M14 6h20v13c0 7-4.5 12-10 12s-10-5-10-12z" fill="url(#gG)"/>
+        <path d="M14 10H6c0 8 3 12 9 13M34 10h8c0 8-3 12-9 13" stroke="#f0a800" stroke-width="3" fill="none"/>
+        <rect x="21" y="31" width="6" height="8" fill="#e08a00"/>
+        <rect x="14" y="39" width="20" height="6" rx="2" fill="url(#gG)"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ৭</div>
+    <div class="desc">
+      <div>আপনার প্রথম ৭০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ৭,০০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ৭,০০০</strong>
+    </button>
+  </div>
+
+  <!-- ৮) সোনালি মেডেল (Gold Medal) -->
+  <div class="row" style="--i:7;">
+    <div class="ico">
+      <svg viewBox="0 0 48 48">
+        <polygon points="12,30 7,46 16,42 21,47 26,31" fill="#1b66e0"/>
+        <polygon points="36,30 41,46 32,42 27,47 22,31" fill="#2f9bff"/>
+        <circle cx="24" cy="18" r="16" fill="url(#gG)"/>
+        <circle cx="24" cy="18" r="11" fill="#1a63de"/>
+        <polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gG)"/>
+      </svg>
+    </div>
+    <div class="pos">অবস্থান ৮</div>
+    <div class="desc">
+      <div>আপনার প্রথম ১০০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+    </div>
+    <button type="button" class="pay" aria-label="মাসিক বেতন ৳ ১০,০০০">
+      <small>মাসিক বেতন</small>
+      <strong>৳ ১০,০০০</strong>
+    </button>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.row').forEach(function(r, i) {
+  r.style.setProperty('--i', i);
+
+  // বাংলা সংখ্যা কনভার্টার
+  var bn = function(n) {
+    return String(n).replace(/\d/g, function(d) {
+      return '০১২৩৪৫৬৭৮৯'[d];
+    });
+  };
+
+  // প্রগ্রেস বার ও পার্সেন্টেজ টেক্সট যুক্ত করা
+  var desc = r.querySelector('.desc');
+  var pg = document.createElement('div');
+  pg.className = 'prog';
+  pg.innerHTML = '<div class="bar"><div class="fill"></div></div><div class="pct">' + bn(0) + '%</div>';
+  desc.appendChild(pg);
+
+  var f = pg.querySelector('.fill');
+  var t = pg.querySelector('.pct');
+  
+  // বাস্তব টিম মেম্বার সংখ্যা থেকে পার্সেন্টেজ নির্ধারণ (শর্ত পূরণ না হলে আনলক হবে না)
+  var reqs = [3, 5, 8, 15, 25, 40, 70, 100];
+  var req = reqs[i] || 3;
+  var memberCount = 0;
+  try {
+    var user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+    var myPhone = (user && (user.phone || user.accountNumber)) || '';
+    var teamRecords = JSON.parse(localStorage.getItem('aloTeamRecords') || '[]');
+    memberCount = teamRecords.filter(function(m) {
+      return m.superiorPhone === myPhone || m.superior_phone === myPhone;
+    }).length;
+  } catch(e) { memberCount = 0; }
+  
+  var tgt = Math.min(100, Math.floor((memberCount / req) * 100));
+
+  // মসৃণ অ্যানিমেশনে বাস্তব অগ্রগতি প্রদর্শন
+  setTimeout(function() {
+    if (tgt <= 0) {
+      f.style.width = '0%';
+      t.textContent = bn(0) + '%';
+      return;
+    }
+    var startTs = null;
+    var duration = 2500;
+
+    function step(ts) {
+      if (!startTs) startTs = ts;
+      var elapsed = ts - startTs;
+      var k = Math.min(elapsed / duration, 1);
+      var ease = 1 - Math.pow(1 - k, 3);
+      var val = tgt * ease;
+
+      f.style.width = val + '%';
+      t.textContent = bn(Math.round(val)) + '%';
+
+      if (k < 1) {
+        requestAnimationFrame(step);
+      } else if (tgt >= 100) {
+        r.classList.add('done');
+      }
+    }
+    requestAnimationFrame(step);
+  }, 600 + i * 200);
+
+  // ৩ডি স্পর্শ ও মাউস টিল্ট (3D Interactive Tilt)
+  function tilt(e) {
+    var rect = r.getBoundingClientRect();
+    var p = e.touches ? e.touches[0] : e;
+    var x = (p.clientX - rect.left) / rect.width - 0.5;
+    var y = (p.clientY - rect.top) / rect.height - 0.5;
+    r.style.setProperty('--ry', (x * 14) + 'deg');
+    r.style.setProperty('--rx', (-y * 14) + 'deg');
+  }
+
+  function reset() {
+    r.style.setProperty('--ry', '0deg');
+    r.style.setProperty('--rx', '0deg');
+  }
+
+  r.addEventListener('pointermove', tilt);
+  r.addEventListener('pointerleave', reset);
+  r.addEventListener('touchmove', tilt, { passive: true });
+  r.addEventListener('touchend', reset);
+
+  // বেতন বক্সে ক্লিক করলে অভিনন্দন নোটিফিকেশন
+  var payBtn = r.querySelector('.pay');
+  if (payBtn) {
+    payBtn.addEventListener('click', function(ev) {
+      if (r.classList.contains('done')) {
+        alert('🎉 অভিনন্দন! আপনার ' + r.querySelector('.pos').textContent + ' এর মাসিক বেতন সফলভাবে গৃহীত হয়েছে!');
+      }
+    });
+  }
+});
+</script>
+
+</body>
+</html>

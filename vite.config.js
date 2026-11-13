@@ -1,8 +1,12 @@
 import { defineConfig } from 'vite';
-import depositHandler from './api/deposit.js';
-import createPaymentHandler from './api/create-payment.js';
-import notifyHandler from './api/notify.js';
-import cryptoHandler from './api/crypto.js';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+async function loadApiHandler(relPath) {
+  const fullPath = path.resolve(process.cwd(), relPath);
+  const mod = await import(pathToFileURL(fullPath).href);
+  return mod.default || mod;
+}
 
 function apiDepositPlugin() {
   return {
@@ -12,6 +16,10 @@ function apiDepositPlugin() {
         const url = new URL(req.url, `http://${req.headers.host || 'localhost:3000'}`);
         if (url.pathname === '/checkout' || url.pathname === '/payment') {
           req.url = '/checkout.html';
+          return next();
+        }
+        if (url.pathname === '/admin' || url.pathname === '/admin/') {
+          req.url = '/admin.html';
           return next();
         }
         if (url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify' || url.pathname.startsWith('/api/crypto')) {
@@ -45,12 +53,16 @@ function apiDepositPlugin() {
 
             try {
               if (url.pathname.startsWith('/api/crypto')) {
+                const cryptoHandler = await loadApiHandler('api/crypto.js');
                 await cryptoHandler(req, res);
               } else if (url.pathname === '/api/deposit') {
+                const depositHandler = await loadApiHandler('api/deposit.js');
                 await depositHandler(req, res);
               } else if (url.pathname === '/api/create-payment') {
+                const createPaymentHandler = await loadApiHandler('api/create-payment.js');
                 await createPaymentHandler(req, res);
               } else if (url.pathname === '/api/notify') {
+                const notifyHandler = await loadApiHandler('api/notify.js');
                 await notifyHandler(req, res);
               }
             } catch (err) {

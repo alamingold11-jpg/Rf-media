@@ -80,7 +80,8 @@ export default async function handler(req, res) {
       amount: rawAmount,
       orderId: orderId,
       payType: payType,
-      phone: phone
+      phone: phone,
+      attach: phone
     });
 
     console.log(`[Payment Proxy] Forwarding to cPanel (${CPANEL_PAYMENT_URL}):`, cpanelPayload);
