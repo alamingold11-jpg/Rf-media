@@ -21,40 +21,27 @@
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-      }
-    }
-  </script>
   <style>
     body {
       font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-      background: linear-gradient(145deg, #eef2f7 0%, #e4ebf5 50%, #dae3f0 100%);
+      background: linear-gradient(155deg, #eef3f9 0%, #e6edf7 50%, #ebf1f8 100%);
       color: #0f172a;
     }
     .tabular-nums {
       font-variant-numeric: tabular-nums;
     }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-track { background: #e8eef6; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   </style>
 </head>
 <body class="min-h-screen text-slate-900 antialiased">
 
   <!-- =========================================================
-       3D ARCHITECTURAL BACKDROP CANVAS
+       ADMIN LOGIN SCREEN (Clean Minimal Light)
   ========================================================== -->
-  <div id="admin-3d-bg" class="fixed inset-0 z-0 pointer-events-none overflow-hidden" style="background: linear-gradient(145deg, #eef2f7 0%, #e4ebf5 50%, #dae3f0 100%);" aria-hidden="true"></div>
-
-  <!-- =========================================================
-       ADMIN LOGIN SCREEN (Clean Minimal Light over 3D Scene)
-  ========================================================== -->
-  <div id="admin-login-screen" class="relative z-10 min-h-screen flex items-center justify-center p-4 bg-transparent">
-    <div class="w-full max-w-sm bg-white/92 rounded-xl p-7 shadow-lg border border-white/80">
+  <div id="admin-login-screen" class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-xl p-7 shadow-sm">
       <div class="mb-6 pb-4 border-b border-slate-100">
         <h1 class="text-xl font-bold text-slate-900 tracking-tight">Admin Login</h1>
         <p class="text-xs text-slate-500 mt-1">Sign in to manage users, recharges &amp; withdrawals</p>
@@ -90,14 +77,14 @@
   <!-- =========================================================
        MAIN ADMIN WORKSPACE
   ========================================================== -->
-  <div id="admin-app-shell" class="relative z-10 hidden min-h-screen flex">
+  <div id="admin-app-shell" class="hidden min-h-screen flex">
 
     <!-- Mobile Sidebar Backdrop -->
     <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/30 z-30 hidden lg:hidden" onclick="toggleMobileSidebar(false)"></div>
 
     <!-- Left Navigation Sidebar -->
     <aside id="admin-sidebar"
-      class="fixed lg:sticky top-0 left-0 z-40 h-screen w-60 bg-white/92 border-r border-slate-200/70 flex flex-col justify-between transition-transform duration-200 -translate-x-full lg:translate-x-0 shrink-0">
+      class="fixed lg:sticky top-0 left-0 z-40 h-screen w-60 bg-white border-r border-slate-200/70 flex flex-col justify-between transition-transform duration-200 -translate-x-full lg:translate-x-0 shrink-0">
       <div>
         <!-- Brand Header -->
         <div class="h-14 px-5 flex items-center justify-between border-b border-slate-100">
@@ -171,7 +158,7 @@
     <!-- Main Workspace Area -->
     <div class="flex-1 min-w-0 flex flex-col">
       <!-- Top Header Bar -->
-      <header class="sticky top-0 z-20 h-14 bg-white/90 border-b border-slate-200/70 px-4 sm:px-6 flex items-center justify-between gap-4">
+      <header class="sticky top-0 z-20 h-14 bg-white/95 border-b border-slate-200/70 px-4 sm:px-6 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 min-w-0">
           <button type="button" onclick="toggleMobileSidebar(true)" class="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -201,7 +188,7 @@
         <section id="section-overview" class="space-y-6">
           <!-- 6 Core KPI Metrics (Clean Fresh Cards, no heavy borders) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Users</div>
               <div id="kpi-total-users" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">0</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
@@ -209,7 +196,7 @@
               </div>
             </div>
 
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="flex items-center justify-between text-xs font-medium text-slate-500">
                 <span>Today Users</span>
                 <span id="kpi-today-date-label" class="font-mono text-slate-400">TODAY</span>
@@ -218,7 +205,7 @@
               <div class="mt-1.5 text-xs text-slate-500">Joined today</div>
             </div>
 
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Recharge</div>
               <div id="kpi-total-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
@@ -226,7 +213,7 @@
               </div>
             </div>
 
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Today Recharge</div>
               <div id="kpi-today-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
@@ -234,7 +221,7 @@
               </div>
             </div>
 
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Withdrawal</div>
               <div id="kpi-total-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
@@ -242,7 +229,7 @@
               </div>
             </div>
 
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+            <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Today Withdrawal</div>
               <div id="kpi-today-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
@@ -253,7 +240,7 @@
 
           <!-- Pending Queues -->
           <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-            <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden flex flex-col">
+            <div class="bg-white rounded-xl shadow-xs overflow-hidden flex flex-col">
               <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 class="text-sm font-bold text-slate-900">Pending Recharges</h3>
@@ -268,7 +255,7 @@
               </div>
             </div>
 
-            <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden flex flex-col">
+            <div class="bg-white rounded-xl shadow-xs overflow-hidden flex flex-col">
               <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
                 <div>
                   <h3 class="text-sm font-bold text-slate-900">Pending Withdrawals</h3>
@@ -285,7 +272,7 @@
           </div>
 
           <!-- Latest Users -->
-          <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden">
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
             <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-bold text-slate-900">Recent Users</h3>
@@ -316,7 +303,7 @@
              SECTION: RECHARGES
         ================================================== -->
         <section id="section-recharges" class="hidden space-y-4">
-          <div class="bg-white/92 rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div class="flex flex-wrap items-center gap-1" id="recharge-filter-tabs">
               <button type="button" data-filter="all" onclick="setRechargeFilter('all')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white cursor-pointer">All</button>
               <button type="button" data-filter="pending" onclick="setRechargeFilter('pending')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Pending</button>
@@ -334,7 +321,7 @@
             </div>
           </div>
 
-          <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden">
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
                 <thead>
@@ -357,7 +344,7 @@
              SECTION: WITHDRAWALS
         ================================================== -->
         <section id="section-withdrawals" class="hidden space-y-4">
-          <div class="bg-white/92 rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div class="flex flex-wrap items-center gap-1" id="withdraw-filter-tabs">
               <button type="button" data-filter="all" onclick="setWithdrawFilter('all')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white cursor-pointer">All</button>
               <button type="button" data-filter="pending" onclick="setWithdrawFilter('pending')" class="wd-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Pending</button>
@@ -371,7 +358,7 @@
             </div>
           </div>
 
-          <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden">
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
                 <thead>
@@ -394,7 +381,7 @@
              SECTION: USERS
         ================================================== -->
         <section id="section-users" class="hidden space-y-4">
-          <div class="bg-white/92 rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div class="flex flex-wrap items-center gap-2">
               <input id="user-search-input" type="text" oninput="renderUsersTable()" placeholder="Search phone, name, member ID..."
                 class="w-full sm:w-72 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
@@ -416,7 +403,7 @@
             </div>
           </div>
 
-          <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden">
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
                 <thead>
@@ -440,7 +427,7 @@
              SECTION: COMMISSIONS
         ================================================== -->
         <section id="section-commissions" class="hidden space-y-4">
-          <div class="bg-white/92 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="bg-white rounded-xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <h3 class="text-sm font-bold text-slate-900">Team Rebates &amp; Commissions</h3>
               <p class="text-xs text-slate-500">Referral commission ledger</p>
@@ -449,7 +436,7 @@
               class="w-full sm:w-64 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
           </div>
 
-          <div class="bg-white/92 rounded-xl shadow-xs overflow-hidden">
+          <div class="bg-white rounded-xl shadow-xs overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left border-collapse">
                 <thead>
@@ -471,7 +458,7 @@
              SECTION: PLATFORM RULES
         ================================================== -->
         <section id="section-platform" class="hidden space-y-4">
-          <div class="bg-white/92 rounded-xl p-5 shadow-xs">
+          <div class="bg-white rounded-xl p-5 shadow-xs">
             <div class="border-b border-slate-100 pb-3.5 mb-5">
               <h3 class="text-sm font-bold text-slate-900">Platform Rules &amp; Live Website Settings</h3>
               <p class="text-xs text-slate-500">Changes saved here update the live user website immediately</p>
@@ -544,7 +531,7 @@
         ================================================== -->
         <section id="section-settings" class="hidden space-y-5">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs space-y-4">
+            <div class="bg-white rounded-xl p-5 shadow-xs space-y-4">
               <div class="border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900">Admin Credentials</h3>
                 <p class="text-xs text-slate-500">Update login username and password for this browser</p>
@@ -566,7 +553,7 @@
               </form>
             </div>
 
-            <div class="bg-white/92 rounded-xl p-5 shadow-xs space-y-4">
+            <div class="bg-white rounded-xl p-5 shadow-xs space-y-4">
               <div class="border-b border-slate-100 pb-3">
                 <h3 class="text-sm font-bold text-slate-900">Database Connection</h3>
                 <p class="text-xs text-slate-500">Pre-configured Supabase connection settings</p>
@@ -594,7 +581,7 @@
             </div>
           </div>
 
-          <div class="bg-white/92 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="bg-white rounded-xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h3 class="text-sm font-bold text-slate-900">CSV Exports</h3>
               <p class="text-xs text-slate-500">Download spreadsheet backups</p>
@@ -800,6 +787,5 @@
 
   <script src="/admin-config.js"></script>
   <script src="/admin-panel.js"></script>
-  <script type="module" src="/admin-bg-3d.js"></script>
 </body>
 </html>
