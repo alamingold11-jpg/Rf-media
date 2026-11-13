@@ -73,17 +73,23 @@ function isSameLocalDay(isoOrDateStr) {
   );
 }
 
-function parseUserMeta(userRow) {
+function parseRawUserOpt(userRow) {
   let opt = {};
   if (userRow && userRow.bkash_optional) {
     try {
-      opt = typeof userRow.bkash_optional === 'string'
+      const parsed = typeof userRow.bkash_optional === 'string'
         ? JSON.parse(userRow.bkash_optional)
         : userRow.bkash_optional;
+      if (parsed && typeof parsed === 'object') opt = parsed;
     } catch (e) {
       opt = {};
     }
   }
+  return opt;
+}
+
+function parseUserMeta(userRow) {
+  const opt = parseRawUserOpt(userRow);
   return {
     realName: opt.real_name || userRow?.name || 'Member',
     fundPassword: opt.fund_password || '',
@@ -723,19 +729,29 @@ async function handleRechargeAction(txId, targetState) {
 
       if (userRow) {
         const curBal = Number(userRow.balance) || 0;
+        const rawOpt = parseRawUserOpt(userRow);
+        const curRechargeAmt = Number(rawOpt.recharge_amount) || 0;
         let nextBal = curBal;
+        let nextRechargeAmt = curRechargeAmt;
         if (prevState !== 'approved' && targetState === 'approved') {
-          nextBal = curBal + amt;
+          nextBal = Number((curBal + amt).toFixed(2));
+          nextRechargeAmt = Number((curRechargeAmt + amt).toFixed(2));
           balanceNote = ` (+${formatMoney(amt)} credited to user)`;
         } else if (prevState === 'approved' && targetState !== 'approved') {
-          nextBal = Math.max(0, curBal - amt);
+          nextBal = Math.max(0, Number((curBal - amt).toFixed(2)));
+          nextRechargeAmt = Math.max(0, Number((curRechargeAmt - amt).toFixed(2)));
           balanceNote = ` (-${formatMoney(amt)} reverted from balance)`;
         }
 
-        if (nextBal !== curBal) {
+        if (nextBal !== curBal || nextRechargeAmt !== curRechargeAmt) {
+          rawOpt.recharge_amount = nextRechargeAmt;
           await supabaseClient
             .from('users')
-            .update({ balance: nextBal, updated_at: new Date().toISOString() })
+            .update({
+              balance: nextBal,
+              bkash_optional: JSON.stringify(rawOpt),
+              updated_at: new Date().toISOString()
+            })
             .eq('phone', normPhone);
         }
       }
@@ -914,18 +930,28 @@ async function handleWithdrawAction(txId, targetState) {
 
       if (userRow) {
         const curBal = Number(userRow.balance) || 0;
+        const rawOpt = parseRawUserOpt(userRow);
+        const curCashoutAmt = Number(rawOpt.cashout_amount) || 0;
         let nextBal = curBal;
+        let nextCashoutAmt = curCashoutAmt;
         if (prevState !== 'rejected' && targetState === 'rejected') {
-          nextBal = curBal + amt;
+          nextBal = Number((curBal + amt).toFixed(2));
+          nextCashoutAmt = Math.max(0, Number((curCashoutAmt - amt).toFixed(2)));
           note = ` (+${formatMoney(amt)} refunded to user)`;
         } else if (prevState === 'rejected' && targetState !== 'rejected') {
-          nextBal = Math.max(0, curBal - amt);
+          nextBal = Math.max(0, Number((curBal - amt).toFixed(2)));
+          nextCashoutAmt = Number((curCashoutAmt + amt).toFixed(2));
           note = ` (-${formatMoney(amt)} re-deducted)`;
         }
-        if (nextBal !== curBal) {
+        if (nextBal !== curBal || nextCashoutAmt !== curCashoutAmt) {
+          rawOpt.cashout_amount = nextCashoutAmt;
           await supabaseClient
             .from('users')
-            .update({ balance: nextBal, updated_at: new Date().toISOString() })
+            .update({
+              balance: nextBal,
+              bkash_optional: JSON.stringify(rawOpt),
+              updated_at: new Date().toISOString()
+            })
             .eq('phone', normPhone);
         }
       }
@@ -1142,10 +1168,11 @@ async function handleSaveUserForm(e) {
   if (!existing) return;
 
   const existingMeta = parseUserMeta(existing);
+  const rawOpt = parseRawUserOpt(existing);
   const newName = document.getElementById('edit-user-name').value.trim() || 'Member';
   const newPlainPass = document.getElementById('edit-user-password').value.trim();
 
-  const updatedMeta = {
+  const updatedMeta = Object.assign({}, rawOpt, {
     nagad_name: existingMeta.nagadName || newName,
     nagad_phone: document.getElementById('edit-user-nagad-phone').value.trim(),
     usdt_name: existingMeta.usdtName || newName,
@@ -1153,7 +1180,7 @@ async function handleSaveUserForm(e) {
     real_name: newName,
     fund_password: document.getElementById('edit-user-fundpass').value.trim(),
     account_status: document.getElementById('edit-user-status').value || 'active'
-  };
+  });
 
   const payload = {
     name: newName,
@@ -1407,6 +1434,184 @@ const DEFAULT_PLATFORM_CONTROLS = {
   managerId: '#PW-MANAGER-8802'
 };
 
+const PACKAGE_LEVEL_KEYS = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
+
+const DEFAULT_PACKAGE_CONFIGS = {
+  LV0: { count: 5, reward: 20, price: 0, nameBn: 'ফ্রি স্তর', nameEn: 'Free Tier', nameHi: 'निःशुल्क स्तर' },
+  LV1: { count: 6, reward: 30, price: 3500, nameBn: 'বেসিক প্যাকেজ', nameEn: 'Basic Package', nameHi: 'बेसिक पैकेज' },
+  LV2: { count: 12, reward: 40, price: 7500, nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameEn: 'Standard Package', nameHi: 'स्टैंडर्ड पैकेज' },
+  LV3: { count: 15, reward: 50, price: 36000, nameBn: 'সিলভার প্যাকেজ', nameEn: 'Silver Package', nameHi: 'सिल्वर पैकेज' },
+  LV4: { count: 25, reward: 60, price: 84000, nameBn: 'গোল্ড প্যাকেজ', nameEn: 'Gold Package', nameHi: 'गोल्ड पैकेज' },
+  LV5: { count: 35, reward: 70, price: 150000, nameBn: 'প্রিমিয়াম প্যাকেজ', nameEn: 'Premium Package', nameHi: 'प्रीमियम पैकेज' },
+  LV6: { count: 50, reward: 100, price: 300000, nameBn: 'এলিট প্যাকেজ', nameEn: 'Elite Package', nameHi: 'एलीट पैकेज' }
+};
+
+let latestSystemConfig = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, {
+  packages: cloneDefaultPackages()
+});
+
+function cloneDefaultPackages() {
+  const out = {};
+  PACKAGE_LEVEL_KEYS.forEach(lvl => {
+    out[lvl] = Object.assign({}, DEFAULT_PACKAGE_CONFIGS[lvl]);
+  });
+  return out;
+}
+
+function normalizePackagesMap(rawPackages) {
+  const out = cloneDefaultPackages();
+  if (!rawPackages || typeof rawPackages !== 'object') return out;
+  PACKAGE_LEVEL_KEYS.forEach(lvl => {
+    const src = rawPackages[lvl];
+    if (!src || typeof src !== 'object') return;
+    const def = DEFAULT_PACKAGE_CONFIGS[lvl];
+    const parsedCount = parseInt(src.count, 10);
+    const parsedReward = parseFloat(src.reward);
+    const parsedPrice = parseFloat(src.price);
+    out[lvl] = {
+      count: Number.isFinite(parsedCount) && parsedCount >= 1 ? parsedCount : def.count,
+      reward: Number.isFinite(parsedReward) && parsedReward >= 0 ? parsedReward : def.reward,
+      price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : def.price,
+      nameBn: String(src.nameBn || '').trim() || def.nameBn,
+      nameEn: String(src.nameEn || '').trim() || def.nameEn,
+      nameHi: String(src.nameHi || '').trim() || def.nameHi
+    };
+  });
+  return out;
+}
+
+function syncEditUserPackageOptions(packagesObj) {
+  const selectEl = document.getElementById('edit-user-level');
+  if (!selectEl) return;
+  const currentVal = selectEl.value;
+  const pkgs = normalizePackagesMap(packagesObj);
+  PACKAGE_LEVEL_KEYS.forEach(lvl => {
+    const opt = selectEl.querySelector(`option[value="${lvl}"]`);
+    if (!opt) return;
+    const pkg = pkgs[lvl];
+    const priceLabel = Number(pkg.price) === 0 ? 'Free' : `৳${Number(pkg.price).toLocaleString()}`;
+    opt.textContent = `${lvl} (${pkg.nameEn} - ${priceLabel})`;
+  });
+  if (currentVal) selectEl.value = currentVal;
+}
+
+function renderPackageConfigEditor(packagesObj) {
+  const container = document.getElementById('package-configs-editor');
+  if (!container) return;
+  const pkgs = normalizePackagesMap(packagesObj);
+
+  container.innerHTML = PACKAGE_LEVEL_KEYS.map(lvl => {
+    const p = pkgs[lvl];
+    const dailyIncome = Number((p.count * p.reward).toFixed(2));
+    const badgeColor = lvl === 'LV0'
+      ? 'bg-sky-50 text-sky-700 border-sky-200'
+      : 'bg-slate-100 text-slate-800 border-slate-200';
+
+    return `
+      <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-3" data-pkg-row="${lvl}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md border text-xs font-bold font-mono ${badgeColor}">${lvl}</span>
+            <span class="text-xs font-semibold text-slate-700">${escapeHtml(p.nameBn)} · ${escapeHtml(p.nameEn)}</span>
+          </div>
+          <div class="text-xs font-medium text-slate-500">
+            দৈনিক আয় (Daily Income):
+            <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">৳${dailyIncome.toLocaleString('en-US', { minimumFractionDigits: dailyIncome % 1 ? 2 : 0, maximumFractionDigits: 2 })}</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">দৈনিক কর্ম (Daily Tasks)</label>
+            <input type="number" min="1" step="1" required
+              data-pkg-level="${lvl}" data-pkg-field="count" value="${p.count}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রতি কাজের এমাউন্ট (Per-Task Amount ৳)</label>
+            <input type="number" min="0" step="0.01" required
+              data-pkg-level="${lvl}" data-pkg-field="reward" value="${p.reward}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্যাকেজ দাম (Package Price ৳)</label>
+            <input type="number" min="0" step="1" required
+              data-pkg-level="${lvl}" data-pkg-field="price" value="${p.price}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">বাংলা নাম (Bangla)</label>
+            <input type="text" required
+              data-pkg-level="${lvl}" data-pkg-field="nameBn" value="${escapeHtml(p.nameBn)}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">English Name</label>
+            <input type="text" required
+              data-pkg-level="${lvl}" data-pkg-field="nameEn" value="${escapeHtml(p.nameEn)}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">हिन्दी नाम (Hindi)</label>
+            <input type="text" required
+              data-pkg-level="${lvl}" data-pkg-field="nameHi" value="${escapeHtml(p.nameHi)}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.pkg-cfg-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const lvl = inp.dataset.pkgLevel;
+      if (!lvl) return;
+      const countInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="count"]`);
+      const rewardInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="reward"]`);
+      const incEl = container.querySelector(`[data-pkg-income="${lvl}"]`);
+      if (incEl && countInp && rewardInp) {
+        const c = Math.max(0, parseInt(countInp.value || '0', 10) || 0);
+        const r = Math.max(0, parseFloat(rewardInp.value || '0') || 0);
+        const inc = Number((c * r).toFixed(2));
+        incEl.textContent = `৳${inc.toLocaleString('en-US', { minimumFractionDigits: inc % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+      }
+    });
+  });
+}
+
+function collectPackagesFromForm() {
+  const container = document.getElementById('package-configs-editor');
+  if (!container) return latestSystemConfig.packages || cloneDefaultPackages();
+  const out = {};
+  PACKAGE_LEVEL_KEYS.forEach(lvl => {
+    const def = DEFAULT_PACKAGE_CONFIGS[lvl];
+    const getVal = field => {
+      const el = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="${field}"]`);
+      return el ? el.value : '';
+    };
+    const countVal = parseInt(getVal('count'), 10);
+    const rewardVal = parseFloat(getVal('reward'));
+    const priceVal = parseFloat(getVal('price'));
+    out[lvl] = {
+      count: Number.isFinite(countVal) && countVal >= 1 ? countVal : def.count,
+      reward: Number.isFinite(rewardVal) && rewardVal >= 0 ? rewardVal : def.reward,
+      price: Number.isFinite(priceVal) && priceVal >= 0 ? priceVal : def.price,
+      nameBn: String(getVal('nameBn')).trim() || def.nameBn,
+      nameEn: String(getVal('nameEn')).trim() || def.nameEn,
+      nameHi: String(getVal('nameHi')).trim() || def.nameHi
+    };
+  });
+  return out;
+}
+
+function resetPackageConfigsToDefault() {
+  renderPackageConfigEditor(DEFAULT_PACKAGE_CONFIGS);
+  showToast('Default package values loaded in form. Click "Save Package & Task Settings" to apply live.', 'success');
+}
+
 function hydratePlatformControlsForm(sysRow) {
   let parsed = {};
   if (sysRow && sysRow.bkash_optional) {
@@ -1416,7 +1621,9 @@ function hydratePlatformControlsForm(sysRow) {
         : sysRow.bkash_optional;
     } catch (e) {}
   }
-  const cfg = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, parsed);
+  const normalizedPkgs = normalizePackagesMap(parsed.packages);
+  const cfg = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, parsed, { packages: normalizedPkgs });
+  latestSystemConfig = cfg;
 
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
   setVal('pc-withdraw-enabled', cfg.withdrawEnabled === false ? 'false' : 'true');
@@ -1427,21 +1634,12 @@ function hydratePlatformControlsForm(sysRow) {
   setVal('pc-usdt-address', cfg.usdtAddress);
   setVal('pc-telegram-url', cfg.telegramUrl);
   setVal('pc-manager-id', cfg.managerId);
+
+  renderPackageConfigEditor(normalizedPkgs);
+  syncEditUserPackageOptions(normalizedPkgs);
 }
 
-async function handlePlatformControlsSave(e) {
-  e.preventDefault();
-  const configObj = {
-    withdrawEnabled: document.getElementById('pc-withdraw-enabled').value !== 'false',
-    minWithdraw: parseFloat(document.getElementById('pc-min-withdraw').value) || 700,
-    withdrawNetPercent: parseFloat(document.getElementById('pc-withdraw-ratio').value) || 50,
-    minRecharge: parseFloat(document.getElementById('pc-min-recharge').value) || 300,
-    usdtRate: parseFloat(document.getElementById('pc-usdt-rate').value) || 125,
-    usdtAddress: document.getElementById('pc-usdt-address').value.trim(),
-    telegramUrl: document.getElementById('pc-telegram-url').value.trim(),
-    managerId: document.getElementById('pc-manager-id').value.trim()
-  };
-
+async function saveSystemConfigPayload(configObj, successMsg) {
   try {
     const { error } = await supabaseClient.from('users').upsert({
       phone: 'SYSTEM_CONFIG',
@@ -1455,15 +1653,45 @@ async function handlePlatformControlsSave(e) {
     }, { onConflict: 'phone' });
 
     if (error) {
-      showToast('Failed to save platform controls: ' + error.message, 'error');
-      return;
+      showToast('Failed to save configuration: ' + error.message, 'error');
+      return false;
     }
 
-    showToast('Platform rules saved and synced to live website.', 'success');
+    latestSystemConfig = configObj;
+    showToast(successMsg, 'success');
     await refreshAllData(false);
+    return true;
   } catch (err) {
-    showToast('Error saving platform controls: ' + (err.message || 'Unknown'), 'error');
+    showToast('Error saving configuration: ' + (err.message || 'Unknown'), 'error');
+    return false;
   }
+}
+
+async function handlePlatformControlsSave(e) {
+  e.preventDefault();
+  const configObj = Object.assign({}, latestSystemConfig, {
+    withdrawEnabled: document.getElementById('pc-withdraw-enabled').value !== 'false',
+    minWithdraw: parseFloat(document.getElementById('pc-min-withdraw').value) || 700,
+    withdrawNetPercent: parseFloat(document.getElementById('pc-withdraw-ratio').value) || 50,
+    minRecharge: parseFloat(document.getElementById('pc-min-recharge').value) || 300,
+    usdtRate: parseFloat(document.getElementById('pc-usdt-rate').value) || 125,
+    usdtAddress: document.getElementById('pc-usdt-address').value.trim(),
+    telegramUrl: document.getElementById('pc-telegram-url').value.trim(),
+    managerId: document.getElementById('pc-manager-id').value.trim(),
+    packages: normalizePackagesMap(latestSystemConfig.packages)
+  });
+
+  await saveSystemConfigPayload(configObj, 'Platform rules saved and synced to live website.');
+}
+
+async function handlePackageControlsSave(e) {
+  e.preventDefault();
+  const packagesObj = collectPackagesFromForm();
+  const configObj = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, latestSystemConfig, {
+    packages: packagesObj
+  });
+
+  await saveSystemConfigPayload(configObj, 'Packages, daily tasks, amounts & language names saved live!');
 }
 
 // ============================================================================
@@ -1475,7 +1703,7 @@ const SECTION_TITLES = {
   withdrawals: 'Withdrawal Requests & Payouts',
   users: 'User Directory & Balance Control',
   commissions: 'Team Rebates & Commissions',
-  platform: 'Platform Controls & Rules',
+  platform: 'Platform Rules & Packages',
   settings: 'System & Connection Settings'
 };
 
@@ -1523,6 +1751,8 @@ async function enterAdminShell(username) {
   const setUserInp = document.getElementById('settings-admin-username');
   if (setUserInp) setUserInp.value = creds.username;
 
+  renderPackageConfigEditor(latestSystemConfig.packages);
+  syncEditUserPackageOptions(latestSystemConfig.packages);
   initSupabaseClient();
   await refreshAllData(false);
 
@@ -1537,6 +1767,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('edit-user-form')?.addEventListener('submit', handleSaveUserForm);
   document.getElementById('manual-adjust-form')?.addEventListener('submit', handleManualAdjustSubmit);
   document.getElementById('platform-controls-form')?.addEventListener('submit', handlePlatformControlsSave);
+  document.getElementById('package-controls-form')?.addEventListener('submit', handlePackageControlsSave);
   document.getElementById('settings-credentials-form')?.addEventListener('submit', handleCredentialsSave);
   document.getElementById('settings-db-form')?.addEventListener('submit', handleDbConfigSave);
 
@@ -1571,6 +1802,7 @@ window.deleteEditedUser = deleteEditedUser;
 window.openManualAdjustModal = openManualAdjustModal;
 window.closeManualAdjustModal = closeManualAdjustModal;
 window.renderCommissionsTable = renderCommissionsTable;
+window.resetPackageConfigsToDefault = resetPackageConfigsToDefault;
 window.resetDatabaseDefaults = resetDatabaseDefaults;
 window.exportCsv = exportCsv;
 window.copyToClipboard = copyToClipboard;

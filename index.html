@@ -115,14 +115,21 @@ html, body {
 
 /* Hind Siliguri Typography & Silky Smooth Scroll for Savings Plan & Customer Service */
 .dashboard-shell:has(#savings-plan-panel:not([hidden])) > header,
-.dashboard-shell:has(#customer-service-panel:not([hidden])) > header {
+.dashboard-shell:has(#customer-service-panel:not([hidden])) > header,
+.dashboard-shell:has(#lucky-spin-panel:not([hidden])) > header {
   display: none !important;
 }
 .team-update-track {
   animation: 65s linear infinite team-update-scroll !important;
 }
-#savings-plan-panel, #savings-plan-panel * {
+#savings-plan-panel, #savings-plan-panel *,
+#lucky-spin-panel, #lucky-spin-panel * {
   font-family: 'Hind Siliguri', system-ui, -apple-system, sans-serif !important;
+}
+#lucky-spin-wheel-rotator {
+  transform-box: view-box;
+  transform-origin: 200px 200px;
+  will-change: transform;
 }
 #savings-plan-panel {
   overflow-y: auto !important;
@@ -193,39 +200,39 @@ html, body {
   font-family: 'Hind Siliguri', system-ui, sans-serif !important;
 }
 .platform-task-row {
-  border-radius: 18px !important;
-  background: rgba(7, 22, 56, 0.88) !important;
-  border: 1px solid rgba(22, 56, 120, 0.6) !important;
-  padding: 1rem 1.1rem !important;
-  margin-bottom: 0.85rem !important;
-  box-shadow: 0 4px 18px rgba(3, 11, 32, 0.5) !important;
-  transition: border-color 0.2s ease, transform 0.2s ease !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 15px 0 !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+  transition: opacity 0.15s ease !important;
 }
 .platform-task-row:hover {
-  border-color: rgba(53, 198, 231, 0.45) !important;
+  background: transparent !important;
+  border-color: transparent !important;
 }
 .platform-task-accept {
-  border-radius: 12px !important;
-  background: linear-gradient(135deg, #1877f2, #0d5bc4) !important;
-  min-width: 5.4rem !important;
-  min-height: 2.85rem !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-  font-size: 0.82rem !important;
-  border: 1px solid rgba(53, 198, 231, 0.35) !important;
-  box-shadow: 0 4px 14px rgba(24, 119, 242, 0.35) !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-radius: 5px !important;
+  background: #1877f2 !important;
+  min-width: 66px !important;
+  min-height: 32px !important;
+  color: #f8fafc !important;
+  font-weight: 500 !important;
+  font-size: 13.5px !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: transform 0.14s ease, background-color 0.16s ease !important;
   cursor: pointer;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 0.45rem 0.85rem !important;
+  padding: 5px 14px !important;
 }
 .platform-task-accept:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2582fc, #166fe5) !important;
-  border-color: #38bdf8 !important;
-  box-shadow: 0 6px 18px rgba(37, 130, 252, 0.5) !important;
-  transform: translateY(-2px);
+  background: #166fe5 !important;
+  box-shadow: none !important;
+  transform: none;
 }
 .platform-task-accept:active:not(:disabled) {
   transform: scale(0.96);
@@ -234,11 +241,18 @@ html, body {
 .platform-task-accept[data-accepted="true"],
 .platform-task-accept.is-accepted {
   background: #ffffff !important;
-  border: 1px solid #ffffff !important;
-  color: #071b50 !important;
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.35) !important;
+  border: none !important;
+  color: #071638 !important;
+  box-shadow: none !important;
   cursor: default !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
+}
+.platform-task-accept.is-limit-reached,
+.platform-task-accept[data-limit-reached="true"] {
+  background: #13274f !important;
+  color: #cbd5e1 !important;
+  box-shadow: none !important;
+  cursor: default !important;
 }
 .task-center-toast-bubble {
   position: fixed !important;
@@ -1182,7 +1196,7 @@ button:active:not(:disabled), .cursor-pointer:active {
                       </button>
 
                       <!-- ১০. ভাগ্যবান স্পিন -->
-                      <button type="button" class="w-full flex items-center justify-between h-[34px] min-h-[34px] transition-opacity active:opacity-70 text-left cursor-pointer bg-transparent border-0 p-0 shadow-none outline-none focus:outline-none" style="background: transparent; border: none; padding: 0; box-shadow: none;" data-dashboard-message="ভাগ্যবান স্পিনের সুবিধা এখানে চালু নেই।">
+                      <button type="button" id="profile-lucky-spin-btn" class="w-full flex items-center justify-between h-[34px] min-h-[34px] transition-opacity active:opacity-70 text-left cursor-pointer bg-transparent border-0 p-0 shadow-none outline-none focus:outline-none" style="background: transparent; border: none; padding: 0; box-shadow: none;" data-panel="lucky-spin">
                         <div class="flex items-center gap-[16px] min-w-0">
                           <svg viewBox="0 0 24 24" class="w-[23px] h-[23px] shrink-0 text-[#fb923c]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>
@@ -1713,210 +1727,230 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <span>YouTube</span>
               </button>
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV0" tabindex="0" role="button" aria-label="LV0 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-vip-card-blue), var(--color-profile-blue)); color: var(--color-primary-contrast);">
-                <div class="flex items-center justify-between gap-2">
-                  <p class="text-sm font-bold">LV0</p>
-                  <span class="hall-current-tag">বর্তমান স্তর</span>
-                </div>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">5</strong></p>
+            <style>
+              #vip-panel .hall-package {
+                position: relative;
+                border-radius: 8px;
+                color: #ffffff !important;
+                border: none !important;
+                transition: transform 0.14s ease, opacity 0.14s ease;
+              }
+              #vip-panel .hall-package:active {
+                transform: scale(0.98);
+              }
+              #vip-panel .hall-package::after {
+                content: "";
+                position: absolute;
+                top: -20%;
+                right: 12%;
+                width: 44%;
+                height: 150%;
+                background: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 60%, transparent 100%);
+                transform: skewX(-24deg);
+                pointer-events: none;
+              }
+              #vip-panel .hall-current-tag {
+                position: absolute;
+                top: 6px;
+                right: 6px;
+                background: rgba(255, 255, 255, 0.92);
+                color: #dc2626;
+                font-size: 10.5px;
+                font-weight: 600;
+                padding: 1.5px 6px;
+                border-radius: 3px;
+                line-height: 1.3;
+                z-index: 20;
+              }
+            </style>
+            <div class="grid grid-cols-2 gap-3.5">
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV0" tabindex="0" role="button" aria-label="LV0 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #2b7ef0 0%, #1659bf 100%);">
+                <span class="hall-current-tag">বর্তমান স্তর</span>
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV0</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">5</strong></p>
               </article>
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV1" tabindex="0" role="button" aria-label="LV1 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-vip-package-border), var(--color-vip-card-sand)); color: var(--color-profile-bg);">
-                <p class="text-sm font-bold">LV1</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">6</strong></p>
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV1" tabindex="0" role="button" aria-label="LV1 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #b8c2ce 0%, #8b96a6 100%);">
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV1</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">6</strong></p>
               </article>
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV2" tabindex="0" role="button" aria-label="LV2 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-vip-frame), var(--color-warning)); color: var(--color-profile-bg);">
-                <p class="text-sm font-bold">LV2</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">12</strong></p>
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV2" tabindex="0" role="button" aria-label="LV2 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #f29d1d 0%, #d87b08 100%);">
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV2</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">12</strong></p>
               </article>
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV3" tabindex="0" role="button" aria-label="LV3 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-profile-blue), var(--color-vip-card-blue)); color: var(--color-primary-contrast);">
-                <p class="text-sm font-bold">LV3</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">15</strong></p>
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV3" tabindex="0" role="button" aria-label="LV3 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #374cb0 0%, #203178 100%);">
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV3</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">15</strong></p>
               </article>
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV4" tabindex="0" role="button" aria-label="LV4 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-profile-cyan), var(--color-success)); color: var(--color-profile-bg);">
-                <p class="text-sm font-bold">LV4</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">25</strong></p>
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV4" tabindex="0" role="button" aria-label="LV4 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #3dbda9 0%, #228895 100%);">
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV4</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">25</strong></p>
               </article>
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV5" tabindex="0" role="button" aria-label="LV5 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-profile-card), var(--color-accent)); color: var(--color-profile-text);">
-                <p class="text-sm font-bold">LV5</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">35</strong></p>
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV5" tabindex="0" role="button" aria-label="LV5 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #363a42 0%, #21242a 100%);">
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV5</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">35</strong></p>
               </article>
-              <article class="hall-package hall-level-room overflow-hidden rounded-[var(--radius)] p-3 shadow-lg" data-open-level-tasks data-level="LV6" tabindex="0" role="button" aria-label="LV6 কাজের তালিকা খুলুন" style="background: linear-gradient(125deg, var(--color-vip-card-purple), var(--color-profile-blue)); color: var(--color-primary-contrast);">
-                <p class="text-sm font-bold">LV6</p>
-                <p class="mt-2 text-sm">দৈনিক কর্ম: <strong class="ml-1">50</strong></p>
+              <article class="hall-package hall-level-room overflow-hidden p-3.5 shadow-md" data-open-level-tasks data-level="LV6" tabindex="0" role="button" aria-label="LV6 কাজের তালিকা খুলুন" style="background: linear-gradient(135deg, #5e43c2 0%, #3a268c 100%);">
+                <p class="text-[15.5px] font-semibold leading-tight text-white relative z-10">LV6</p>
+                <p class="hall-daily-work mt-2.5 text-[13.5px] font-normal text-white/95 relative z-10">দৈনন্দিন কর্ম: <strong class="ml-0.5 font-normal">50</strong></p>
               </article>
             </div>
           </section>
 
-          <section id="invite-panel" class="dashboard-panel -mx-4 -mt-4 min-h-[100vh] px-4 pb-10" aria-label="বন্ধুদের আমন্ত্রণ" hidden style="background: var(--color-profile-bg); color: var(--color-profile-text);">
-            <header class="-mx-4 flex items-center justify-between border-b px-4 py-4" style="border-color: var(--color-profile-border); background: var(--color-profile-bg);">
-              <button type="button" class="personal-header-action" data-panel="profile" aria-label="পেছনে যান">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+          <section id="invite-panel" class="dashboard-panel -mx-4 -mt-4 min-h-screen px-4 pb-28 text-[#eef2fb]" aria-label="বন্ধুদের আমন্ত্রণ জানান" hidden style="background: #071638; color: #eef2fb; font-family: 'Hind Siliguri', system-ui, -apple-system, sans-serif;">
+            <!-- Top Navigation Header (Matches Screenshot 1) -->
+            <header class="-mx-4 flex items-center justify-between px-4 py-3.5 sticky top-0 z-30" style="background: #071638;">
+              <button type="button" class="personal-header-action text-[#eef2fb] hover:text-white" data-panel="profile" aria-label="পেছনে যান">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
               </button>
-              <h2 class="text-base font-bold">টিম</h2>
+              <h2 class="text-[18px] font-bold text-[#eef2fb] tracking-normal">বন্ধুদের আমন্ত্রণ জানান</h2>
               <span class="w-10" aria-hidden="true"></span>
             </header>
 
-            <!-- TOP COMMISSION SUMMARY CARD (Matches Screenshot_20261018_230941.jpg) -->
-            <div class="mx-auto max-w-md mt-4 rounded-2xl p-4 sm:p-5 relative overflow-hidden shadow-xl border border-[#163870]" style="background: linear-gradient(135deg, #071e3d 0%, #0c2b52 100%);">
-              <!-- Subtle Background Glow -->
-              <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-[#35c6e7]/10 pointer-events-none"></div>
+            <!-- HERO GIFT ILLUSTRATION + CENTERED INVITATION CARD (Matches Screenshot 1 with Site Palette) -->
+            <div class="mx-auto max-w-[380px] pt-1 relative">
+              <!-- Subtle Celebratory Gift Illustration Header (Matte Site Colors) -->
+              <div class="relative w-full h-[126px] flex items-end justify-center overflow-hidden pointer-events-none select-none -mb-3 z-0">
+                <svg viewBox="0 0 360 130" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <!-- Soft ambient podium base -->
+                  <path d="M18 130 L64 108 L296 108 L342 130 Z" fill="#0d2354"/>
+                  <!-- Subtle confetti ribbons & small coins (matte, muted tones) -->
+                  <circle cx="52" cy="48" r="6" fill="#d99b26" opacity="0.75"/>
+                  <circle cx="88" cy="24" r="5" fill="#d99b26" opacity="0.65"/>
+                  <circle cx="272" cy="26" r="5.5" fill="#d99b26" opacity="0.7"/>
+                  <circle cx="308" cy="54" r="6" fill="#d99b26" opacity="0.7"/>
+                  <rect x="116" y="28" width="12" height="8" rx="1.5" transform="rotate(-18 116 28)" fill="#1877f2" opacity="0.85"/>
+                  <rect x="234" y="34" width="12" height="8" rx="1.5" transform="rotate(20 234 34)" fill="#1877f2" opacity="0.85"/>
+                  <rect x="148" y="14" width="7" height="10" rx="1" transform="rotate(14 148 14)" fill="#60a5fa" opacity="0.6"/>
+                  <rect x="208" y="16" width="7" height="10" rx="1" transform="rotate(-16 208 16)" fill="#60a5fa" opacity="0.6"/>
 
-              <!-- Header label: % মোট কমিশন -->
-              <div class="flex items-center gap-1.5 text-xs text-slate-300 font-medium">
-                <span class="text-sm font-bold text-[#35c6e7]">%</span>
+                  <!-- Left character figure pointing up -->
+                  <circle cx="108" cy="68" r="6.5" fill="#e2b49a"/>
+                  <path d="M101 66 C101 60 114 60 114 67" fill="#334155"/>
+                  <path d="M98 116 L102 80 L114 80 L117 116 Z" fill="#1e3a8a"/>
+                  <path d="M102 80 C102 74 114 74 114 80 L127 68 L130 71 L114 87 Z" fill="#38bdf8"/>
+
+                  <!-- Right character figure holding gift -->
+                  <circle cx="252" cy="68" r="6.5" fill="#e2b49a"/>
+                  <path d="M246 65 C246 60 258 60 258 66" fill="#1e293b"/>
+                  <path d="M244 116 L246 82 L258 82 L260 116 Z" fill="#0f295c"/>
+                  <path d="M245 80 C245 75 259 75 259 80 L259 96 L245 96 Z" fill="#10b981"/>
+                  <path d="M245 83 L232 90 L234 94 L245 88 Z" fill="#10b981"/>
+
+                  <!-- Center Open Gift Box -->
+                  <!-- Inner stack inside box -->
+                  <rect x="157" y="64" width="46" height="18" rx="2" fill="#10b981"/>
+                  <rect x="176" y="64" width="8" height="18" fill="#60a5fa"/>
+                  <!-- Gift box body -->
+                  <rect x="150" y="78" width="60" height="40" rx="3" fill="#e5a93b"/>
+                  <rect x="175" y="78" width="10" height="40" fill="#1877f2"/>
+                  <!-- Gift box open lid hovering cleanly -->
+                  <g transform="translate(0, -4)">
+                    <rect x="146" y="42" width="68" height="14" rx="2.5" fill="#f0b949"/>
+                    <rect x="175" y="42" width="10" height="14" fill="#1877f2"/>
+                    <path d="M180 42 C170 30 158 34 166 42 Z" fill="#60a5fa"/>
+                    <path d="M180 42 C190 30 202 34 194 42 Z" fill="#60a5fa"/>
+                  </g>
+                </svg>
+              </div>
+
+              <!-- Centered Dark-Navy Invitation Card -->
+              <div class="relative z-10 rounded-xl bg-[#0b1730] px-6 py-7 text-center">
+                <p class="text-[14.5px] font-medium text-[#eef2fb] leading-relaxed">
+                  <span>তোমার বন্ধু</span>
+                  <span id="invite-friend-account" class="notranslate font-mono font-semibold text-[#eef2fb] ml-1">—</span>
+                </p>
+                <p class="text-[14px] font-medium text-[#cbd5e1] mt-1 mb-5">
+                  যোগদানের জন্য আপনাকে আমন্ত্রণ জানাই
+                </p>
+
+                <!-- Centered White QR Code Square -->
+                <div class="w-[152px] h-[152px] mx-auto bg-white rounded-md p-2 flex items-center justify-center overflow-hidden">
+                  <div id="invite-page-qr" class="w-full h-full flex items-center justify-center text-xs text-slate-800"></div>
+                </div>
+
+                <!-- Invitation Code Line -->
+                <p class="mt-5 text-[14.5px] font-medium text-[#eef2fb]">
+                  <span>আমন্ত্রণ কোড:</span>
+                  <strong id="invite-page-code" class="notranslate ml-1.5 font-mono font-bold text-[#eef2fb]">—</strong>
+                </p>
+
+                <!-- Copy Code Button (#1877f2) -->
+                <button type="button" id="invite-copy-code-btn" class="mt-3 mx-auto w-[216px] max-w-full py-2.5 px-4 rounded-md bg-[#1877f2] hover:bg-[#166fe5] text-white font-semibold text-[14px] active:scale-[0.98] transition cursor-pointer border-0">
+                  <span id="invite-copy-code-text">আমন্ত্রণ কোড কপি করুন</span>
+                </button>
+
+                <!-- Real Referral URL Text -->
+                <p id="invite-link-display" class="notranslate mt-5 text-left text-[13px] font-normal text-[#cbd5e1] leading-snug break-all select-all"></p>
+                <input type="text" id="invite-link-input" readonly class="hidden" value="" aria-label="রেফারেল লিঙ্ক">
+                <a id="invite-page-link" class="hidden" href="#" target="_blank" rel="noopener noreferrer"></a>
+
+                <!-- Copy Link Button (#1877f2) -->
+                <button type="button" id="invite-page-copy" class="mt-4 mx-auto w-[216px] max-w-full py-2.5 px-4 rounded-md bg-[#1877f2] hover:bg-[#166fe5] text-white font-semibold text-[14px] active:scale-[0.98] transition cursor-pointer border-0">
+                  <span id="invite-copy-btn-text">আমন্ত্রণ লিঙ্ক কপি করুন</span>
+                </button>
+
+                <p id="invite-page-status" class="mt-2 text-xs text-[#60a5fa] font-medium min-h-4"></p>
+              </div>
+            </div>
+
+            <!-- COMMISSION SUMMARY CARD (Clean Matte Site Colors) -->
+            <div class="mx-auto max-w-[380px] mt-5 rounded-xl p-4 bg-[#0b1730] text-left">
+              <div class="flex items-center gap-1.5 text-xs text-[#94a3b8] font-medium">
+                <span class="text-sm font-bold text-[#60a5fa]">%</span>
                 <span>মোট কমিশন</span>
               </div>
 
-              <!-- Big Amount: ৳ 0.00 -->
-              <div class="flex items-baseline gap-1.5 mt-1.5 mb-4">
-                <span class="text-xl sm:text-2xl font-bold text-[#35c6e7]">৳</span>
-                <span id="invite-total-commission" class="text-3xl sm:text-4xl font-black text-white tracking-tight font-mono">0.00</span>
+              <div class="flex items-baseline gap-1.5 mt-1 mb-3.5">
+                <span class="text-xl font-bold text-[#60a5fa]">৳</span>
+                <span id="invite-total-commission" class="text-3xl font-bold text-[#eef2fb] tracking-tight font-mono">0.00</span>
               </div>
 
-              <!-- 3 Sub-Cards Row -->
-              <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="rounded-xl p-2.5 bg-[#05152e]/85 border border-[#12315c] text-left">
-                  <p class="text-[11px] text-slate-300 font-normal truncate">আজকের কমিশন</p>
-                  <p class="text-xs sm:text-sm font-bold text-white mt-1 font-mono">৳ <span id="invite-today-commission">0.00</span></p>
+              <div class="grid grid-cols-3 gap-2">
+                <div class="rounded-lg p-2.5 bg-[#071638] text-left">
+                  <p class="text-[11px] text-[#94a3b8] font-normal truncate">আজকের কমিশন</p>
+                  <p class="text-xs sm:text-sm font-bold text-[#eef2fb] mt-1 font-mono">৳ <span id="invite-today-commission">0.00</span></p>
                 </div>
-                <div class="rounded-xl p-2.5 bg-[#05152e]/85 border border-[#12315c] text-left">
-                  <p class="text-[11px] text-slate-300 font-normal truncate">টিম সদস্য</p>
-                  <p class="text-xs sm:text-sm font-bold text-white mt-1 font-mono"><span id="invite-team-members-count">0</span> জন</p>
+                <div class="rounded-lg p-2.5 bg-[#071638] text-left">
+                  <p class="text-[11px] text-[#94a3b8] font-normal truncate">টিম সদস্য</p>
+                  <p class="text-xs sm:text-sm font-bold text-[#eef2fb] mt-1 font-mono"><span id="invite-team-members-count">0</span> জন</p>
                 </div>
-                <div class="rounded-xl p-2.5 bg-[#05152e]/85 border border-[#12315c] text-left">
-                  <p class="text-[11px] text-slate-300 font-normal truncate">আজ নতুন</p>
-                  <p class="text-xs sm:text-sm font-bold text-white mt-1 font-mono"><span id="invite-today-new-count">0</span> জন</p>
+                <div class="rounded-lg p-2.5 bg-[#071638] text-left">
+                  <p class="text-[11px] text-[#94a3b8] font-normal truncate">আজ নতুন</p>
+                  <p class="text-xs sm:text-sm font-bold text-[#eef2fb] mt-1 font-mono"><span id="invite-today-new-count">0</span> জন</p>
                 </div>
               </div>
             </div>
 
-            <!-- INVITATION SYSTEM CARD (Matches Screenshot_20261018_230941.jpg) -->
-            <div class="mx-auto max-w-md mt-4 rounded-3xl p-4 sm:p-5 bg-[#081b44]/95 border border-[#1b3e85] shadow-2xl relative text-left">
-              <h3 class="text-base sm:text-lg font-extrabold text-white tracking-tight mb-4">
-                বন্ধুদের আমন্ত্রণ
-              </h3>
-
-              <!-- 2-Column Grid: Left QR Code, Right Circular Friends Badge -->
-              <div class="grid grid-cols-2 gap-3 sm:gap-4 items-center">
-                <!-- Left: QR Code Box -->
-                <div class="flex flex-col items-center">
-                  <div class="w-36 h-36 sm:w-40 sm:h-40 bg-white rounded-2xl p-2 flex items-center justify-center shadow-lg border border-slate-200 overflow-hidden">
-                    <div id="invite-page-qr" class="w-full h-full flex items-center justify-center text-xs text-slate-800"></div>
-                  </div>
-                  <p class="mt-2 text-[11px] sm:text-xs text-slate-300 font-medium text-center leading-tight">
-                    বন্ধুদের স্ক্যান করতে<br>আমন্ত্রণ করুন
-                  </p>
-                </div>
-
-                <!-- Right: Circular Friends Badge with Ribbons (Matches screenshot) -->
-                <div class="flex flex-col items-center">
-                  <div class="w-36 h-36 sm:w-40 sm:h-40 rounded-full bg-gradient-to-b from-[#e0f7fa] via-[#e8f4fd] to-[#d0ecfb] border-2 border-[#168acb] flex flex-col items-center justify-between p-1.5 shadow-lg relative overflow-hidden select-none">
-                    
-                    <!-- Top Ribbon: আমন্ত্রণ -->
-                    <div class="w-full py-0.5 bg-[#168acb] text-white text-[11px] sm:text-xs font-black text-center uppercase tracking-wide rounded-t-full shadow-sm">
-                      আমন্ত্রণ
-                    </div>
-
-                    <!-- Center 3 Friends Vector Illustration -->
-                    <svg viewBox="0 0 140 85" class="w-full h-20 my-auto" fill="none">
-                      <!-- Left Friend (Green body, tan head) -->
-                      <circle cx="36" cy="30" r="14" fill="#fca5a5" />
-                      <path d="M 12 78 C 12 55, 32 48, 52 50 C 58 52, 60 78, 60 78 Z" fill="#34d399" />
-                      
-                      <!-- Right Friend (Orange body, dark tan head) -->
-                      <circle cx="104" cy="30" r="14" fill="#b45309" />
-                      <path d="M 80 78 C 80 78, 82 52, 88 50 C 108 48, 128 55, 128 78 Z" fill="#f97316" />
-
-                      <!-- Center Friend in foreground (White body, peach head) -->
-                      <circle cx="70" cy="22" r="16" fill="#fbcfe8" />
-                      <path d="M 40 85 C 40 54, 52 46, 70 46 C 88 46, 100 54, 100 85 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.15))" />
-                    </svg>
-
-                    <!-- Bottom Ribbon: বন্ধুরা -->
-                    <div class="w-full py-0.5 bg-[#168acb] text-white text-[11px] sm:text-xs font-black text-center uppercase tracking-wide rounded-b-full shadow-sm">
-                      বন্ধুরা
-                    </div>
-                  </div>
-                  <p class="mt-2 text-[11px] sm:text-xs text-transparent select-none leading-tight" aria-hidden="true">
-                    &nbsp;
-                  </p>
-                </div>
-              </div>
-
-
-              <!-- Share Link Section -->
-              <div class="mt-4 text-left">
-                <label for="invite-link-input" class="block text-xs sm:text-sm font-bold text-slate-200 mb-1.5">
-                  শেয়ার লিঙ্ক
-                </label>
-                <div class="flex items-center gap-2.5 bg-[#05112e] border border-[#1b3e85] rounded-xl px-3 py-2.5 focus-within:border-[#35c6e7] transition shadow-inner">
-                  <svg viewBox="0 0 24 24" class="w-4 h-4 text-[#35c6e7] shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                  </svg>
-                  <input type="text" id="invite-link-input" readonly class="w-full bg-transparent text-xs sm:text-[13px] font-mono text-[#35c6e7] focus:outline-none selection:bg-[#35c6e7]/30 select-all cursor-text truncate" value="" aria-label="রেফারেল লিঙ্ক">
-                  <a id="invite-page-link" class="hidden" href="#" target="_blank" rel="noopener noreferrer"></a>
-                </div>
-              </div>
-
-              <!-- Large Copy Action Button -->
-              <button type="button" id="invite-page-copy" class="w-full mt-3.5 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#1479e0] to-[#0ea5e9] hover:from-[#1d86f0] hover:to-[#38bdf8] text-white font-extrabold text-sm sm:text-base flex items-center justify-center relative shadow-lg active:scale-95 transition cursor-pointer">
-                <div class="flex items-center gap-2">
-                  <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
-                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
-                  </svg>
-                  <span id="invite-copy-btn-text">কপি</span>
-                </div>
-                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-white/90">
-                  <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    <line x1="9" y1="10" x2="15" y2="10"></line>
-                    <line x1="9" y1="14" x2="13" y2="14"></line>
-                  </svg>
-                </span>
-              </button>
-
-              <div class="mt-2.5 flex items-center justify-between text-xs text-slate-400 px-1">
-                <span>আমন্ত্রণ কোড: <strong id="invite-page-code" class="text-[#35c6e7] font-mono"></strong></span>
-                <span id="invite-page-status" class="text-[#35c6e7] font-medium min-h-4"></span>
-              </div>
-            </div>
-
-            <!-- SVG DEFS FOR 3D METALLIC SALARY ICONS -->
+            <!-- SVG DEFS FOR CLEAN SITE-TONE SALARY ICONS -->
             <svg width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true">
               <defs>
                 <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#9be3ff"/>
-                  <stop offset="55%" stop-color="#2f9bff"/>
-                  <stop offset="100%" stop-color="#1559d6"/>
+                  <stop offset="0%" stop-color="#60a5fa"/>
+                  <stop offset="55%" stop-color="#1877f2"/>
+                  <stop offset="100%" stop-color="#0f3d91"/>
                 </linearGradient>
                 <linearGradient id="gG" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#fff2a8"/>
-                  <stop offset="50%" stop-color="#ffc93c"/>
-                  <stop offset="100%" stop-color="#e08a00"/>
+                  <stop offset="0%" stop-color="#fde68a"/>
+                  <stop offset="50%" stop-color="#eab308"/>
+                  <stop offset="100%" stop-color="#b45309"/>
                 </linearGradient>
                 <linearGradient id="gW" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#ffffff"/>
-                  <stop offset="100%" stop-color="#a9d8ff"/>
+                  <stop offset="0%" stop-color="#eef2fb"/>
+                  <stop offset="100%" stop-color="#93c5fd"/>
                 </linearGradient>
               </defs>
             </svg>
 
-            <!-- SALARY & LEVEL UPGRADE SECTION (আপনার অর্জন, আপনার সম্মান) -->
+            <!-- SALARY & LEVEL UPGRADE SECTION (বেতন পেজ - সাইটের কালারের সাথে মিলানো) -->
             <style>
               .salary-page-wrap {
-                background: radial-gradient(circle at 50% 0%, rgba(39, 196, 255, 0.35), transparent 55%),
-                            radial-gradient(circle at 100% 100%, rgba(77, 255, 184, 0.18), transparent 50%),
-                            linear-gradient(180deg, #0a1f6b 0%, #06124a 100%) !important;
+                background: #0b1730 !important;
                 border: none !important;
                 box-shadow: none !important;
-                border-radius: 20px !important;
+                border-radius: 16px !important;
               }
               .salary-clean-h1 {
-                animation: salaryH1Float 5s ease-in-out infinite;
-                text-shadow: 0 8px 24px rgba(39, 196, 255, 0.38);
+                text-shadow: none !important;
               }
               .salary-row {
                 display: flex !important;
@@ -1924,53 +1958,48 @@ button:active:not(:disabled), .cursor-pointer:active {
                 align-items: center !important;
                 gap: 10px !important;
                 padding: 12px 6px !important;
-                margin: 6px 0 !important;
+                margin: 4px 0 !important;
                 border: none !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+                border-top: 1px solid rgba(148, 163, 184, 0.12) !important;
                 background: transparent !important;
                 box-shadow: none !important;
                 width: 100% !important;
                 box-sizing: border-box !important;
-                transform-style: preserve-3d;
-                transition: transform 0.15s ease-out;
               }
               .salary-row:first-child {
                 border-top: none !important;
               }
               .salary-ico {
-                flex: 0 0 44px !important;
-                width: 44px !important;
-                height: 44px !important;
-                min-width: 44px !important;
-                max-width: 44px !important;
+                flex: 0 0 42px !important;
+                width: 42px !important;
+                height: 42px !important;
+                min-width: 42px !important;
+                max-width: 42px !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.4)) !important;
-                transform: translateZ(30px);
-                animation: salaryIcoSpin 4s ease-in-out infinite;
+                filter: none !important;
               }
               .salary-pos {
-                flex: 0 0 76px !important;
-                width: 76px !important;
-                min-width: 76px !important;
-                max-width: 76px !important;
+                flex: 0 0 74px !important;
+                width: 74px !important;
+                min-width: 74px !important;
+                max-width: 74px !important;
                 font-weight: 700 !important;
-                font-size: 16.5px !important;
-                color: #ffffff !important;
+                font-size: 15.5px !important;
+                color: #f3f4f6 !important;
                 white-space: nowrap !important;
-                transform: translateZ(20px);
               }
               .salary-desc {
                 flex: 1 1 auto !important;
                 min-width: 0 !important;
-                font-size: 13.5px !important;
+                font-size: 13px !important;
                 line-height: 1.45 !important;
-                color: rgba(255, 255, 255, 0.95) !important;
+                color: #f3f4f6 !important;
                 padding: 0 4px !important;
               }
               .salary-desc b {
-                color: #27c4ff !important;
+                color: #f8fafc !important;
               }
               .salary-desc .prog {
                 display: flex !important;
@@ -1981,79 +2010,70 @@ button:active:not(:disabled), .cursor-pointer:active {
               }
               .salary-desc .bar {
                 flex: 1 1 auto !important;
-                height: 8px !important;
+                height: 7px !important;
                 border-radius: 99px !important;
-                background: rgba(255, 255, 255, 0.15) !important;
+                background: #071638 !important;
                 overflow: hidden !important;
-                box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.4) !important;
+                box-shadow: none !important;
               }
               .salary-desc .fill {
                 height: 100% !important;
                 border-radius: 99px !important;
-                background: linear-gradient(90deg, #27c4ff, #4dffb8) !important;
-                box-shadow: 0 0 10px rgba(77, 255, 184, 0.7) !important;
+                background: #1877f2 !important;
+                box-shadow: none !important;
               }
               .salary-desc .pct {
                 flex: 0 0 auto !important;
-                font-size: 12px !important;
+                font-size: 11.5px !important;
                 font-weight: 700 !important;
-                min-width: 36px !important;
+                min-width: 34px !important;
                 text-align: right !important;
-                color: #4dffb8 !important;
+                color: #f3f4f6 !important;
               }
               .salary-pay {
-                flex: 0 0 94px !important;
-                width: 94px !important;
-                min-width: 94px !important;
-                max-width: 94px !important;
+                flex: 0 0 92px !important;
+                width: 92px !important;
+                min-width: 92px !important;
+                max-width: 92px !important;
                 height: auto !important;
                 min-height: unset !important;
-                background: linear-gradient(135deg, #2aa7ff, #1fd0ff) !important;
-                color: #041a5c !important;
-                border-radius: 16px 4px 16px 4px !important;
-                padding: 6px 8px !important;
+                background: #071638 !important;
+                color: #e5e7eb !important;
+                border-radius: 10px !important;
+                padding: 7px 8px !important;
                 text-align: center !important;
-                box-shadow: 0 0 18px rgba(39, 196, 255, 0.75) !important;
+                box-shadow: none !important;
                 border: none !important;
                 cursor: pointer !important;
                 user-select: none !important;
-                transform: translateZ(30px);
-                transition: transform 0.15s ease, filter 0.3s ease, box-shadow 0.3s ease !important;
+                transition: transform 0.15s ease, background-color 0.2s ease !important;
                 box-sizing: border-box !important;
               }
               .salary-pay:active {
-                transform: translateZ(30px) scale(0.95) !important;
+                transform: scale(0.96) !important;
               }
               .salary-pay small {
                 display: block !important;
-                font-size: 11px !important;
+                font-size: 10.5px !important;
                 font-weight: 600 !important;
                 line-height: 1.2 !important;
                 color: inherit !important;
               }
               .salary-pay strong {
                 display: block !important;
-                font-size: 18px !important;
+                font-size: 16px !important;
                 font-weight: 700 !important;
                 font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-                line-height: 1.2 !important;
+                line-height: 1.25 !important;
                 color: inherit !important;
-              }
-              @keyframes salaryIcoSpin {
-                0%, 60%, 100% { transform: translateZ(30px) rotateY(0); }
-                80% { transform: translateZ(30px) rotateY(360deg); }
-              }
-              @keyframes salaryH1Float {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-5px); }
               }
             </style>
 
-            <div class="salary-page-wrap w-full max-w-[560px] mx-auto mt-6 mb-8 px-3.5 py-6 rounded-3xl relative text-left" style="color: #fff;">
-              <h2 class="salary-clean-h1 text-center text-[26px] sm:text-[30px] font-bold text-white mt-2 mb-1.5 leading-[1.3]">
-                আপনার অর্জন, <span class="text-[#27c4ff]">আপনার সম্মান</span>
+            <div class="salary-page-wrap w-full max-w-[380px] mx-auto mt-5 mb-6 px-3.5 py-5 relative text-left" style="color: #f3f4f6;">
+              <h2 class="salary-clean-h1 text-center text-[22px] sm:text-[24px] font-bold text-[#f3f4f6] mt-1 mb-1 leading-[1.3]">
+                আপনার অর্জন, আপনার সম্মান
               </h2>
-              <p class="text-center text-[14px] sm:text-[15px] text-white/95 mb-6 font-normal">
+              <p class="text-center text-[13px] text-[#e5e7eb] mb-5 font-normal">
                 নির্ধারিত লক্ষ্য পূরণ করে পদমর্যাদা ও মাসিক বেতন অর্জন করুন।
               </p>
 
@@ -2061,7 +2081,7 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ১: তারা-সহ ব্যক্তি -->
                 <div class="salary-row" data-salary-idx="0" data-vip-tier="অবস্থান ১">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
                       <circle cx="22" cy="14" r="8" fill="url(#gB)"/>
                       <path d="M6 42c0-10 7-16 16-16s16 6 16 16z" fill="url(#gB)"/>
                       <polygon points="38,26 40.6,31.4 46.4,32.2 42.2,36.2 43.2,42 38,39.2 32.8,42 33.8,36.2 29.6,32.2 35.4,31.4" fill="url(#gG)"/>
@@ -2086,11 +2106,11 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ২: রিবন ব্যাজ -->
                 <div class="salary-row" data-salary-idx="1" data-vip-tier="অবস্থান ২">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
-                      <polygon points="13,30 7,45 16,42 20,47 25,31" fill="#1b66e0"/>
-                      <polygon points="35,30 41,45 32,42 28,47 23,31" fill="#2f9bff"/>
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
+                      <polygon points="13,30 7,45 16,42 20,47 25,31" fill="#0f3d91"/>
+                      <polygon points="35,30 41,45 32,42 28,47 23,31" fill="#1877f2"/>
                       <circle cx="24" cy="18" r="15" fill="url(#gB)"/>
-                      <circle cx="24" cy="18" r="10.5" fill="#1a63de"/>
+                      <circle cx="24" cy="18" r="10.5" fill="#0f3d91"/>
                       <polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gW)"/>
                     </svg>
                   </div>
@@ -2113,7 +2133,7 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ৩: মুকুট -->
                 <div class="salary-row" data-salary-idx="2" data-vip-tier="অবস্থান ৩">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
                       <path d="M5 36V13l11 11 8-15 8 15 11-11v23z" fill="url(#gB)"/>
                       <rect x="5" y="38" width="38" height="7" rx="2.5" fill="url(#gB)"/>
                       <circle cx="5" cy="12" r="3" fill="url(#gG)"/>
@@ -2140,10 +2160,10 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ৪: হীরা -->
                 <div class="salary-row" data-salary-idx="3" data-vip-tier="অবস্থান ৪">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
                       <polygon points="11,8 37,8 46,19 24,45 2,19" fill="url(#gB)"/>
-                      <polygon points="11,8 37,8 46,19 2,19" fill="#fff" opacity=".3"/>
-                      <path d="M2 19h44M17 19l7-11 7 11-7 26z" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" fill="none"/>
+                      <polygon points="11,8 37,8 46,19 2,19" fill="#fff" opacity=".25"/>
+                      <path d="M2 19h44M17 19l7-11 7 11-7 26z" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" fill="none"/>
                     </svg>
                   </div>
                   <div class="salary-pos">অবস্থান ৪</div>
@@ -2165,12 +2185,12 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ৫: রকেট -->
                 <div class="salary-row" data-salary-idx="4" data-vip-tier="অবস্থান ৫">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
                       <g transform="rotate(40 24 24)">
                         <path d="M24 2c8 6 11 16 9 30H15C13 18 16 8 24 2z" fill="url(#gW)"/>
-                        <path d="M24 2c8 6 11 16 9 30H24z" fill="#8cc8ff" opacity=".6"/>
+                        <path d="M24 2c8 6 11 16 9 30H24z" fill="#60a5fa" opacity=".5"/>
                         <circle cx="24" cy="16" r="4.5" fill="url(#gB)"/>
-                        <path d="M15 24l-7 10 7-2zM33 24l7 10-7-2z" fill="#1f7be0"/>
+                        <path d="M15 24l-7 10 7-2zM33 24l7 10-7-2z" fill="#1877f2"/>
                         <path d="M19 32h10l-5 13z" fill="url(#gG)"/>
                       </g>
                     </svg>
@@ -2194,9 +2214,9 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ৬: ঢাল -->
                 <div class="salary-row" data-salary-idx="5" data-vip-tier="অবস্থান ৬">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
                       <path d="M24 3l17 6v13c0 11-7 19-17 23C14 41 7 33 7 22V9z" fill="url(#gB)"/>
-                      <path d="M24 8l12 4.5V22c0 8-5 14-12 17.5C17 36 12 30 12 22v-9.5z" fill="#1a63de"/>
+                      <path d="M24 8l12 4.5V22c0 8-5 14-12 17.5C17 36 12 30 12 22v-9.5z" fill="#0f3d91"/>
                       <polygon points="24,15 26.4,20.3 32,21 27.8,24.8 29,30.5 24,27.6 19,30.5 20.2,24.8 16,21 21.6,20.3" fill="url(#gW)"/>
                     </svg>
                   </div>
@@ -2219,10 +2239,10 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ৭: ট্রফি -->
                 <div class="salary-row" data-salary-idx="6" data-vip-tier="অবস্থান ৭">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
                       <path d="M14 6h20v13c0 7-4.5 12-10 12s-10-5-10-12z" fill="url(#gG)"/>
-                      <path d="M14 10H6c0 8 3 12 9 13M34 10h8c0 8-3 12-9 13" stroke="#f0a800" stroke-width="3" fill="none"/>
-                      <rect x="21" y="31" width="6" height="8" fill="#e08a00"/>
+                      <path d="M14 10H6c0 8 3 12 9 13M34 10h8c0 8-3 12-9 13" stroke="#d97706" stroke-width="3" fill="none"/>
+                      <rect x="21" y="31" width="6" height="8" fill="#b45309"/>
                       <rect x="14" y="39" width="20" height="6" rx="2" fill="url(#gG)"/>
                     </svg>
                   </div>
@@ -2245,11 +2265,11 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <!-- অবস্থান ৮: সোনালি মেডেল -->
                 <div class="salary-row" data-salary-idx="7" data-vip-tier="অবস্থান ৮">
                   <div class="salary-ico">
-                    <svg viewBox="0 0 48 48" class="w-11 h-11">
-                      <polygon points="12,30 7,46 16,42 21,47 26,31" fill="#1b66e0"/>
-                      <polygon points="36,30 41,46 32,42 27,47 22,31" fill="#2f9bff"/>
+                    <svg viewBox="0 0 48 48" class="w-10 h-10">
+                      <polygon points="12,30 7,46 16,42 21,47 26,31" fill="#0f3d91"/>
+                      <polygon points="36,30 41,46 32,42 27,47 22,31" fill="#1877f2"/>
                       <circle cx="24" cy="18" r="16" fill="url(#gG)"/>
-                      <circle cx="24" cy="18" r="11" fill="#1a63de"/>
+                      <circle cx="24" cy="18" r="11" fill="#0f3d91"/>
                       <polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gG)"/>
                     </svg>
                   </div>
@@ -2271,37 +2291,17 @@ button:active:not(:disabled), .cursor-pointer:active {
               </div>
             </div>
 
-            <script>
-              (function() {
-                // Interactive 3D tilt on salary rows
-                document.querySelectorAll('.salary-row').forEach(function(r) {
-                  function tilt(e) {
-                    var b = r.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
-                    var x = (p.clientX - b.left) / b.width - 0.5, y = (p.clientY - b.top) / b.height - 0.5;
-                    r.style.transform = 'rotateY(' + (x * 12) + 'deg) rotateX(' + (-y * 12) + 'deg)';
-                  }
-                  function reset() {
-                    r.style.transform = 'rotateY(0deg) rotateX(0deg)';
-                  }
-                  r.addEventListener('pointermove', tilt);
-                  r.addEventListener('pointerleave', reset);
-                  r.addEventListener('touchmove', tilt, { passive: true });
-                  r.addEventListener('touchend', reset);
-                });
-              })();
-            </script>
-
-            <!-- VIP BONUS REAL ACTIVATION MODAL -->
-            <div id="invite-vip-claim-modal" class="fixed inset-0 z-[10010] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm transition-opacity duration-200" style="display: none;" hidden>
+            <!-- VIP BONUS REAL ACTIVATION MODAL (Clean Matte Site Colors) -->
+            <div id="invite-vip-claim-modal" class="fixed inset-0 z-[10010] flex items-center justify-center p-4 bg-[#040b1e]/80 transition-opacity duration-200" style="display: none;" hidden>
               <div id="invite-vip-modal-backdrop" class="absolute inset-0 cursor-pointer" aria-label="বন্ধ করুন"></div>
               
-              <div class="relative w-full max-w-sm bg-gradient-to-b from-[#0c2356] to-[#071536] border border-[#23488f] rounded-2xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] z-10 text-white overflow-hidden p-5">
+              <div class="relative w-full max-w-sm bg-[#0b1730] rounded-2xl z-10 text-[#eef2fb] overflow-hidden p-5">
                 <!-- Modal Top -->
-                <div class="flex items-center justify-between border-b border-[#142d66] pb-3 mb-4">
+                <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-700/30">
                   <div class="flex items-center gap-2">
                     <div>
-                      <h3 class="text-base font-bold text-white leading-tight" id="invite-modal-tier-title">অবস্থান ১ মাসিক বেতন</h3>
-                      <p class="text-[11px] text-[#35c6e7]" id="invite-modal-reward-type">নির্ধারিত লক্ষ্য পূরণ বেতন</p>
+                      <h3 class="text-base font-bold text-[#eef2fb] leading-tight" id="invite-modal-tier-title">অবস্থান ১ মাসিক বেতন</h3>
+                      <p class="text-[11px] text-[#60a5fa]" id="invite-modal-reward-type">নির্ধারিত লক্ষ্য পূরণ বেতন</p>
                     </div>
                   </div>
                   <button type="button" id="invite-modal-close-btn" class="p-1 rounded-lg text-slate-400 hover:text-white transition active:scale-95 cursor-pointer">
@@ -2310,40 +2310,39 @@ button:active:not(:disabled), .cursor-pointer:active {
                 </div>
 
                 <!-- Reward Amount Highlight -->
-                <div class="bg-[#05112e] rounded-xl p-3.5 border border-[#142d66] text-center mb-4">
-                  <p class="text-[11px] text-slate-400">বেতনের পরিমাণ</p>
-                  <p class="text-2xl font-extrabold text-[#35c6e7] font-mono mt-0.5" id="invite-modal-amount-display">৳ ১,০০০.০০</p>
+                <div class="bg-[#071638] rounded-xl p-3.5 text-center mb-4">
+                  <p class="text-[11px] text-[#94a3b8]">বেতনের পরিমাণ</p>
+                  <p class="text-2xl font-extrabold text-[#60a5fa] font-mono mt-0.5" id="invite-modal-amount-display">৳ ১,০০০.০০</p>
                 </div>
 
                 <!-- Requirement & Progress Info -->
                 <div class="space-y-2 text-xs mb-4">
                   <div class="flex items-center justify-between font-semibold">
-                    <span class="text-slate-300">প্রয়োজনীয় সক্রিয় সদস্য:</span>
-                    <span class="text-white font-mono" id="invite-modal-req-display">৩ জন সক্রিয় সদস্য</span>
+                    <span class="text-[#cbd5e1]">প্রয়োজনীয় সক্রিয় সদস্য:</span>
+                    <span class="text-[#eef2fb] font-mono" id="invite-modal-req-display">৩ জন সক্রিয় সদস্য</span>
                   </div>
                   <div class="flex items-center justify-between font-semibold">
-                    <span class="text-slate-300">আপনার বর্তমান অগ্রগতি:</span>
+                    <span class="text-[#cbd5e1]">আপনার বর্তমান অগ্রগতি:</span>
                     <span class="text-emerald-400 font-mono" id="invite-modal-current-display">০ / ৩ জন (০%)</span>
                   </div>
-                  <div class="w-full h-2 bg-[#05112e] rounded-full overflow-hidden border border-[#0e245a] mt-1">
-                    <div class="h-full bg-gradient-to-r from-[#1877f2] to-[#35c6e7] rounded-full transition-all duration-500" style="width: 0%;" id="invite-modal-progress-bar"></div>
+                  <div class="w-full h-2 bg-[#071638] rounded-full overflow-hidden mt-1">
+                    <div class="h-full bg-[#1877f2] rounded-full transition-all duration-500" style="width: 0%;" id="invite-modal-progress-bar"></div>
                   </div>
                 </div>
 
-                <div class="p-2.5 rounded-xl bg-blue-950/40 border border-blue-800/30 text-[11.5px] text-slate-300 leading-relaxed mb-4">
+                <div class="p-2.5 rounded-xl bg-[#071638] text-[11.5px] text-[#94a3b8] leading-relaxed mb-4">
                   আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। নির্ধারিত সক্রিয় সদস্য পূরণ হলেই আপনার অবস্থান সক্রিয় হবে এবং মাসিক বেতন সরাসরি মূল ব্যালেন্সে গ্রহণ করতে পারবেন।
                 </div>
 
                 <!-- Action Buttons in Modal -->
                 <div class="space-y-2.5" id="invite-modal-actions-container">
-                  <!-- Real Direct Claim Button -->
-                  <button type="button" id="invite-modal-claim-btn" class="w-full py-3.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-slate-800/90 text-slate-400 border border-slate-700/60 cursor-not-allowed select-none" disabled>
+                  <button type="button" id="invite-modal-claim-btn" class="w-full py-3.5 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 bg-[#071638] text-slate-400 cursor-not-allowed select-none" disabled>
                     <span>🔒 শর্ত পূরণ হয়নি (লকড)</span>
                   </button>
 
                   <div class="pt-1">
-                    <button type="button" id="invite-modal-copy-link-btn" class="w-full py-3 px-3 rounded-xl text-xs font-bold text-center transition cursor-pointer active:scale-95 bg-[#0e214d] hover:bg-[#15316e] border border-[#1b3e85] text-[#38bdf8] flex items-center justify-center gap-2">
-                      <svg viewBox="0 0 24 24" class="w-4 h-4 text-[#38bdf8]" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
+                    <button type="button" id="invite-modal-copy-link-btn" class="w-full py-3 px-3 rounded-xl text-xs font-bold text-center transition cursor-pointer active:scale-95 bg-[#1877f2] hover:bg-[#166fe5] text-white flex items-center justify-center gap-2">
+                      <svg viewBox="0 0 24 24" class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>
                       <span>আমন্ত্রণ লিংক কপি করুন</span>
                     </button>
                   </div>
@@ -3722,64 +3721,23 @@ button:active:not(:disabled), .cursor-pointer:active {
             </div>
           </section>
 
-          <section id="platform-tasks-panel" class="dashboard-panel -mx-4 -mt-4 min-h-[calc(100vh-4rem)]" aria-label="TikTok মিশন" hidden>
-            <header class="sticky top-0 z-20 flex items-center justify-between border-b px-4 py-3 shadow-md" style="border-color: var(--color-profile-border); background: var(--color-profile-blue); color: var(--color-primary-contrast);">
-              <button type="button" class="personal-header-action flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition cursor-pointer text-xs font-bold active:scale-95" data-panel="vip" aria-label="ফিরে যান">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
-                <span>ফিরে যান</span>
+          <section id="platform-tasks-panel" class="dashboard-panel -mx-4 -mt-4 min-h-screen" style="background: #071638; color: #f3f4f6;" aria-label="TikTok মিশন" hidden>
+            <header class="sticky top-0 z-20 flex items-center justify-between px-4 py-3.5" style="background: #071638; color: #f3f4f6;">
+              <button type="button" class="personal-header-action flex items-center gap-1 px-2 py-1 rounded-lg text-slate-200 hover:text-white transition cursor-pointer text-[13px] font-medium active:scale-95" data-panel="vip" aria-label="ফিরে যান">
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
               </button>
-              <h2 class="text-sm font-bold flex items-center gap-1.5 pr-2">
-                <span>📋</span> <span id="platform-task-header-level">মিশন স্তর</span>
+              <h2 class="text-[16px] font-bold text-[#f3f4f6]">
+                <span id="platform-task-header-level">মিশন তালিকা</span>
               </h2>
               <div class="w-8"></div>
             </header>
-            <div class="px-4 pb-8">
-              <div class="border-b px-1 py-4" style="border-color: var(--color-profile-border);">
-                <p id="platform-task-level-title" class="text-xs font-semibold" style="color: var(--color-profile-cyan);">TikTok · LV0</p>
-                <p id="platform-task-level-note" class="mt-1 text-sm" style="color: var(--color-muted);">আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ</p>
+            <div class="px-4 pb-10">
+              <div class="px-0.5 py-2.5 hidden">
+                <p id="platform-task-level-title" class="text-xs font-semibold text-[#60a5fa]">TikTok · LV0</p>
+                <p id="platform-task-level-note" class="mt-1 text-xs text-[#cbd5e1]">আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ</p>
               </div>
-              <div id="platform-task-list" aria-live="polite">
-                <article class="platform-task-row flex items-start gap-3 py-5" data-task-index="0">
-                  <span class="platform-task-icon" aria-hidden="true"><svg viewBox="0 0 24 24" class="h-8 w-8"><path fill="currentColor" d="M19.6 7.2a6.8 6.8 0 0 1-4.2-1.5v8.1a6.1 6.1 0 1 1-5.3-6.1v3.3a2.8 2.8 0 1 0 2 2.7V2.5h3.3c.2 2.2 1.9 4 4.2 4.2v.5Z"/></svg></span>
-                  <div class="min-w-0 flex-1">
-                    <h3 class="font-bold">TikTok</h3>
-                    <p class="mt-2 text-sm leading-6" style="color: var(--color-muted);">কাজের ধরন: TikTok অ্যাকাউন্ট অনুসরণ করুন</p>
-                    <p class="mt-2 flex items-center gap-2 text-sm">স্তর: <span class="platform-task-level">LV0</span></p>
-                    <p class="mt-2 text-sm" style="color: var(--color-muted);">অগ্রগতি: <span class="font-semibold" style="color: var(--color-profile-text);">১০০০০০ / ৯০৮৫২</span></p>
-                  </div>
-                  <div class="flex shrink-0 flex-col items-end gap-3">
-                    <div class="text-right"><p class="text-xs" style="color: var(--color-muted);">দৈনিক পুরস্কার</p><p class="font-bold" style="color: var(--color-profile-blue-text);"><span class="task-reward-num">২০.০০</span> <span class="user-currency-text">BDT</span></p></div>
-                    <button type="button" class="platform-task-accept" data-platform-accept>গ্রহণ</button>
-                  </div>
-                </article>
-                <article class="platform-task-row flex items-start gap-3 py-5" data-task-index="1">
-                  <span class="platform-task-icon" aria-hidden="true"><svg viewBox="0 0 24 24" class="h-8 w-8"><path fill="currentColor" d="M19.6 7.2a6.8 6.8 0 0 1-4.2-1.5v8.1a6.1 6.1 0 1 1-5.3-6.1v3.3a2.8 2.8 0 1 0 2 2.7V2.5h3.3c.2 2.2 1.9 4 4.2 4.2v.5Z"/></svg></span>
-                  <div class="min-w-0 flex-1">
-                    <h3 class="font-bold">TikTok</h3>
-                    <p class="mt-2 text-sm leading-6" style="color: var(--color-muted);">কাজের ধরন: একটি ভিডিওতে লাইক দিন</p>
-                    <p class="mt-2 flex items-center gap-2 text-sm">স্তর: <span class="platform-task-level">LV0</span></p>
-                    <p class="mt-2 text-sm" style="color: var(--color-muted);">অগ্রগতি: <span class="font-semibold" style="color: var(--color-profile-text);">১০০০০০ / ৯১০৪৩</span></p>
-                  </div>
-                  <div class="flex shrink-0 flex-col items-end gap-3">
-                    <div class="text-right"><p class="text-xs" style="color: var(--color-muted);">দৈনিক পুরস্কার</p><p class="font-bold" style="color: var(--color-profile-blue-text);"><span class="task-reward-num">২০.০০</span> <span class="user-currency-text">BDT</span></p></div>
-                    <button type="button" class="platform-task-accept" data-platform-accept>গ্রহণ</button>
-                  </div>
-                </article>
-                <article class="platform-task-row flex items-start gap-3 py-5" data-task-index="2">
-                  <span class="platform-task-icon" aria-hidden="true"><svg viewBox="0 0 24 24" class="h-8 w-8"><path fill="currentColor" d="M19.6 7.2a6.8 6.8 0 0 1-4.2-1.5v8.1a6.1 6.1 0 1 1-5.3-6.1v3.3a2.8 2.8 0 1 0 2 2.7V2.5h3.3c.2 2.2 1.9 4 4.2 4.2v.5Z"/></svg></span>
-                  <div class="min-w-0 flex-1">
-                    <h3 class="font-bold">TikTok</h3>
-                    <p class="mt-2 text-sm leading-6" style="color: var(--color-muted);">কাজের ধরন: TikTok প্রোফাইল দেখুন</p>
-                    <p class="mt-2 flex items-center gap-2 text-sm">স্তর: <span class="platform-task-level">LV0</span></p>
-                    <p class="mt-2 text-sm" style="color: var(--color-muted);">অগ্রগতি: <span class="font-semibold" style="color: var(--color-profile-text);">১০০০০০ / ৯১২৪৪</span></p>
-                  </div>
-                  <div class="flex shrink-0 flex-col items-end gap-3">
-                    <div class="text-right"><p class="text-xs" style="color: var(--color-muted);">দৈনিক পুরস্কার</p><p class="font-bold" style="color: var(--color-profile-blue-text);"><span class="task-reward-num">২০.০০</span> <span class="user-currency-text">BDT</span></p></div>
-                    <button type="button" class="platform-task-accept" data-platform-accept>গ্রহণ</button>
-                  </div>
-                </article>
-              </div>
-              <p id="platform-task-message" class="min-h-6 pt-3 text-center text-sm" style="color: var(--color-profile-cyan);" role="status"></p>
+              <div id="platform-task-list" aria-live="polite"></div>
+              <p id="platform-task-message" class="min-h-6 pt-3 text-center text-sm text-[#60a5fa]" role="status"></p>
             </div>
           </section>
 
@@ -3788,7 +3746,7 @@ button:active:not(:disabled), .cursor-pointer:active {
               <button type="button" class="mission-record-tab" data-mission-filter="active" aria-selected="true">চলমান<span id="mission-active-count">(0)</span></button>
               <button type="button" class="mission-record-tab" data-mission-filter="review" aria-selected="false">পর্যালোচনা<span id="mission-review-count">(0)</span></button>
               <button type="button" class="mission-record-tab" data-mission-filter="complete" aria-selected="false">সম্পন্ন<span id="mission-complete-count">(0)</span></button>
-              <button type="button" class="mission-record-tab" data-mission-filter="failed" aria-selected="false">বাতিল<span id="mission-failed-count">(0)</span></button>
+              <button type="button" class="mission-record-tab" data-mission-filter="failed" aria-selected="false">ব্যর্থ / বাতিল<span id="mission-failed-count">(0)</span></button>
             </div>
             <div id="mission-record-list" class="space-y-3 px-4 py-4" aria-live="polite"></div>
             <p id="task-message" class="min-h-8 px-4 pb-5 text-center text-sm" style="color: var(--color-profile-cyan);" role="status"></p>
@@ -3867,8 +3825,8 @@ button:active:not(:disabled), .cursor-pointer:active {
                 <div class="flex flex-wrap items-center justify-between gap-2">
                   <div class="flex items-center gap-1.5 min-w-0 flex-1">
                     <span id="mission-submit-link-lbl" class="text-slate-300 font-medium shrink-0 text-sm">টাস্ক লিঙ্ক:</span>
-                    <span id="mission-submit-link-display" class="text-xs text-slate-300 font-mono truncate max-w-[150px] sm:max-w-[220px]" title="">https://youtube.com/short...</span>
-                    <input id="mission-submit-link" type="hidden" value="https://youtube.com/short...">
+                    <span id="mission-submit-link-display" class="text-xs text-slate-300 font-mono truncate max-w-[150px] sm:max-w-[220px]" title="">https://www.tiktok.com/...</span>
+                    <input id="mission-submit-link" type="hidden" value="">
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
                     <button id="mission-submit-open" type="button" class="bg-[#00b875] hover:bg-[#00a368] text-white text-xs font-bold px-3 py-1.5 rounded transition cursor-pointer active:scale-95 shadow">
@@ -4646,6 +4604,123 @@ button:active:not(:disabled), .cursor-pointer:active {
 
         </div>
 
+      </div>
+    </section>
+
+        <!-- LUCKY SPIN (ভাগ্যবান স্পিন) PANEL - Matte, Real Site Colors & Text Below Wheel -->
+    <section id="lucky-spin-panel" class="dashboard-panel -mx-4 -mt-4 min-h-screen text-[#eef2fb] relative flex flex-col pb-28 border-0" style="background: #071638; color: #eef2fb; border: none; font-family: 'Hind Siliguri', system-ui, -apple-system, sans-serif;" aria-label="ভাগ্যবান স্পিন" hidden>
+      <!-- Clean Matte Header -->
+      <header class="flex items-center justify-between px-4 py-3.5 bg-[#071638] sticky top-0 z-30 border-0 shadow-none">
+        <button type="button" id="lucky-spin-back-btn" class="p-2 rounded-lg text-slate-300 hover:text-white active:scale-95 transition cursor-pointer flex items-center justify-center border-0 bg-transparent" data-panel="profile" aria-label="পেছনে যান">
+          <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m15 18-6-6 6-6"></path>
+          </svg>
+        </button>
+        <h1 class="text-[18px] font-bold text-[#eef2fb] tracking-normal">ভাগ্যবান স্পিন</h1>
+        <button type="button" class="px-2.5 py-1 rounded-lg text-xs font-semibold text-[#cbd5e1] bg-[#0b1730] hover:bg-[#112246] transition cursor-pointer border-0" data-panel="my-pass">
+          <span id="lucky-spin-user-balance" class="font-mono">৳ ০.০০</span>
+        </button>
+      </header>
+
+      <div class="px-4 pt-2 pb-6 space-y-5 max-w-md mx-auto w-full flex-1 flex flex-col items-center">
+        <!-- Spin Wheel Stage FIRST (Matte, Real, Zero Glow / Zero Gold) -->
+        <div class="relative w-full max-w-[310px] aspect-square flex items-center justify-center mt-1 select-none border-0">
+          <!-- Roulette Wheel SVG (12 Segments: ৪২৳ to ৪৫০০০৳) -->
+          <svg id="lucky-spin-wheel-svg" viewBox="0 0 400 400" class="w-full h-full relative z-10">
+            <!-- Matte outer rim matching site dark navy & primary blue -->
+            <circle cx="200" cy="200" r="190" fill="#08173d"/>
+            <circle cx="200" cy="200" r="186" fill="none" stroke="#1e3a7a" stroke-width="4"/>
+
+            <!-- Rotating 12-segment Wheel Group (Slice 0 is centered at 9 o'clock / LEFT) -->
+            <g id="lucky-spin-wheel-rotator"></g>
+
+            <!-- Matte Center Hub -->
+            <circle cx="200" cy="200" r="24" fill="#eef2fb" class="cursor-pointer" id="lucky-spin-center-hub"/>
+            <circle cx="200" cy="200" r="9" fill="#1877f2" class="pointer-events-none"/>
+          </svg>
+
+          <!-- Clean Matte Left Pointer Arrow (9 o'clock, flat site palette) -->
+          <div class="absolute left-[-4px] top-1/2 -translate-y-1/2 z-20 pointer-events-none">
+            <svg viewBox="0 0 56 44" class="w-11 h-9">
+              <path d="M4 6 L50 22 L4 38 L12 22 Z" fill="#0b1730" stroke="#eef2fb" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M12 13 L42 22 L12 31 L17 22 Z" fill="#1877f2"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- ALL TEXTS & RULES BELOW THE WHEEL (লেখা নিচে থাকবে, ফ্রেশ ও সাইটের ফন্ট অনুযায়ী) -->
+        <div class="w-full space-y-2.5 text-center border-0">
+          <!-- Draw Count Row -->
+          <div class="flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#0b1730] border-0">
+            <span class="text-[16px] font-bold text-[#eef2fb]">
+              <span>আপনার ড্র</span>
+              <span id="lucky-spin-draws-num" class="text-[19px] font-bold text-[#60a5fa] mx-1 font-mono">০</span>
+            </span>
+          </div>
+
+          <!-- Today Members & Today Spins Counters -->
+          <div class="grid grid-cols-2 gap-2.5 border-0">
+            <div class="px-3 py-2.5 rounded-xl bg-[#0b1730] border-0">
+              <p class="text-[12px] text-[#94a3b8] leading-snug">আজকের জয়ের জন্য সদস্য সংখ্যা</p>
+              <p id="lucky-spin-qualified-count" class="text-[17px] font-bold text-[#eef2fb] mt-0.5 font-mono">০</p>
+            </div>
+            <div class="px-3 py-2.5 rounded-xl bg-[#0b1730] border-0">
+              <p class="text-[12px] text-[#94a3b8] leading-snug">আজকের ঘোড়ানো সংখ্যা</p>
+              <p id="lucky-spin-today-count" class="text-[17px] font-bold text-[#eef2fb] mt-0.5 font-mono">০</p>
+            </div>
+          </div>
+
+          <!-- Required Rule Copy Below Wheel -->
+          <div class="px-2 pt-0.5 border-0">
+            <p class="text-[15px] font-semibold text-[#eef2fb] leading-snug">
+              আপনার প্রথম কক্ষে একজন সফল বন্ধু যোগ করলে একটি কর্মদক্ষতা যাচাইয়ের সুযোগ
+            </p>
+          </div>
+        </div>
+
+        <!-- Primary Action Buttons (Flat Site Blue #1877f2, No Neon Glow) -->
+        <div class="w-full space-y-2.5 border-0">
+          <button type="button" id="lucky-spin-start-btn" class="w-full py-3.5 rounded-xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-[15px] active:scale-[0.99] transition flex items-center justify-center gap-2 cursor-pointer border-0 shadow-none">
+            <span id="lucky-spin-btn-label">স্পিন ঘুরান</span>
+          </button>
+
+          <button type="button" id="lucky-spin-invite-btn" class="w-full py-3 rounded-xl bg-[#0b1730] hover:bg-[#102145] text-[#cbd5e1] font-medium text-[13.5px] transition active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer border-0 shadow-none" data-panel="invite">
+            <span>বন্ধুকে আমন্ত্রণ জানান ও ড্র অর্জন করুন</span>
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-[#7f8fb0]" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Real Spin Win History (Matte Borderless List) -->
+        <div class="w-full pt-1 border-0">
+          <div class="flex items-center justify-between px-1 mb-2">
+            <h2 class="text-[13.5px] font-semibold text-[#cbd5e1]">সাম্প্রতিক স্পিন পুরস্কার</h2>
+            <span class="text-[12px] text-[#7f8fb0] font-medium">আয়ের ধারাবাহিকতা</span>
+          </div>
+          <div id="lucky-spin-history-list" class="space-y-2 border-0">
+            <p class="text-center text-xs text-[#7f8fb0] py-4">এখনো কোনো স্পিন পুরস্কার রেকর্ড নেই</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clean Matte Win Result Modal -->
+      <div id="lucky-spin-win-modal" class="fixed inset-0 z-[10000] bg-[#040b1e]/80 hidden items-center justify-center px-5">
+        <div class="w-full max-w-xs rounded-2xl p-6 text-center space-y-4 border-0 bg-[#0b1730]">
+          <div class="w-14 h-14 mx-auto rounded-full bg-[#1877f2] flex items-center justify-center">
+            <svg viewBox="0 0 24 24" class="w-7 h-7 text-white" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m5 12 5 5L20 7"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-[#94a3b8]">অভিনন্দন!</p>
+            <h3 class="text-3xl font-bold text-[#eef2fb] mt-1 font-mono" id="lucky-spin-win-amount">+৪২৳</h3>
+            <p class="text-xs text-[#94a3b8] mt-1.5">পুরস্কারের টাকা সরাসরি আপনার মেইন ব্যালেন্সে যোগ হয়েছে।</p>
+          </div>
+          <button type="button" id="lucky-spin-win-close-btn" class="w-full py-3 rounded-xl bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-sm cursor-pointer active:scale-95 transition border-0">
+            ঠিক আছে
+          </button>
+        </div>
       </div>
     </section>
 

@@ -1,34 +1,91 @@
-function getRealisticTaskUrl(platform, index) {
-  const p = (platform || 'TikTok').toLowerCase();
-  const idx = typeof index === 'number' ? index : 0;
-  if (p.includes('tiktok')) {
-    const urls = [
-      'https://vt.tiktok.com/ZSb666bLY/',
-      'https://www.tiktok.com/@tiktok/video/7391823901234',
-      'https://www.tiktok.com/@creative_hub/video/7281902837465',
-      'https://vt.tiktok.com/ZSj891LmP/',
-      'https://www.tiktok.com/@bangla_short/video/7391827364510'
-    ];
-    return urls[idx % urls.length];
-  } else if (p.includes('youtube')) {
-    const urls = [
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      'https://www.youtube.com/watch?v=3JZ_D3ELwOQ',
-      'https://youtu.be/kJQP7kiw5Fk',
-      'https://www.youtube.com/watch?v=9bZkp7q19f0',
-      'https://www.youtube.com/watch?v=fJ9rUzIMcZQ'
-    ];
-    return urls[idx % urls.length];
-  } else {
-    const urls = [
-      'https://www.facebook.com/watch/?v=10158319283726192',
-      'https://www.facebook.com/reel/782910394829102',
-      'https://www.facebook.com/watch/?v=9812739481920',
-      'https://www.facebook.com/reel/19283746501928'
-    ];
-    return urls[idx % urls.length];
-  }
+const FOREIGN_TIKTOK_LINKS = [
+  'https://www.tiktok.com/@mrbeast/video/7426423889904913695',
+  'https://www.tiktok.com/@duolingo/video/7463493099772284202',
+  'https://www.tiktok.com/@barstoolsports/video/7470338861181308206',
+  'https://www.tiktok.com/@haleyybaylee/video/7167070683816578347',
+  'https://www.tiktok.com/@kallmekris/video/7321871350694432005',
+  'https://www.tiktok.com/@newyorknico/video/7257560669237775662',
+  'https://www.tiktok.com/@sapphie_the_pomsky/video/7228036120540597550',
+  'https://www.tiktok.com/@epicgardening/video/7055411162212633903',
+  'https://www.tiktok.com/@thrillist/video/7216370705460399406',
+  'https://www.tiktok.com/@tiktok/video/6807491984882765062',
+  'https://www.tiktok.com/@scout2015/video/6718335390845095173',
+  'https://www.tiktok.com/@honeycutepet/video/7032659446199274757',
+  'https://www.tiktok.com/@danieljubnelson/video/7383444194725006597',
+  'https://www.tiktok.com/@ivanmccombs/video/7074240776791723307',
+  'https://www.tiktok.com/@cierraramirezofficial/video/7006566147675983110',
+  'https://www.tiktok.com/@leah_janae_/video/7216891655180324138',
+  'https://www.tiktok.com/@cassie.lyons/video/7317347956863012142',
+  'https://www.tiktok.com/@lesleyetp/video/7177486317813648686',
+  'https://www.tiktok.com/@davidteathercodes/video/7106686413101468970',
+  'https://www.tiktok.com/@saps_entertainment/video/6780507681544342790',
+  'https://www.tiktok.com/@icm_triplets/video/7444815300115287342',
+  'https://www.tiktok.com/@sam.agraz/video/7353500788594969861',
+  'https://www.tiktok.com/@callie.deedee/video/7339594662002298154',
+  'https://www.tiktok.com/@fabrizio.mndz/video/7390849506188856581',
+  'https://www.tiktok.com/@zell_bell15/video/7407712497899195654',
+  'https://www.tiktok.com/@andr3w_wave/video/7396303578425494816',
+  'https://www.tiktok.com/@nightmoonxyz/video/7392945064588135688',
+  'https://www.tiktok.com/@manta_nice/video/7395507386808585518',
+  'https://www.tiktok.com/@usimmango/video/7334835348058443051',
+  'https://www.tiktok.com/@mlfnf1/video/7252699176692092162'
+];
+
+const YOUTUBE_TASK_LINKS = [
+  'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  'https://www.youtube.com/watch?v=3JZ_D3ELwOQ',
+  'https://youtu.be/kJQP7kiw5Fk',
+  'https://www.youtube.com/watch?v=9bZkp7q19f0',
+  'https://www.youtube.com/watch?v=fJ9rUzIMcZQ'
+];
+
+const FACEBOOK_TASK_LINKS = [
+  'https://www.facebook.com/watch/?v=10158319283726192',
+  'https://www.facebook.com/reel/782910394829102',
+  'https://www.facebook.com/watch/?v=9812739481920',
+  'https://www.facebook.com/reel/19283746501928'
+];
+
+function isLegacyPlaceholderTaskUrl(url) {
+  if (!url) return true;
+  return /ZSb666bLY|ZSj891LmP|bangla_short|7391823901234|7281902837465|youtube\.com\/short/i.test(String(url));
 }
+
+function getPlatformTaskPool(platform) {
+  const p = (platform || 'TikTok').toLowerCase();
+  if (p.includes('tiktok')) return FOREIGN_TIKTOK_LINKS;
+  if (p.includes('youtube')) return YOUTUBE_TASK_LINKS;
+  return FACEBOOK_TASK_LINKS;
+}
+
+function getUniqueRandomTaskUrl(platform, index, existingMissions) {
+  const pool = getPlatformTaskPool(platform);
+  if (!pool.length) return '';
+  let missions = existingMissions;
+  if (!Array.isArray(missions) && typeof readAcceptedMissions === 'function') {
+    try { missions = readAcceptedMissions(); } catch (e) { missions = []; }
+  }
+  const usedSet = new Set(
+    (Array.isArray(missions) ? missions : [])
+      .map(function(m) { return m && m.taskLink ? String(m.taskLink).trim() : ''; })
+      .filter(Boolean)
+  );
+  const available = pool.filter(function(u) { return !usedSet.has(u); });
+  if (available.length > 0) {
+    return available[Math.floor(Math.random() * available.length)];
+  }
+  const lastLink = Array.isArray(missions) && missions[0] ? missions[0].taskLink : '';
+  const nonRepeat = pool.filter(function(u) { return u !== lastLink; });
+  const pickFrom = nonRepeat.length > 0 ? nonRepeat : pool;
+  return pickFrom[Math.floor(Math.random() * pickFrom.length)];
+}
+
+function getRealisticTaskUrl(platform, index) {
+  const pool = getPlatformTaskPool(platform);
+  if (!pool.length) return '';
+  return getUniqueRandomTaskUrl(platform, index);
+}
+
 
 
 function getPlatformSvg(platform, sizeClass) {
@@ -60,26 +117,51 @@ function mapSupabaseUser(d) {
   if (!d) return null;
   let opt = {};
   if (d.bkash_optional) {
-    try { opt = JSON.parse(d.bkash_optional); } catch(e) {}
+    try { opt = typeof d.bkash_optional === 'string' ? JSON.parse(d.bkash_optional) : d.bkash_optional; } catch(e) { opt = {}; }
   }
+  if (!opt || typeof opt !== 'object') opt = {};
+
   const nName = d.nagad_name || opt.nagad_name || '';
   const nPhone = d.nagad_phone || opt.nagad_phone || '';
   const uName = d.usdt_name || opt.usdt_name || '';
   const uAddr = d.usdt_address || opt.usdt_address || '';
+  const purchasedPackages = Array.isArray(opt.purchased_packages) && opt.purchased_packages.length > 0
+    ? opt.purchased_packages
+    : [d.package_level || d.packageLevel || 'LV0'];
+  if (!purchasedPackages.includes('LV0')) purchasedPackages.unshift('LV0');
 
   return {
     phone: d.phone || d.account_number || d.accountNumber,
     accountNumber: d.account_number || d.accountNumber || d.phone,
     name: opt.real_name || d.name || 'সদস্য',
-    realName: opt.real_name || d.name || '',
+    realName: opt.real_name || (d.name && d.name !== 'সদস্য' ? d.name : ''),
     fundPassword: opt.fund_password || '',
+    fundPasswordLocked: Boolean(opt.fund_password),
     passwordHash: d.password_hash || d.passwordHash || '',
     plainPassword: d.plain_password || d.plainPassword || '',
     memberId: d.member_id || d.memberId || ('AL' + Date.now().toString().slice(-8)),
     inviteCode: d.invite_code || d.inviteCode || '',
     superiorId: d.superior_id || d.superiorId || '11',
     packageLevel: d.package_level || d.packageLevel || 'LV0',
+    purchasedPackages: purchasedPackages,
     balance: typeof d.balance === 'number' ? d.balance : parseFloat(d.balance || 0) || 0,
+    frozenBalance: Number(opt.frozen_balance) || 0,
+    lifetimeEarnings: Number(opt.lifetime_earnings) || 0,
+    todayIncome: Number(opt.today_income) || 0,
+    totalIncome: Number(opt.total_income) || 0,
+    completedMissions: Number(opt.completed_missions) || 0,
+    rechargeAmount: Number(opt.recharge_amount) || 0,
+    cashoutAmount: Number(opt.cashout_amount) || 0,
+    acceptedMissions: Array.isArray(opt.accepted_missions) ? opt.accepted_missions : [],
+    savingsPlan: opt.savings_plan || null,
+    claimedInviteRewards: Array.isArray(opt.claimed_rewards) ? opt.claimed_rewards : [],
+    claimedUsdtOnchain: Number(opt.claimed_usdt_onchain) || 0,
+    usedSpins: Number(opt.used_spins) || 0,
+    bonusSpins: Number(opt.bonus_spins) || 0,
+    spinHistory: Array.isArray(opt.spin_history) ? opt.spin_history : [],
+    country: opt.country || (String(d.phone || '').startsWith('91') ? 'IN' : 'BD'),
+    currency: opt.currency || (String(d.phone || '').startsWith('91') ? 'INR' : 'BDT'),
+    language: opt.language || (String(d.phone || '').startsWith('91') ? 'hi' : 'bn'),
     bkashName: d.bkash_name || d.bkashName || '',
     bkashPhone: d.bkash_phone || d.bkashPhone || '',
     bkash: {
@@ -100,9 +182,139 @@ function mapSupabaseUser(d) {
       network: 'BEP20'
     },
     accountStatus: opt.account_status || 'active',
+    _rawOpt: opt,
     createdAt: d.created_at || d.createdAt || new Date().toISOString()
   };
 }
+
+function clearUserCachesOnAuthSwitch() {
+  try {
+    const keys = [
+      'alo_real_name',
+      'alo_fund_password',
+      'alo_fund_password_locked',
+      'alo_bkash_account',
+      'alo_nagad_account',
+      'alo_usdt_account',
+      'alo_usdt_address',
+      'alo_claimed_invite_rewards',
+      'withdrawal_history_records',
+      'my_pass_available_bal',
+      'aloAcceptedMissions',
+      'alo_usdt_deposits_history'
+    ];
+    keys.forEach(function(k) { localStorage.removeItem(k); });
+  } catch (e) {}
+}
+
+function hydrateUserCachesFromCloud(user) {
+  if (!user) return;
+  try {
+    const normPhone = normalizeBdPhone(user.phone || user.accountNumber || '');
+    const boundRealName = user.realName || (user.name && user.name !== 'সদস্য' && user.name !== 'Member' && user.name !== 'सदस्य' ? user.name : '');
+    if (boundRealName) {
+      localStorage.setItem('alo_real_name', boundRealName);
+      user.realName = boundRealName;
+    } else {
+      localStorage.removeItem('alo_real_name');
+    }
+
+    if (user.fundPassword) {
+      localStorage.setItem('alo_fund_password', String(user.fundPassword));
+      localStorage.setItem('alo_fund_password_locked', 'true');
+    } else {
+      localStorage.removeItem('alo_fund_password');
+      localStorage.removeItem('alo_fund_password_locked');
+    }
+
+    const bkPhone = (user.bkash && user.bkash.phone) || user.bkashPhone || '';
+    if (bkPhone) {
+      const bkData = {
+        fullName: (user.bkash && user.bkash.fullName) || user.bkashName || boundRealName || '',
+        phone: bkPhone,
+        locked: true,
+        updatedAt: user.updatedAt || new Date().toISOString()
+      };
+      localStorage.setItem('alo_bkash_account', JSON.stringify(bkData));
+      user.bkash = bkData;
+    } else {
+      localStorage.removeItem('alo_bkash_account');
+    }
+
+    const ngPhone = (user.nagad && user.nagad.phone) || user.nagadPhone || '';
+    if (ngPhone) {
+      const ngData = {
+        fullName: (user.nagad && user.nagad.fullName) || user.nagadName || boundRealName || '',
+        phone: ngPhone,
+        locked: true,
+        updatedAt: user.updatedAt || new Date().toISOString()
+      };
+      localStorage.setItem('alo_nagad_account', JSON.stringify(ngData));
+      user.nagad = ngData;
+    } else {
+      localStorage.removeItem('alo_nagad_account');
+    }
+
+    const usAddr = (user.usdt && user.usdt.address) || user.usdtAddress || '';
+    if (usAddr) {
+      const usData = {
+        fullName: (user.usdt && user.usdt.fullName) || user.usdtName || boundRealName || '',
+        address: usAddr,
+        network: 'BEP20',
+        locked: true,
+        updatedAt: user.updatedAt || new Date().toISOString()
+      };
+      localStorage.setItem('alo_usdt_account', JSON.stringify(usData));
+      localStorage.setItem('alo_usdt_address', usAddr);
+      user.usdt = usData;
+    } else {
+      localStorage.removeItem('alo_usdt_account');
+      localStorage.removeItem('alo_usdt_address');
+    }
+
+    if (Array.isArray(user.claimedInviteRewards)) {
+      localStorage.setItem('alo_claimed_invite_rewards', JSON.stringify(user.claimedInviteRewards));
+    }
+
+    if (Array.isArray(user.acceptedMissions)) {
+      // Preserve existing screenshots from local browser cache if ID matches and cloud stripped heavy base64
+      let localList = [];
+      try { localList = JSON.parse(localStorage.getItem('aloAcceptedMissions') || '[]'); } catch(e) {}
+      const localMap = new Map();
+      if (Array.isArray(localList)) {
+        localList.forEach(function(lm) { if (lm && lm.id) localMap.set(lm.id, lm); });
+      }
+      const hydratedMissions = user.acceptedMissions.map(function(cm) {
+        if (!cm.screenshot && localMap.has(cm.id) && localMap.get(cm.id).screenshot) {
+          return Object.assign({}, cm, { screenshot: localMap.get(cm.id).screenshot });
+        }
+        return cm;
+      });
+      localStorage.setItem('aloAcceptedMissions', JSON.stringify(hydratedMissions));
+    }
+
+    if (user.savingsPlan && normPhone) {
+      localStorage.setItem('aloSavingsPlan_' + normPhone, JSON.stringify(user.savingsPlan));
+    }
+
+    if (typeof user.balance === 'number') {
+      localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
+    }
+  } catch (e) {}
+}
+
+window.saveUser = function(u) {
+  if (!u) return;
+  try {
+    localStorage.setItem('aloSignedInUser', JSON.stringify(u));
+    if (typeof u.balance === 'number') {
+      localStorage.setItem('my_pass_available_bal', u.balance.toFixed(2));
+    }
+  } catch (e) {}
+  if (typeof dbSaveUser === 'function') {
+    dbSaveUser(u).catch(function() {});
+  }
+};
 
 // ==========================================
 // LIVE PLATFORM CONTROLS (SYNCED FROM CPANEL ADMIN PANEL)
@@ -135,6 +347,12 @@ function applyPlatformConfigData(rawOpt) {
   if (Number(parsed.minRecharge) > 0) window.aloPlatformConfig.minRecharge = Number(parsed.minRecharge);
   if (typeof parsed.withdrawEnabled === 'boolean') window.aloPlatformConfig.withdrawEnabled = parsed.withdrawEnabled;
   if (typeof parsed.siteNotice === 'string') window.aloPlatformConfig.siteNotice = parsed.siteNotice;
+  if (parsed.packages && typeof parsed.packages === 'object') {
+    window.aloPlatformConfig.packages = parsed.packages;
+    if (typeof applyRemotePackageConfigs === 'function') {
+      applyRemotePackageConfigs(parsed.packages);
+    }
+  }
 }
 
 async function loadPlatformConfigFromSupabase() {
@@ -169,6 +387,7 @@ function mapSupabaseTeam(d) {
 
 function mapSupabaseTx(d) {
   return {
+    id: d.id,
     phone: d.phone,
     type: d.type,
     amount: typeof d.amount === 'number' ? d.amount : parseFloat(d.amount || 0) || 0,
@@ -176,6 +395,7 @@ function mapSupabaseTx(d) {
     actual: typeof d.actual === 'number' ? d.actual : parseFloat(d.actual || d.amount || 0) || 0,
     status: d.status || 'স্থানান্তরিত',
     method: d.method || 'বিকাশ (bKash)',
+    orderId: d.order_id || d.out_trade_no || '',
     date: d.date,
     time: d.time,
     createdAt: d.created_at || d.createdAt
@@ -184,6 +404,7 @@ function mapSupabaseTx(d) {
 
 // 0. Supabase Live Realtime Sync
 let supabaseLiveChannel = null;
+let supabaseTxChannel = null;
 
 function initSupabaseLiveSync(user) {
   if (!user && typeof getCurrentUser === 'function') user = getCurrentUser();
@@ -195,6 +416,10 @@ function initSupabaseLiveSync(user) {
     if (supabaseLiveChannel) {
       try { window.aloSupabase.removeChannel(supabaseLiveChannel); } catch (e) {}
       supabaseLiveChannel = null;
+    }
+    if (supabaseTxChannel) {
+      try { window.aloSupabase.removeChannel(supabaseTxChannel); } catch (e) {}
+      supabaseTxChannel = null;
     }
 
     supabaseLiveChannel = window.aloSupabase
@@ -209,28 +434,12 @@ function initSupabaseLiveSync(user) {
         },
         function(payload) {
           if (!payload || !payload.new) return;
-          console.log('⚡ Supabase Live Realtime update received:', payload.new);
           const currentUser = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
           if (!currentUser) return;
 
-          const updated = Object.assign({}, currentUser);
-          if (payload.new.balance !== undefined && payload.new.balance !== null) {
-            updated.balance = Number(payload.new.balance);
-          }
-          if (payload.new.package_level) {
-            updated.packageLevel = payload.new.package_level;
-          }
-          if (payload.new.total_income !== undefined && payload.new.total_income !== null) {
-            updated.totalIncome = Number(payload.new.total_income);
-          }
-          if (payload.new.today_income !== undefined && payload.new.today_income !== null) {
-            updated.todayIncome = Number(payload.new.today_income);
-          }
-          let liveMeta = {};
-          if (payload.new.bkash_optional) {
-            try { liveMeta = JSON.parse(payload.new.bkash_optional); } catch (e) {}
-          }
-          if (liveMeta.account_status === 'banned') {
+          const mapped = mapSupabaseUser(payload.new);
+          if (mapped && mapped.accountStatus === 'banned') {
+            clearUserCachesOnAuthSwitch();
             localStorage.removeItem('aloSignedInUser');
             if (typeof showToastNotification === 'function') {
               showToastNotification('⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত (Suspended) করা হয়েছে।');
@@ -239,18 +448,47 @@ function initSupabaseLiveSync(user) {
             return;
           }
 
-          if (payload.new.bkash_name !== undefined) updated.bkashName = payload.new.bkash_name;
-          if (payload.new.bkash_phone !== undefined) updated.bkashPhone = payload.new.bkash_phone;
-          if (payload.new.nagad_name !== undefined) updated.nagadName = payload.new.nagad_name;
-          if (payload.new.nagad_phone !== undefined) updated.nagadPhone = payload.new.nagad_phone;
-          if (payload.new.usdt_name !== undefined) updated.usdtName = payload.new.usdt_name;
-          if (payload.new.usdt_address !== undefined) updated.usdtAddress = payload.new.usdt_address;
-
+          const updated = Object.assign({}, currentUser, mapped || {});
+          hydrateUserCachesFromCloud(updated);
           localStorage.setItem('aloSignedInUser', JSON.stringify(updated));
           if (typeof updateUserDetails === 'function') updateUserDetails(updated);
           if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
           if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
           if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+          if (typeof updateBkashDisplayAcrossApp === 'function') {
+            updateBkashDisplayAcrossApp();
+            updateNagadDisplayAcrossApp();
+            updateUsdtDisplayAcrossApp();
+            updateRealNameDisplayAcrossApp();
+            updateFundPasswordDisplayAcrossApp();
+          }
+          if (typeof renderSavingsPlanPanel === 'function') renderSavingsPlanPanel();
+          if (typeof renderMissionRecords === 'function') renderMissionRecords(activeMissionFilter);
+          const spinPanel = document.getElementById('lucky-spin-panel');
+          if (spinPanel && !spinPanel.hidden && typeof renderLuckySpinPanel === 'function') {
+            renderLuckySpinPanel();
+          }
+        }
+      )
+      .subscribe();
+
+    supabaseTxChannel = window.aloSupabase
+      .channel('user-tx-sync-' + normPhone)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'transactions',
+          filter: `phone=eq.${normPhone}`
+        },
+        function() {
+          if (typeof renderWithdrawalHistory === 'function') renderWithdrawalHistory();
+          if (typeof renderRecentUsdtDeposits === 'function') renderRecentUsdtDeposits();
+          const spinPanel = document.getElementById('lucky-spin-panel');
+          if (spinPanel && !spinPanel.hidden && typeof renderLuckySpinPanel === 'function') {
+            renderLuckySpinPanel();
+          }
         }
       )
       .subscribe();
@@ -267,7 +505,6 @@ function initSupabaseLiveSync(user) {
         }
       )
       .subscribe();
-    console.log('⚡ Subscribed to Supabase Live Realtime channel for:', normPhone);
   } catch (err) {
     console.warn('Supabase Live Channel Subscription warning:', err);
   }
@@ -278,33 +515,53 @@ window.addEventListener('alo-supabase-ready', function() {
   loadPlatformConfigFromSupabase();
   if (typeof getCurrentUser === 'function') {
     const user = getCurrentUser();
-    if (user) initSupabaseLiveSync(user);
+    if (user) {
+      initSupabaseLiveSync(user);
+      if (typeof hydrateSessionFromSupabase === 'function') {
+        hydrateSessionFromSupabase();
+      }
+    }
   }
 });
 
-// 1. User DB helpers
+// 1. User DB helpers (100% Real Database First)
 async function dbGetUser(normPhone) {
-  // Try Supabase first
+  const cleanPhone = normalizeBdPhone(normPhone || '');
+  if (!cleanPhone) return null;
+
   if (window.aloSupabase) {
     try {
       const { data, error } = await window.aloSupabase
         .from('users')
         .select('*')
-        .eq('phone', normPhone)
+        .or(`phone.eq.${cleanPhone},account_number.eq.${cleanPhone}`)
+        .limit(1)
         .maybeSingle();
       if (!error && data) {
         return mapSupabaseUser(data);
       }
+      // Also check exact raw string in case stored without normalization
+      if (normPhone && normPhone !== cleanPhone) {
+        const { data: rawData, error: rawErr } = await window.aloSupabase
+          .from('users')
+          .select('*')
+          .eq('phone', String(normPhone).trim())
+          .maybeSingle();
+        if (!rawErr && rawData) {
+          return mapSupabaseUser(rawData);
+        }
+      }
+      return null;
     } catch (err) {
       console.warn('Supabase dbGetUser error:', err);
     }
   }
 
-  // Fallback to Firebase
+  // Fallback to Firebase if Supabase is unavailable
   if (window.aloFirebase && window.aloFirebase.db) {
     try {
       const { db, doc, getDoc } = window.aloFirebase;
-      const snap = await getDoc(doc(db, 'users', normPhone));
+      const snap = await getDoc(doc(db, 'users', cleanPhone));
       if (snap && snap.exists()) {
         return snap.data();
       }
@@ -313,85 +570,123 @@ async function dbGetUser(normPhone) {
     }
   }
 
-  // Check localStorage accounts
-  try {
-    const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-    const local = accounts.find(function(a) {
-      return normalizeBdPhone(a.phone || a.accountNumber || '') === normPhone;
-    });
-    if (local) return local;
-  } catch(e) {}
-
   return null;
 }
 
+function compactMissionsForCloud(missions) {
+  if (!Array.isArray(missions)) return [];
+  return missions.slice(0, 60).map(function(m) {
+    const copy = Object.assign({}, m);
+    if (copy.screenshot && String(copy.screenshot).length > 18000) {
+      copy.hasScreenshot = true;
+      delete copy.screenshot;
+    }
+    return copy;
+  });
+}
+
 async function dbSaveUser(account) {
+  if (!account) return false;
   const normPhone = normalizeBdPhone(account.phone || account.accountNumber);
+  if (!normPhone) return false;
   let saved = false;
 
-  // Save to Supabase
   if (window.aloSupabase) {
     try {
-      // Supabase users table schema: id, phone, account_number, name, password_hash, plain_password, member_id, invite_code, superior_id, package_level, balance, bkash_name, bkash_phone, bkash_optional, created_at, updated_at
-      let extraMeta = {};
+      // Preserve any existing metadata keys in bkash_optional (like admin-controlled flags)
+      let baseOpt = (account._rawOpt && typeof account._rawOpt === 'object') ? Object.assign({}, account._rawOpt) : {};
       try {
-        extraMeta = {
-          nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || '',
-          nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
-          usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || '',
-          usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || '',
-          real_name: account.realName || account.name || '',
-          fund_password: account.fundPassword || ''
-        };
-      } catch(e) {}
+        const { data: existingRow } = await window.aloSupabase
+          .from('users')
+          .select('bkash_optional')
+          .eq('phone', normPhone)
+          .maybeSingle();
+        if (existingRow && existingRow.bkash_optional) {
+          const parsed = typeof existingRow.bkash_optional === 'string'
+            ? JSON.parse(existingRow.bkash_optional)
+            : existingRow.bkash_optional;
+          if (parsed && typeof parsed === 'object') {
+            baseOpt = Object.assign({}, parsed, baseOpt);
+          }
+        }
+      } catch (e) {}
+
+      const purchasedPkgs = Array.isArray(account.purchasedPackages) && account.purchasedPackages.length > 0
+        ? account.purchasedPackages
+        : (Array.isArray(baseOpt.purchased_packages) ? baseOpt.purchased_packages : ['LV0']);
+      if (!purchasedPkgs.includes('LV0')) purchasedPkgs.unshift('LV0');
+
+      const extraMeta = Object.assign({}, baseOpt, {
+        nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || baseOpt.nagad_name || '',
+        nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || baseOpt.nagad_phone || '',
+        usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || baseOpt.usdt_name || '',
+        usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || baseOpt.usdt_address || '',
+        real_name: account.realName || (account.name && account.name !== 'সদস্য' ? account.name : baseOpt.real_name || ''),
+        fund_password: account.fundPassword || baseOpt.fund_password || '',
+        account_status: account.accountStatus || baseOpt.account_status || 'active',
+        frozen_balance: typeof account.frozenBalance === 'number' ? account.frozenBalance : (Number(baseOpt.frozen_balance) || 0),
+        lifetime_earnings: typeof account.lifetimeEarnings === 'number' ? account.lifetimeEarnings : (Number(baseOpt.lifetime_earnings) || 0),
+        today_income: typeof account.todayIncome === 'number' ? account.todayIncome : (Number(baseOpt.today_income) || 0),
+        total_income: typeof account.totalIncome === 'number' ? account.totalIncome : (Number(baseOpt.total_income) || 0),
+        completed_missions: typeof account.completedMissions === 'number' ? account.completedMissions : (Number(baseOpt.completed_missions) || 0),
+        recharge_amount: typeof account.rechargeAmount === 'number' ? account.rechargeAmount : (Number(baseOpt.recharge_amount) || 0),
+        cashout_amount: typeof account.cashoutAmount === 'number' ? account.cashoutAmount : (Number(baseOpt.cashout_amount) || 0),
+        purchased_packages: purchasedPkgs,
+        accepted_missions: Array.isArray(account.acceptedMissions)
+          ? compactMissionsForCloud(account.acceptedMissions)
+          : (Array.isArray(baseOpt.accepted_missions) ? baseOpt.accepted_missions : []),
+        savings_plan: account.savingsPlan !== undefined ? account.savingsPlan : (baseOpt.savings_plan || null),
+        claimed_rewards: Array.isArray(account.claimedInviteRewards)
+          ? account.claimedInviteRewards
+          : (Array.isArray(baseOpt.claimed_rewards) ? baseOpt.claimed_rewards : []),
+        claimed_usdt_onchain: typeof account.claimedUsdtOnchain === 'number'
+          ? account.claimedUsdtOnchain
+          : (Number(baseOpt.claimed_usdt_onchain) || 0),
+        used_spins: typeof account.usedSpins === 'number'
+          ? account.usedSpins
+          : (Number(baseOpt.used_spins) || 0),
+        bonus_spins: typeof account.bonusSpins === 'number'
+          ? account.bonusSpins
+          : (Number(baseOpt.bonus_spins) || 0),
+        spin_history: Array.isArray(account.spinHistory)
+          ? account.spinHistory.slice(0, 25)
+          : (Array.isArray(baseOpt.spin_history) ? baseOpt.spin_history : []),
+        country: account.country || baseOpt.country || 'BD',
+        currency: account.currency || baseOpt.currency || 'BDT',
+        language: account.language || baseOpt.language || 'bn'
+      });
+
+      account._rawOpt = extraMeta;
 
       const payload = {
         phone: normPhone,
-        account_number: account.accountNumber || account.phone,
-        name: account.name || 'সদস্য',
+        account_number: account.accountNumber || normPhone,
+        name: account.realName || account.name || 'সদস্য',
         password_hash: account.passwordHash || '',
         plain_password: account.plainPassword || '',
         member_id: account.memberId || ('AL' + Date.now().toString().slice(-8)),
         invite_code: account.inviteCode || '',
         superior_id: account.superiorId || '11',
         package_level: account.packageLevel || 'LV0',
-        balance: typeof account.balance === 'number' ? account.balance : 0.00,
+        balance: typeof account.balance === 'number' ? account.balance : (parseFloat(account.balance) || 0),
         bkash_name: (account.bkash && account.bkash.fullName) || account.bkashName || '',
         bkash_phone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
         bkash_optional: JSON.stringify(extraMeta),
+        created_at: account.createdAt || new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      if (account.createdAt) payload.created_at = account.createdAt;
-      else payload.created_at = new Date().toISOString();
 
       const { error } = await window.aloSupabase
         .from('users')
         .upsert(payload, { onConflict: 'phone' });
       if (!error) saved = true;
       else console.warn('Supabase dbSaveUser warning:', error);
-
-      // Attempt background auth sync so it also registers in Authentication tab
-      if (window.aloSupabase.auth && normPhone) {
-        try {
-          window.aloSupabase.auth.signUp({
-            email: `user_${normPhone}@gmail.com`,
-            password: account.plainPassword || 'Password123!',
-            options: {
-              data: {
-                phone: normPhone,
-                name: account.name || 'সদস্য',
-                member_id: payload.member_id
-              }
-            }
-          }).catch(function() {});
-        } catch(e) {}
-      }
     } catch (err) {
       console.warn('Supabase dbSaveUser error:', err);
     }
   }
 
-  // Also sync to Firebase
+  // Also sync to Firebase if enabled
   if (window.aloFirebase && window.aloFirebase.db) {
     try {
       const { db, doc, setDoc } = window.aloFirebase;
@@ -412,31 +707,15 @@ async function dbSaveUser(account) {
         nagadPhone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
         usdtName: (account.usdt && account.usdt.fullName) || account.usdtName || '',
         usdtAddress: (account.usdt && account.usdt.address) || account.usdtAddress || '',
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        createdAt: account.createdAt || new Date().toISOString()
       };
-      if (account.createdAt) payload.createdAt = account.createdAt;
-      else payload.createdAt = new Date().toISOString();
-
       await setDoc(doc(db, 'users', normPhone), payload, { merge: true });
       saved = true;
     } catch (err) {
       console.warn('Firebase dbSaveUser error:', err);
     }
   }
-
-  // Also update in localStorage aloAccounts
-  try {
-    const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-    const idx = accounts.findIndex(function(a) {
-      return normalizeBdPhone(a.phone || a.accountNumber || '') === normPhone;
-    });
-    if (idx >= 0) {
-      accounts[idx] = Object.assign({}, accounts[idx], account);
-    } else {
-      accounts.push(account);
-    }
-    localStorage.setItem('aloAccounts', JSON.stringify(accounts));
-  } catch(e) {}
 
   return saved;
 }
@@ -447,21 +726,7 @@ async function dbFindInviter(codeOrPhone) {
   const raw = String(codeOrPhone).trim();
   const norm = normalizeBdPhone(raw);
 
-  // Check localStorage accounts first
-  try {
-    const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-    const local = accounts.find(function(a) {
-      return (
-        (a.inviteCode && a.inviteCode.toUpperCase() === raw.toUpperCase()) ||
-        (a.phone && normalizeBdPhone(a.phone) === norm) ||
-        (a.accountNumber && normalizeBdPhone(a.accountNumber) === norm) ||
-        (a.memberId && a.memberId === raw)
-      );
-    });
-    if (local) return local;
-  } catch(e) {}
-
-  // Check Supabase
+  // Check Supabase first (authoritative)
   if (window.aloSupabase) {
     try {
       // By invite_code (case-insensitive)
@@ -860,16 +1125,17 @@ async function dbGetRealTeam(userPhone) {
               t2LookupKeys.add(p);
               if (u.phone) t2LookupKeys.add(String(u.phone).trim());
               if (u.invite_code) t2LookupKeys.add(String(u.invite_code).trim());
+              const mapped = mapSupabaseUser(u);
               upsertMember(p, {
                 fromUsersTable: true,
-                memberId: u.member_id || u.memberId || ('AL' + p.slice(-6)),
-                inviteCode: u.invite_code || '',
+                memberId: mapped.memberId || ('AL' + p.slice(-6)),
+                inviteCode: mapped.inviteCode || '',
                 tier: 1,
-                level: u.package_level || u.packageLevel || 'LV0',
-                balance: Number(u.balance) || 0,
-                rechargeAmount: Number(u.recharge_amount || 0),
-                cashoutAmount: Number(u.withdraw_amount || u.cashout_amount || u.withdrawal || 0),
-                joinedAt: u.created_at || u.createdAt || new Date().toISOString()
+                level: mapped.packageLevel || 'LV0',
+                balance: Number(mapped.balance) || 0,
+                rechargeAmount: Number(mapped.rechargeAmount || 0),
+                cashoutAmount: Number(mapped.cashoutAmount || 0),
+                joinedAt: mapped.createdAt || new Date().toISOString()
               });
             }
           });
@@ -897,16 +1163,17 @@ async function dbGetRealTeam(userPhone) {
                   t3LookupKeys.add(p);
                   if (u.phone) t3LookupKeys.add(String(u.phone).trim());
                   if (u.invite_code) t3LookupKeys.add(String(u.invite_code).trim());
+                  const mapped = mapSupabaseUser(u);
                   upsertMember(p, {
                     fromUsersTable: true,
-                    memberId: u.member_id || u.memberId || ('AL' + p.slice(-6)),
-                    inviteCode: u.invite_code || '',
+                    memberId: mapped.memberId || ('AL' + p.slice(-6)),
+                    inviteCode: mapped.inviteCode || '',
                     tier: 2,
-                    level: u.package_level || u.packageLevel || 'LV0',
-                    balance: Number(u.balance) || 0,
-                    rechargeAmount: Number(u.recharge_amount || 0),
-                    cashoutAmount: Number(u.withdraw_amount || u.cashout_amount || u.withdrawal || 0),
-                    joinedAt: u.created_at || u.createdAt || new Date().toISOString()
+                    level: mapped.packageLevel || 'LV0',
+                    balance: Number(mapped.balance) || 0,
+                    rechargeAmount: Number(mapped.rechargeAmount || 0),
+                    cashoutAmount: Number(mapped.cashoutAmount || 0),
+                    joinedAt: mapped.createdAt || new Date().toISOString()
                   });
                 }
               });
@@ -929,16 +1196,17 @@ async function dbGetRealTeam(userPhone) {
                   tier3Users.forEach(function(u) {
                     const p = normalizeBdPhone(u.phone || u.account_number);
                     if (p && p !== normPhone) {
+                      const mapped = mapSupabaseUser(u);
                       upsertMember(p, {
                         fromUsersTable: true,
-                        memberId: u.member_id || u.memberId || ('AL' + p.slice(-6)),
-                        inviteCode: u.invite_code || '',
+                        memberId: mapped.memberId || ('AL' + p.slice(-6)),
+                        inviteCode: mapped.inviteCode || '',
                         tier: 3,
-                        level: u.package_level || u.packageLevel || 'LV0',
-                        balance: Number(u.balance) || 0,
-                        rechargeAmount: Number(u.recharge_amount || 0),
-                        cashoutAmount: Number(u.withdraw_amount || u.cashout_amount || u.withdrawal || 0),
-                        joinedAt: u.created_at || u.createdAt || new Date().toISOString()
+                        level: mapped.packageLevel || 'LV0',
+                        balance: Number(mapped.balance) || 0,
+                        rechargeAmount: Number(mapped.rechargeAmount || 0),
+                        cashoutAmount: Number(mapped.cashoutAmount || 0),
+                        joinedAt: mapped.createdAt || new Date().toISOString()
                       });
                     }
                   });
@@ -961,16 +1229,17 @@ async function dbGetRealTeam(userPhone) {
             const p = normalizeBdPhone(u.phone || u.account_number);
             const cur = memberMap.get(p);
             if (cur) {
+              const mapped = mapSupabaseUser(u);
               upsertMember(p, {
                 fromUsersTable: true,
-                memberId: u.member_id || u.memberId,
-                inviteCode: u.invite_code || '',
+                memberId: mapped.memberId,
+                inviteCode: mapped.inviteCode || '',
                 tier: cur.tier,
-                level: u.package_level || u.packageLevel || 'LV0',
-                balance: Number(u.balance) || 0,
-                rechargeAmount: Number(u.recharge_amount || 0),
-                cashoutAmount: Number(u.withdraw_amount || u.cashout_amount || u.withdrawal || 0),
-                joinedAt: u.created_at || u.createdAt
+                level: mapped.packageLevel || 'LV0',
+                balance: Number(mapped.balance) || 0,
+                rechargeAmount: Number(mapped.rechargeAmount || 0),
+                cashoutAmount: Number(mapped.cashoutAmount || 0),
+                joinedAt: mapped.createdAt
               });
             }
           });
@@ -981,152 +1250,42 @@ async function dbGetRealTeam(userPhone) {
     }
   }
 
-  // 2. Multi-level recursive graph from localStorage aloAccounts (Level 1 -> Level 2 -> Level 3)
-  try {
-    const user = getCurrentUser();
-    const myInviteCode = (user && user.inviteCode) ? user.inviteCode.toUpperCase() : '';
-    const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-
-    // Tier 1: Directly referred by me
-    const directAccounts = accounts.filter(function(a) {
-      const ap = normalizeBdPhone(a.phone || a.accountNumber);
-      if (ap === normPhone) return false;
-      const supPhone = normalizeBdPhone(a.superiorPhone || a.superiorId);
-      const supCode = String(a.superiorId || '').trim().toUpperCase();
-      return supPhone === normPhone || (myInviteCode && supCode === myInviteCode);
-    });
-
-    directAccounts.forEach(function(a) {
-      const p = normalizeBdPhone(a.phone || a.accountNumber);
-      upsertMember(p, {
-        memberId: a.memberId || ('AL' + p.slice(-6)),
-        inviteCode: a.inviteCode || '',
-        tier: 1,
-        level: a.packageLevel || 'LV0',
-        balance: Number(a.balance) || 0,
-        rechargeAmount: Number(a.rechargeAmount || 0),
-        cashoutAmount: Number(a.cashoutAmount || a.withdrawAmount || a.withdrawal || 0),
-        joinedAt: a.createdAt || new Date().toISOString()
-      });
-    });
-
-    // Tier 2: Referred by members of Tier 1
-    const tier1Phones = Array.from(memberMap.values())
-      .filter(function(m) { return m.tier === 1; })
-      .map(function(m) { return m.rawPhone; });
-    const tier1Codes = directAccounts
-      .map(function(a) { return String(a.inviteCode || '').toUpperCase(); })
-      .filter(Boolean);
-
-    const tier2Accounts = accounts.filter(function(a) {
-      const ap = normalizeBdPhone(a.phone || a.accountNumber);
-      if (ap === normPhone) return false;
-      const sup = normalizeBdPhone(a.superiorPhone || a.superiorId);
-      const code = String(a.superiorId || '').trim().toUpperCase();
-      return tier1Phones.includes(sup) || (code && tier1Codes.includes(code));
-    });
-
-    tier2Accounts.forEach(function(a) {
-      const p = normalizeBdPhone(a.phone || a.accountNumber);
-      upsertMember(p, {
-        memberId: a.memberId || ('AL' + p.slice(-6)),
-        inviteCode: a.inviteCode || '',
-        tier: 2,
-        level: a.packageLevel || 'LV0',
-        balance: Number(a.balance) || 0,
-        rechargeAmount: Number(a.rechargeAmount || 0),
-        cashoutAmount: Number(a.cashoutAmount || a.withdrawAmount || a.withdrawal || 0),
-        joinedAt: a.createdAt || new Date().toISOString()
-      });
-    });
-
-    // Tier 3: Referred by members of Tier 2
-    const tier2Phones = Array.from(memberMap.values())
-      .filter(function(m) { return m.tier === 2; })
-      .map(function(m) { return m.rawPhone; });
-    const tier2Codes = tier2Accounts
-      .map(function(a) { return String(a.inviteCode || '').toUpperCase(); })
-      .filter(Boolean);
-
-    const tier3Accounts = accounts.filter(function(a) {
-      const ap = normalizeBdPhone(a.phone || a.accountNumber);
-      if (ap === normPhone) return false;
-      const sup = normalizeBdPhone(a.superiorPhone || a.superiorId);
-      const code = String(a.superiorId || '').trim().toUpperCase();
-      return tier2Phones.includes(sup) || (code && tier2Codes.includes(code));
-    });
-
-    tier3Accounts.forEach(function(a) {
-      const p = normalizeBdPhone(a.phone || a.accountNumber);
-      upsertMember(p, {
-        memberId: a.memberId || ('AL' + p.slice(-6)),
-        inviteCode: a.inviteCode || '',
-        tier: 3,
-        level: a.packageLevel || 'LV0',
-        balance: Number(a.balance) || 0,
-        rechargeAmount: Number(a.rechargeAmount || 0),
-        cashoutAmount: Number(a.cashoutAmount || a.withdrawAmount || a.withdrawal || 0),
-        joinedAt: a.createdAt || new Date().toISOString()
-      });
-    });
-  } catch(e) {}
-
-  // 3. Aggregate real deposit & withdrawal totals from transactions for accurate cashout/recharge calculus
+  // 2. Aggregate real deposit & withdrawal totals from Supabase transactions
   const allPhones = Array.from(memberMap.keys());
-  if (allPhones.length > 0) {
-    // 3a. Local withdrawal & transaction records
+  if (allPhones.length > 0 && window.aloSupabase) {
     try {
-      const localW = JSON.parse(localStorage.getItem('aloWithdrawalRequests') || '[]');
-      const wTotals = {};
-      localW.forEach(function(w) {
-        if (w.status === 'rejected') return;
-        const p = normalizeBdPhone(w.phone || w.accountNumber);
-        if (p && memberMap.has(p)) {
-          wTotals[p] = (wTotals[p] || 0) + (Number(w.amount) || 0);
-        }
-      });
-      Object.keys(wTotals).forEach(function(p) {
-        const m = memberMap.get(p);
-        if (m) m.cashoutAmount = Math.max(m.cashoutAmount, wTotals[p]);
-      });
+      const { data: txList, error: txErr } = await window.aloSupabase
+        .from('transactions')
+        .select('phone, type, amount, status')
+        .in('phone', allPhones);
+      if (!txErr && Array.isArray(txList)) {
+        const depTotals = {};
+        const wdTotals = {};
+        txList.forEach(function(tx) {
+          const p = normalizeBdPhone(tx.phone);
+          const amt = Number(tx.amount) || 0;
+          if (!p || amt <= 0) return;
+          const st = String(tx.status || '').toLowerCase();
+          if (st.includes('reject') || st.includes('বাতিল') || st.includes('fail')) return;
+          if (tx.type === 'withdraw') {
+            wdTotals[p] = (wdTotals[p] || 0) + amt;
+          } else if (tx.type === 'deposit' && !st.includes('pending') && !st.includes('মুলতবি')) {
+            depTotals[p] = (depTotals[p] || 0) + amt;
+          }
+        });
+        Object.keys(depTotals).forEach(function(p) {
+          const m = memberMap.get(p);
+          if (m) m.rechargeAmount = Math.max(m.rechargeAmount, depTotals[p]);
+        });
+        Object.keys(wdTotals).forEach(function(p) {
+          const m = memberMap.get(p);
+          if (m) m.cashoutAmount = Math.max(m.cashoutAmount, wdTotals[p]);
+        });
+      }
     } catch(e) {}
-
-    // 3b. Supabase transactions & withdrawals for all team members
-    if (window.aloSupabase) {
-      try {
-        const { data: txList, error: txErr } = await window.aloSupabase
-          .from('transactions')
-          .select('phone, type, amount, status')
-          .in('phone', allPhones);
-        if (!txErr && Array.isArray(txList)) {
-          const depTotals = {};
-          const wdTotals = {};
-          txList.forEach(function(tx) {
-            const p = normalizeBdPhone(tx.phone);
-            const amt = Number(tx.amount) || 0;
-            if (!p || amt <= 0) return;
-            const st = String(tx.status || '').toLowerCase();
-            if (st.includes('reject') || st.includes('বাতিল') || st.includes('fail')) return;
-            if (tx.type === 'withdraw') {
-              wdTotals[p] = (wdTotals[p] || 0) + amt;
-            } else if (tx.type === 'deposit' && !st.includes('pending') && !st.includes('মুলতবি')) {
-              depTotals[p] = (depTotals[p] || 0) + amt;
-            }
-          });
-          Object.keys(depTotals).forEach(function(p) {
-            const m = memberMap.get(p);
-            if (m) m.rechargeAmount = Math.max(m.rechargeAmount, depTotals[p]);
-          });
-          Object.keys(wdTotals).forEach(function(p) {
-            const m = memberMap.get(p);
-            if (m) m.cashoutAmount = Math.max(m.cashoutAmount, wdTotals[p]);
-          });
-        }
-      } catch(e) {}
-    }
   }
 
-  // Team accounts are strictly 100% real registered users (no fake/mock data)
+  // Team accounts are strictly 100% real registered users from Supabase (no fake/mock data)
   const all = Array.from(memberMap.values());
   const tier1 = all.filter(function(m) { return m.tier === 1; });
   const tier2 = all.filter(function(m) { return m.tier === 2; });
@@ -1272,6 +1431,7 @@ const dashboardTitles = {
   'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
   'usdt-deposit': 'USDT ডিপোজিট',
   'bd-recharge': 'রিচার্জ',
+  'lucky-spin': 'ভাগ্যবান স্পিন',
   'customer-service': 'গ্রাহক সেবা',
   manager: 'গ্রাহক সেবা'
 };
@@ -1300,6 +1460,7 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
       'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
       'usdt-deposit': 'USDT ডিপোজিট',
+      'lucky-spin': 'ভাগ্যবান স্পিন',
       'customer-service': 'গ্রাহক সেবা',
       manager: 'গ্রাহক সেবা'
     },
@@ -1324,6 +1485,7 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'Account Binding',
       'fund-password-setup': 'Fund Password',
       'usdt-deposit': 'USDT Deposit',
+      'lucky-spin': 'Lucky Spin',
       'customer-service': 'Customer Service',
       manager: 'Customer Service'
     },
@@ -1348,6 +1510,7 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'खाता बाइंडिंग',
       'fund-password-setup': 'निकासी पासवर्ड',
       'usdt-deposit': 'USDT डिपॉजिट',
+      'lucky-spin': 'लकी स्पिन',
       'customer-service': 'ग्राहक सेवा',
       manager: 'ग्राहक सेवा'
     },
@@ -1372,6 +1535,7 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'ربط الحساب',
       'fund-password-setup': 'كلمة مرور السحب',
       'usdt-deposit': 'إيداع USDT',
+      'lucky-spin': 'عجلة الحظ',
       'customer-service': 'خدمة العملاء',
       manager: 'خدمة العملاء'
     }
@@ -1521,6 +1685,8 @@ function renderInvitePage() {
   const qrContainer = document.getElementById('invite-page-qr');
   const linkElement = document.getElementById('invite-page-link');
   const linkInput = document.getElementById('invite-link-input');
+  const linkDisplay = document.getElementById('invite-link-display');
+  const friendAccountEl = document.getElementById('invite-friend-account');
   const codeElement = document.getElementById('invite-page-code');
   if (!qrContainer) return;
 
@@ -1531,23 +1697,31 @@ function renderInvitePage() {
     user = null;
   }
 
-  const inviteCode = (user && (user.inviteCode || user.accountNumber)) || '728207';
+  const accountLabel = (user && (user.accountNumber || user.phone)) || '';
+  if (friendAccountEl) friendAccountEl.textContent = accountLabel || '—';
+
+  const inviteCode = (user && (user.inviteCode || user.accountNumber)) || '';
   
-  // Real working invite link with company branding & query parameter
+  // Real working invite link with query parameter
   let inviteLink = '';
-  if (window.location.origin && window.location.origin !== 'null') {
-    inviteLink = `${window.location.origin}/?invite=${encodeURIComponent(inviteCode)}`;
-  } else {
-    inviteLink = `https://${window.location.host || 'pwnewmedia.app'}/?invite=${encodeURIComponent(inviteCode)}`;
+  if (inviteCode) {
+    if (window.location.origin && window.location.origin !== 'null') {
+      inviteLink = `${window.location.origin}/?invite=${encodeURIComponent(inviteCode)}`;
+    } else {
+      inviteLink = `https://${window.location.host || 'rf-media.vercel.app'}/?invite=${encodeURIComponent(inviteCode)}`;
+    }
   }
 
-  if (codeElement) codeElement.textContent = inviteCode;
+  if (codeElement) codeElement.textContent = inviteCode || '—';
   if (linkElement) {
     linkElement.href = inviteLink;
     linkElement.textContent = inviteLink;
   }
   if (linkInput) {
     linkInput.value = inviteLink;
+  }
+  if (linkDisplay) {
+    linkDisplay.textContent = inviteLink || (inviteCode ? '' : 'আমন্ত্রণ লিঙ্ক পেতে আগে লগইন করুন।');
   }
   const companyLinkDisplay = document.getElementById('invite-company-link-display');
   if (companyLinkDisplay) {
@@ -1560,9 +1734,9 @@ function renderInvitePage() {
   if (window.QRCode && inviteCode) {
     new QRCode(qrContainer, {
       text: inviteLink,
-      width: 128,
-      height: 128,
-      colorDark: '#07183e',
+      width: 136,
+      height: 136,
+      colorDark: '#071638',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
@@ -1637,11 +1811,13 @@ async function renderInviteVipSalaryCards() {
   const totalTeamCount = tier1Count + tier2Count + tier3Count;
   const tier1And2Count = tier1Count + tier2Count;
 
-  let claimed = [];
-  try {
-    claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
-  } catch(e) {
-    claimed = [];
+  let claimed = (user && Array.isArray(user.claimedInviteRewards)) ? user.claimedInviteRewards : [];
+  if (claimed.length === 0) {
+    try {
+      claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
+    } catch(e) {
+      claimed = [];
+    }
   }
 
   const tiersConfig = [
@@ -1691,44 +1867,44 @@ async function renderInviteVipSalaryCards() {
       if (isClaimed) {
         salaryBtn.dataset.isClaimed = 'true';
         salaryBtn.dataset.isUnlocked = 'false';
-        salaryBtn.style.setProperty('background', 'linear-gradient(135deg, #10b981, #059669)', 'important');
+        salaryBtn.style.setProperty('background', '#059669', 'important');
         salaryBtn.style.setProperty('color', '#ffffff', 'important');
         salaryBtn.style.setProperty('filter', 'none', 'important');
         salaryBtn.style.setProperty('opacity', '1', 'important');
         salaryBtn.style.setProperty('cursor', 'default', 'important');
-        salaryBtn.style.setProperty('box-shadow', '0 0 14px rgba(16, 185, 129, 0.6)', 'important');
+        salaryBtn.style.setProperty('box-shadow', 'none', 'important');
         salaryBtn.classList.remove('animate-pulse');
         salaryBtn.innerHTML = `
-          <small class="block text-[11px] font-semibold leading-tight text-white">গৃহীত ✓</small>
-          <strong class="block text-[18px] sm:text-[19px] font-bold font-mono leading-tight text-white">${cfg.label}</strong>
+          <small class="block text-[10.5px] font-semibold leading-tight text-white">গৃহীত ✓</small>
+          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${cfg.label}</strong>
         `;
       } else if (isUnlocked) {
         salaryBtn.dataset.isClaimed = 'false';
         salaryBtn.dataset.isUnlocked = 'true';
-        salaryBtn.style.setProperty('background', 'linear-gradient(135deg, #2aa7ff, #1fd0ff)', 'important');
-        salaryBtn.style.setProperty('color', '#041a5c', 'important');
+        salaryBtn.style.setProperty('background', '#1877f2', 'important');
+        salaryBtn.style.setProperty('color', '#ffffff', 'important');
         salaryBtn.style.setProperty('filter', 'none', 'important');
         salaryBtn.style.setProperty('opacity', '1', 'important');
-        salaryBtn.style.setProperty('cursor', 'pointer', 'important');
-        salaryBtn.style.setProperty('box-shadow', '0 0 20px rgba(39, 196, 255, 0.85)', 'important');
-        salaryBtn.classList.add('animate-pulse');
-        salaryBtn.innerHTML = `
-          <small class="block text-[11px] font-semibold leading-tight" style="color: #041a5c;">গ্রহণ করুন</small>
-          <strong class="block text-[18px] sm:text-[19px] font-bold font-mono leading-tight" style="color: #041a5c;">${cfg.label}</strong>
-        `;
-      } else {
-        salaryBtn.dataset.isClaimed = 'false';
-        salaryBtn.dataset.isUnlocked = 'false';
-        salaryBtn.style.setProperty('background', 'linear-gradient(135deg, #13274f, #0d1a38)', 'important');
-        salaryBtn.style.setProperty('color', '#94a3b8', 'important');
-        salaryBtn.style.setProperty('filter', 'grayscale(0.7) brightness(0.8)', 'important');
-        salaryBtn.style.setProperty('opacity', '0.7', 'important');
         salaryBtn.style.setProperty('cursor', 'pointer', 'important');
         salaryBtn.style.setProperty('box-shadow', 'none', 'important');
         salaryBtn.classList.remove('animate-pulse');
         salaryBtn.innerHTML = `
-          <small class="block text-[11px] font-semibold leading-tight text-slate-300">🔒 মাসিক বেতন</small>
-          <strong class="block text-[18px] sm:text-[19px] font-bold font-mono leading-tight text-slate-200">${cfg.label}</strong>
+          <small class="block text-[10.5px] font-semibold leading-tight text-white">গ্রহণ করুন</small>
+          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${cfg.label}</strong>
+        `;
+      } else {
+        salaryBtn.dataset.isClaimed = 'false';
+        salaryBtn.dataset.isUnlocked = 'false';
+        salaryBtn.style.setProperty('background', '#071638', 'important');
+        salaryBtn.style.setProperty('color', '#e5e7eb', 'important');
+        salaryBtn.style.setProperty('filter', 'none', 'important');
+        salaryBtn.style.setProperty('opacity', '1', 'important');
+        salaryBtn.style.setProperty('cursor', 'pointer', 'important');
+        salaryBtn.style.setProperty('box-shadow', 'none', 'important');
+        salaryBtn.classList.remove('animate-pulse');
+        salaryBtn.innerHTML = `
+          <small class="block text-[10.5px] font-semibold leading-tight text-[#e5e7eb]">🔒 মাসিক বেতন</small>
+          <strong class="block text-[16px] font-bold font-mono leading-tight text-[#f3f4f6]">${cfg.label}</strong>
         `;
       }
     }
@@ -1803,8 +1979,11 @@ function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
   const claimBtn = document.getElementById('invite-modal-claim-btn');
   if (claimBtn) {
     const key = `${tier}-${type}`;
-    let claimed = [];
-    try { claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]'); } catch(e) {}
+    const curUser = getCurrentUser();
+    let claimed = (curUser && Array.isArray(curUser.claimedInviteRewards)) ? curUser.claimedInviteRewards : [];
+    if (claimed.length === 0) {
+      try { claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]'); } catch(e) {}
+    }
     const isClaimed = claimed.includes(key);
 
     if (isClaimed) {
@@ -1841,19 +2020,14 @@ function closeInviteVipClaimModal() {
 window.closeInviteVipClaimModal = closeInviteVipClaimModal;
 
 async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCount) {
-  const key = `${tier}-${type}`;
-  let claimed = [];
-  try {
-    claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
-  } catch(e) {
-    claimed = [];
-  }
-
-  if (claimed.includes(key)) {
-    showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
-    closeInviteVipClaimModal();
+  const user = getCurrentUser();
+  if (!user || !(user.phone || user.accountNumber)) {
+    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
     return;
   }
+
+  const key = `${tier}-${type}`;
+  const normPhone = normalizeBdPhone(user.phone || user.accountNumber);
 
   // STRICT REAL VALIDATION: DO NOT ALLOW CLAIM IF REQUIREMENT NOT MET!
   if (Number(currentCount) < Number(reqMembers)) {
@@ -1863,57 +2037,63 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
     return;
   }
 
-  // Claim reward to user's real balance!
-  const user = getCurrentUser();
-  if (user) {
-    const prevBal = Number(user.balance) || 0;
-    const addAmt = Number(amount) || 0;
-    const newBal = prevBal + addAmt;
-    user.balance = newBal;
-    user.totalIncome = (Number(user.totalIncome) || 0) + addAmt;
-    user.todayIncome = (Number(user.todayIncome) || 0) + addAmt;
+  // Re-verify live claim state and live balance from Supabase first
+  const cloudUser = await dbGetUser(normPhone);
+  const liveUser = cloudUser ? Object.assign({}, user, cloudUser) : user;
+  let claimed = Array.isArray(liveUser.claimedInviteRewards) ? liveUser.claimedInviteRewards.slice() : [];
 
-    // Add transaction to history
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    if (!Array.isArray(user.depositRecords)) user.depositRecords = [];
-    user.depositRecords.unshift({
-      id: 'VIP' + Date.now().toString().slice(-6),
-      amount: addAmt,
-      actual: addAmt,
-      status: 'সফল',
-      method: `${tier} ${type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার'} গ্রহণ`,
-      date: dateStr,
-      time: `${hours}:${mins}`,
-      newBalance: newBal
-    });
-
-    localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-    claimed.push(key);
+  if (claimed.includes(key)) {
     localStorage.setItem('alo_claimed_invite_rewards', JSON.stringify(claimed));
-
-    // Save user to cloud db
-    dbSaveUser(user);
-    if (window.aloSupabase) {
-      window.aloSupabase.from('users').update({ balance: user.balance, updated_at: new Date().toISOString() }).eq('phone', user.phone || user.accountNumber).then(() => {}).catch(e => console.warn(e));
-    }
-
+    showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
     closeInviteVipClaimModal();
-    updateProfileMetrics();
     await renderInviteVipSalaryCards();
+    return;
+  }
 
-    const typeBengali = type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার';
-    showToastNotification(`🎉 অভিনন্দন! ${tier} ${typeBengali} ৳ ${addAmt.toLocaleString()} সফলভাবে মূল ব্যালেন্সে যোগ হয়েছে!`);
+  const prevBal = Number(liveUser.balance) || 0;
+  const addAmt = Number(amount) || 0;
+  const newBal = prevBal + addAmt;
+  liveUser.balance = newBal;
+  liveUser.totalIncome = (Number(liveUser.totalIncome) || 0) + addAmt;
+  liveUser.todayIncome = (Number(liveUser.todayIncome) || 0) + addAmt;
+  liveUser.lifetimeEarnings = (Number(liveUser.lifetimeEarnings) || 0) + addAmt;
+  claimed.push(key);
+  liveUser.claimedInviteRewards = claimed;
 
-    // Animate balance display
-    const balEl = document.getElementById('records-balance-display');
-    if (balEl) {
-      balEl.textContent = formatMoney(newBal);
-      balEl.classList.add('scale-110', 'text-emerald-400');
-      setTimeout(() => balEl.classList.remove('scale-110', 'text-emerald-400'), 1500);
-    }
+  localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
+  localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
+  localStorage.setItem('alo_claimed_invite_rewards', JSON.stringify(claimed));
+
+  await dbSaveUser(liveUser);
+
+  const now = new Date();
+  await dbRecordTransaction({
+    phone: normPhone,
+    type: 'vip_reward',
+    amount: addAmt,
+    ratio: '100%',
+    actual: addAmt,
+    status: 'অনুমোদিত',
+    method: `${tier} ${type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার'}`,
+    order_id: 'VIP' + Date.now() + Math.floor(100 + Math.random() * 900),
+    date: now.toISOString().split('T')[0],
+    time: now.toTimeString().split(' ')[0],
+    newBalance: newBal
+  });
+
+  closeInviteVipClaimModal();
+  updateUserDetails(liveUser);
+  updateProfileMetrics();
+  await renderInviteVipSalaryCards();
+
+  const typeBengali = type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার';
+  showToastNotification(`🎉 অভিনন্দন! ${tier} ${typeBengali} ৳ ${addAmt.toLocaleString()} সফলভাবে মূল ব্যালেন্সে যোগ হয়েছে!`);
+
+  const balEl = document.getElementById('records-balance-display');
+  if (balEl) {
+    balEl.textContent = formatMoney(newBal, liveUser);
+    balEl.classList.add('scale-110', 'text-emerald-400');
+    setTimeout(() => balEl.classList.remove('scale-110', 'text-emerald-400'), 1500);
   }
 }
 window.executeVipRewardClaim = executeVipRewardClaim;
@@ -2013,6 +2193,7 @@ function openDashboardPanel(panelName) {
     'team-members': 'profile',
     'my-team': 'profile',
     'savings-plan': 'profile',
+    'lucky-spin': 'profile',
     'bkash-setup': 'profile',
     'nagad-setup': 'profile',
     'usdt-setup': 'profile',
@@ -2041,6 +2222,9 @@ function openDashboardPanel(panelName) {
   }
   if (nextPanel === 'savings-plan') {
     renderSavingsPlanPanel();
+  }
+  if (nextPanel === 'lucky-spin') {
+    if (typeof renderLuckySpinPanel === 'function') renderLuckySpinPanel();
   }
   if (nextPanel === 'platform-tasks') {
     renderPackageTasks(activePackageLevel || 'LV0');
@@ -2074,9 +2258,17 @@ function openDashboardPanel(panelName) {
   }
   if (nextPanel === 'vip') {
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+    if (typeof loadPlatformConfigFromSupabase === 'function') loadPlatformConfigFromSupabase();
   }
   if (nextPanel === 'records') {
     if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+    if (typeof loadPlatformConfigFromSupabase === 'function') loadPlatformConfigFromSupabase();
+  }
+  if (nextPanel === 'package-detail') {
+    if (typeof loadPlatformConfigFromSupabase === 'function') loadPlatformConfigFromSupabase();
+  }
+  if (nextPanel === 'platform-tasks') {
+    if (typeof loadPlatformConfigFromSupabase === 'function') loadPlatformConfigFromSupabase();
   }
   if (nextPanel === 'tasks') {
     renderMissionRecords(activeMissionFilter);
@@ -2188,17 +2380,17 @@ function updateUserDetails(user) {
   if (user.inviteCode) user.inviteCode = String(user.inviteCode).replace(/টি/g, '').trim();
   if (user.memberId) user.memberId = String(user.memberId).replace(/টি/g, '').trim();
 
-  const cleanMemberId = user.memberId || '1105';
+  const cleanMemberId = user.memberId || '—';
   const memberId = document.getElementById('profile-member-id');
   if (memberId) memberId.textContent = cleanMemberId;
 
-  const cleanInviteCode = user.inviteCode || '728207';
+  const cleanInviteCode = user.inviteCode || '—';
   const inviteCode = document.getElementById('profile-invite-code');
   if (inviteCode) inviteCode.textContent = cleanInviteCode;
 
-  let registeredPhone = String(user.accountNumber || user.phone || '1735235999').replace(/টি/g, '').trim();
+  let registeredPhone = String(user.accountNumber || user.phone || '').replace(/টি/g, '').trim();
   const accountNum = document.getElementById('profile-account-number');
-  if (accountNum) accountNum.textContent = registeredPhone;
+  if (accountNum) accountNum.textContent = registeredPhone || '—';
 
   document.querySelectorAll('[data-profile-value="phone"]').forEach(function(el) {
     el.textContent = registeredPhone;
@@ -2718,42 +2910,27 @@ if (loginForm) {
 
     try {
       const passwordHash = await hashPassword(password);
+      const isLoginInd = loginCountry.code === 'IN';
 
-      // 1. Check cloud database first
+      // Check real Supabase database
       let account = await dbGetUser(normPhone);
 
-      // 2. Fallback to localStorage accounts if offline / not found in cloud
-      const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
       if (!account) {
-        account = accounts.find(function(item) {
-          return normalizeBdPhone(item.phone || item.accountNumber || item.email || '', loginCountry.code) === normPhone;
-        });
+        const notFoundMsg = isLoginInd
+          ? 'इस फ़ोन नंबर पर कोई खाता नहीं मिला। कृपया पंजीकरण करें।'
+          : (currentAppLang === 'bn' ? 'এই নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি। অনুগ্রহ করে নিবন্ধন করুন।' : 'No account found with this phone number. Please register.');
+        if (message) {
+          message.textContent = notFoundMsg;
+          message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
+        }
+        return;
       }
 
-      if (!account) {
-        // Auto-provision user account so any phone/password entered by user logs in seamlessly!
-        account = {
-          name: 'সদস্য',
-          phone: normPhone,
-          accountNumber: normPhone,
-          passwordHash: passwordHash,
-          plainPassword: password,
-          memberId: 'AL' + Date.now().toString().slice(-8),
-          inviteCode: 'AL' + Math.random().toString(36).slice(2, 7).toUpperCase(),
-          superiorId: '11',
-          packageLevel: 'LV0',
-          purchasedPackages: ['LV0'],
-          balance: 9678.8,
-          country: loginCountry.code,
-          currency: loginCountry.code === 'IN' ? 'INR' : 'BDT',
-          currencySymbol: loginCountry.code === 'IN' ? '₹' : '৳'
-        };
-        accounts.push(account);
-        localStorage.setItem('aloAccounts', JSON.stringify(accounts));
-      } else if ((account.passwordHash && account.passwordHash !== passwordHash) && (account.plainPassword && account.plainPassword !== password)) {
-        const isLoginInd = loginCountry.code === 'IN';
-        const failMsg = isLoginInd 
-          ? 'अमान्य फ़ोन नंबर या पासवर्ड।' 
+      const hashMatches = account.passwordHash && account.passwordHash === passwordHash;
+      const plainMatches = account.plainPassword && account.plainPassword === password;
+      if (!hashMatches && !plainMatches) {
+        const failMsg = isLoginInd
+          ? 'अमान्य फ़ोन नंबर या पासवर्ड।'
           : (currentAppLang === 'bn' ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.');
         if (message) {
           message.textContent = failMsg;
@@ -2776,10 +2953,12 @@ if (loginForm) {
       if (!account.memberId) account.memberId = 'AL' + Date.now().toString().slice(-8);
       if (!account.inviteCode) account.inviteCode = 'AL' + Math.random().toString(36).slice(2, 7).toUpperCase();
 
-      const regNumber = account.accountNumber || account.phone || phoneInput;
+      clearUserCachesOnAuthSwitch();
+
+      const regNumber = account.accountNumber || account.phone || normPhone;
       const isAccIndia = isIndianUser(account) || (loginCountry.code === 'IN') || (account.country === 'IN') || (account.currency === 'INR') || (account.dialCode === '+91');
       const targetUserLang = isAccIndia ? (account.language === 'en' ? 'en' : 'hi') : (account.language || 'bn');
-      const signedInUser = {
+      const signedInUser = Object.assign({}, account, {
         name: account.name || (isAccIndia ? (targetUserLang === 'en' ? 'Member' : 'सदस्य') : 'সদস্য'),
         phone: regNumber,
         accountNumber: regNumber,
@@ -2787,7 +2966,7 @@ if (loginForm) {
         inviteCode: account.inviteCode,
         superiorId: account.superiorId || '11',
         packageLevel: account.packageLevel || 'LV0',
-        purchasedPackages: account.purchasedPackages || ['LV0'],
+        purchasedPackages: Array.isArray(account.purchasedPackages) && account.purchasedPackages.length > 0 ? account.purchasedPackages : ['LV0'],
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
         country: isAccIndia ? 'IN' : 'BD',
         countryName: isAccIndia ? (targetUserLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
@@ -2796,56 +2975,10 @@ if (loginForm) {
         currencySymbol: isAccIndia ? '₹' : '৳',
         currencyName: isAccIndia ? 'Rupee' : 'Taka',
         dialCode: isAccIndia ? '+91' : '+880',
-        language: targetUserLang,
-        profileData: account.profileData || {}
-      };
+        language: targetUserLang
+      });
 
-      // Restore bKash, Nagad, and USDT accounts if set in database
-      const boundRealName = account.realName || account.real_name || account.bkashName || account.nagadName || account.usdtName || '';
-      if (boundRealName) {
-        localStorage.setItem('alo_real_name', boundRealName);
-        signedInUser.realName = boundRealName;
-      }
-      if (account.bkashPhone || account.bkash_phone) {
-        const bkashData = {
-          fullName: account.bkashName || account.bkash_name || boundRealName,
-          phone: account.bkashPhone || account.bkash_phone,
-          locked: true,
-          updatedAt: account.updatedAt || new Date().toISOString()
-        };
-        localStorage.setItem('alo_bkash_account', JSON.stringify(bkashData));
-        signedInUser.bkash = bkashData;
-      }
-      if (account.nagadPhone || account.nagad_phone) {
-        const nagadData = {
-          fullName: account.nagadName || account.nagad_name || boundRealName,
-          phone: account.nagadPhone || account.nagad_phone,
-          locked: true,
-          updatedAt: account.updatedAt || new Date().toISOString()
-        };
-        localStorage.setItem('alo_nagad_account', JSON.stringify(nagadData));
-        signedInUser.nagad = nagadData;
-      }
-      if (account.usdtAddress || account.usdt_address) {
-        const usdtData = {
-          fullName: account.usdtName || account.usdt_name || boundRealName,
-          address: account.usdtAddress || account.usdt_address,
-          network: 'BEP20',
-          locked: true,
-          updatedAt: account.updatedAt || new Date().toISOString()
-        };
-        localStorage.setItem('alo_usdt_account', JSON.stringify(usdtData));
-        signedInUser.usdt = usdtData;
-      }
-
-      // Sync local accounts cache
-      const accIdx = accounts.findIndex(function(a) { return normalizeBdPhone(a.phone) === normPhone; });
-      if (accIdx >= 0) {
-        accounts[accIdx] = Object.assign({}, accounts[accIdx], account);
-      } else {
-        accounts.push(account);
-      }
-      localStorage.setItem('aloAccounts', JSON.stringify(accounts));
+      hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
       const userLang = isAccIndia ? (signedInUser.language === 'en' ? 'en' : 'hi') : (signedInUser.language || 'bn');
@@ -2863,7 +2996,11 @@ if (loginForm) {
         updateBkashDisplayAcrossApp();
         updateNagadDisplayAcrossApp();
         updateUsdtDisplayAcrossApp();
+        updateRealNameDisplayAcrossApp();
+        updateFundPasswordDisplayAcrossApp();
       }
+      if (typeof renderSavingsPlanPanel === 'function') renderSavingsPlanPanel();
+      if (typeof renderMissionRecords === 'function') renderMissionRecords(activeMissionFilter);
       if (typeof initSupabaseLiveSync === 'function') {
         initSupabaseLiveSync(signedInUser);
       }
@@ -3018,14 +3155,10 @@ if (registerForm) {
       const registeredNumber = phoneInput;
       const normInput = normalizeBdPhone(registeredNumber, countryCode);
 
-      // Check cloud database and local accounts for duplicate phone
+      // Check real Supabase database for duplicate phone
       const dbUser = await dbGetUser(normInput);
-      const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-      const localAccount = accounts.find(function(account) {
-        return normalizeBdPhone(account.phone || account.accountNumber || '', countryCode) === normInput;
-      });
 
-      if (dbUser || localAccount) {
+      if (dbUser) {
         if (message) message.textContent = targetLang === 'hi' ? 'इस नंबर पर पहले से खाता मौजूद है। लॉगिन पेज पर जाएं।' : (targetLang === 'bn' ? 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।' : 'An account with this number already exists. Redirecting to login…');
         const loginEmail = document.getElementById('login-email');
         if (loginEmail) loginEmail.value = registeredNumber;
@@ -3053,8 +3186,8 @@ if (registerForm) {
 
       const account = {
         name: isIndia ? 'सदस्य' : 'সদস্য',
-        phone: registeredNumber,
-        accountNumber: registeredNumber,
+        phone: normInput,
+        accountNumber: normInput,
         passwordHash: passwordHash,
         plainPassword: password,
         memberId: String(Math.floor(1000 + Math.random() * 9000)),
@@ -3064,7 +3197,17 @@ if (registerForm) {
         packageLevel: 'LV0',
         purchasedPackages: ['LV0'],
         balance: 0.00,
-        // Country & Currency System Data:
+        frozenBalance: 0.00,
+        lifetimeEarnings: 0.00,
+        todayIncome: 0.00,
+        totalIncome: 0.00,
+        completedMissions: 0,
+        rechargeAmount: 0.00,
+        cashoutAmount: 0.00,
+        acceptedMissions: [],
+        savingsPlan: null,
+        claimedInviteRewards: [],
+        claimedUsdtOnchain: 0,
         country: countryCode,
         countryName: countryName,
         countryNameEn: countryNameEn,
@@ -3085,20 +3228,22 @@ if (registerForm) {
         createdAt: new Date().toISOString()
       };
 
-      // 1. Save new account to Cloud Database
-      await dbSaveUser(account);
+      // 1. Save new account to Supabase
+      const savedOk = await dbSaveUser(account);
+      if (!savedOk) {
+        throw new Error('Database save failed');
+      }
 
       // 2. Record multi-level referral hierarchy (Level 1, Level 2, Level 3)
       if (enteredInviteCode || uplinePhone) {
-        await registerTeamHierarchy(registeredNumber, account.memberId, 'LV0', enteredInviteCode || uplinePhone);
+        await registerTeamHierarchy(normInput, account.memberId, 'LV0', enteredInviteCode || uplinePhone);
       }
 
-      // 3. Save locally
-      accounts.push(account);
-      localStorage.setItem('aloAccounts', JSON.stringify(accounts));
+      clearUserCachesOnAuthSwitch();
 
       // Set registered account as active signed in user
       const signedInUser = Object.assign({}, account);
+      hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
       // CRITICAL: Immediately switch entire website language: Hindi for India by default, Bengali for BD!
@@ -3110,11 +3255,18 @@ if (registerForm) {
       updateProfileMetrics();
       updateVipHallRooms();
       updateRecordsPanelPackages();
+      if (typeof updateBkashDisplayAcrossApp === 'function') {
+        updateBkashDisplayAcrossApp();
+        updateNagadDisplayAcrossApp();
+        updateUsdtDisplayAcrossApp();
+        updateRealNameDisplayAcrossApp();
+        updateFundPasswordDisplayAcrossApp();
+      }
       if (typeof initSupabaseLiveSync === 'function') {
         initSupabaseLiveSync(signedInUser);
       }
 
-      showRegistrationSuccess(registeredNumber, countryName, currencyCode, currencySymbol, targetLang);
+      showRegistrationSuccess(normInput, countryName, currencyCode, currencySymbol, targetLang);
     } catch (error) {
       if (message) message.textContent = targetLang === 'hi' ? 'खाता नहीं बन सका। कृपया पुनः प्रयास करें।' : (targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Failed to create account. Please try again.');
     }
@@ -3193,6 +3345,97 @@ function getPackageName(level, lang) {
 
 const LEVEL_ORDER = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
 
+function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
+  if (!packagesObj || typeof packagesObj !== 'object') return;
+  const cachePayload = {};
+  let changed = false;
+
+  LEVEL_ORDER.forEach(function(lvl) {
+    const src = packagesObj[lvl];
+    const targetPkg = packageData[lvl];
+    const targetTask = packageTaskSettings[lvl];
+    if (!targetPkg || !targetTask) return;
+
+    if (src && typeof src === 'object') {
+      const parsedCount = parseInt(src.count, 10);
+      const parsedReward = parseFloat(src.reward);
+      const parsedPrice = parseFloat(src.price);
+
+      const nextCount = Number.isFinite(parsedCount) && parsedCount >= 1 ? parsedCount : targetPkg.count;
+      const nextReward = Number.isFinite(parsedReward) && parsedReward >= 0 ? parsedReward : targetPkg.reward;
+      const nextPrice = Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : targetPkg.price;
+      const nextDaily = Number((nextCount * nextReward).toFixed(2));
+      const nextBn = String(src.nameBn || '').trim() || targetPkg.nameBn;
+      const nextEn = String(src.nameEn || '').trim() || targetPkg.nameEn;
+      const nextHi = String(src.nameHi || '').trim() || targetPkg.nameHi;
+
+      if (
+        targetPkg.count !== nextCount ||
+        targetPkg.reward !== nextReward ||
+        targetPkg.price !== nextPrice ||
+        targetPkg.nameBn !== nextBn ||
+        targetPkg.nameEn !== nextEn ||
+        targetPkg.nameHi !== nextHi
+      ) {
+        changed = true;
+      }
+
+      targetTask.count = nextCount;
+      targetTask.reward = nextReward;
+
+      targetPkg.count = nextCount;
+      targetPkg.reward = nextReward;
+      targetPkg.price = nextPrice;
+      targetPkg.dailyIncome = nextDaily;
+      targetPkg.nameBn = nextBn;
+      targetPkg.nameEn = nextEn;
+      targetPkg.nameHi = nextHi;
+      targetPkg.name = nextBn;
+      targetPkg.desc = `দৈনিক ${nextCount}টি কাজ · প্রতি কাজের আয় ${nextReward}`;
+    }
+
+    cachePayload[lvl] = {
+      count: targetPkg.count,
+      reward: targetPkg.reward,
+      price: targetPkg.price,
+      nameBn: targetPkg.nameBn,
+      nameEn: targetPkg.nameEn,
+      nameHi: targetPkg.nameHi
+    };
+  });
+
+  if (!skipCacheWrite) {
+    try {
+      localStorage.setItem('alo_system_packages_cache', JSON.stringify(cachePayload));
+    } catch (e) {}
+  }
+
+  if (changed) {
+    if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+    if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
+    if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+    const taskPanel = document.getElementById('platform-tasks-panel');
+    if (taskPanel && !taskPanel.hidden && typeof renderPackageTasks === 'function') {
+      renderPackageTasks(activePackageLevel || 'LV0');
+    }
+    const detailPanel = document.getElementById('package-detail-panel');
+    if (detailPanel && !detailPanel.hidden && typeof renderPackageDetailPage === 'function') {
+      renderPackageDetailPage(activeDetailPackageLevel || 'LV1');
+    }
+  }
+}
+window.applyRemotePackageConfigs = applyRemotePackageConfigs;
+
+try {
+  const cachedPkgRaw = localStorage.getItem('alo_system_packages_cache');
+  if (cachedPkgRaw) {
+    const cachedPkgObj = JSON.parse(cachedPkgRaw);
+    if (cachedPkgObj && typeof cachedPkgObj === 'object') {
+      applyRemotePackageConfigs(cachedPkgObj, true);
+    }
+  }
+} catch (e) {}
+
 function getCurrentUser() {
   let user = null;
   try {
@@ -3201,50 +3444,14 @@ function getCurrentUser() {
     user = null;
   }
 
-  let accounts = [];
-  try {
-    accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-  } catch (e) {
-    accounts = [];
-  }
-  const latestAccount = accounts.length > 0 ? accounts[accounts.length - 1] : null;
-
-  if (user) {
-    if (!user.accountNumber && !user.phone) {
-      const regPhone = latestAccount ? (latestAccount.accountNumber || latestAccount.phone) : '1735235999';
-      user.accountNumber = regPhone;
-      user.phone = regPhone;
-    } else if (!user.accountNumber && user.phone) {
-      user.accountNumber = user.phone;
-    } else if (!user.phone && user.accountNumber) {
-      user.phone = user.accountNumber;
-    }
+  if (!user || (!user.phone && !user.accountNumber)) {
+    return null;
   }
 
-  if (!user) {
-    const regPhone = latestAccount ? (latestAccount.accountNumber || latestAccount.phone || '1735235999') : '1735235999';
-    const isLatestIndia = isIndianUser(latestAccount);
-    const defLang = isLatestIndia ? ((latestAccount && latestAccount.language === 'en') ? 'en' : 'hi') : ((latestAccount && latestAccount.language) || 'bn');
-    user = {
-      name: (latestAccount && latestAccount.name) || (isLatestIndia ? 'सदस्य' : 'সদস্য'),
-      phone: regPhone,
-      accountNumber: regPhone,
-      inviteCode: (latestAccount && latestAccount.inviteCode) || '728207',
-      memberId: (latestAccount && latestAccount.memberId) || '1105',
-      superiorId: '11',
-      packageLevel: (latestAccount && latestAccount.packageLevel) || 'LV0',
-      purchasedPackages: (latestAccount && latestAccount.purchasedPackages) || ['LV0'],
-      balance: (latestAccount && typeof latestAccount.balance === 'number') ? latestAccount.balance : 0.00,
-      country: isLatestIndia ? 'IN' : 'BD',
-      countryName: isLatestIndia ? (defLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
-      countryNameEn: isLatestIndia ? 'India' : 'Bangladesh',
-      currency: isLatestIndia ? 'INR' : 'BDT',
-      currencySymbol: isLatestIndia ? '₹' : '৳',
-      currencyName: isLatestIndia ? 'Rupee' : 'Taka',
-      dialCode: isLatestIndia ? '+91' : '+880',
-      language: defLang
-    };
-    return user;
+  if (!user.accountNumber && user.phone) {
+    user.accountNumber = user.phone;
+  } else if (!user.phone && user.accountNumber) {
+    user.phone = user.accountNumber;
   }
 
   // Strictly sanitize currency based on country
@@ -3273,12 +3480,10 @@ function getCurrentUser() {
     }
   }
 
-  if (user) {
-    if (user.accountNumber) user.accountNumber = String(user.accountNumber).replace(/টি/g, '').trim();
-    if (user.phone) user.phone = String(user.phone).replace(/টি/g, '').trim();
-    if (user.inviteCode) user.inviteCode = String(user.inviteCode).replace(/টি/g, '').trim();
-    if (user.memberId) user.memberId = String(user.memberId).replace(/টি/g, '').trim();
-  }
+  if (user.accountNumber) user.accountNumber = String(user.accountNumber).replace(/টি/g, '').trim();
+  if (user.phone) user.phone = String(user.phone).replace(/টি/g, '').trim();
+  if (user.inviteCode) user.inviteCode = String(user.inviteCode).replace(/টি/g, '').trim();
+  if (user.memberId) user.memberId = String(user.memberId).replace(/টি/g, '').trim();
 
   return user;
 }
@@ -3315,6 +3520,7 @@ function formatNumber(num, user) {
 function isLevelUnlocked(targetLevel, user) {
   if (targetLevel === 'LV0') return true; // LV0 is ALWAYS free
   if (!user) user = getCurrentUser();
+  if (!user) return false;
   if (user.purchasedPackages && user.purchasedPackages.includes(targetLevel)) {
     return true;
   }
@@ -3330,55 +3536,42 @@ let selectedDepositAmount = 3500;
 
 function updateVipHallRooms() {
   const user = getCurrentUser();
-  const userLevel = user.packageLevel || 'LV0';
+  const userLevel = (user && user.packageLevel) || 'LV0';
   const rooms = document.querySelectorAll('.hall-level-room');
   rooms.forEach(function(room) {
     const lvl = room.dataset.level;
     if (!lvl) return;
-    const isUnlocked = isLevelUnlocked(lvl, user);
     const isCurrent = (lvl === userLevel);
-
-    let tag = room.querySelector('.hall-current-tag, .hall-status-tag');
-    if (!tag) {
-      tag = document.createElement('span');
-      const titleDiv = room.querySelector('.flex.items-center') || room.firstElementChild;
-      if (titleDiv) {
-        titleDiv.appendChild(tag);
-      } else {
-        room.appendChild(tag);
-      }
-    }
 
     const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
     const hallLabels = {
       current: lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর'),
-      unlocked: lang === 'hi' ? 'अनलॉक ✓' : (lang === 'en' ? 'Unlocked ✓' : 'আনলকড ✓'),
-      locked: lang === 'hi' ? 'खरीद आवश्यक 🔒' : (lang === 'en' ? 'Purchase Required 🔒' : 'ক্রয় প্রয়োজন 🔒'),
-      dailyWork: lang === 'hi' ? 'दैनिक कार्य:' : (lang === 'en' ? 'Daily Tasks:' : 'দৈনিক কর্ম:')
+      dailyWork: lang === 'hi' ? 'दैनिक कार्य:' : (lang === 'en' ? 'Daily Tasks:' : 'দৈনন্দিন কর্ম:')
     };
 
     const pkg = packageData[lvl];
-    const workP = room.querySelector('p.mt-2');
+    const workP = room.querySelector('.hall-daily-work') || room.querySelector('p:last-of-type');
     if (workP && pkg) {
-      workP.innerHTML = `${hallLabels.dailyWork} <strong class="ml-1">${pkg.count}</strong>`;
+      workP.innerHTML = `${hallLabels.dailyWork} <strong class="ml-0.5 font-normal">${pkg.count}</strong>`;
     }
 
+    let tag = room.querySelector('.hall-current-tag, .hall-status-tag');
     if (isCurrent) {
-      tag.className = 'hall-current-tag text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-200 border border-emerald-400/40';
+      if (!tag) {
+        tag = document.createElement('span');
+        room.insertBefore(tag, room.firstChild);
+      }
+      tag.className = 'hall-current-tag';
       tag.textContent = hallLabels.current;
-    } else if (isUnlocked) {
-      tag.className = 'hall-status-tag text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-200';
-      tag.textContent = hallLabels.unlocked;
-    } else {
-      tag.className = 'hall-status-tag text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 flex items-center gap-0.5';
-      tag.textContent = hallLabels.locked;
+    } else if (tag) {
+      tag.remove();
     }
   });
 }
 
 function updateRecordsPanelPackages() {
   const user = getCurrentUser();
-  const userLevel = user.packageLevel || 'LV0';
+  const userLevel = (user && user.packageLevel) || 'LV0';
   const curr = getUserCurrency(user);
   const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
 
@@ -3389,7 +3582,7 @@ function updateRecordsPanelPackages() {
   }
   const balDisplay = document.getElementById('records-balance-display');
   if (balDisplay) {
-    balDisplay.textContent = formatMoney(user.balance || 0, user);
+    balDisplay.textContent = formatMoney((user && user.balance) || 0, user);
   }
 
   const labels = {
@@ -3408,6 +3601,7 @@ function updateRecordsPanelPackages() {
     const level = card.dataset.recordPackage;
     const pkg = packageData[level];
     if (!pkg) return;
+    const pkgName = getPackageName(level, lang);
 
     // 1. Update "পণ্যের বিস্তারিত দেখুন" Details Button text
     const detailsBtnText = card.querySelector('.package-view-details-btn span, [data-view-details] span');
@@ -3415,11 +3609,17 @@ function updateRecordsPanelPackages() {
       detailsBtnText.textContent = lang === 'hi' ? 'उत्पाद विवरण देखें' : (lang === 'en' ? 'View Product Details' : 'পণ্যের বিস্তারিত দেখুন');
     }
 
+    // 1b. Update Level + Admin-configured Package Name per active language
+    const levelTitleP = card.querySelector('p.text-xs.font-semibold');
+    if (levelTitleP) {
+      levelTitleP.textContent = pkgName ? `${level} · ${pkgName}` : level;
+    }
+
     // 2. Update Price
     const priceEl = card.querySelector('h3');
     if (priceEl) {
       if (pkg.price === 0) {
-        priceEl.textContent = `0 ${curr} (${labels.freeText})`;
+        priceEl.textContent = `${formatNumber(0, user)} ${curr} (${labels.freeText})`;
       } else {
         priceEl.textContent = `${formatNumber(pkg.price, user)} ${curr}`;
       }
@@ -3434,16 +3634,16 @@ function updateRecordsPanelPackages() {
     }
     const metricValues = card.querySelectorAll('strong');
     if (metricValues.length >= 3) {
-      metricValues[0].textContent = `${pkg.count}${labels.tasksUnit}`;
-      metricValues[1].textContent = `${pkg.reward}.00 ${curr}`;
-      metricValues[2].textContent = `${formatNumber(pkg.dailyIncome, user)}.00 ${curr}`;
+      metricValues[0].textContent = `${formatNumber(pkg.count, user)}${labels.tasksUnit}`;
+      metricValues[1].textContent = `${formatMoney(pkg.reward, user)} ${curr}`;
+      metricValues[2].textContent = `${formatMoney(pkg.dailyIncome, user)} ${curr}`;
     }
 
     // 4. Update Button
     const btn = card.querySelector('[data-buy-package]');
     if (btn) {
       const isCurrent = (level === userLevel);
-      const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+      const isPurchased = (user && user.purchasedPackages && user.purchasedPackages.includes(level));
 
       if (isCurrent) {
         btn.textContent = labels.btnCurrent;
@@ -3612,7 +3812,7 @@ function renderPackageDetailPage(level) {
   const user = getCurrentUser();
   const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
   const curr = getUserCurrency(user);
-  const userLevel = user.packageLevel || 'LV0';
+  const userLevel = (user && user.packageLevel) || 'LV0';
   const pkgName = getPackageName(level, lang);
 
   // 1. Dynamic Professional Hero Banner per Package
@@ -3623,35 +3823,43 @@ function renderPackageDetailPage(level) {
   }
 
   const bannerBadge = document.getElementById('page-pkg-banner-badge');
-  if (bannerBadge) bannerBadge.textContent = bannerConfig.badge;
+  if (bannerBadge) bannerBadge.textContent = `${level} · ${(pkg.nameEn || level).toUpperCase()}`;
 
   const bannerTagline = document.getElementById('page-pkg-banner-tagline');
   if (bannerTagline) bannerTagline.textContent = bannerConfig.tagline;
 
   const bannerTitle = document.getElementById('page-pkg-banner-title');
-  if (bannerTitle) bannerTitle.textContent = bannerConfig.title;
+  if (bannerTitle) bannerTitle.textContent = `${pkgName} (${level})`;
 
   const bannerDesc = document.getElementById('page-pkg-banner-desc');
-  if (bannerDesc) bannerDesc.textContent = bannerConfig.desc;
+  if (bannerDesc) {
+    if (lang === 'hi') {
+      bannerDesc.textContent = `दैनिक ${pkg.count} कार्य · प्रति कार्य ${curr} ${formatMoney(pkg.reward, user)} · दैनिक ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+    } else if (lang === 'en') {
+      bannerDesc.textContent = `${pkg.count} Daily Tasks · ${curr} ${formatMoney(pkg.reward, user)} / task · Daily ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+    } else {
+      bannerDesc.textContent = `দৈনিক ${formatNumber(pkg.count, user)}টি কাজ · প্রতি কাজ ${curr} ${formatMoney(pkg.reward, user)} · দৈনিক ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+    }
+  }
 
   // 2. Price Display
   const priceEl = document.getElementById('page-pkg-price');
   const barPriceEl = document.getElementById('page-pkg-bar-price');
   const formattedPrice = pkg.price === 0
-    ? (lang === 'bn' ? `০ ${curr} (ফ্রি)` : `0 ${curr} (Free)`)
+    ? (lang === 'hi' ? `0 ${curr} (मुफ़्त)` : (lang === 'bn' ? `${formatNumber(0, user)} ${curr} (ফ্রি)` : `0 ${curr} (Free)`))
     : `${curr} ${formatNumber(pkg.price, user)}`;
   if (priceEl) priceEl.textContent = formattedPrice;
   if (barPriceEl) barPriceEl.textContent = formattedPrice;
 
   // 3. Rate and Metrics Calculation
-  let rateStr = '৫.১৪';
+  let rateStr = '0.00';
   if (pkg.price > 0 && pkg.dailyIncome > 0) {
     rateStr = ((pkg.dailyIncome / pkg.price) * 100).toFixed(2);
   }
 
   const metricDailyEl = document.getElementById('page-pkg-metric-daily');
   if (metricDailyEl) {
-    metricDailyEl.textContent = `${curr} ${formatNumber(pkg.dailyIncome, user)}`;
+    metricDailyEl.textContent = `${curr} ${formatMoney(pkg.dailyIncome, user)}`;
   }
 
   const monthlyProfit = (pkg.dailyIncome || 0) * 30;
@@ -3663,7 +3871,7 @@ function renderPackageDetailPage(level) {
   const metricRateEl = document.getElementById('page-pkg-metric-rate');
   if (metricRateEl) {
     if (pkg.price === 0) {
-      metricRateEl.textContent = lang === 'bn' ? '১০০% ফ্রি' : '100% Free';
+      metricRateEl.textContent = lang === 'hi' ? '100% मुफ़्त' : (lang === 'bn' ? '১০০% ফ্রি' : '100% Free');
     } else {
       metricRateEl.textContent = lang === 'bn' ? `${formatBanglaNumber(rateStr)}%` : `${rateStr}%`;
     }
@@ -3671,10 +3879,12 @@ function renderPackageDetailPage(level) {
 
   const metricTasksEl = document.getElementById('page-pkg-metric-tasks');
   if (metricTasksEl) {
-    if (lang === 'bn') {
-      metricTasksEl.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ (প্রতি কাজ ${curr} ${formatBanglaNumber(pkg.reward)})`;
+    if (lang === 'hi') {
+      metricTasksEl.textContent = `${pkg.count} कार्य (प्रति कार्य ${curr} ${formatMoney(pkg.reward, user)})`;
+    } else if (lang === 'bn') {
+      metricTasksEl.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ (প্রতি কাজ ${curr} ${formatMoney(pkg.reward, user)})`;
     } else {
-      metricTasksEl.textContent = `${pkg.count} Tasks (${curr} ${pkg.reward} / task)`;
+      metricTasksEl.textContent = `${pkg.count} Tasks (${curr} ${formatMoney(pkg.reward, user)} / task)`;
     }
   }
 
@@ -3682,43 +3892,53 @@ function renderPackageDetailPage(level) {
   const calcLine1El = document.getElementById('page-pkg-calc-line1');
   if (calcLine1El) {
     if (pkg.price === 0) {
-      calcLine1El.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ × ${curr} ${formatBanglaNumber(pkg.reward)} = ${curr} ${formatBanglaNumber(pkg.dailyIncome)}.০০`;
+      calcLine1El.textContent = lang === 'bn'
+        ? `${formatBanglaNumber(pkg.count)}টি কাজ × ${curr} ${formatMoney(pkg.reward, user)} = ${curr} ${formatMoney(pkg.dailyIncome, user)}`
+        : `${pkg.count} × ${curr} ${formatMoney(pkg.reward, user)} = ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
     } else {
-      calcLine1El.textContent = `${curr} ${formatNumber(pkg.price, user)} × ${formatBanglaNumber(rateStr)}% = ${curr} ${formatBanglaNumber(pkg.dailyIncome)}.০০`;
+      calcLine1El.textContent = lang === 'bn'
+        ? `${curr} ${formatNumber(pkg.price, user)} × ${formatBanglaNumber(rateStr)}% = ${curr} ${formatMoney(pkg.dailyIncome, user)}`
+        : `${curr} ${formatNumber(pkg.price, user)} × ${rateStr}% = ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
     }
   }
 
   const calcLine2El = document.getElementById('page-pkg-calc-line2');
   if (calcLine2El) {
-    calcLine2El.textContent = `${curr} ${formatBanglaNumber(pkg.dailyIncome)}.০০ × ৩০ দিন = ${curr} ${formatNumber(monthlyProfit, user)}`;
+    calcLine2El.textContent = lang === 'bn'
+      ? `${curr} ${formatMoney(pkg.dailyIncome, user)} × ৩০ দিন = ${curr} ${formatNumber(monthlyProfit, user)}`
+      : `${curr} ${formatMoney(pkg.dailyIncome, user)} × 30 = ${curr} ${formatNumber(monthlyProfit, user)}`;
   }
 
   const calcLine3El = document.getElementById('page-pkg-calc-line3');
   if (calcLine3El) {
-    calcLine3El.textContent = `${curr} ${formatNumber(monthlyProfit, user)} লাভ (প্রতিদিন উত্তোলনযোগ্য)`;
+    calcLine3El.textContent = lang === 'hi'
+      ? `${curr} ${formatNumber(monthlyProfit, user)} लाभ (दैनिक निकासी योग्य)`
+      : (lang === 'bn'
+        ? `${curr} ${formatNumber(monthlyProfit, user)} লাভ (প্রতিদিন উত্তোলনযোগ্য)`
+        : `${curr} ${formatNumber(monthlyProfit, user)} Profit (Withdrawable daily)`);
   }
 
-  // 5. Bottom Purchase Button State (Label: 'ক্রয় করুন')
+  // 5. Bottom Purchase Button State
   const buyBtn = document.getElementById('page-pkg-buy-btn');
   if (buyBtn) {
     buyBtn.dataset.targetLevel = level;
     const isCurrent = (level === userLevel);
-    const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+    const isPurchased = (user && user.purchasedPackages && user.purchasedPackages.includes(level));
 
     if (isCurrent) {
-      buyBtn.textContent = 'বর্তমান স্তর';
+      buyBtn.textContent = lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
     } else if (isPurchased) {
-      buyBtn.textContent = 'ক্রয় সম্পন্ন ✓';
+      buyBtn.textContent = lang === 'hi' ? 'खरीदा गया ✓' : (lang === 'en' ? 'Purchased ✓' : 'ক্রয় সম্পন্ন ✓');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-emerald-700/60 text-emerald-200 font-bold text-sm cursor-default';
     } else if (level === 'LV0') {
-      buyBtn.textContent = 'ফ্রি সক্রিয়';
+      buyBtn.textContent = lang === 'hi' ? 'मुफ़्त सक्रिय' : (lang === 'en' ? 'Free Active' : 'ফ্রি সক্রিয়');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
     } else {
-      buyBtn.textContent = 'ক্রয় করুন';
+      buyBtn.textContent = lang === 'hi' ? 'खरीदें' : (lang === 'en' ? 'Buy Now' : 'ক্রয় করুন');
       buyBtn.disabled = false;
       buyBtn.className = 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition active:scale-95 cursor-pointer';
     }
@@ -3755,12 +3975,18 @@ function closePackageDetailsModal() {
 window.openPackageDetailsModal = openPackageDetailsModal;
 window.closePackageDetailsModal = closePackageDetailsModal;
 
-// Package Purchase Handling: Clean verification with loading animation and direct status
+// Package Purchase Handling: Real Supabase balance verification and persistence
 function handlePackagePurchase(level, triggerBtn) {
   if (!packageData[level] || level === 'LV0') return;
   if (window.isProcessingPackagePurchase) return;
 
   const user = getCurrentUser();
+  if (!user || (!user.phone && !user.accountNumber)) {
+    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    if (typeof showView === 'function') showView('login');
+    return;
+  }
+
   const pkg = packageData[level];
   const isCurrent = (level === user.packageLevel);
   const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
@@ -3774,7 +4000,6 @@ function handlePackagePurchase(level, triggerBtn) {
     return;
   }
 
-  // Find target button
   let btn = triggerBtn;
   if (!btn || !btn.isConnected) {
     btn = document.getElementById('page-pkg-buy-btn') || document.querySelector(`[data-buy-package="${level}"]`);
@@ -3800,84 +4025,82 @@ function handlePackagePurchase(level, triggerBtn) {
     btn.className = 'px-8 py-3 rounded-xl bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg opacity-90 cursor-wait flex items-center justify-center gap-2';
   }
 
-  setTimeout(function() {
-    window.isProcessingPackagePurchase = false;
-    const freshUser = getCurrentUser();
-    const userBal = Number(freshUser.balance || 0);
-    const price = Number(pkg.price || 0);
-
-    // 1. অপর্যাপ্ত ব্যালেন্স: পর্যাপ্ত সময় প্রদর্শন এবং হালকা ভাবে ফেড-আউট (Smooth gentle fade-out)
-    if (userBal < price) {
-      if (btn) {
-        btn.disabled = true;
-        btn.style.transition = 'all 0.5s ease-in-out';
-        btn.style.opacity = '1';
-        btn.className = 'px-6 py-3 rounded-xl bg-rose-600 text-white font-black text-sm shadow-lg shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-not-allowed transition-all duration-500';
-        btn.innerHTML = `
-          <span class="inline-flex items-center gap-1.5 transition-opacity duration-700 ease-in-out" id="insufficient-bal-label">
-            <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <span>অপর্যাপ্ত ব্যালেন্স</span>
-          </span>
-        `;
+  setTimeout(async function() {
+    try {
+      let freshUser = getCurrentUser() || user;
+      const phoneKey = freshUser.phone || freshUser.accountNumber;
+      const liveDbUser = phoneKey ? await dbGetUser(phoneKey) : null;
+      if (liveDbUser) {
+        freshUser = Object.assign({}, freshUser, liveDbUser);
       }
 
-      // ৩.৬ সেকেন্ড পর্যাপ্ত সময় ধরে দেখাবে, এরপর হালকা ভাবে ধীরে ধীরে মিলিয়ে যাবে (Soft Dissolve)
-      setTimeout(function() {
-        if (btn && btn.isConnected) {
-          const label = btn.querySelector('#insufficient-bal-label');
-          if (label) {
-            label.style.opacity = '0';
-          }
-          btn.style.opacity = '0.4';
+      const userBal = Number(freshUser.balance || 0);
+      const price = Number(pkg.price || 0);
 
-          // ধীরে মিলিয়ে যাওয়ার পর স্বাভাবিক 'ক্রয় করুন' বোতামে সফট ট্রানজিশন
-          setTimeout(function() {
-            const checkUser = getCurrentUser();
-            if (checkUser.packageLevel !== level && !(checkUser.purchasedPackages && checkUser.purchasedPackages.includes(level))) {
-              btn.disabled = false;
-              btn.className = origClass || 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition-all duration-500 active:scale-95 cursor-pointer';
-              btn.innerHTML = origHtml || 'ক্রয় করুন';
-              btn.style.opacity = '0';
-              requestAnimationFrame(function() {
-                btn.style.opacity = '1';
-              });
-            }
-          }, 650);
+      if (userBal < price) {
+        if (btn) {
+          btn.disabled = true;
+          btn.style.transition = 'all 0.5s ease-in-out';
+          btn.style.opacity = '1';
+          btn.className = 'px-6 py-3 rounded-xl bg-rose-600 text-white font-black text-sm shadow-lg shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-not-allowed transition-all duration-500';
+          btn.innerHTML = `
+            <span class="inline-flex items-center gap-1.5 transition-opacity duration-700 ease-in-out" id="insufficient-bal-label">
+              <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span>অপর্যাপ্ত ব্যালেন্স</span>
+            </span>
+          `;
         }
-      }, 3600);
 
-    } else {
-      // 2. পর্যাপ্ত ব্যালেন্স: সরাসরি ক্রয় ও সক্রিয়করণ
+        setTimeout(function() {
+          if (btn && btn.isConnected) {
+            const label = btn.querySelector('#insufficient-bal-label');
+            if (label) label.style.opacity = '0';
+            btn.style.opacity = '0.4';
+
+            setTimeout(function() {
+              const checkUser = getCurrentUser();
+              if (!checkUser || (checkUser.packageLevel !== level && !(checkUser.purchasedPackages && checkUser.purchasedPackages.includes(level)))) {
+                btn.disabled = false;
+                btn.className = origClass || 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition-all duration-500 active:scale-95 cursor-pointer';
+                btn.innerHTML = origHtml || 'ক্রয় করুন';
+                btn.style.opacity = '0';
+                requestAnimationFrame(function() { btn.style.opacity = '1'; });
+              }
+            }, 650);
+          }
+        }, 3600);
+        return;
+      }
+
+      // Sufficient live Supabase balance: deduct & persist
       freshUser.balance = Math.max(0, userBal - price);
-      // যে টাকা প্যাকেজ কিনবে অইটা বরফে পরিনত হবে
       freshUser.frozenBalance = (Number(freshUser.frozenBalance) || 0) + price;
       freshUser.packageLevel = level;
-      if (!freshUser.purchasedPackages) freshUser.purchasedPackages = ['LV0'];
+      if (!Array.isArray(freshUser.purchasedPackages)) freshUser.purchasedPackages = ['LV0'];
       if (!freshUser.purchasedPackages.includes(level)) {
         freshUser.purchasedPackages.push(level);
       }
+
       localStorage.setItem('my_pass_available_bal', freshUser.balance.toFixed(2));
       localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
-      dbSaveUser(freshUser).catch(function(e) { console.warn('Supabase sync warning:', e); });
 
-      if (window.aloSupabase) {
-        try {
-          const normPhone = normalizeBdPhone(freshUser.phone);
-          window.aloSupabase
-            .from('users')
-            .update({
-              balance: freshUser.balance,
-              frozen_balance: freshUser.frozenBalance,
-              package_level: level,
-              updated_at: new Date().toISOString()
-            })
-            .eq('phone', normPhone)
-            .then(function() {})
-            .catch(function(e) { console.warn('Supabase sync warning:', e); });
-        } catch(e) {}
-      }
+      await dbSaveUser(freshUser);
+
+      const now = new Date();
+      await dbRecordTransaction({
+        phone: freshUser.phone || freshUser.accountNumber,
+        type: 'package',
+        amount: price,
+        ratio: '100%',
+        actual: price,
+        status: 'অনুমোদিত',
+        method: `প্যাকেজ ক্রয় (${level})`,
+        date: now.toISOString().split('T')[0],
+        time: now.toTimeString().split(' ')[0],
+        newBalance: freshUser.balance
+      });
 
       if (btn) {
         btn.textContent = 'বর্তমান স্তর';
@@ -3893,11 +4116,13 @@ function handlePackagePurchase(level, triggerBtn) {
       showToastNotification(`🎉 অভিনন্দন! আপনার ${level} প্যাকেজ সফলভাবে সক্রিয় হয়েছে!`);
 
       const detailPanel = document.getElementById('package-detail-panel');
-      if (detailPanel && !detailPanel.classList.contains('hidden')) {
+      if (detailPanel && !detailPanel.hidden) {
         renderPackageDetailPage(level);
       }
+    } finally {
+      window.isProcessingPackagePurchase = false;
     }
-  }, 800);
+  }, 500);
 }
 
 function openPackagePurchaseModal(level, alertNotice, triggerBtn) {
@@ -4128,7 +4353,14 @@ async function distributeTeamRebate(memberPhone, rechargeAmount) {
   }
 }
 
-function confirmDeposit() {
+async function confirmDeposit() {
+  const user = getCurrentUser();
+  if (!user || (!user.phone && !user.accountNumber)) {
+    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    if (typeof showView === 'function') showView('login');
+    return;
+  }
+
   const customInput = document.getElementById('custom-deposit-amount');
   let amount = selectedDepositAmount;
   if (customInput && customInput.value && parseFloat(customInput.value) > 0) {
@@ -4143,67 +4375,55 @@ function confirmDeposit() {
     return;
   }
 
-  const user = getCurrentUser();
-  user.balance = (Number(user.balance) || 0) + amount;
-  user.rechargeAmount = (Number(user.rechargeAmount) || 0) + amount;
-  localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+  const minRcAmt = Number((window.aloPlatformConfig && window.aloPlatformConfig.minRecharge) || 300);
+  if (amount < minRcAmt) {
+    const statusMsg = document.getElementById('deposit-status-message');
+    if (statusMsg) {
+      statusMsg.className = 'text-center font-bold text-xs text-amber-300';
+      statusMsg.textContent = `সর্বনিম্ন রিচার্জের পরিমাণ ৳${minRcAmt}`;
+    }
+    return;
+  }
 
-  // Sync to Cloud Database (Firestore)
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0];
   const hours = String(now.getHours()).padStart(2, '0');
   const mins = String(now.getMinutes()).padStart(2, '0');
-  dbRecordTransaction({
+  const orderId = 'DEP' + Date.now() + Math.floor(100 + Math.random() * 900);
+
+  await dbRecordTransaction({
     phone: user.phone || user.accountNumber,
     type: 'deposit',
     amount: amount,
     ratio: '0%',
     actual: amount,
-    status: 'সফল',
+    status: 'মুলতবি (Pending)',
     method: 'বিকাশ (bKash)',
+    order_id: orderId,
     date: dateStr,
     time: `${hours}:${mins}`,
-    newBalance: user.balance
-  });
-  dbSaveUser(user);
-
-  // Distribute multi-level team recharge commissions (Level 1: 10%, Level 2: 5%, Level 3: 2%)
-  distributeTeamRebate(user.phone || user.accountNumber, amount).catch(function(e) {
-    console.warn('Rebate distribution notice:', e);
+    newBalance: user.balance || 0
   });
 
   const curr = getUserCurrency(user);
   const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
 
-  const curBalEl = document.getElementById('deposit-current-balance');
-  if (curBalEl) curBalEl.textContent = formatMoney(user.balance, user);
-
   const statusMsg = document.getElementById('deposit-status-message');
   if (statusMsg) {
-    statusMsg.className = 'text-center font-bold text-xs text-[#34d399]';
-    const msg = lang === 'hi' 
-      ? `✅ ${formatMoney(amount, user)} ${curr} रिचार्ज सफल रहा!` 
-      : (lang === 'en' ? `✅ ${formatMoney(amount, user)} ${curr} recharge successful!` : `✅ ${formatMoney(amount, user)} ${curr} রিচার্জ সফল হয়েছে!`);
+    statusMsg.className = 'text-center font-bold text-xs text-amber-300';
+    const msg = lang === 'hi'
+      ? `⏳ ${formatMoney(amount, user)} ${curr} रिचार्ज अनुरोध सबमिट हो गया (एडमिन अनुमोदन के बाद बैलेंस जुड़ेगा)`
+      : (lang === 'en' ? `⏳ ${formatMoney(amount, user)} ${curr} deposit request submitted (awaiting Admin approval)` : `⏳ ${formatMoney(amount, user)} ${curr} রিচার্জ আবেদন জমা হয়েছে — অ্যাডমিন যাচাইয়ের পর ব্যালেন্সে যোগ হবে!`);
     statusMsg.textContent = msg;
   }
 
-  updateProfileMetrics();
-  updateUserDetails(user);
-  updateVipHallRooms();
-  updateRecordsPanelPackages();
-
   setTimeout(function() {
-    if (pendingPurchaseLevel) {
-      const lvl = pendingPurchaseLevel;
-      pendingPurchaseLevel = '';
-      openPackagePurchaseModal(lvl);
-    } else {
-      closeActionSheet();
-      const toastMsg = lang === 'hi'
-        ? `⚡ ${formatMoney(amount, user)} ${curr} रिचार्ज सफल रहा! वर्तमान बैलेंस: ${formatMoney(user.balance, user)} ${curr}`
-        : (lang === 'en' ? `⚡ ${formatMoney(amount, user)} ${curr} recharge successful! Current balance: ${formatMoney(user.balance, user)} ${curr}` : `⚡ ${formatMoney(amount, user)} ${curr} রিচার্জ সফল হয়েছে! বর্তমান ব্যালেন্স: ${formatMoney(user.balance, user)} ${curr}`);
-      showToastNotification(toastMsg);
-    }
+    closeActionSheet();
+    showToastNotification(
+      lang === 'en'
+        ? `⏳ ${formatMoney(amount, user)} ${curr} deposit submitted for Admin review.`
+        : `⏳ ${formatMoney(amount, user)} ${curr} ডিপোজিট অনুরোধ জমা হয়েছে (যাচাই চলমান)।`
+    );
   }, 650);
 }
 
@@ -4222,6 +4442,38 @@ function showToastNotification(messageText) {
     toast.classList.remove('translate-y-0', 'opacity-100');
     toast.classList.add('-translate-y-16', 'opacity-0', 'pointer-events-none');
   }, 3800);
+}
+
+let centerTextNoticeTimer = null;
+function showCenterTextNotice(messageText) {
+  let wrapper = document.getElementById('alo-center-text-notice');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.id = 'alo-center-text-notice';
+    wrapper.className = 'fixed inset-0 z-[10008] flex items-center justify-center pointer-events-none px-4';
+    const box = document.createElement('div');
+    box.id = 'alo-center-text-notice-box';
+    box.className = 'rounded-lg bg-[#050d24]/95 text-[#f3f4f6] px-6 py-3 text-[14.5px] font-medium text-center shadow-xl transition-all duration-200 ease-out opacity-0 scale-90';
+    box.style.fontFamily = "'Hind Siliguri', system-ui, -apple-system, sans-serif";
+    wrapper.appendChild(box);
+    document.body.appendChild(wrapper);
+  }
+  const box = document.getElementById('alo-center-text-notice-box');
+  if (!box) return;
+  if (centerTextNoticeTimer) {
+    clearTimeout(centerTextNoticeTimer);
+    centerTextNoticeTimer = null;
+  }
+  box.textContent = messageText;
+  box.classList.remove('opacity-100', 'scale-100');
+  box.classList.add('opacity-0', 'scale-90');
+  void box.offsetWidth;
+  box.classList.remove('opacity-0', 'scale-90');
+  box.classList.add('opacity-100', 'scale-100');
+  centerTextNoticeTimer = setTimeout(function() {
+    box.classList.remove('opacity-100', 'scale-100');
+    box.classList.add('opacity-0', 'scale-90');
+  }, 2000);
 }
 
 function showToast(messageText) {
@@ -4254,12 +4506,8 @@ function saveWithdrawalHistory(history) {
   } catch (e) {}
 }
 
-function renderWithdrawalHistory() {
-  const container = document.getElementById('my-pass-history-rows');
-  const emptyState = document.getElementById('my-pass-empty-state');
-  if (!container) return;
-  const history = getWithdrawalHistory();
-  if (!history || history.length === 0) {
+function renderWithdrawalHistoryRows(container, emptyState, list) {
+  if (!list || list.length === 0) {
     container.innerHTML = '';
     container.classList.add('hidden');
     if (emptyState) emptyState.classList.remove('hidden');
@@ -4267,7 +4515,7 @@ function renderWithdrawalHistory() {
   }
   if (emptyState) emptyState.classList.add('hidden');
   container.classList.remove('hidden');
-  container.innerHTML = history.map(function(item) {
+  container.innerHTML = list.map(function(item) {
     const stStr = String(item.status || '');
     const stLower = stStr.toLowerCase();
     const stColor = (stLower.includes('বাতিল') || stLower.includes('reject'))
@@ -4286,52 +4534,39 @@ function renderWithdrawalHistory() {
       </div>
     `;
   }).join('');
+}
 
-  // Sync latest transactions from Supabase/Firestore in the background
+function renderWithdrawalHistory() {
+  const container = document.getElementById('my-pass-history-rows');
+  const emptyState = document.getElementById('my-pass-empty-state');
+  if (!container) return;
+
   const user = getCurrentUser();
-  if (user && (user.phone || user.accountNumber)) {
-    dbGetTransactions(user.phone || user.accountNumber, 'withdraw').then(function(dbList) {
-      if (dbList && dbList.length > 0) {
-        const merged = dbList.map(function(tx) {
-          return {
-            amount: Number(tx.amount).toFixed(2),
-            ratio: tx.ratio || '50.0%',
-            actual: Number(tx.actual).toFixed(2),
-            status: tx.status || 'মুলতবি (Pending)',
-            date: tx.date,
-            time: tx.time
-          };
-        });
-        // Preserve any unsynced local items not yet in DB
-        history.forEach(function(m) {
-          const existsInDb = merged.some(function(dbItem) {
-            return dbItem.date === m.date && dbItem.time === m.time && Math.abs(parseFloat(dbItem.amount) - parseFloat(m.amount)) < 0.01;
-          });
-          if (!existsInDb) merged.push(m);
-        });
-        saveWithdrawalHistory(merged);
-        container.innerHTML = merged.map(function(item) {
-          const stStr = String(item.status || '');
-          const stLower = stStr.toLowerCase();
-          const stColor = (stLower.includes('বাতিল') || stLower.includes('reject'))
-            ? '#f87171'
-            : ((stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet')) ? '#34d399' : '#f59e0b');
-          return `
-            <div class="grid grid-cols-5 items-center py-3.5 px-2 text-center hover:bg-[#081a4b] transition">
-              <div class="text-left pl-1 font-bold font-mono text-white text-[13px]">${item.amount}</div>
-              <div class="font-bold text-[13px]" style="color: #2d79f8;">${item.ratio}</div>
-              <div class="font-bold font-mono text-white text-[13px]">${item.actual}</div>
-              <div class="font-bold text-xs" style="color: ${stColor};">${item.status}</div>
-              <div class="text-[10.5px] text-slate-200 leading-tight font-mono">
-                <div>${item.date}</div>
-                <div class="mt-0.5 text-slate-400">${item.time}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-    }).catch(function() {});
+  if (!user || (!user.phone && !user.accountNumber)) {
+    renderWithdrawalHistoryRows(container, emptyState, []);
+    return;
   }
+
+  const cachedHistory = getWithdrawalHistory();
+  renderWithdrawalHistoryRows(container, emptyState, cachedHistory);
+
+  // Authoritative sync from Supabase transactions table (so Admin approvals/rejections update cleanly)
+  dbGetTransactions(user.phone || user.accountNumber, 'withdraw').then(function(dbList) {
+    if (!Array.isArray(dbList)) return;
+    const mapped = dbList.map(function(tx) {
+      return {
+        id: tx.id,
+        amount: Number(tx.amount || 0).toFixed(2),
+        ratio: tx.ratio || '50.0%',
+        actual: Number(tx.actual || 0).toFixed(2),
+        status: tx.status || 'মুলতবি (Pending)',
+        date: tx.date || (tx.createdAt ? String(tx.createdAt).split('T')[0] : ''),
+        time: tx.time || ''
+      };
+    });
+    saveWithdrawalHistory(mapped);
+    renderWithdrawalHistoryRows(container, emptyState, mapped);
+  }).catch(function() {});
 }
 
 // Withdrawal bottom sheet and method picker controllers (matching user screenshot)
@@ -4522,11 +4757,7 @@ function saveRealNameDetails() {
       user.realName = realName;
       user.name = realName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      if (window.aloSupabase) {
-        window.aloSupabase.from('users').update({
-          name: realName
-        }).eq('phone', user.phone).then(() => {}).catch(e => console.warn('Supabase realname update:', e));
-      }
+      dbSaveUser(user).catch(function() {});
     }
   } catch(e) {}
 
@@ -4681,7 +4912,8 @@ function saveFundPasswordDetails() {
     if (user) {
       user.fundPassword = newPass;
       user.fundPasswordLocked = true;
-      dbSaveUser(user);
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      dbSaveUser(user).catch(function() {});
     }
   } catch(e) {}
 
@@ -4846,15 +5078,12 @@ function saveBkashAccountDetails() {
     const user = getCurrentUser();
     if (user) {
       user.bkash = bkashData;
-      user.realName = fullName;
+      user.bkashName = fullName;
+      user.bkashPhone = phone;
+      user.realName = user.realName || fullName;
+      if (!user.name || user.name === 'সদস্য') user.name = fullName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      if (window.aloSupabase) {
-        window.aloSupabase.from('users').update({
-          bkash_phone: phone,
-          bkash_name: fullName,
-          name: fullName
-        }).eq('phone', user.phone || phone).then(() => {}).catch(e => console.warn('Supabase bkash update:', e));
-      }
+      dbSaveUser(user).catch(function() {});
     }
   } catch(e) {}
 
@@ -5009,8 +5238,12 @@ function saveNagadAccountDetails() {
     const user = getCurrentUser();
     if (user) {
       user.nagad = nagadData;
-      user.realName = fullName;
-      dbSaveUser(user);
+      user.nagadName = fullName;
+      user.nagadPhone = phone;
+      user.realName = user.realName || fullName;
+      if (!user.name || user.name === 'সদস্য') user.name = fullName;
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      dbSaveUser(user).catch(function() {});
     }
   } catch(e) {}
 
@@ -5177,8 +5410,12 @@ function saveUsdtAccountDetails() {
     const user = getCurrentUser();
     if (user) {
       user.usdt = usdtData;
-      user.realName = fullName;
-      dbSaveUser(user);
+      user.usdtName = fullName;
+      user.usdtAddress = address;
+      user.realName = user.realName || fullName;
+      if (!user.name || user.name === 'সদস্য') user.name = fullName;
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+      dbSaveUser(user).catch(function() {});
     }
   } catch(e) {}
 
@@ -5533,18 +5770,40 @@ function readAllMissionsRaw() {
   }
 }
 
+let missionCloudSyncTimer = null;
+
 function saveAllMissionsRaw(allMissions) {
-  localStorage.setItem('aloAcceptedMissions', JSON.stringify(Array.isArray(allMissions) ? allMissions : []));
+  const cleanList = Array.isArray(allMissions) ? allMissions : [];
+  try {
+    localStorage.setItem('aloAcceptedMissions', JSON.stringify(cleanList));
+  } catch (e) {}
+
+  try {
+    const u = getCurrentUser();
+    if (u && (u.phone || u.accountNumber)) {
+      const curPhone = normalizeBdPhone(u.phone || u.accountNumber);
+      const userMissions = cleanList.filter(function(m) {
+        return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
+      });
+      u.acceptedMissions = compactMissionsForCloud(userMissions);
+      localStorage.setItem('aloSignedInUser', JSON.stringify(u));
+      if (missionCloudSyncTimer) clearTimeout(missionCloudSyncTimer);
+      missionCloudSyncTimer = setTimeout(function() {
+        const latestU = getCurrentUser() || u;
+        dbSaveUser(latestU).catch(function() {});
+      }, 300);
+    }
+  } catch (e) {}
 }
 
 function readAcceptedMissions() {
   const missions = readAllMissionsRaw();
   let curPhone = '';
   try {
-    const u = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+    const u = getCurrentUser();
     curPhone = u ? normalizeBdPhone(u.phone || u.accountNumber || '') : '';
   } catch(e) {}
-  if (!curPhone) return missions;
+  if (!curPhone) return [];
   return missions.filter(function(m) {
     return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
   });
@@ -5719,7 +5978,7 @@ function saveAcceptedMission(serverMission) {
     status: serverMission.status,
     acceptedAt: serverMission.acceptedAt,
     evidenceName: '',
-    taskLink: serverMission.taskLink || (serverMission.platform === 'TikTok' ? 'https://vt.tiktok.com/ZSb666bLY/' : '')
+    taskLink: (!isLegacyPlaceholderTaskUrl(serverMission.taskLink) ? serverMission.taskLink : '') || getUniqueRandomTaskUrl(serverMission.platform || 'TikTok', serverMission.taskIndex || 0, allMissions)
   });
   saveAllMissionsRaw(allMissions);
   renderMissionRecords(activeMissionFilter);
@@ -5897,7 +6156,7 @@ function renderMissionRecords(filter) {
     tabComplete.innerHTML = `${lbl}<span id="mission-complete-count">(${counts.complete})</span>`;
   }
   if (tabFailed) {
-    const lbl = lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'Cancelled' : 'বাতিল');
+    const lbl = lang === 'hi' ? 'विफल / रद्द' : (lang === 'en' ? 'Failed / Cancelled' : 'ব্যর্থ / বাতিল');
     tabFailed.innerHTML = `${lbl}<span id="mission-failed-count">(${counts.failed})</span>`;
   }
 
@@ -5918,13 +6177,13 @@ function renderMissionRecords(filter) {
     let subMsg = lang === 'hi' ? 'मिशन हॉल से कार्य स्वीकार करने पर वे यहां दिखेंगे।' : (lang === 'en' ? 'Accept tasks from Mission Hall to see them here.' : 'মিশন হল থেকে কাজ গ্রহণ করলে এখানে দেখা যাবে।');
     if (activeMissionFilter === 'review') {
       emptyMsg = lang === 'hi' ? 'वर्तमान में कोई कार्य समीक्षाधीन नहीं है।' : (lang === 'en' ? 'No tasks currently under review.' : 'বর্তমানে কোনো কাজ পর্যালোচনাধীন নেই।');
-      subMsg = lang === 'hi' ? 'चलते हुए कार्य सबमिट करने पर 5-10 मिनट तक समीक्षा में रहते हैं।' : (lang === 'en' ? 'Submitted tasks remain under review for 5-10 minutes.' : 'চলমান কাজ জমা দিলে ৫-১০ মিনিট পর্যালোচনায় থাকবে।');
+      subMsg = lang === 'hi' ? 'सबमिट किए गए कार्य 15 मिनट तक स्वचालित लाइक जांच के बाद सफल या विफल होंगे।' : (lang === 'en' ? 'Submitted tasks verify Likes automatically and settle after 15 minutes.' : 'জমা দেওয়া কাজ ১৫ মিনিট লাইক যাচাইয়ের পর সফল বা ব্যর্থ হবে।');
     } else if (activeMissionFilter === 'complete') {
       emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य पूर्ण नहीं हुआ है।' : (lang === 'en' ? 'No tasks completed yet.' : 'এখনো কোনো কাজ সম্পূর্ণ হয়নি।');
       subMsg = lang === 'hi' ? 'समीक्षा पूरी होने के बाद कार्य यहाँ स्थायी रूप से संग्रहीत रहेंगे।' : (lang === 'en' ? 'Completed tasks are permanently archived here.' : 'সম্পূর্ণ কাজগুলো এখানে এককালীন সংরক্ষিত থাকবে।');
     } else if (activeMissionFilter === 'failed') {
-      emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य रद्द नहीं हुआ है।' : (lang === 'en' ? 'No cancelled tasks yet.' : 'এখনো কোনো কাজ বাতিল হয়নি।');
-      subMsg = lang === 'hi' ? 'रद्द किए गए कार्य यहाँ स्थायी रूप से संग्रहीत रहेंगे।' : (lang === 'en' ? 'Cancelled tasks are permanently archived here.' : 'বাতিল করা কাজগুলো এখানে এককালীন সংরক্ষিত থাকবে।');
+      emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य विफल या रद्द नहीं हुआ है।' : (lang === 'en' ? 'No failed or cancelled tasks yet.' : 'এখনো কোনো কাজ ব্যর্থ বা বাতিল হয়নি।');
+      subMsg = lang === 'hi' ? 'गलत स्क्रीनशॉट या रद्द किए गए कार्य यहाँ दिखेंगे।' : (lang === 'en' ? 'Failed or cancelled tasks are permanently archived here.' : 'ভুল স্ক্রিনশট বা বাতিল করা কাজগুলো এখানে সংরক্ষিত থাকবে।');
     }
     empty.innerHTML = `<span class="text-3xl" aria-hidden="true">▤</span><p class="mt-3 text-sm font-semibold">${emptyMsg}</p><p class="mt-2 text-xs" style="color: var(--color-muted);">${subMsg}</p>`;
     list.appendChild(empty);
@@ -5932,6 +6191,9 @@ function renderMissionRecords(filter) {
   }
 
   const now = Date.now();
+  const safeEsc = function(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  };
 
   visibleMissions.forEach(function(mission) {
     const card = document.createElement('article');
@@ -5951,16 +6213,12 @@ function renderMissionRecords(filter) {
     let actionsHtml = '';
 
     if (mission.status === 'active') {
-      const statusLabel = lang === 'hi' ? 'चालू' : (lang === 'en' ? 'In Progress' : 'চলমান');
       const cancelLabel = lang === 'hi' ? 'रद्द करें' : (lang === 'en' ? 'Cancel' : 'বাতিল করুন');
       const submitLabel = lang === 'hi' ? 'जमा करें →' : (lang === 'en' ? 'Submit →' : 'জমা দিন →');
       actionsHtml = `
-        <div class="mission-record-actions flex items-center justify-between gap-2 pt-2">
-          <span class="text-xs px-2.5 py-1 rounded font-semibold" style="background: rgba(37, 244, 238, 0.1); color: var(--color-profile-cyan);">${statusLabel}</span>
-          <div class="flex gap-2">
-            <button type="button" class="mission-cancel-button px-3 py-1.5 rounded text-xs font-semibold cursor-pointer hover:bg-slate-800 transition" style="border: 1px solid var(--color-profile-border); color: var(--color-muted);" data-cancel-mission>${cancelLabel}</button>
-            <button type="button" class="mission-submit-button px-4 py-1.5 rounded text-xs font-bold cursor-pointer hover:opacity-90 active:scale-95 transition" style="background: var(--color-profile-cyan); color: #000;" data-open-submission>${submitLabel}</button>
-          </div>
+        <div class="mission-record-actions flex items-center justify-end gap-2.5 pt-2">
+          <button type="button" class="mission-cancel-button px-3.5 py-1.5 rounded text-xs font-bold cursor-pointer hover:opacity-90 active:scale-95 transition" style="background: #b91c1c; color: #ffffff;" data-cancel-mission>${cancelLabel}</button>
+          <button type="button" class="mission-submit-button px-4 py-1.5 rounded text-xs font-bold cursor-pointer hover:opacity-90 active:scale-95 transition" style="background: var(--color-profile-cyan); color: #000;" data-open-submission>${submitLabel}</button>
         </div>
       `;
     } else if (mission.status === 'review') {
@@ -5973,12 +6231,34 @@ function renderMissionRecords(filter) {
       const reviewLabel = lang === 'hi' ? 'समीक्षाधीन: शेष' : (lang === 'en' ? 'Under Review: Left' : 'পর্যালোচনাধীন: বাকি');
       const minsLabel = lang === 'hi' ? 'मिनट' : (lang === 'en' ? 'mins' : 'মিনিট');
 
+      let verifyHint = lang === 'hi'
+        ? '🔍 स्क्रीनशॉट लाइक जांच जारी है...'
+        : (lang === 'en' ? '🔍 Verifying Like screenshot...' : '🔍 স্ক্রিনশটে লাইক যাচাই চলছে...');
+      let verifyColor = 'text-sky-300';
+      if (mission.likeVerifyStatus === 'valid') {
+        verifyHint = lang === 'hi'
+          ? '✓ लाइक सत्यापित — समय पूरा होने पर इनाम मिलेगा'
+          : (lang === 'en' ? '✓ Like verified — Reward settles when timer ends' : '✓ লাইক সঠিক পাওয়া গেছে — সময় শেষে সফল হবে');
+        verifyColor = 'text-emerald-300';
+      } else if (mission.likeVerifyStatus === 'invalid') {
+        verifyHint = lang === 'hi'
+          ? '⚠️ लाइक नहीं मिला — समय पूरा होने पर विफल होगा'
+          : (lang === 'en' ? '⚠️ Valid Like not detected — Will fail after timer' : '⚠️ স্ক্রিনশটে সঠিক লাইক মেলেনি — সময় শেষে ব্যর্থ হবে');
+        verifyColor = 'text-rose-300';
+      } else if (mission.likeVerifyStatus === 'error' && mission.likeVerifyReason) {
+        verifyHint = `⚠️ ${safeEsc(mission.likeVerifyReason)}`;
+        verifyColor = 'text-amber-300';
+      }
+
       actionsHtml = `
-        <div class="mission-card-review-bar mt-2 flex items-center justify-between gap-2 relative z-10">
-          <div class="flex items-center gap-2 text-xs font-semibold text-amber-400">
-            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-            <span>${reviewLabel} <span class="review-timer-text font-mono font-bold text-amber-300" data-review-ends="${endsAt}">${timeStr}</span> ${minsLabel}</span>
+        <div class="mission-card-review-bar mt-2 space-y-1 relative z-10">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs font-semibold text-amber-400">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+              <span>${reviewLabel} <span class="review-timer-text font-mono font-bold text-amber-300" data-review-ends="${endsAt}">${timeStr}</span> ${minsLabel}</span>
+            </div>
           </div>
+          <p class="text-[11px] font-medium ${verifyColor}">${verifyHint}</p>
         </div>
       `;
     } else if (mission.status === 'complete') {
@@ -6001,15 +6281,21 @@ function renderMissionRecords(filter) {
       const cancelDate = new Date(mission.cancelledAt || mission.failedAt || Date.now());
       const cancelDateText = cancelDate.getFullYear() + '-' + String(cancelDate.getMonth() + 1).padStart(2, '0') + '-' + String(cancelDate.getDate()).padStart(2, '0') + ' ' + String(cancelDate.getHours()).padStart(2, '0') + ':' + String(cancelDate.getMinutes()).padStart(2, '0');
 
-      const cancelSuccessLabel = lang === 'hi' ? 'कार्य रद्द — रिकॉर्ड में सुरक्षित' : (lang === 'en' ? 'Task Cancelled — Permanently Archived' : 'কাজটি বাতিল — রেকর্ডে এককালীন সংরক্ষিত');
-      const cancelTimeLabel = lang === 'hi' ? 'বাতিলের সময়:' : (lang === 'en' ? 'Cancelled at:' : 'বাতিলের সময়:');
+      const isAuditFailed = Boolean(mission.failReason);
+      const cancelSuccessLabel = isAuditFailed
+        ? (lang === 'hi' ? `समीक्षा विफल — ${safeEsc(mission.failReason)}` : (lang === 'en' ? `Review Failed — ${safeEsc(mission.failReason)}` : `পর্যালোচনা ব্যর্থ — ${safeEsc(mission.failReason)}`))
+        : (lang === 'hi' ? 'कार्य रद्द — रिकॉर्ड में सुरक्षित' : (lang === 'en' ? 'Task Cancelled — Permanently Archived' : 'কাজটি বাতিল — রেকর্ডে এককালীন সংরক্ষিত'));
+      const badgeLbl = isAuditFailed
+        ? (lang === 'hi' ? 'विफल' : (lang === 'en' ? 'Failed' : 'ব্যর্থ'))
+        : (lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'Cancelled' : 'বাতিল'));
+      const cancelTimeLabel = lang === 'hi' ? (isAuditFailed ? 'विफल समय:' : 'रद्द समय:') : (lang === 'en' ? (isAuditFailed ? 'Failed at:' : 'Cancelled at:') : (isAuditFailed ? 'ব্যর্থতার সময়:' : 'বাতিলের সময়:'));
 
       actionsHtml = `
-        <div class="mission-card-failed-bar mt-2.5 pt-2 flex items-center justify-between text-xs">
+        <div class="mission-card-failed-bar mt-2.5 pt-2 flex items-center justify-between text-xs gap-2">
           <span class="font-bold flex items-center gap-1.5 text-rose-400">
             <span>✕</span> ${cancelSuccessLabel}
           </span>
-          <span class="font-bold font-mono text-rose-400/90 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded text-[11px]">${lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'Cancelled' : 'বাতিল')}</span>
+          <span class="font-bold font-mono shrink-0 text-rose-400/90 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded text-[11px]">${badgeLbl}</span>
         </div>
         <p class="text-[11px] mt-1" style="color: var(--color-muted);">${cancelTimeLabel} ${cancelDateText}</p>
       `;
@@ -6021,6 +6307,9 @@ function renderMissionRecords(filter) {
     const proofLabel = lang === 'hi' ? 'सबमिट किया गया प्रमाण:' : (lang === 'en' ? 'Submitted Proof:' : 'জমা দেওয়া প্রমাণ:');
     const previewLabel = lang === 'hi' ? 'प्रिव्यू देखें 🔍' : (lang === 'en' ? 'Preview 🔍' : 'প্রিভিউ দেখুন 🔍');
     const descText = getPlatformTaskDescription(mission.platform, mission.taskIndex !== undefined ? mission.taskIndex : 0, lang) || mission.description;
+    const failedStampText = mission.failReason
+      ? (lang === 'hi' ? 'विफल' : (lang === 'en' ? 'FAILED' : 'ব্যর্থ'))
+      : (lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'CANCELLED' : 'বাতিল'));
 
     card.innerHTML = `
       ${mission.status === 'review' ? `
@@ -6036,7 +6325,7 @@ function renderMissionRecords(filter) {
       ${mission.status === 'failed' ? `
         <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none select-none flex items-center justify-center -rotate-12 opacity-85">
           <div class="border-[3px] border-dashed border-rose-500/80 rounded-xl px-5 py-2 text-rose-500 font-black text-xl sm:text-2xl uppercase tracking-widest drop-shadow-[0_2px_12px_rgba(244,63,94,0.45)] rotate-[-6deg] bg-rose-950/30 backdrop-blur-xs select-none">
-            ${lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'CANCELLED' : 'বাতিল')}
+            ${failedStampText}
           </div>
         </div>
       ` : ''}
@@ -6129,39 +6418,51 @@ function renderPackageTasks(level) {
       extraAttr = 'data-limit-reached="true"';
     }
 
-    const taskTitle = lang === 'hi' ? `${activePlatform} · कार्य ${i + 1}` : (lang === 'en' ? `${activePlatform} · Task ${i + 1}` : `${activePlatform} · কাজ ${i + 1}`);
-    const typeLabel = lang === 'hi' ? 'कार्य प्रकार:' : (lang === 'en' ? 'Task Type:' : 'কাজের ধরন:');
+    const taskTitle = activePlatform || 'TikTok';
+    const typeLabel = lang === 'hi' ? 'आवश्यक:' : (lang === 'en' ? 'Required:' : 'প্রয়োজন:');
     const tierLabel = lang === 'hi' ? 'स्तर:' : (lang === 'en' ? 'Tier:' : 'স্তর:');
-    const rewHeading = lang === 'hi' ? 'दैनिक पुरस्कार' : (lang === 'en' ? 'Daily Reward' : 'দৈনিক পুরস্কার');
-    const rewVal = lang === 'bn' ? `${formatBanglaNumber(settings.reward)}.০০` : `${settings.reward}.00`;
-    const usdVal = formatUsd(settings.reward, user);
-    const progressLabel = lang === 'hi' ? 'प्रगति:' : (lang === 'en' ? 'Progress:' : 'অগ্রগতি:');
-    const progressVal = lang === 'bn'
-      ? `১০০০০০ / ৯${formatBanglaNumber(1200 + (i * 37) % 800)}`
-      : `100000 / 9${1200 + (i * 37) % 800}`;
-    const taskDesc = getPlatformTaskDescription(activePlatform, i, lang);
+    const rewHeading = lang === 'hi' ? 'इकाई मूल्य' : (lang === 'en' ? 'Unit Price' : 'একক দাম');
+    const rewVal = Number(settings.reward || 20).toFixed(2);
+    const progressLabel = lang === 'hi' ? 'मात्रा:' : (lang === 'en' ? 'Quantity:' : 'পরিমাণ:');
+    const progressTargets = [90852, 91043, 91244, 91419, 91651];
+    const progressTarget = i < progressTargets.length ? progressTargets[i] : (91651 + (i - 4) * 197);
+    const progressVal = `100000 / ${progressTarget}`;
+    const shortActionLabel = lang === 'hi'
+      ? 'लाइक और फॉलो करें'
+      : (lang === 'en' ? 'Like & Follow' : 'পছন্দ লক্ষ্য করা');
+
+    const iconMarkup = activePlatform === 'TikTok'
+      ? `<div class="w-[42px] h-[42px] rounded-[7px] bg-white flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+           <div class="w-7 h-7 rounded-[5px] bg-[#111827] flex items-center justify-center">
+             <svg viewBox="0 0 24 24" class="w-4 h-4 text-white" fill="currentColor">
+               <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.89 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.3 0 .59.05.87.13V9.4a6.33 6.33 0 0 0-.87-.06A6.34 6.34 0 0 0 3 15.67 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.33V9.82a8.16 8.16 0 0 0 4.82 1.54V7.91a4.85 4.85 0 0 1-.91-.22Z"/>
+             </svg>
+           </div>
+         </div>`
+      : `<div class="w-[42px] h-[42px] rounded-[7px] bg-white flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+           ${getPlatformSvg(activePlatform, 'h-7 w-7')}
+         </div>`;
 
     const row = document.createElement('article');
-    row.className = 'platform-task-row flex items-start gap-3 py-5';
+    row.className = 'platform-task-row flex items-start gap-3.5';
     row.dataset.taskIndex = String(i);
     row.innerHTML = `
-      <span class="platform-task-icon flex shrink-0 items-center justify-center pt-1" aria-hidden="true">
-        ${getPlatformSvg(activePlatform, 'h-7 w-7')}
-      </span>
+      ${iconMarkup}
       <div class="min-w-0 flex-1">
-        <h3 class="font-bold text-sm">${taskTitle}</h3>
-        <p class="mt-1 text-xs leading-5" style="color: var(--color-muted);">${typeLabel} ${taskDesc}</p>
-        <div class="mt-2 flex items-center gap-3 text-xs">
-          <p>${tierLabel} <span class="platform-task-level">${activePackageLevel}</span></p>
-          <p style="color: var(--color-muted);">${progressLabel} <span class="font-semibold" style="color: var(--color-profile-text);">${progressVal}</span></p>
-        </div>
+        <h3 class="text-[15.5px] font-medium text-[#f3f4f6] leading-tight">${taskTitle}</h3>
+        <p class="mt-2 text-[13.5px] font-normal text-[#e5e7eb] leading-snug">${typeLabel} <span class="ml-1">${shortActionLabel}</span></p>
+        <p class="mt-1.5 flex items-center gap-2 text-[13.5px] font-normal text-[#e5e7eb]">
+          <span>${tierLabel}</span>
+          <span class="inline-block bg-[#16a34a] text-white text-[11.5px] font-semibold px-2 py-[1px] rounded-[3px] leading-tight">${activePackageLevel}</span>
+        </p>
+        <p class="mt-1.5 text-[13.5px] font-normal text-[#e5e7eb]">${progressLabel} <span class="ml-1">${progressVal}</span></p>
       </div>
-      <div class="flex shrink-0 flex-col items-end gap-2.5">
-        <div class="text-right">
-          <p class="text-[10px]" style="color: var(--color-muted);">${rewHeading}</p>
-          <p class="font-bold text-sm font-mono" style="color: var(--color-profile-blue-text);">${rewVal} ${curr}</p>
-        </div>
-        <button type="button" class="${btnClass}" data-platform-accept ${btnDisabled ? 'disabled' : ''} ${extraAttr}>${btnText}</button>
+      <div class="flex shrink-0 flex-col items-end text-right">
+        <p class="text-[12.5px] font-normal text-[#e5e7eb] leading-tight">${rewHeading}</p>
+        <p class="mt-0.5 text-[15px] leading-tight whitespace-nowrap">
+          <span class="text-[#2684ff] font-medium">${rewVal}</span><span class="text-[#f3f4f6] font-normal">${curr}</span>
+        </p>
+        <button type="button" class="${btnClass} mt-2.5" data-platform-accept ${btnDisabled ? 'disabled' : ''} ${extraAttr}>${btnText}</button>
       </div>
     `;
     rows.push(row);
@@ -6170,7 +6471,7 @@ function renderPackageTasks(level) {
   platformTaskList.replaceChildren(...rows);
   const headerLvl = document.getElementById('platform-task-header-level');
   if (headerLvl) {
-    const listTitle = lang === 'hi' ? `${activePackageLevel} मिशन सूची` : (lang === 'en' ? `${activePackageLevel} Mission List` : `${activePackageLevel} মিশন তালিকা`);
+    const listTitle = lang === 'hi' ? `${activePlatform} · ${activePackageLevel}` : (lang === 'en' ? `${activePlatform} · ${activePackageLevel}` : `${activePlatform} · ${activePackageLevel}`);
     headerLvl.textContent = listTitle;
   }
   refreshDailyMissionLimit(activePackageLevel);
@@ -6305,7 +6606,16 @@ function renderMissionSubmission() {
       : (lang === 'en' ? '<span>🔍 View Preview</span>' : '<span>🔍 প্রিভিউ দেখুন</span>');
   }
 
-  const defaultUrl = mission.taskLink || getRealisticTaskUrl(mission.platform, mission.taskIndex || 0);
+  let defaultUrl = mission.taskLink;
+  if (isLegacyPlaceholderTaskUrl(defaultUrl)) {
+    defaultUrl = getUniqueRandomTaskUrl(mission.platform, mission.taskIndex || 0, missions);
+    const allM = readAllMissionsRaw();
+    const targetM = allM.find(function(item) { return item.id === mission.id; });
+    if (targetM) {
+      targetM.taskLink = defaultUrl;
+      saveAllMissionsRaw(allM);
+    }
+  }
   const linkEl = document.getElementById('mission-submit-link');
   if (linkEl) linkEl.value = defaultUrl;
 
@@ -6402,8 +6712,8 @@ window.refreshAllMissionsAndMetrics = refreshAllMissionsAndMetrics;
 function handleOpenTaskLink() {
   const linkEl = document.getElementById('mission-submit-link');
   let url = linkEl ? linkEl.value.trim() : '';
-  if (!url) {
-    url = 'https://vt.tiktok.com/ZSb666bLY/';
+  if (!url || isLegacyPlaceholderTaskUrl(url)) {
+    url = getUniqueRandomTaskUrl('TikTok', 0);
   }
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = 'https://' + url;
@@ -6500,62 +6810,204 @@ function handleCopyTaskLink() {
   }
 }
 
-// Check and process pending 5-10 minute reviews automatically
-function checkPendingReviews() {
-  const allMissions = readAllMissionsRaw();
-  let curPhone = '';
+// Server-side AI screenshot verification for Like state during 15-minute audit window
+window._likeVerifyInFlight = window._likeVerifyInFlight || {};
+window._likeVerifyLastTry = window._likeVerifyLastTry || {};
+
+async function verifyMissionScreenshotLike(missionId) {
+  if (!missionId) return null;
+  if (window._likeVerifyInFlight[missionId]) return null;
+  const lastTry = window._likeVerifyLastTry[missionId] || 0;
+  if (Date.now() - lastTry < 5000) return null;
+
+  const list = readAllMissionsRaw();
+  const target = list.find(function(item) { return item.id === missionId; });
+  if (!target || target.status !== 'review') return null;
+
+  if (!target.screenshot) {
+    target.likeVerifyStatus = 'invalid';
+    target.likeVerifyReason = 'স্ক্রিনশট আপলোড করা হয়নি';
+    target.likeVerifyCheckedAt = new Date().toISOString();
+    saveAllMissionsRaw(list);
+    return 'invalid';
+  }
+
+  window._likeVerifyInFlight[missionId] = true;
+  window._likeVerifyLastTry[missionId] = Date.now();
   try {
-    const u = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
-    curPhone = u ? normalizeBdPhone(u.phone || u.accountNumber || '') : '';
-  } catch(e) {}
+    const resp = await fetch('/api/verify-like', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        image: target.screenshot,
+        platform: target.platform || 'TikTok'
+      })
+    });
+    const data = await resp.json().catch(function() { return {}; });
 
-  let changed = false;
-  let totalReward = 0;
-  let completedInBatch = 0;
-  const now = Date.now();
+    const freshList = readAllMissionsRaw();
+    const freshTarget = freshList.find(function(item) { return item.id === missionId; });
+    if (!freshTarget || freshTarget.status !== 'review') return null;
 
-  allMissions.forEach(function(m) {
-    const belongsToCurrent = !curPhone || !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
-    if (!belongsToCurrent) return;
-    if (m.status === 'review') {
-      if (!m.reviewEndsAt) {
-        const subTime = m.submittedAt ? new Date(m.submittedAt).getTime() : now;
-        m.reviewEndsAt = subTime + 15 * 60 * 1000;
-      }
-      if (now >= m.reviewEndsAt) {
-        m.status = 'complete';
-        m.completedAt = new Date().toISOString();
-        if (!m.rewardCredited) {
-          m.rewardCredited = true;
-          totalReward += (Number(m.reward) || (packageTaskSettings[m.level || 'LV0']?.reward || 20));
-          completedInBatch += 1;
-        }
-        changed = true;
-      }
+    if (resp.ok && data && data.success) {
+      freshTarget.likeVerifyStatus = data.isLiked ? 'valid' : 'invalid';
+      freshTarget.likeVerifyReason = data.reasonBn || (data.isLiked ? 'স্ক্রিনশটে লাইক শনাক্ত হয়েছে' : 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি');
+      freshTarget.likeVerifyPlatform = data.detectedPlatform || freshTarget.platform;
+      freshTarget.likeVerifyCheckedAt = new Date().toISOString();
+    } else {
+      const isNonRetryable = Boolean(data && data.nonRetryable) || resp.status === 400 || resp.status === 403 || resp.status === 503;
+      freshTarget.likeVerifyAttempts = isNonRetryable ? 99 : ((Number(freshTarget.likeVerifyAttempts) || 0) + 1);
+      freshTarget.likeVerifyStatus = 'error';
+      freshTarget.likeVerifyReason = (data && data.message) || 'স্ক্রিনশট যাচাই করতে সমস্যা হয়েছে';
     }
-  });
 
-  if (changed) {
-    saveAllMissionsRaw(allMissions);
-    if (totalReward > 0) {
-      let user = null;
-      try {
-        user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
-      } catch(e) {}
+    saveAllMissionsRaw(freshList);
+    const tasksPanel = document.getElementById('tasks-panel');
+    if (tasksPanel && !tasksPanel.hidden && activeMissionFilter === 'review') {
+      renderMissionRecords('review');
+    }
+    return freshTarget.likeVerifyStatus;
+  } catch (err) {
+    const freshList = readAllMissionsRaw();
+    const freshTarget = freshList.find(function(item) { return item.id === missionId; });
+    if (freshTarget && freshTarget.status === 'review') {
+      freshTarget.likeVerifyAttempts = (Number(freshTarget.likeVerifyAttempts) || 0) + 1;
+      freshTarget.likeVerifyStatus = 'error';
+      freshTarget.likeVerifyReason = 'নেটওয়ার্ক ত্রুটি — পুনরায় যাচাই হবে';
+      saveAllMissionsRaw(freshList);
+    }
+    return 'error';
+  } finally {
+    delete window._likeVerifyInFlight[missionId];
+  }
+}
+window.verifyMissionScreenshotLike = verifyMissionScreenshotLike;
+
+// Check and process pending 15-minute reviews automatically
+function checkPendingReviews() {
+  if (window._isCheckingMissionReviews) return;
+  const u = getCurrentUser();
+  if (!u || (!u.phone && !u.accountNumber)) return;
+
+  window._isCheckingMissionReviews = true;
+  try {
+    const allMissions = readAllMissionsRaw();
+    const curPhone = normalizeBdPhone(u.phone || u.accountNumber || '');
+
+    let changed = false;
+    let totalReward = 0;
+    let completedInBatch = 0;
+    let failedInBatch = 0;
+    let lastFailReason = '';
+    const now = Date.now();
+    const toVerifyIds = [];
+
+    allMissions.forEach(function(m) {
+      const belongsToCurrent = !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
+      if (!belongsToCurrent) return;
+      if (m.status === 'review') {
+        if (!m.reviewEndsAt) {
+          const subTime = m.submittedAt ? new Date(m.submittedAt).getTime() : now;
+          m.reviewEndsAt = subTime + 15 * 60 * 1000;
+        }
+
+        const needsVerification = !m.likeVerifyStatus || m.likeVerifyStatus === 'pending' || (m.likeVerifyStatus === 'error' && (Number(m.likeVerifyAttempts) || 0) < 3);
+
+        if (now < m.reviewEndsAt) {
+          if (needsVerification && m.screenshot && !window._likeVerifyInFlight[m.id]) {
+            toVerifyIds.push(m.id);
+          } else if (!m.screenshot && m.likeVerifyStatus !== 'invalid') {
+            m.likeVerifyStatus = 'invalid';
+            m.likeVerifyReason = 'স্ক্রিনশট আপলোড করা হয়নি';
+            changed = true;
+          }
+          return;
+        }
+
+        // 15 minutes elapsed: settle based on Like verification result
+        if (needsVerification && m.screenshot) {
+          if (!window._likeVerifyInFlight[m.id]) {
+            toVerifyIds.push(m.id);
+          }
+          return;
+        }
+
+        if (m.likeVerifyStatus === 'valid') {
+          m.status = 'complete';
+          m.completedAt = new Date().toISOString();
+          if (!m.rewardCredited) {
+            m.rewardCredited = true;
+            totalReward += (Number(m.reward) || (packageTaskSettings[m.level || 'LV0']?.reward || 20));
+            completedInBatch += 1;
+          }
+          changed = true;
+        } else {
+          m.status = 'failed';
+          m.failedAt = new Date().toISOString();
+          m.cancelledAt = m.failedAt;
+          m.rewardCredited = false;
+          m.failReason = m.likeVerifyReason || 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি';
+          failedInBatch += 1;
+          lastFailReason = m.failReason;
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) {
+      saveAllMissionsRaw(allMissions);
+      const user = getCurrentUser();
       if (user) {
-        user.balance = (Number(user.balance) || 0) + totalReward;
-        user.todayIncome = (Number(user.todayIncome) || 0) + totalReward;
-        user.totalIncome = (Number(user.totalIncome) || 0) + totalReward;
-        user.lifetimeEarnings = (Number(user.lifetimeEarnings) || 0) + totalReward;
-        user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
-        localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
+        if (totalReward > 0) {
+          user.balance = (Number(user.balance) || 0) + totalReward;
+          user.todayIncome = (Number(user.todayIncome) || 0) + totalReward;
+          user.totalIncome = (Number(user.totalIncome) || 0) + totalReward;
+          user.lifetimeEarnings = (Number(user.lifetimeEarnings) || 0) + totalReward;
+          user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
+
+          const dNow = new Date();
+          dbRecordTransaction({
+            phone: curPhone,
+            type: 'mission',
+            amount: totalReward,
+            ratio: '100%',
+            actual: totalReward,
+            status: 'অনুমোদিত',
+            method: `টাস্ক পুরস্কার (${completedInBatch} টি কাজ)`,
+            date: dNow.toISOString().split('T')[0],
+            time: dNow.toTimeString().split(' ')[0],
+            newBalance: user.balance
+          }).catch(function() {});
+        }
+        user.acceptedMissions = compactMissionsForCloud(allMissions.filter(function(m) {
+          return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
+        }));
+        localStorage.setItem('my_pass_available_bal', (Number(user.balance) || 0).toFixed(2));
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+
         dbSaveUser(user).catch(function() {});
         updateUserDetails(user);
         updateProfileMetrics();
       }
+      if (completedInBatch > 0 && typeof showToastNotification === 'function') {
+        showToastNotification(`✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার ব্যালেন্সে যোগ হয়েছে।`);
+      }
+      if (failedInBatch > 0 && typeof showToastNotification === 'function') {
+        showToastNotification(`✕ টাস্ক ব্যর্থ: ${lastFailReason || 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি'}`);
+      }
+      if (typeof refreshDailyMissionLimit === 'function') {
+        refreshDailyMissionLimit(activePackageLevel || 'LV0');
+      }
+      renderMissionRecords(activeMissionFilter);
     }
-    renderMissionRecords(activeMissionFilter);
+
+    if (toVerifyIds.length > 0) {
+      toVerifyIds.forEach(function(id) {
+        verifyMissionScreenshotLike(id);
+      });
+    }
+  } finally {
+    window._isCheckingMissionReviews = false;
   }
 }
 
@@ -6772,115 +7224,94 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
     member = phoneOrMember;
   }
 
-  // Look up full account record in localStorage or Supabase
-  let memberAcc = null;
-  try {
-    const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-    memberAcc = accounts.find(function(a) {
-      return normalizeBdPhone(a.phone || a.accountNumber || '') === normalizeBdPhone(targetPhone || '');
-    });
-  } catch(e) {}
-
   const rawPhone = targetPhone || (member && (member.rawPhone || member.phone)) || '';
   const maskedPhone = maskTeamPhone(rawPhone);
-  const memberId = (member && member.memberId) || (memberAcc && memberAcc.memberId) || ('AL' + String(rawPhone).slice(-6));
-  
-  // Real or deterministic UUID matching screenshot format (L1 / 833948CE-2F16-49CD-A7C5-928A923BB489)
-  let uuid = (memberAcc && (memberAcc.uuid || memberAcc.id)) || (member && (member.uuid || member.id));
-  if (!uuid || String(uuid).length < 15 || !String(uuid).includes('-')) {
-    uuid = generateMemberUuid(rawPhone || memberId);
-  } else {
-    uuid = String(uuid).toUpperCase();
-  }
+  const normP = normalizeBdPhone(rawPhone);
 
-  // Member Name matching user screenshot
-  let memberName = (memberAcc && (memberAcc.fullName || (memberAcc.name && memberAcc.name !== 'সদস্য' ? memberAcc.name : ''))) ||
-                   (member && (member.fullName || (member.name && member.name !== 'সদস্য' ? member.name : ''))) || '';
-  if (!memberName) {
-    if (memberAcc && memberAcc.name) memberName = memberAcc.name;
-    else if (rawPhone) memberName = `D.S. ${maskedPhone}`;
-    else memberName = 'D.S. Rony Sorkar';
-  }
+  let memberAcc = normP ? await dbGetUser(normP).catch(function() { return null; }) : null;
 
-  // Avatar: profile rabbit avatar (আমাদের প্রোফাইল যেটা আছে)
+  const memberId = (memberAcc && memberAcc.memberId) || (member && member.memberId) || (normP ? normP.slice(-6) : '—');
+
+  // Account / Registered Phone Number
+  const regNumber = rawPhone || (memberAcc && (memberAcc.phone || memberAcc.accountNumber)) || '';
+  const maskedAccNumber = maskAccountPhone3(regNumber);
+
+  // Tier and Account Number
+  const tierEl = document.getElementById('team-modal-tier');
+  const uuidEl = document.getElementById('team-modal-uuid');
+  const nameEl = document.getElementById('team-modal-name');
+  if (tierEl) tierEl.textContent = `L${t}`;
+  if (uuidEl) uuidEl.textContent = `ID:${memberId}`;
+  if (nameEl) nameEl.textContent = maskedAccNumber || maskedPhone;
+
+  // Avatar
   const avatarEl = document.getElementById('team-modal-avatar');
   if (avatarEl) {
     avatarEl.src = '/assets/rabbit_avatar-DZmseAUF.jpg';
     avatarEl.onerror = function() { this.src = '/team_avatar.png'; };
   }
 
-  // Account / Registered Phone Number (প্রথম ৩ টা ও শেষ ৩ টা)
-  const regNumber = rawPhone || (memberAcc && (memberAcc.phone || memberAcc.accountNumber)) || (member && (member.rawPhone || member.phone)) || '';
-  const maskedAccNumber = maskAccountPhone3(regNumber);
-
-  // Tier and Account Number (উপরে শুধু L1, নিচে হিসাব নাম্বার)
-  const tierEl = document.getElementById('team-modal-tier');
-  const uuidEl = document.getElementById('team-modal-uuid');
-  const nameEl = document.getElementById('team-modal-name');
-  if (tierEl) tierEl.textContent = `L${t}`;
-  if (uuidEl) uuidEl.textContent = '';
-  if (nameEl) nameEl.textContent = maskedAccNumber;
-
-  // Live fetch from real Supabase database if available
-  if (window.aloSupabase && rawPhone) {
-    try {
-      const normP = normalizeBdPhone(rawPhone);
-      const { data: dbUser, error: dbErr } = await window.aloSupabase
-        .from('users')
-        .select('*')
-        .or(`phone.eq.${normP},account_number.eq.${normP}`)
-        .maybeSingle();
-      if (!dbErr && dbUser) {
-        if (dbUser.balance !== undefined && dbUser.balance !== null) {
-          member = Object.assign({}, member, { balance: Number(dbUser.balance) });
-        }
-        if (dbUser.recharge_amount !== undefined && dbUser.recharge_amount !== null) {
-          member = Object.assign({}, member, { rechargeAmount: Number(dbUser.recharge_amount) });
-        }
-        if (dbUser.package_level) {
-          member = Object.assign({}, member, { level: dbUser.package_level });
-        }
-      }
-    } catch(e) {
-      console.warn('Real Supabase member query notice:', e);
-    }
+  if (memberAcc) {
+    member = Object.assign({}, member || {}, {
+      balance: memberAcc.balance,
+      rechargeAmount: memberAcc.rechargeAmount,
+      cashoutAmount: memberAcc.cashoutAmount,
+      level: memberAcc.packageLevel,
+      inviteCode: memberAcc.inviteCode,
+      memberId: memberAcc.memberId
+    });
   }
 
-  // Real Financial Data
-  const bdtBalance = Number((member && member.balance) ?? (memberAcc && memberAcc.balance) ?? 0);
-  const bdtDeposit = Number((member && member.rechargeAmount) ?? (memberAcc && memberAcc.rechargeAmount) ?? 0);
-  
-  // USDT conversions (1 USDT = 126 BDT standard rate)
-  const usdtBalance = (bdtBalance / 126).toFixed(2);
-  const usdtDeposit = (bdtDeposit / 126).toFixed(2);
+  // Real Financial Data from Supabase user row
+  const bdtBalance = Number((memberAcc && memberAcc.balance) ?? (member && member.balance) ?? 0);
+  let bdtDeposit = Number((memberAcc && memberAcc.rechargeAmount) ?? (member && member.rechargeAmount) ?? 0);
 
-  // Withdrawals calculation from records & Supabase
-  let bdtWithdrawals = 0;
-  try {
-    const wRequests = JSON.parse(localStorage.getItem('aloWithdrawalRequests') || '[]');
-    const userW = wRequests.filter(function(w) {
-      return normalizeBdPhone(w.phone || w.accountNumber) === normalizeBdPhone(rawPhone) && w.status !== 'rejected';
-    });
-    bdtWithdrawals = userW.reduce(function(sum, w) { return sum + (Number(w.amount) || 0); }, 0);
-  } catch(e) {}
-
-  if (window.aloSupabase && rawPhone) {
+  // Also sum approved deposits from Supabase transactions for accuracy
+  if (window.aloSupabase && normP) {
     try {
-      const normP = normalizeBdPhone(rawPhone);
-      const { data: wList, error: wErr } = await window.aloSupabase
-        .from('withdrawals')
+      const { data: depList, error: depErr } = await window.aloSupabase
+        .from('transactions')
         .select('amount, status')
         .or(`phone.eq.${normP},account_number.eq.${normP}`)
-        .neq('status', 'rejected');
+        .eq('type', 'deposit');
+      if (!depErr && Array.isArray(depList)) {
+        const approvedDepSum = depList.reduce(function(sum, r) {
+          const st = String(r.status || '').toLowerCase();
+          if (st.includes('অনুমোদিত') || st.includes('সফল') || st.includes('approv') || st.includes('complet') || st.includes('success')) {
+            return sum + (Number(r.amount) || 0);
+          }
+          return sum;
+        }, 0);
+        if (approvedDepSum > bdtDeposit) bdtDeposit = approvedDepSum;
+      }
+    } catch(e) {}
+  }
+
+  // Withdrawals calculation from Supabase transactions
+  let bdtWithdrawals = Number((memberAcc && memberAcc.cashoutAmount) ?? (member && member.cashoutAmount) ?? 0);
+  if (window.aloSupabase && normP) {
+    try {
+      const { data: wList, error: wErr } = await window.aloSupabase
+        .from('transactions')
+        .select('amount, status')
+        .or(`phone.eq.${normP},account_number.eq.${normP}`)
+        .eq('type', 'withdraw');
       if (!wErr && Array.isArray(wList)) {
-        const dbW = wList.reduce(function(sum, r) { return sum + (Number(r.amount) || 0); }, 0);
+        const dbW = wList.reduce(function(sum, r) {
+          const st = String(r.status || '').toLowerCase();
+          if (st.includes('বাতিল') || st.includes('reject')) return sum;
+          return sum + (Number(r.amount) || 0);
+        }, 0);
         if (dbW > bdtWithdrawals) bdtWithdrawals = dbW;
       }
     } catch(e) {}
   }
+
+  const usdtBalance = (bdtBalance / 126).toFixed(2);
+  const usdtDeposit = (bdtDeposit / 126).toFixed(2);
   const usdtWithdrawals = (bdtWithdrawals / 126).toFixed(2);
 
-  // Status Badge (সক্রিয় / নিষ্ক্রিয়)
+  // Status Badge
   const statusEl = document.getElementById('team-modal-status-badge');
   const isActive = bdtDeposit > 0 || (member && member.level && member.level !== 'LV0') || bdtBalance > 0;
   if (statusEl) {
@@ -6893,34 +7324,31 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
     }
   }
 
-  // 1. ভারসাম্য (Balance): Country currency on top, USDT below
+  // 1. Balance
   const balUsdtEl = document.getElementById('team-modal-balance-usdt');
   const balBdtEl = document.getElementById('team-modal-balance-bdt');
   if (balBdtEl) balBdtEl.textContent = `৳ ${bdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (balUsdtEl) balUsdtEl.textContent = `≈ ${usdtBalance} USDT`;
 
-  // 2. বন্ধু সংখ্যা (Referral Friends Count) from Real DB & Accounts
+  // 2. Referral Friends Count from Supabase team/users
   let friendsCount = 0;
-  try {
-    const accounts = JSON.parse(localStorage.getItem('aloAccounts') || '[]');
-    friendsCount = accounts.filter(function(a) {
-      const sp = normalizeBdPhone(a.superiorPhone || a.superiorId);
-      const sc = String(a.superiorId || '').trim().toUpperCase();
-      const mCode = String((memberAcc && memberAcc.inviteCode) || memberId || '').toUpperCase();
-      return (sp && sp === normalizeBdPhone(rawPhone)) || (mCode && sc === mCode);
-    }).length;
-  } catch(e) {}
-
-  if (window.aloSupabase && rawPhone) {
+  if (window.aloSupabase && normP) {
     try {
-      const normP = normalizeBdPhone(rawPhone);
-      const { count, error: cErr } = await window.aloSupabase
+      const { count: tCount } = await window.aloSupabase
+        .from('team')
+        .select('*', { count: 'exact', head: true })
+        .eq('superior_phone', normP)
+        .eq('tier', 1);
+      if (typeof tCount === 'number') friendsCount = tCount;
+
+      const supKeys = [normP];
+      if (memberAcc && memberAcc.inviteCode) supKeys.push(String(memberAcc.inviteCode));
+      if (memberAcc && memberAcc.memberId) supKeys.push(String(memberAcc.memberId));
+      const { count: uCount } = await window.aloSupabase
         .from('users')
         .select('*', { count: 'exact', head: true })
-        .eq('superior_id', normP);
-      if (!cErr && typeof count === 'number' && count > friendsCount) {
-        friendsCount = count;
-      }
+        .in('superior_id', supKeys);
+      if (typeof uCount === 'number' && uCount > friendsCount) friendsCount = uCount;
     } catch(e) {}
   }
 
@@ -6934,19 +7362,18 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
     refSubEl.textContent = 'জন';
   }
 
-  // 3. আমানত (Deposit) Card: Country currency on top, USDT below
+  // 3. Deposit
   const depUsdtEl = document.getElementById('team-modal-deposit-usdt');
   const depBdtEl = document.getElementById('team-modal-deposit-bdt');
   if (depBdtEl) depBdtEl.textContent = `৳ ${bdtDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (depUsdtEl) depUsdtEl.textContent = `≈ ${usdtDeposit} USDT`;
 
-  // 4. প্রত্যাহার (Withdrawals) Card: Country currency on top, USDT below
+  // 4. Withdrawals
   const withUsdtEl = document.getElementById('team-modal-withdraw-usdt');
   const withBdtEl = document.getElementById('team-modal-withdraw-bdt');
   if (withBdtEl) withBdtEl.textContent = `৳ ${bdtWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (withUsdtEl) withUsdtEl.textContent = `≈ ${usdtWithdrawals} USDT`;
 
-  // Display modal
   modal.style.display = 'flex';
   modal.hidden = false;
 }
@@ -7095,7 +7522,7 @@ document.addEventListener('click', function(event) {
     pendingPurchaseLevel = currentPurchaseLevel;
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
-    const deficit = pkg ? Math.max(0, pkg.price - (Number(user.balance) || 0)) : 3500;
+    const deficit = pkg ? Math.max(0, pkg.price - (Number(user && user.balance) || 0)) : 3500;
     const customInputs = document.querySelectorAll('#custom-deposit-amount');
     customInputs.forEach(function(inp) { inp.value = deficit; });
     selectedDepositAmount = deficit;
@@ -7652,6 +8079,7 @@ document.addEventListener('click', function(event) {
   const withdrawSheetSubmitBtn = event.target.closest('#withdraw-sheet-submit-btn');
   if (withdrawSheetSubmitBtn) {
     event.preventDefault();
+    if (window.isSubmittingWithdrawal) return;
     const label = document.getElementById('withdraw-selected-method-label');
     const selectedMethod = label ? label.textContent.trim() : 'পছন্দ করুন';
 
@@ -7693,8 +8121,13 @@ document.addEventListener('click', function(event) {
 
     const amtInp = document.getElementById('withdraw-sheet-amount');
     const amt = parseFloat(amtInp ? amtInp.value : '0') || 0;
-    const availBal = getAvailableBalance();
     const user = getCurrentUser();
+    if (!user || (!user.phone && !user.accountNumber)) {
+      showToastNotification('⚠️ অনুগ্রহ করে প্রথমে লগইন করুন');
+      showView('login');
+      return;
+    }
+
     const curr = getUserCurrency(user);
     const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
     const pCfg = window.aloPlatformConfig || {};
@@ -7710,15 +8143,6 @@ document.addEventListener('click', function(event) {
         ? `⚠️ कृपया वैध निकासी राशि दर्ज करें (न्यूनतम ${minWithdrawAmt})` 
         : (lang === 'en' ? `⚠️ Please enter a valid withdrawal amount (Min ${minWithdrawAmt})` : `⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন (ন্যূনতম ${minWithdrawAmt})`);
       showToastNotification(minNotice);
-      if (amtInp) amtInp.focus();
-      return;
-    }
-
-    if (amt > availBal) {
-      const insMsg = lang === 'hi'
-        ? `⚠️ अपर्याप्त बैलेंस! आपका उपलब्ध बैलेंस ${availBal.toFixed(2)} ${curr}`
-        : (lang === 'en' ? `⚠️ Insufficient balance! Your available balance is ${availBal.toFixed(2)} ${curr}` : `⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${formatBanglaNumber(availBal.toFixed(2))} ${curr}`);
-      showToastNotification(insMsg);
       if (amtInp) amtInp.focus();
       return;
     }
@@ -7753,77 +8177,97 @@ document.addEventListener('click', function(event) {
       return;
     }
 
-    // Deduct available balance (ভারসাম্য শুধু অখানে উইথড্র দিলে ব্যালেন্স জিরো হবে)
-    const newBal = Math.max(0, availBal - amt);
-    localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
-    if (user) {
-      user.balance = newBal;
-      user.cashoutAmount = (Number(user.cashoutAmount) || 0) + amt;
-      // Note: user.lifetimeEarnings is NOT reduced, permanently preserving lifetime income in 'ব্যক্তিগত ভারসাম্য'
-      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-    }
+    window.isSubmittingWithdrawal = true;
+    withdrawSheetSubmitBtn.disabled = true;
 
-    // Add withdrawal record (enters Pending review queue for Admin)
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const hours = String(now.getHours()).padStart(2, '0');
-    const mins = String(now.getMinutes()).padStart(2, '0');
-    let payoutMethodLabel = 'বিকাশ (bKash)';
-    if (userSelectedWithdrawMethod === 'USDT' || selectedMethod.includes('USDT')) {
-      payoutMethodLabel = (usdt && usdt.address) ? `USDT BEP20 (${usdt.address})` : 'USDT (BEP20)';
-    } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ')) {
-      payoutMethodLabel = (nagad && nagad.phone) ? `নগদ (${nagad.phone})` : 'নগদ (Nagad)';
-    } else {
-      payoutMethodLabel = (bkash && bkash.phone) ? `বিকাশ (${bkash.phone})` : 'বিকাশ (bKash)';
-    }
+    (async function() {
+      try {
+        let liveUser = user;
+        const phoneKey = user.phone || user.accountNumber;
+        const dbUser = phoneKey ? await dbGetUser(phoneKey) : null;
+        if (dbUser) {
+          liveUser = Object.assign({}, user, dbUser);
+          localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
+        }
 
-    const wdNetPct = Number((window.aloPlatformConfig && window.aloPlatformConfig.withdrawNetPercent) || 50);
-    const wdNetAmt = amt * (wdNetPct / 100);
+        const liveBal = Number(liveUser.balance) || 0;
+        if (amt > liveBal) {
+          const insMsg = lang === 'hi'
+            ? `⚠️ अपर्याप्त बैलेंस! आपका उपलब्ध बैलेंस ${liveBal.toFixed(2)} ${curr}`
+            : (lang === 'en' ? `⚠️ Insufficient balance! Your available balance is ${liveBal.toFixed(2)} ${curr}` : `⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${formatBanglaNumber(liveBal.toFixed(2))} ${curr}`);
+          showToastNotification(insMsg);
+          if (amtInp) amtInp.focus();
+          return;
+        }
 
-    const newRecord = {
-      amount: amt.toFixed(2),
-      ratio: `${wdNetPct.toFixed(1)}%`,
-      actual: wdNetAmt.toFixed(2),
-      status: 'মুলতবি (Pending)',
-      date: dateStr,
-      time: `${hours}:${mins}`
-    };
+        const newBal = Math.max(0, liveBal - amt);
+        liveUser.balance = newBal;
+        liveUser.cashoutAmount = (Number(liveUser.cashoutAmount) || 0) + amt;
+        localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
+        localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
 
-    // Save withdrawal record to Cloud Database
-    if (user) {
-      dbRecordTransaction({
-        phone: user.phone || user.accountNumber,
-        type: 'withdraw',
-        amount: amt,
-        ratio: `${wdNetPct.toFixed(1)}%`,
-        actual: wdNetAmt,
-        status: 'মুলতবি (Pending)',
-        method: payoutMethodLabel,
-        order_id: 'WD' + Date.now() + Math.floor(100 + Math.random() * 900),
-        date: dateStr,
-        time: `${hours}:${mins}`,
-        newBalance: user.balance || 0
-      });
-      dbSaveUser(user);
-    }
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        let payoutMethodLabel = 'বিকাশ (bKash)';
+        if (userSelectedWithdrawMethod === 'USDT' || selectedMethod.includes('USDT')) {
+          payoutMethodLabel = (usdt && usdt.address) ? `USDT BEP20 (${usdt.address})` : 'USDT (BEP20)';
+        } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ')) {
+          payoutMethodLabel = (nagad && nagad.phone) ? `নগদ (${nagad.phone})` : 'নগদ (Nagad)';
+        } else {
+          payoutMethodLabel = (bkash && bkash.phone) ? `বিকাশ (${bkash.phone})` : 'বিকাশ (bKash)';
+        }
 
-    const curHistory = getWithdrawalHistory();
-    curHistory.unshift(newRecord);
-    saveWithdrawalHistory(curHistory);
+        const wdNetPct = Number((window.aloPlatformConfig && window.aloPlatformConfig.withdrawNetPercent) || 50);
+        const wdNetAmt = amt * (wdNetPct / 100);
 
-    // Refresh UI
-    updateProfileMetrics();
-    renderWithdrawalHistory();
-    closeWithdrawSheet();
+        const newRecord = {
+          amount: amt.toFixed(2),
+          ratio: `${wdNetPct.toFixed(1)}%`,
+          actual: wdNetAmt.toFixed(2),
+          status: 'মুলতবি (Pending)',
+          date: dateStr,
+          time: `${hours}:${mins}`
+        };
 
-    const successNotice = lang === 'hi'
-      ? `🎉 ${amt.toFixed(2)} ${curr} निकासी का अनुरोध सफलतापूर्वक सबमिट किया गया!`
-      : (lang === 'en' ? `🎉 ${amt.toFixed(2)} ${curr} withdrawal request submitted successfully!` : `🎉 ${formatBanglaNumber(amt.toFixed(2))} ${curr} উত্তোলনের আবেদন সফলভাবে জমা দেওয়া হয়েছে!`);
-    showToastNotification(successNotice);
+        await dbRecordTransaction({
+          phone: liveUser.phone || liveUser.accountNumber,
+          type: 'withdraw',
+          amount: amt,
+          ratio: `${wdNetPct.toFixed(1)}%`,
+          actual: wdNetAmt,
+          status: 'মুলতবি (Pending)',
+          method: payoutMethodLabel,
+          order_id: 'WD' + Date.now() + Math.floor(100 + Math.random() * 900),
+          date: dateStr,
+          time: `${hours}:${mins}`,
+          newBalance: liveUser.balance || 0
+        });
+        await dbSaveUser(liveUser);
+
+        const curHistory = getWithdrawalHistory();
+        curHistory.unshift(newRecord);
+        saveWithdrawalHistory(curHistory);
+
+        updateUserDetails(liveUser);
+        updateProfileMetrics();
+        renderWithdrawalHistory();
+        closeWithdrawSheet();
+
+        const successNotice = lang === 'hi'
+          ? `🎉 ${amt.toFixed(2)} ${curr} निकासी का अनुरोध सफलतापूर्वक सबमिट किया गया!`
+          : (lang === 'en' ? `🎉 ${amt.toFixed(2)} ${curr} withdrawal request submitted successfully!` : `🎉 ${formatBanglaNumber(amt.toFixed(2))} ${curr} উত্তোলনের আবেদন সফলভাবে জমা দেওয়া হয়েছে!`);
+        showToastNotification(successNotice);
+      } finally {
+        window.isSubmittingWithdrawal = false;
+        withdrawSheetSubmitBtn.disabled = false;
+      }
+    })();
     return;
   }
 
-  // VIP Salary & Level Upgrade claim button click (Matches prominent গ্রহণ করুন action)
+  // VIP Salary & Level Upgrade claim button click
   const inviteClaimBtn = event.target.closest('.invite-claim-btn, .salary-pay, .salary-pay-btn');
   if (inviteClaimBtn) {
     event.preventDefault();
@@ -7834,10 +8278,14 @@ document.addEventListener('click', function(event) {
     const currentCount = Number(inviteClaimBtn.dataset.currentCount) || 0;
     const key = `${tier}-${type}`;
 
-    let claimed = [];
+    const curUser = getCurrentUser();
+    let claimed = Array.isArray(curUser && curUser.claimedInviteRewards) ? curUser.claimedInviteRewards.slice() : [];
     try {
-      claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
-    } catch(e) { claimed = []; }
+      const localC = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
+      if (Array.isArray(localC)) {
+        localC.forEach(function(k) { if (!claimed.includes(k)) claimed.push(k); });
+      }
+    } catch(e) {}
 
     if (claimed.includes(key)) {
       showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
@@ -7885,7 +8333,11 @@ document.addEventListener('click', function(event) {
   if (modalCopyBtn) {
     event.preventDefault();
     const user = getCurrentUser();
-    const code = (user && user.inviteCode) || (user && user.accountNumber) || 'ALO123';
+    const code = (user && (user.inviteCode || user.accountNumber)) || '';
+    if (!code) {
+      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      return;
+    }
     const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(function() {
@@ -7906,62 +8358,103 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // Invite Page Copy Invite Code Button
+  const copyCodeBtn = event.target.closest('#invite-copy-code-btn');
+  if (copyCodeBtn) {
+    event.preventDefault();
+    const user = getCurrentUser();
+    const code = (user && (user.inviteCode || user.accountNumber)) || '';
+    if (!code) {
+      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      return;
+    }
+    const copyCodeTextEl = document.getElementById('invite-copy-code-text');
+    const onCodeCopied = function() {
+      if (copyCodeTextEl) {
+        copyCodeTextEl.textContent = 'কপি সম্পন্ন!';
+        setTimeout(function() { copyCodeTextEl.textContent = 'আমন্ত্রণ কোড কপি করুন'; }, 2000);
+      }
+      showToastNotification(`আমন্ত্রণ কোড কপি করা হয়েছে: ${code}`);
+    };
+    const fallbackCopyText = function(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      onCodeCopied();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(onCodeCopied).catch(function() {
+        fallbackCopyText(code);
+      });
+    } else {
+      fallbackCopyText(code);
+    }
+    return;
+  }
+
   // Invite Page Copy Link Button & Company Referral System Link Button
   const pageCopyBtn = event.target.closest('#invite-page-copy, #invite-company-link-copy-btn, #invite-company-link-display');
   if (pageCopyBtn) {
     event.preventDefault();
     const linkInput = document.getElementById('invite-link-input');
     const linkEl = document.getElementById('invite-page-link');
+    const linkDisplay = document.getElementById('invite-link-display');
     const companyDisplay = document.getElementById('invite-company-link-display');
     const user = getCurrentUser();
-    const code = (user && (user.inviteCode || user.accountNumber)) || '728207';
-    let linkText = (linkInput && linkInput.value) || (companyDisplay && companyDisplay.textContent && companyDisplay.textContent.trim()) || (linkEl && linkEl.textContent && linkEl.textContent.trim()) || `${window.location.origin}/?invite=${code}`;
-
-    if (linkInput) {
-      linkInput.focus();
-      linkInput.select();
+    const code = (user && (user.inviteCode || user.accountNumber)) || '';
+    if (!code) {
+      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      return;
     }
+    const linkText = (linkInput && linkInput.value)
+      || (linkDisplay && linkDisplay.textContent && linkDisplay.textContent.trim())
+      || (companyDisplay && companyDisplay.textContent && companyDisplay.textContent.trim())
+      || (linkEl && linkEl.textContent && linkEl.textContent.trim())
+      || `${window.location.origin}/?invite=${encodeURIComponent(code)}`;
 
     const copyBtnText = document.getElementById('invite-copy-btn-text');
     const companyCopyText = document.getElementById('invite-company-copy-text');
     function onCopied() {
       if (copyBtnText) {
-        const orig = copyBtnText.textContent;
         copyBtnText.textContent = 'কপি সম্পন্ন!';
-        setTimeout(function() { copyBtnText.textContent = orig; }, 2000);
+        setTimeout(function() { copyBtnText.textContent = 'আমন্ত্রণ লিঙ্ক কপি করুন'; }, 2000);
       }
       if (companyCopyText) {
         const origComp = companyCopyText.textContent;
         companyCopyText.textContent = 'কপি হয়েছে! ✓';
         setTimeout(function() { companyCopyText.textContent = origComp; }, 2000);
       }
-      showToastNotification(`🔗 PW New Media রেফারেল লিংক কপি করা হয়েছে!`);
+      showToastNotification('আমন্ত্রণ লিঙ্ক কপি করা হয়েছে!');
+    }
+    function fallbackCopyLink(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      onCopied();
     }
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(linkText).then(onCopied).catch(function() {
-        if (linkInput) {
-          linkInput.select();
-          document.execCommand('copy');
-          onCopied();
-        } else {
-          showToastNotification(`আমন্ত্রণ কোড: ${code}`);
-        }
+        fallbackCopyLink(linkText);
       });
     } else {
-      if (linkInput) {
-        linkInput.select();
-        document.execCommand('copy');
-        onCopied();
-      } else {
-        showToastNotification(`আমন্ত্রণ কোড: ${code}`);
-      }
+      fallbackCopyLink(linkText);
     }
     return;
   }
 
   // Hall package level room click:
-  // LV0 is always free; unlocked VIP levels open directly into tasks; locked levels open purchase modal
+  // User's unlocked levels open tasks; unpurchased levels show 'ক্রয় করা হয়নি'
   const levelRoom = event.target.closest('[data-open-level-tasks]');
   if (levelRoom) {
     const level = levelRoom.dataset.level || 'LV0';
@@ -7972,7 +8465,9 @@ document.addEventListener('click', function(event) {
       return;
     }
     event.preventDefault();
-    openPackagePurchaseModal(level);
+    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
+    const msg = lang === 'hi' ? 'खरीदा नहीं गया' : (lang === 'en' ? 'Not purchased' : 'ক্রয় করা হয়নি');
+    showCenterTextNotice(msg);
     return;
   }
 
@@ -8092,6 +8587,11 @@ document.addEventListener('click', function(event) {
   const acceptBtn = event.target.closest('[data-platform-accept]');
   if (acceptBtn) {
     const user = getCurrentUser();
+    if (!user) {
+      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      showView('login');
+      return;
+    }
     const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
 
     if (activePackageLevel !== 'LV0' && !isLevelUnlocked(activePackageLevel, user)) {
@@ -8103,7 +8603,7 @@ document.addEventListener('click', function(event) {
     const row = acceptBtn.closest('.platform-task-row');
     const taskIndex = row ? parseInt(row.dataset.taskIndex || '0', 10) : 0;
     const quota = packageTaskSettings[activePackageLevel]?.count || 5;
-    const userLevel = user.packageLevel || 'LV0';
+    const userLevel = (user && user.packageLevel) || 'LV0';
     const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
     const today = new Date().toDateString();
     const acceptedToday = readAcceptedMissions().filter(function(m) {
@@ -8135,7 +8635,7 @@ document.addEventListener('click', function(event) {
       const taskTitle = `${activePlatform} · ${lang === 'hi' ? 'कार्य' : (lang === 'en' ? 'Task' : 'কাজ')} ${taskIndex + 1}`;
       const desc = getPlatformTaskDescription(activePlatform, taskIndex, lang);
       const reward = (packageTaskSettings[activePackageLevel] && packageTaskSettings[activePackageLevel].reward) || 20;
-      const taskLink = getRealisticTaskUrl(activePlatform, taskIndex);
+      const taskLink = getUniqueRandomTaskUrl(activePlatform, taskIndex, readAcceptedMissions());
 
       saveAcceptedMission({
         id: 'demo-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
@@ -8257,13 +8757,23 @@ document.addEventListener('click', function(event) {
 
   
 
-// Submission confirm click: Sets to 'review' for 5-10 minutes
+// Submission confirm click: Require screenshot and enter 15-minute automated Like verification
 const confirmSubmitBtn = document.getElementById('mission-submit-confirm');
 if (confirmSubmitBtn) {
   confirmSubmitBtn.addEventListener('click', function() {
     const allMissions = readAllMissionsRaw();
     const mission = allMissions.find(function(item) { return item.id === activeSubmissionId; });
     if (!mission) return;
+
+    const msgEl = document.getElementById('mission-submit-message');
+    const screenshotToUse = activeSubmissionImage || mission.screenshot;
+    if (!screenshotToUse) {
+      const needMsg = 'অনুগ্রহ করে লাইক দেওয়ার স্ক্রিনশট আপলোড করুন।';
+      if (msgEl) msgEl.textContent = needMsg;
+      if (typeof showToastNotification === 'function') showToastNotification(needMsg);
+      return;
+    }
+    if (msgEl) msgEl.textContent = '';
 
     // Review for exactly 15 minutes (15 * 60 * 1000)
     const reviewMinutes = 15;
@@ -8275,6 +8785,10 @@ if (confirmSubmitBtn) {
     mission.reviewMinutes = reviewMinutes;
     mission.reviewEndsAt = reviewEndsAt;
     mission.rewardCredited = false;
+    mission.likeVerifyStatus = 'pending';
+    mission.likeVerifyAttempts = 0;
+    mission.likeVerifyReason = '';
+    mission.failReason = '';
 
     const commentEl = document.getElementById('mission-submit-comment');
     if (commentEl) {
@@ -8298,6 +8812,9 @@ if (confirmSubmitBtn) {
     activeMissionFilter = 'review';
     openDashboardPanel('tasks');
     renderMissionRecords('review');
+
+    // Start AI Like-screenshot verification right away during the 15-minute window
+    verifyMissionScreenshotLike(mission.id);
 
     // Keep page clean: no extra message callouts or border layers
     const taskMsg = document.getElementById('task-message');
@@ -8540,7 +9057,7 @@ if (openDepositFromPurchaseBtn) {
     pendingPurchaseLevel = currentPurchaseLevel;
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
-    const deficit = pkg ? Math.max(0, pkg.price - (Number(user.balance) || 0)) : 3500;
+    const deficit = pkg ? Math.max(0, pkg.price - (Number(user && user.balance) || 0)) : 3500;
     const customInput = document.getElementById('custom-deposit-amount');
     if (customInput) customInput.value = deficit;
     selectedDepositAmount = deficit;
@@ -8632,6 +9149,20 @@ if (customDepositInput) {
 }
 
 function handleLogout() {
+  try {
+    if (window.aloSupabase) {
+      if (supabaseLiveChannel) {
+        window.aloSupabase.removeChannel(supabaseLiveChannel);
+        supabaseLiveChannel = null;
+      }
+      if (supabaseTxChannel) {
+        window.aloSupabase.removeChannel(supabaseTxChannel);
+        supabaseTxChannel = null;
+      }
+    }
+  } catch (e) {}
+  cachedTeamReportData = null;
+  clearUserCachesOnAuthSwitch();
   localStorage.removeItem('aloSignedInUser');
   showToastNotification('সফলভাবে সাইন আউট করা হয়েছে।');
   const loginPass = document.getElementById('login-password');
@@ -8712,17 +9243,57 @@ function initPWBannerCarousel() {
   }
 }
 
+async function hydrateSessionFromSupabase() {
+  const user = getCurrentUser();
+  if (!user || (!user.phone && !user.accountNumber)) return;
+  if (!window.aloSupabase) return;
+
+  try {
+    const dbUser = await dbGetUser(user.phone || user.accountNumber);
+    if (!dbUser) {
+      // Account deleted in DB: sign out cleanly
+      handleLogout();
+      return;
+    }
+
+    if (dbUser.accountStatus === 'banned') {
+      clearUserCachesOnAuthSwitch();
+      localStorage.removeItem('aloSignedInUser');
+      showToastNotification('⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত (Suspended) করা হয়েছে।');
+      showView('login');
+      return;
+    }
+
+    const updated = Object.assign({}, user, dbUser);
+    hydrateUserCachesFromCloud(updated);
+    localStorage.setItem('aloSignedInUser', JSON.stringify(updated));
+
+    updateUserDetails(updated);
+    updateProfileMetrics();
+    updateVipHallRooms();
+    updateRecordsPanelPackages();
+    updateBkashDisplayAcrossApp();
+    updateNagadDisplayAcrossApp();
+    updateUsdtDisplayAcrossApp();
+    updateRealNameDisplayAcrossApp();
+    updateFundPasswordDisplayAcrossApp();
+    if (typeof renderWithdrawalHistory === 'function') renderWithdrawalHistory();
+    if (typeof renderRecentUsdtDeposits === 'function') renderRecentUsdtDeposits();
+    if (typeof renderSavingsPlanPanel === 'function') renderSavingsPlanPanel();
+    if (typeof renderMissionRecords === 'function') renderMissionRecords(activeMissionFilter);
+    if (typeof initSupabaseLiveSync === 'function') initSupabaseLiveSync(updated);
+  } catch (e) {
+    console.warn('Supabase session hydration notice:', e);
+  }
+}
+window.hydrateSessionFromSupabase = hydrateSessionFromSupabase;
+
 // Initial session check
 function initApp() {
   initPWBannerCarousel();
-  let savedUser = null;
-  try {
-    savedUser = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
-  } catch (error) {
-    savedUser = null;
-  }
+  loadPlatformConfigFromSupabase();
 
-
+  let savedUser = getCurrentUser();
 
   if (savedUser) {
     if (!savedUser.purchasedPackages) {
@@ -8749,11 +9320,15 @@ function initApp() {
     updateProfileMetrics();
     updateVipHallRooms();
     updateRecordsPanelPackages();
-    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp(); updateRealNameDisplayAcrossApp();
-    
+    updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp(); updateRealNameDisplayAcrossApp(); updateFundPasswordDisplayAcrossApp();
+    if (typeof initSupabaseLiveSync === 'function') initSupabaseLiveSync(savedUser);
+
     // Open HOME panel so the banner carousel is immediately visible on first load!
     openDashboardPanel('home');
     showView('dashboard');
+
+    // Immediately pull live authoritative state from Supabase
+    hydrateSessionFromSupabase();
   } else {
     // Show login view when not authenticated
     showView('login');
@@ -8768,7 +9343,7 @@ function initApp() {
     }
   } catch(e) {}
 
-  // Handle return from payment gateway (WPay / bKash / Nagad)
+  // Handle return from payment gateway (WPay / bKash / Nagad) without double-crediting server webhook
   try {
     const urlParams = new URLSearchParams(window.location.search);
     const isPaymentReturn = urlParams.has('trade_status') || 
@@ -8782,82 +9357,75 @@ function initApp() {
     if (isPaymentReturn) {
       const pendingRaw = localStorage.getItem('alo_pending_recharge_order');
       if (pendingRaw) {
-        try {
-          const pendingOrder = JSON.parse(pendingRaw);
-          const creditedKey = `alo_recharge_credited_${pendingOrder.orderId}`;
-          if (!localStorage.getItem(creditedKey)) {
+        (async function() {
+          try {
+            const pendingOrder = JSON.parse(pendingRaw);
+            const creditedKey = `alo_recharge_credited_${pendingOrder.orderId}`;
             const currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
-            if (currentUser) {
+            if (!localStorage.getItem(creditedKey) && currentUser && pendingOrder.orderId) {
               const creditedAmt = Number(pendingOrder.amount || 0);
-              if (creditedAmt > 0) {
-                currentUser.balance = (currentUser.balance || 0) + creditedAmt;
-                currentUser.rechargeAmount = (Number(currentUser.rechargeAmount) || 0) + creditedAmt;
-                currentUser.totalIncome = (currentUser.totalIncome || 0) + creditedAmt;
-                if (typeof saveUser === 'function') saveUser(currentUser);
-                if (typeof dbSaveUser === 'function') dbSaveUser(currentUser);
-                if (typeof updateUserDetails === 'function') updateUserDetails(currentUser);
-                if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
-                if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+              let alreadyApprovedOnServer = false;
 
-                // Update existing pending gateway order or insert approved transaction
-                if (window.aloSupabase && pendingOrder.orderId) {
-                  (async function() {
-                    try {
-                      const { data: existingTx } = await window.aloSupabase
-                        .from('transactions')
-                        .select('id')
-                        .or(`order_id.eq.${pendingOrder.orderId},out_trade_no.eq.${pendingOrder.orderId}`)
-                        .maybeSingle();
-                      if (existingTx && existingTx.id) {
-                        await window.aloSupabase
-                          .from('transactions')
-                          .update({ status: 'অনুমোদিত', updated_at: new Date().toISOString() })
-                          .eq('id', existingTx.id);
-                      } else if (typeof dbRecordTransaction === 'function') {
-                        const now = new Date();
-                        dbRecordTransaction({
-                          phone: currentUser.phone || currentUser.accountNumber,
-                          type: 'deposit',
-                          amount: creditedAmt,
-                          actual: creditedAmt,
-                          ratio: '100%',
-                          status: 'অনুমোদিত',
-                          method: pendingOrder.payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]',
-                          order_id: pendingOrder.orderId,
-                          out_trade_no: pendingOrder.orderId,
-                          date: now.toISOString().split('T')[0],
-                          time: now.toTimeString().split(' ')[0],
-                          newBalance: currentUser.balance
-                        });
-                      }
-                    } catch (txUpErr) {}
-                  })();
-                } else if (typeof dbRecordTransaction === 'function') {
-                  const now = new Date();
-                  dbRecordTransaction({
-                    phone: currentUser.phone || currentUser.accountNumber,
-                    type: 'deposit',
-                    amount: creditedAmt,
-                    actual: creditedAmt,
-                    ratio: '100%',
-                    status: 'অনুমোদিত',
-                    method: pendingOrder.payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]',
-                    order_id: pendingOrder.orderId,
-                    out_trade_no: pendingOrder.orderId,
-                    date: now.toISOString().split('T')[0],
-                    time: now.toTimeString().split(' ')[0],
-                    newBalance: currentUser.balance
-                  });
-                }
-                localStorage.setItem(creditedKey, 'true');
-                if (typeof showToastNotification === 'function') {
-                  showToastNotification(`🎉 পেমেন্ট সফল! ৳ ${creditedAmt.toLocaleString('en-US')} অ্যাকাউন্টে যোগ হয়েছে!`);
-                }
+              if (window.aloSupabase) {
+                try {
+                  const { data: existingTx } = await window.aloSupabase
+                    .from('transactions')
+                    .select('id, status')
+                    .or(`order_id.eq.${pendingOrder.orderId},out_trade_no.eq.${pendingOrder.orderId}`)
+                    .maybeSingle();
+
+                  const stLower = String((existingTx && existingTx.status) || '').toLowerCase();
+                  if (stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet') || stLower.includes('success')) {
+                    alreadyApprovedOnServer = true;
+                  } else if (existingTx && existingTx.id) {
+                    await window.aloSupabase
+                      .from('transactions')
+                      .update({ status: 'অনুমোদিত', updated_at: new Date().toISOString() })
+                      .eq('id', existingTx.id);
+                  } else if (creditedAmt > 0 && typeof dbRecordTransaction === 'function') {
+                    const now = new Date();
+                    await dbRecordTransaction({
+                      phone: currentUser.phone || currentUser.accountNumber,
+                      type: 'deposit',
+                      amount: creditedAmt,
+                      actual: creditedAmt,
+                      ratio: '100%',
+                      status: 'অনুমোদিত',
+                      method: pendingOrder.payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]',
+                      order_id: pendingOrder.orderId,
+                      out_trade_no: pendingOrder.orderId,
+                      date: now.toISOString().split('T')[0],
+                      time: now.toTimeString().split(' ')[0],
+                      newBalance: (Number(currentUser.balance) || 0) + creditedAmt
+                    });
+                  }
+                } catch (txUpErr) {}
+              }
+
+              if (alreadyApprovedOnServer) {
+                await hydrateSessionFromSupabase();
+              } else if (creditedAmt > 0) {
+                const liveU = await dbGetUser(currentUser.phone || currentUser.accountNumber) || currentUser;
+                liveU.balance = (Number(liveU.balance) || 0) + creditedAmt;
+                liveU.rechargeAmount = (Number(liveU.rechargeAmount) || 0) + creditedAmt;
+                liveU.totalIncome = (Number(liveU.totalIncome) || 0) + creditedAmt;
+                const mergedU = Object.assign({}, currentUser, liveU);
+                if (typeof saveUser === 'function') saveUser(mergedU);
+                if (typeof dbSaveUser === 'function') await dbSaveUser(mergedU);
+                updateUserDetails(mergedU);
+                updateProfileMetrics();
+                updateVipHallRooms();
+                distributeTeamRebate(mergedU.phone || mergedU.accountNumber, creditedAmt).catch(function() {});
+              }
+
+              localStorage.setItem(creditedKey, 'true');
+              if (creditedAmt > 0 && typeof showToastNotification === 'function') {
+                showToastNotification(`🎉 পেমেন্ট সফল! ৳ ${creditedAmt.toLocaleString('en-US')} অ্যাকাউন্টে যোগ হয়েছে!`);
               }
             }
-          }
-          localStorage.removeItem('alo_pending_recharge_order');
-        } catch(e) {}
+            localStorage.removeItem('alo_pending_recharge_order');
+          } catch(e) {}
+        })();
       }
       try {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -8948,7 +9516,12 @@ document.addEventListener('input', function(e) {
 
 function getUserSavingsPlan() {
   const user = getCurrentUser();
-  const phoneKey = normalizeBdPhone(user.phone) || 'default';
+  if (!user) return null;
+  if (user.savingsPlan && typeof user.savingsPlan === 'object') {
+    return user.savingsPlan;
+  }
+  const phoneKey = normalizeBdPhone(user.phone || user.accountNumber);
+  if (!phoneKey) return null;
   try {
     const raw = localStorage.getItem('aloSavingsPlan_' + phoneKey);
     if (raw) return JSON.parse(raw);
@@ -9060,18 +9633,13 @@ function renderSavingsRecordCard(plan) {
         <span>সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)</span>
       </div>
 
-      <!-- Disclaimer Note from Screenshot -->
-      <p class="text-[11px] text-slate-400 text-center leading-relaxed">
-        নমুনা ডিজাইন — এখানে দেখানো অর্থ বাস্তব অ্যাকাউন্টের ব্যালেন্স নয়।
-      </p>
-
     </div>
   `;
 }
 
 function renderSavingsPlanPanel() {
   const user = getCurrentUser();
-  const bal = Number(user.balance || 0);
+  const bal = Number((user && user.balance) || 0);
 
   // 1. Update user balance display
   const balEl = document.getElementById('savings-user-balance');
@@ -9086,14 +9654,12 @@ function renderSavingsPlanPanel() {
   const recordContent = document.getElementById('savings-record-card-content');
 
   if (activePlan) {
-    // গ্রাহক ইতিপূর্বে সঞ্চয় নিয়েছেন: শুধু রেকর্ড শো হবে, আর নিতে পারবেন না
     if (recordContent) {
       recordContent.innerHTML = renderSavingsRecordCard(activePlan);
     }
     if (frontFace) frontFace.style.display = 'none';
     if (backFace) backFace.style.display = 'block';
   } else {
-    // এখনও নেননি: ফ্রেশ ইনপুট ফর্ম শো থাকবে
     if (frontFace) frontFace.style.display = 'block';
     if (backFace) backFace.style.display = 'none';
     const inputEl = document.getElementById('savings-deposit-input');
@@ -9110,6 +9676,13 @@ function handleSavingsSubmission() {
   const btn = document.getElementById('savings-submit-btn');
   if (!inputEl || !btn) return;
 
+  const user = getCurrentUser();
+  if (!user || (!user.phone && !user.accountNumber)) {
+    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    if (typeof showView === 'function') showView('login');
+    return;
+  }
+
   // গ্রাহক যদি ইতিমধ্যে নিয়ে থাকেন, আর নিতে পারবেন না
   const existingPlan = getUserSavingsPlan();
   if (existingPlan) {
@@ -9124,10 +9697,6 @@ function handleSavingsSubmission() {
     return;
   }
 
-  const user = getCurrentUser();
-  const bal = Number(user.balance || 0);
-
-  // Button loading verification
   const origHtml = btn.innerHTML;
   const origClass = btn.className;
   btn.disabled = true;
@@ -9142,65 +9711,51 @@ function handleSavingsSubmission() {
   `;
   btn.className = 'w-full py-3.5 rounded-2xl bg-[#2bb4d4] text-[#030d24] font-bold text-sm shadow-xl opacity-90 cursor-wait flex items-center justify-center gap-2';
 
-  setTimeout(function() {
-    const freshUser = getCurrentUser();
-    const freshBal = Number(freshUser.balance || 0);
+  setTimeout(async function() {
+    try {
+      let freshUser = getCurrentUser() || user;
+      const phoneKey = normalizeBdPhone(freshUser.phone || freshUser.accountNumber);
+      const liveDbUser = phoneKey ? await dbGetUser(phoneKey) : null;
+      if (liveDbUser) {
+        freshUser = Object.assign({}, freshUser, liveDbUser);
+      }
+      const freshBal = Number(freshUser.balance || 0);
 
-    // 1. অপর্যাপ্ত ব্যালেন্স: বোতামে শান্তভাবে স্ট্যাটাস এবং হালকাভাবে ফেড-আউট
-    if (freshBal < amount) {
-      btn.disabled = true;
-      btn.style.transition = 'all 0.5s ease-in-out';
-      btn.style.opacity = '1';
-      btn.className = 'w-full py-3.5 rounded-2xl bg-rose-600 text-white font-black text-sm shadow-xl shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-not-allowed transition-all duration-500';
-      btn.innerHTML = `
-        <span class="inline-flex items-center gap-1.5 transition-opacity duration-700 ease-in-out" id="savings-insufficient-label">
-          <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <span>অপর্যাপ্ত ব্যালেন্স</span>
-        </span>
-      `;
+      if (freshBal < amount) {
+        btn.disabled = true;
+        btn.style.transition = 'all 0.5s ease-in-out';
+        btn.style.opacity = '1';
+        btn.className = 'w-full py-3.5 rounded-2xl bg-rose-600 text-white font-black text-sm shadow-xl shadow-rose-950/60 flex items-center justify-center gap-1.5 cursor-not-allowed transition-all duration-500';
+        btn.innerHTML = `
+          <span class="inline-flex items-center gap-1.5 transition-opacity duration-700 ease-in-out" id="savings-insufficient-label">
+            <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span>অপর্যাপ্ত ব্যালেন্স</span>
+          </span>
+        `;
 
-      // ৩.৬ সেকেন্ড পর হালকাভাবে ফেড-আউট
-      setTimeout(function() {
-        if (btn && btn.isConnected) {
-          const label = btn.querySelector('#savings-insufficient-label');
-          if (label) label.style.opacity = '0';
-          btn.style.opacity = '0.4';
+        setTimeout(function() {
+          if (btn && btn.isConnected) {
+            const label = btn.querySelector('#savings-insufficient-label');
+            if (label) label.style.opacity = '0';
+            btn.style.opacity = '0.4';
 
-          setTimeout(function() {
-            btn.disabled = false;
-            btn.className = origClass;
-            btn.innerHTML = origHtml;
-            btn.style.opacity = '0';
-            requestAnimationFrame(function() {
-              btn.style.opacity = '1';
-            });
-          }, 650);
-        }
-      }, 3600);
-
-    } else {
-      // 2. পর্যাপ্ত ব্যালেন্স: সফলভাবে সঞ্চয় সম্পন্ন
-      freshUser.balance = Math.max(0, freshBal - amount);
-      localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
-
-      if (window.aloSupabase) {
-        try {
-          const normPhone = normalizeBdPhone(freshUser.phone);
-          window.aloSupabase
-            .from('users')
-            .update({
-              balance: freshUser.balance,
-              updated_at: new Date().toISOString()
-            })
-            .eq('phone', normPhone)
-            .then(function() {})
-            .catch(function(e) { console.warn('Supabase sync warning:', e); });
-        } catch(e) {}
+            setTimeout(function() {
+              btn.disabled = false;
+              btn.className = origClass;
+              btn.innerHTML = origHtml;
+              btn.style.opacity = '0';
+              requestAnimationFrame(function() {
+                btn.style.opacity = '1';
+              });
+            }, 650);
+          }
+        }, 3600);
+        return;
       }
 
-      // Save user active plan
+      // Sufficient balance: save savings plan to Supabase
       const targetGoal = Math.max(10000, Math.round((amount * 2.85) / 1000) * 1000);
       const newPlan = {
         id: 'plan_' + Date.now(),
@@ -9215,21 +9770,38 @@ function handleSavingsSubmission() {
         status: 'active',
         createdAt: new Date().toISOString()
       };
-      const phoneKey = normalizeBdPhone(freshUser.phone) || 'default';
-      localStorage.setItem('aloSavingsPlan_' + phoneKey, JSON.stringify(newPlan));
 
-      // Reset button
+      freshUser.balance = Math.max(0, freshBal - amount);
+      freshUser.savingsPlan = newPlan;
+      localStorage.setItem('my_pass_available_bal', freshUser.balance.toFixed(2));
+      localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
+      if (phoneKey) localStorage.setItem('aloSavingsPlan_' + phoneKey, JSON.stringify(newPlan));
+
+      await dbSaveUser(freshUser);
+
+      const now = new Date();
+      await dbRecordTransaction({
+        phone: phoneKey || freshUser.phone,
+        type: 'savings',
+        amount: amount,
+        ratio: '100%',
+        actual: amount,
+        status: 'অনুমোদিত',
+        method: 'সঞ্চয় পরিকল্পনা (৪৫ দিন)',
+        date: now.toISOString().split('T')[0],
+        time: now.toTimeString().split(' ')[0],
+        newBalance: freshUser.balance
+      });
+
       btn.disabled = false;
       btn.className = origClass;
       btn.innerHTML = origHtml;
 
-      // Populate Back Face with the new plan
       const recordContent = document.getElementById('savings-record-card-content');
       if (recordContent) {
         recordContent.innerHTML = renderSavingsRecordCard(newPlan);
       }
 
-      // Smooth transition to active record card
       const frontFace = document.getElementById('savings-front-face');
       const backFace = document.getElementById('savings-back-face');
       if (frontFace) {
@@ -9253,15 +9825,18 @@ function handleSavingsSubmission() {
         backFace.style.display = 'block';
       }
 
-      // Update balances across dashboard
       updateUserDetails(freshUser);
       updateProfileMetrics();
       const balEl = document.getElementById('savings-user-balance');
       if (balEl) balEl.textContent = '৳ ' + formatNumber(freshUser.balance, freshUser);
 
       showToastNotification(`🎉 অভিনন্দন! ৳ ${formatBanglaNumber(amount)} টাকার সঞ্চয় পরিকল্পনা সফলভাবে শুরু হয়েছে!`);
+    } catch (e) {
+      btn.disabled = false;
+      btn.className = origClass;
+      btn.innerHTML = origHtml;
     }
-  }, 750);
+  }, 500);
 }
 window.handleSavingsSubmission = handleSavingsSubmission;
 
@@ -9367,50 +9942,38 @@ function saveLocalUsdtDepositRecord(deposit) {
   } catch (e) {}
 }
 
-function renderRecentUsdtDeposits() {
-  const container = document.getElementById('usdt-recent-records-list');
-  if (!container) return;
-  const records = getLocalUsdtDepositRecords();
-  
+function renderUsdtDepositCardsHtml(container, records) {
   if (!records || records.length === 0) {
     container.innerHTML = `
-      <div class="p-3.5 rounded-2xl bg-[#071a48] border border-[#143270] flex items-center justify-between shadow-md">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-full bg-[#102758] border border-[#1d4ed8]/30 flex items-center justify-center text-slate-300 shrink-0">
-            <svg viewBox="0 0 24 24" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 19V5M5 12l7-7 7 7"/>
-            </svg>
-          </div>
-          <div>
-            <p class="text-sm font-bold text-white leading-tight">USDT deposit</p>
-            <p class="text-xs text-[#8da0be] mt-0.5 font-normal">Nov 10 · BEP20</p>
-          </div>
-        </div>
-        <div class="text-right">
-          <p class="text-sm font-bold text-white font-mono">+50.00</p>
-          <p class="text-xs font-semibold text-emerald-400 mt-0.5">Credited</p>
-        </div>
+      <div class="p-4 rounded-2xl bg-[#071a48]/60 border border-[#143270]/70 text-center">
+        <p class="text-xs font-semibold text-slate-300">এখনো কোনো USDT ডিপোজিট পাওয়া যায়নি</p>
+        <p class="text-[11px] text-[#8da0be] mt-1">BEP20 নেটওয়ার্কে ডিপোজিট করলে এখানে সাথে সাথে যুক্ত হবে।</p>
       </div>
     `;
     return;
   }
 
   container.innerHTML = records.map(function(item) {
-    const rawDate = item.rawDate || item.date || 'Today';
-    let displayDate = 'Nov 10';
+    const rawDate = item.rawDate || item.date || '';
+    let displayDate = rawDate ? String(rawDate).slice(0, 10) : 'Today';
     try {
       const d = new Date(rawDate);
       if (!isNaN(d.getTime())) {
         displayDate = d.toLocaleString('en-US', { month: 'short' }) + ' ' + String(d.getDate()).padStart(2, '0');
-      } else {
-        displayDate = String(rawDate).slice(0, 10);
       }
-    } catch(e) {
-      displayDate = 'Nov 10';
-    }
+    } catch(e) {}
 
-    const amt = (typeof item.usdtAmount === 'number') ? item.usdtAmount.toFixed(2) : parseFloat(item.usdtAmount || 0).toFixed(2);
+    const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+    const usdtVal = item.usdtAmount !== undefined
+      ? parseFloat(item.usdtAmount || 0)
+      : (parseFloat(item.amount || 0) / (activeRate > 0 ? activeRate : 125));
+    const amt = usdtVal.toFixed(2);
     const shortTx = item.txHash ? item.txHash.slice(0, 6) + '...' + item.txHash.slice(-4) : '';
+    const stLower = String(item.status || '').toLowerCase();
+    const isRejected = stLower.includes('বাতিল') || stLower.includes('reject');
+    const isPending = !isRejected && !(stLower.includes('অনুমোদিত') || stLower.includes('approv') || stLower.includes('credit') || stLower.includes('সফল'));
+    const statusLabel = isRejected ? 'Rejected' : (isPending ? 'Pending' : 'Credited');
+    const statusCls = isRejected ? 'text-rose-400' : (isPending ? 'text-amber-400' : 'text-emerald-400');
 
     return `
       <div class="p-3.5 rounded-2xl bg-[#071a48] border border-[#143270] flex items-center justify-between shadow-md">
@@ -9427,11 +9990,42 @@ function renderRecentUsdtDeposits() {
         </div>
         <div class="text-right shrink-0">
           <p class="text-sm font-bold text-white font-mono">+${amt}</p>
-          <p class="text-xs font-semibold text-emerald-400 mt-0.5">Credited</p>
+          <p class="text-xs font-semibold ${statusCls} mt-0.5">${statusLabel}</p>
         </div>
       </div>
     `;
   }).join('');
+}
+
+function renderRecentUsdtDeposits() {
+  const container = document.getElementById('usdt-recent-records-list');
+  if (!container) return;
+  const cachedRecords = getLocalUsdtDepositRecords();
+  renderUsdtDepositCardsHtml(container, cachedRecords);
+
+  const user = getCurrentUser();
+  if (user && (user.phone || user.accountNumber)) {
+    dbGetTransactions(user.phone || user.accountNumber, 'deposit').then(function(dbList) {
+      if (!Array.isArray(dbList)) return;
+      const usdtOnly = dbList.filter(function(tx) {
+        return String(tx.method || '').toLowerCase().includes('usdt') || String(tx.orderId || '').startsWith('0x');
+      }).map(function(tx) {
+        const rate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+        return {
+          txHash: tx.orderId || '',
+          usdtAmount: Number((Number(tx.amount || 0) / (rate > 0 ? rate : 125)).toFixed(2)),
+          bdtAmount: Number(tx.amount || 0),
+          rawDate: tx.createdAt || tx.date,
+          date: tx.date,
+          status: tx.status || 'অনুমোদিত'
+        };
+      });
+      if (usdtOnly.length > 0 || cachedRecords.length === 0) {
+        try { localStorage.setItem('alo_usdt_deposits_history', JSON.stringify(usdtOnly.slice(0, 30))); } catch(e) {}
+        renderUsdtDepositCardsHtml(container, usdtOnly);
+      }
+    }).catch(function() {});
+  }
 }
 
 function selectUsdtMode(mode) {
@@ -9594,9 +10188,11 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
           balanceText.textContent = `${rawBalance.toFixed(2)} USDT`;
         }
 
-        // Track credited on-chain balance to prevent double crediting
+        // Track credited on-chain balance in Supabase & local cache to prevent double crediting across devices
         const creditedKey = `alo_usdt_credited_${userId}`;
-        const lastCredited = parseFloat(localStorage.getItem(creditedKey) || '0');
+        const localCredited = parseFloat(localStorage.getItem(creditedKey) || '0') || 0;
+        const cloudCredited = Number(user && user.claimedUsdtOnchain) || 0;
+        const lastCredited = Math.max(localCredited, cloudCredited);
 
         if (rawBalance > lastCredited) {
           const newUsdt = rawBalance - lastCredited;
@@ -9604,16 +10200,18 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
           const bdtCredit = newUsdt * activeRate;
 
           if (user) {
-            user.balance = (user.balance || 0) + bdtCredit;
+            user.balance = (Number(user.balance) || 0) + bdtCredit;
+            user.rechargeAmount = (Number(user.rechargeAmount) || 0) + bdtCredit;
+            user.claimedUsdtOnchain = rawBalance;
             if (typeof saveUser === 'function') saveUser(user);
-            if (typeof dbSaveUser === 'function') dbSaveUser(user);
+            if (typeof dbSaveUser === 'function') await dbSaveUser(user);
             if (typeof updateUserDetails === 'function') updateUserDetails(user);
             if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
             if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
 
             if (typeof dbRecordTransaction === 'function') {
               const now = new Date();
-              dbRecordTransaction({
+              await dbRecordTransaction({
                 phone: user.phone || user.accountNumber,
                 type: 'deposit',
                 amount: bdtCredit,
@@ -9621,6 +10219,7 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
                 ratio: '100%',
                 status: 'অনুমোদিত',
                 method: 'USDT (BEP20)',
+                order_id: `onchain_${Date.now()}`,
                 date: now.toISOString().split('T')[0],
                 time: now.toTimeString().split(' ')[0],
                 newBalance: user.balance
@@ -10474,23 +11073,11 @@ async function handleBdRechargeSubmit() {
 window.handleBdRechargeSubmit = handleBdRechargeSubmit;
 
 function openDirectPaymentCheckout() {
-  let user = getCurrentUser();
-  if (!user || !user.phone) {
-    user = {
-      phone: '01700000000',
-      fullName: 'সম্মানিত সদস্য',
-      balance: 0.00,
-      lifetime_earnings: 0.00,
-      packageLevel: 'LV0',
-      purchasedPackages: ['LV0'],
-      country: 'BD',
-      language: 'bn'
-    };
-    try {
-      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-    } catch(e) {}
-    if (typeof updateUserDetails === 'function') updateUserDetails(user);
-    if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+  const user = getCurrentUser();
+  if (!user || (!user.phone && !user.accountNumber)) {
+    showView('login');
+    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    return;
   }
   showView('dashboard');
   openDashboardPanel('payment-method');
@@ -10508,10 +11095,421 @@ window.addEventListener('alo-language-changed', function(e) {
     if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
     if (typeof updateUserDetails === 'function') updateUserDetails(user);
+    const taskPanel = document.getElementById('platform-tasks-panel');
+    if (taskPanel && !taskPanel.hidden && typeof renderPackageTasks === 'function') {
+      renderPackageTasks(activePackageLevel || 'LV0');
+    }
+    const detailPanel = document.getElementById('package-detail-panel');
+    if (detailPanel && !detailPanel.hidden && typeof renderPackageDetailPage === 'function') {
+      renderPackageDetailPage(activeDetailPackageLevel || 'LV1');
+    }
+    const spinPanel = document.getElementById('lucky-spin-panel');
+    if (spinPanel && !spinPanel.hidden && typeof renderLuckySpinPanel === 'function') {
+      renderLuckySpinPanel();
+    }
   }
   const cModal = document.getElementById('country-picker-modal');
   if (cModal && !cModal.classList.contains('hidden')) {
     if (typeof renderCountryList === 'function') renderCountryList();
+  }
+});
+
+// ============================================================================
+// LUCKY SPIN (ভাগ্যবান স্পিন) - REAL SUPABASE DRAW & PRIZE SYSTEM (৳42 - ৳45000)
+// ============================================================================
+const LUCKY_SPIN_PRIZES = [
+  { amount: 42,    label: '৪২৳',    enLabel: '42৳',    weight: 34, fill: '#1877f2', text: '#eef2fb' },
+  { amount: 500,   label: '৫০০৳',   enLabel: '500৳',   weight: 2,  fill: '#0b2253', text: '#cbd5e1' },
+  { amount: 95,    label: '৯৫৳',    enLabel: '95৳',    weight: 14, fill: '#1877f2', text: '#eef2fb' },
+  { amount: 5000,  label: '৫০০০৳',  enLabel: '5000৳',  weight: 0.25, fill: '#0b2253', text: '#eef2fb' },
+  { amount: 220,   label: '২২০৳',   enLabel: '220৳',   weight: 6,  fill: '#1877f2', text: '#eef2fb' },
+  { amount: 45000, label: '৪৫০০০৳', enLabel: '45000৳', weight: 0.05, fill: '#0b2253', text: '#eef2fb' },
+  { amount: 65,    label: '৬৫৳',    enLabel: '65৳',    weight: 22, fill: '#1877f2', text: '#eef2fb' },
+  { amount: 1500,  label: '১৫০০৳',  enLabel: '1500৳',  weight: 0.6, fill: '#0b2253', text: '#cbd5e1' },
+  { amount: 150,   label: '১৫০৳',   enLabel: '150৳',   weight: 8,  fill: '#1877f2', text: '#eef2fb' },
+  { amount: 15000, label: '১৫০০০৳', enLabel: '15000৳', weight: 0.1, fill: '#0b2253', text: '#eef2fb' },
+  { amount: 80,    label: '৮০৳',    enLabel: '80৳',    weight: 18, fill: '#1877f2', text: '#eef2fb' },
+  { amount: 2500,  label: '২৫০০৳',  enLabel: '2500৳',  weight: 0.4, fill: '#0b2253', text: '#cbd5e1' }
+];
+
+let luckySpinCurrentRotation = 0;
+let isLuckySpinAnimating = false;
+let luckySpinWheelBuilt = false;
+
+function buildLuckySpinWheelSvg() {
+  const rotator = document.getElementById('lucky-spin-wheel-rotator');
+  if (!rotator) return;
+
+  const lang = (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const cx = 200;
+  const cy = 200;
+  const r = 183;
+  const n = LUCKY_SPIN_PRIZES.length;
+  const sliceDeg = 360 / n; // 30 deg
+  const svgParts = [];
+
+  for (let i = 0; i < n; i++) {
+    const item = LUCKY_SPIN_PRIZES[i];
+    // Center slice i at angle = 180 + i * 30 deg (so i=0 sits at 180 deg = exact LEFT pointer!)
+    const centerDeg = 180 + i * sliceDeg;
+    const startRad = (centerDeg - sliceDeg / 2) * (Math.PI / 180);
+    const endRad = (centerDeg + sliceDeg / 2) * (Math.PI / 180);
+
+    const x1 = cx + r * Math.cos(startRad);
+    const y1 = cy + r * Math.sin(startRad);
+    const x2 = cx + r * Math.cos(endRad);
+    const y2 = cy + r * Math.sin(endRad);
+
+    const d = `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+    const prizeText = lang === 'en' ? item.enLabel : item.label;
+    const fontSize = prizeText.length >= 6 ? '14' : (prizeText.length >= 5 ? '15.5' : '17');
+
+    svgParts.push(
+      `<path d="${d}" fill="${item.fill}" stroke="#071638" stroke-width="2" stroke-linejoin="round"/>`,
+      `<text x="98" y="200" fill="${item.text}" font-size="${fontSize}" font-weight="600" text-anchor="middle" dominant-baseline="central" transform="rotate(${i * sliceDeg} 200 200)" style="font-family:'Hind Siliguri',system-ui,sans-serif;">${prizeText}</text>`
+    );
+  }
+
+  rotator.innerHTML = svgParts.join('');
+  luckySpinWheelBuilt = true;
+}
+
+function pickWeightedSpinPrizeIndex() {
+  const totalWeight = LUCKY_SPIN_PRIZES.reduce(function(sum, p) { return sum + (Number(p.weight) || 0); }, 0);
+  let r = Math.random() * totalWeight;
+  for (let i = 0; i < LUCKY_SPIN_PRIZES.length; i++) {
+    r -= Number(LUCKY_SPIN_PRIZES[i].weight) || 0;
+    if (r <= 0) return i;
+  }
+  return 0;
+}
+
+function isLuckySpinToday(dateStrOrIso) {
+  if (!dateStrOrIso) return false;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const todayLocal = `${y}-${m}-${d}`;
+  const s = String(dateStrOrIso).trim();
+  if (s.startsWith(todayLocal)) return true;
+  const parsed = new Date(s);
+  if (isNaN(parsed.getTime())) return false;
+  return parsed.getFullYear() === y && parsed.getMonth() === now.getMonth() && parsed.getDate() === now.getDate();
+}
+
+async function computeLuckySpinStats(user) {
+  if (!user) {
+    return {
+      qualifiedReferrals: 0,
+      todayQualifiedMembers: 0,
+      todaySpinsCount: 0,
+      totalEarned: 0,
+      usedSpins: 0,
+      availableDraws: 0,
+      freshUser: null
+    };
+  }
+  const normPhone = normalizeBdPhone(user.phone || user.accountNumber);
+  const freshUser = (normPhone ? await dbGetUser(normPhone) : null) || user;
+  const team = normPhone ? await dbGetRealTeam(normPhone) : { tier1: [] };
+  const tier1List = Array.isArray(team && team.tier1) ? team.tier1 : [];
+
+  // Count unique Level-1 referrals who have completed at least one recharge (> 0)
+  const qualifiedMembers = tier1List.filter(function(m) {
+    return (Number(m.rechargeAmount) || 0) > 0;
+  });
+  const qualifiedReferrals = qualifiedMembers.length;
+
+  // Today's qualified Level-1 members (joined or deposited today)
+  let todayQualifiedMembers = 0;
+  if (qualifiedMembers.length > 0 && window.aloSupabase) {
+    try {
+      const qualPhones = qualifiedMembers.map(function(m) { return m.rawPhone; }).filter(Boolean);
+      const { data: depTx } = await window.aloSupabase
+        .from('transactions')
+        .select('phone, status, date, created_at')
+        .in('phone', qualPhones)
+        .eq('type', 'deposit');
+      const todayQualPhoneSet = new Set();
+      if (Array.isArray(depTx)) {
+        depTx.forEach(function(tx) {
+          const st = String(tx.status || '').toLowerCase();
+          if (st.includes('reject') || st.includes('বাতিল') || st.includes('fail') || st.includes('pending') || st.includes('মুলতবি')) return;
+          if (isLuckySpinToday(tx.created_at || tx.date)) {
+            const p = normalizeBdPhone(tx.phone);
+            if (p) todayQualPhoneSet.add(p);
+          }
+        });
+      }
+      qualifiedMembers.forEach(function(m) {
+        if (isLuckySpinToday(m.joinedAt) && m.rawPhone) {
+          todayQualPhoneSet.add(m.rawPhone);
+        }
+      });
+      todayQualifiedMembers = todayQualPhoneSet.size;
+    } catch (e) {
+      todayQualifiedMembers = qualifiedMembers.filter(function(m) { return isLuckySpinToday(m.joinedAt); }).length;
+    }
+  }
+
+  // Today's spins count from local cached spinHistory
+  const histArr = Array.isArray(freshUser.spinHistory) ? freshUser.spinHistory : [];
+  let todaySpinsCount = histArr.filter(function(r) { return isLuckySpinToday(r.date || r.createdAt); }).length;
+
+  const bonusSpins = Number(freshUser.bonusSpins) || 0;
+  const usedSpins = Number(freshUser.usedSpins) || 0;
+  const totalEarned = qualifiedReferrals + bonusSpins;
+  const availableDraws = Math.max(0, totalEarned - usedSpins);
+
+  return {
+    qualifiedReferrals: qualifiedReferrals,
+    todayQualifiedMembers: todayQualifiedMembers,
+    todaySpinsCount: todaySpinsCount,
+    totalEarned: totalEarned,
+    usedSpins: usedSpins,
+    availableDraws: availableDraws,
+    freshUser: freshUser
+  };
+}
+
+async function renderLuckySpinPanel() {
+  buildLuckySpinWheelSvg();
+
+  const lang = (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const drawsEl = document.getElementById('lucky-spin-draws-num');
+  const qualEl = document.getElementById('lucky-spin-qualified-count');
+  const todaySpinsEl = document.getElementById('lucky-spin-today-count');
+  const balEl = document.getElementById('lucky-spin-user-balance');
+  const btnLabel = document.getElementById('lucky-spin-btn-label');
+  const historyList = document.getElementById('lucky-spin-history-list');
+
+  const user = getCurrentUser();
+  if (!user) {
+    if (drawsEl) drawsEl.textContent = lang === 'en' ? '0' : '০';
+    if (qualEl) qualEl.textContent = lang === 'en' ? '0' : '০';
+    if (todaySpinsEl) todaySpinsEl.textContent = lang === 'en' ? '0' : '০';
+    if (balEl) balEl.textContent = '৳ 0.00';
+    return;
+  }
+
+  const fmtNum = function(val) {
+    return lang === 'en' ? String(val) : formatBanglaNumber(String(val));
+  };
+
+  if (balEl) {
+    balEl.textContent = `৳ ${Number(user.balance || 0).toFixed(2)}`;
+  }
+
+  const stats = await computeLuckySpinStats(user);
+  const activeUser = stats.freshUser || user;
+
+  // Render real win history from Supabase transactions + user.spinHistory
+  const normPhone = normalizeBdPhone(activeUser.phone || activeUser.accountNumber);
+  let rows = [];
+  if (normPhone && window.aloSupabase) {
+    try {
+      const { data } = await window.aloSupabase
+        .from('transactions')
+        .select('*')
+        .eq('phone', normPhone)
+        .ilike('method', '%স্পিন%')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (Array.isArray(data) && data.length > 0) {
+        rows = data.map(function(t) {
+          return {
+            amount: Number(t.amount) || 0,
+            date: t.date || (t.created_at || '').split('T')[0],
+            time: t.time || '',
+            createdAt: t.created_at || ''
+          };
+        });
+      }
+    } catch (e) {}
+  }
+
+  if (rows.length === 0 && Array.isArray(activeUser.spinHistory) && activeUser.spinHistory.length > 0) {
+    rows = activeUser.spinHistory;
+  }
+
+  const todayTxCount = rows.filter(function(r) { return isLuckySpinToday(r.createdAt || r.date); }).length;
+  const finalTodaySpins = Math.max(stats.todaySpinsCount, todayTxCount);
+
+  if (balEl) {
+    balEl.textContent = `৳ ${Number(activeUser.balance || 0).toFixed(2)}`;
+  }
+  if (drawsEl) {
+    drawsEl.textContent = fmtNum(stats.availableDraws);
+  }
+  if (qualEl) {
+    qualEl.textContent = fmtNum(stats.todayQualifiedMembers);
+  }
+  if (todaySpinsEl) {
+    todaySpinsEl.textContent = fmtNum(finalTodaySpins);
+  }
+  if (btnLabel) {
+    if (stats.availableDraws > 0) {
+      btnLabel.textContent = lang === 'en'
+        ? `Spin Now (${stats.availableDraws} Draw)`
+        : `স্পিন ঘুরান (${fmtNum(stats.availableDraws)}টি ড্র)`;
+    } else {
+      btnLabel.textContent = lang === 'en' ? 'Spin Now' : 'স্পিন ঘুরান';
+    }
+  }
+
+  if (historyList) {
+    if (rows.length === 0) {
+      historyList.innerHTML = `<p class="text-center text-xs text-[#7f8fb0] py-4">${lang === 'en' ? 'No lucky spin rewards yet.' : 'এখনো কোনো স্পিন পুরস্কার রেকর্ড নেই'}</p>`;
+    } else {
+      historyList.innerHTML = rows.slice(0, 15).map(function(r) {
+        const amtText = lang === 'en' ? `+${r.amount}৳` : `+${formatBanglaNumber(String(r.amount))}৳`;
+        return `
+          <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0b1730] border-0">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-[#eef2fb] truncate">${lang === 'en' ? 'Lucky Spin Reward' : 'ভাগ্যবান স্পিন পুরস্কার'}</p>
+                <p class="text-[11px] text-[#7f8fb0] font-mono">${r.date || ''} ${r.time || ''}</p>
+              </div>
+            </div>
+            <span class="text-sm font-bold text-[#60a5fa] font-mono shrink-0">${amtText}</span>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+}
+window.renderLuckySpinPanel = renderLuckySpinPanel;
+
+async function executeLuckySpin() {
+  if (isLuckySpinAnimating) return;
+  const user = getCurrentUser();
+  if (!user) {
+    showView('login');
+    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    return;
+  }
+
+  const lang = (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const startBtn = document.getElementById('lucky-spin-start-btn');
+  if (startBtn) startBtn.disabled = true;
+
+  try {
+    const stats = await computeLuckySpinStats(user);
+    if (stats.availableDraws <= 0) {
+      showToastNotification(
+        lang === 'en'
+          ? 'No draws available! Refer a Level 1 friend who recharges to unlock 1 spin.'
+          : '⚠️ আপনার ড্র ০! প্রথম লেভেলে রেফার যুক্ত করে সে রিচার্জ করলে ১টি ঘুরার সুযোগ পাবেন।'
+      );
+      if (startBtn) startBtn.disabled = false;
+      return;
+    }
+
+    const freshUser = stats.freshUser || user;
+    const targetIdx = pickWeightedSpinPrizeIndex();
+    const prize = LUCKY_SPIN_PRIZES[targetIdx];
+
+    // Lock draw immediately in Supabase BEFORE animation to prevent multi-tab / refresh exploits
+    freshUser.usedSpins = (Number(freshUser.usedSpins) || 0) + 1;
+    localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
+    await dbSaveUser(freshUser);
+
+    isLuckySpinAnimating = true;
+    if (!luckySpinWheelBuilt) buildLuckySpinWheelSvg();
+
+    const rotator = document.getElementById('lucky-spin-wheel-rotator');
+    const sliceDeg = 360 / LUCKY_SPIN_PRIZES.length;
+    const curMod = ((luckySpinCurrentRotation % 360) + 360) % 360;
+    const targetMod = ((360 - targetIdx * sliceDeg) % 360 + 360) % 360;
+    const delta = (targetMod - curMod + 360) % 360;
+    const jitter = (Math.random() * 14) - 7; // safe within +-15 deg slice bounds
+    const fullSpins = 6 * 360;
+
+    luckySpinCurrentRotation = luckySpinCurrentRotation + fullSpins + delta + jitter;
+
+    if (rotator) {
+      rotator.style.transition = 'transform 4.6s cubic-bezier(0.12, 0.85, 0.18, 1)';
+      rotator.style.transform = `rotate(${luckySpinCurrentRotation}deg)`;
+    }
+
+    // Wait for spin animation to finish
+    await new Promise(function(resolve) { setTimeout(resolve, 4750); });
+
+    // Credit real prize amount to Supabase user balance & record transaction
+    const normPhone = normalizeBdPhone(freshUser.phone || freshUser.accountNumber);
+    const latestUser = (normPhone ? await dbGetUser(normPhone) : null) || freshUser;
+    latestUser.usedSpins = Math.max(Number(latestUser.usedSpins) || 0, freshUser.usedSpins);
+
+    const prevBal = Number(latestUser.balance) || 0;
+    const nextBal = Number((prevBal + prize.amount).toFixed(2));
+    latestUser.balance = nextBal;
+    latestUser.lifetimeEarnings = Number(((Number(latestUser.lifetimeEarnings) || 0) + prize.amount).toFixed(2));
+    latestUser.totalIncome = Number(((Number(latestUser.totalIncome) || 0) + prize.amount).toFixed(2));
+    latestUser.todayIncome = Number(((Number(latestUser.todayIncome) || 0) + prize.amount).toFixed(2));
+
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().split(' ')[0];
+    const hist = Array.isArray(latestUser.spinHistory) ? latestUser.spinHistory.slice(0, 19) : [];
+    hist.unshift({ amount: prize.amount, label: prize.label, date: dateStr, time: timeStr });
+    latestUser.spinHistory = hist;
+
+    await dbSaveUser(latestUser);
+    await dbRecordTransaction({
+      phone: normPhone,
+      type: 'commission',
+      amount: prize.amount,
+      ratio: '100%',
+      actual: prize.amount,
+      status: 'অনুমোদিত',
+      method: 'ভাগ্যবান স্পিন (Lucky Spin)',
+      date: dateStr,
+      time: timeStr,
+      newBalance: nextBal
+    });
+
+    hydrateUserCachesFromCloud(latestUser);
+    localStorage.setItem('aloSignedInUser', JSON.stringify(latestUser));
+    if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+    if (typeof updateUserDetails === 'function') updateUserDetails(latestUser);
+
+    // Show clean Win Modal
+    const winModal = document.getElementById('lucky-spin-win-modal');
+    const winAmtEl = document.getElementById('lucky-spin-win-amount');
+    if (winAmtEl) {
+      winAmtEl.textContent = lang === 'en' ? `+${prize.amount}৳` : `+${formatBanglaNumber(String(prize.amount))}৳`;
+    }
+    if (winModal) {
+      winModal.classList.remove('hidden');
+      winModal.classList.add('flex');
+    }
+
+    await renderLuckySpinPanel();
+  } catch (err) {
+    console.error('Lucky Spin error:', err);
+    showToastNotification('স্পিন সম্পন্ন করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
+  } finally {
+    isLuckySpinAnimating = false;
+    if (startBtn) startBtn.disabled = false;
+  }
+}
+window.executeLuckySpin = executeLuckySpin;
+
+document.addEventListener('click', function(e) {
+  const spinTrigger = e.target.closest('#lucky-spin-start-btn, #lucky-spin-center-hub');
+  if (spinTrigger) {
+    e.preventDefault();
+    executeLuckySpin();
+    return;
+  }
+  const winCloseBtn = e.target.closest('#lucky-spin-win-close-btn');
+  const winBackdrop = document.getElementById('lucky-spin-win-modal');
+  if (winCloseBtn || (winBackdrop && e.target === winBackdrop)) {
+    if (winBackdrop) {
+      winBackdrop.classList.add('hidden');
+      winBackdrop.classList.remove('flex');
+    }
   }
 });
 

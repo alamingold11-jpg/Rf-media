@@ -22,7 +22,7 @@ function apiDepositPlugin() {
           req.url = '/admin.html';
           return next();
         }
-        if (url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify' || url.pathname.startsWith('/api/crypto')) {
+        if (url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify' || url.pathname === '/api/verify-like' || url.pathname.startsWith('/api/crypto')) {
           let bodyStr = '';
           req.on('data', chunk => { bodyStr += chunk; });
           req.on('end', async () => {
@@ -55,6 +55,9 @@ function apiDepositPlugin() {
               if (url.pathname.startsWith('/api/crypto')) {
                 const cryptoHandler = await loadApiHandler('api/crypto.js');
                 await cryptoHandler(req, res);
+              } else if (url.pathname === '/api/verify-like') {
+                const verifyLikeHandler = await loadApiHandler('api/verify-like.js');
+                await verifyLikeHandler(req, res);
               } else if (url.pathname === '/api/deposit') {
                 const depositHandler = await loadApiHandler('api/deposit.js');
                 await depositHandler(req, res);
