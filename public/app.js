@@ -2813,22 +2813,103 @@ function normalizeBdPhone(phoneStr, countryCode) {
 // UI Language defaults to English and preserves selected registration language
 // =========================================================================
 const COUNTRY_DATABASE = [
+  // Primary & Popular Regions
   { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameAr: 'بنغلاديش', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, placeholder: '' },
-  { code: 'EG', nameBn: 'মিশর (Egypt)', nameEn: 'Egypt', nameAr: 'مصر', flag: '🇪🇬', dialCode: '+20', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IN', nameBn: 'ভারত (India)', nameEn: 'India', nameAr: 'الهند', flag: '🇮🇳', dialCode: '+91', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'US', nameBn: 'যুক্তরাষ্ট্র (USA)', nameEn: 'United States', nameAr: 'الولايات المتحدة', flag: '🇺🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'GB', nameBn: 'যুক্তরাজ্য (UK)', nameEn: 'United Kingdom', nameAr: 'المملكة المتحدة', flag: '🇬🇧', dialCode: '+44', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'EG', nameBn: 'মিশর', nameEn: 'Egypt', nameAr: 'مصر', flag: '🇪🇬', dialCode: '+20', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
   { code: 'SA', nameBn: 'সৌদি আরব', nameEn: 'Saudi Arabia', nameAr: 'المملكة العربية السعودية', flag: '🇸🇦', dialCode: '+966', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'AE', nameBn: 'দুবাই / UAE', nameEn: 'United Arab Emirates', nameAr: 'الإمارات العربية المتحدة', flag: '🇦🇪', dialCode: '+971', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'MY', nameBn: 'মালয়েশিয়া', nameEn: 'Malaysia', nameAr: 'ماليزيا', flag: '🇲🇾', dialCode: '+60', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'SG', nameBn: 'সিঙ্গাপুর', nameEn: 'Singapore', nameAr: 'سنغافورة', flag: '🇸🇬', dialCode: '+65', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CA', nameBn: 'কানাডা', nameEn: 'Canada', nameAr: 'كندا', flag: '🇨🇦', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'AU', nameBn: 'অস্ট্রেলিয়া', nameEn: 'Australia', nameAr: 'أستراليا', flag: '🇦🇺', dialCode: '+61', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AE', nameBn: 'সংযুক্ত আরব আমিরাত (UAE)', nameEn: 'United Arab Emirates', nameAr: 'الإمارات العربية المتحدة', flag: '🇦🇪', dialCode: '+971', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IN', nameBn: 'ভারত', nameEn: 'India', nameAr: 'الهند', flag: '🇮🇳', dialCode: '+91', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PK', nameBn: 'পাকিস্তান', nameEn: 'Pakistan', nameAr: 'باكستان', flag: '🇵🇰', dialCode: '+92', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'US', nameBn: 'যুক্তরাষ্ট্র', nameEn: 'United States', nameAr: 'الولايات المتحدة', flag: '🇺🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GB', nameBn: 'যুক্তরাজ্য', nameEn: 'United Kingdom', nameAr: 'المملكة المتحدة', flag: '🇬🇧', dialCode: '+44', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+
+  // Middle East & North Africa
   { code: 'QA', nameBn: 'কাতার', nameEn: 'Qatar', nameAr: 'قطر', flag: '🇶🇦', dialCode: '+974', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
   { code: 'KW', nameBn: 'কুয়েত', nameEn: 'Kuwait', nameAr: 'الكويت', flag: '🇰🇼', dialCode: '+965', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'OM', nameBn: 'ওমান', nameEn: 'Oman', nameAr: 'عمان', flag: '🇴🇲', dialCode: '+968', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'OM', nameBn: 'ওমান', nameEn: 'Oman', nameAr: 'عُمان', flag: '🇴🇲', dialCode: '+968', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BH', nameBn: 'বাহরাইন', nameEn: 'Bahrain', nameAr: 'البحرين', flag: '🇧🇭', dialCode: '+973', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'JO', nameBn: 'জর্ডান', nameEn: 'Jordan', nameAr: 'الأردن', flag: '🇯🇴', dialCode: '+962', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LB', nameBn: 'লেবানন', nameEn: 'Lebanon', nameAr: 'لبنان', flag: '🇱🇧', dialCode: '+961', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IQ', nameBn: 'ইরাক', nameEn: 'Iraq', nameAr: 'العراق', flag: '🇮🇶', dialCode: '+964', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SY', nameBn: 'সিরিয়া', nameEn: 'Syria', nameAr: 'سوريا', flag: '🇸🇾', dialCode: '+963', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PS', nameBn: 'ফিলিস্তিন', nameEn: 'Palestine', nameAr: 'فلسطين', flag: '🇵🇸', dialCode: '+970', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'YE', nameBn: 'ইয়েমেন', nameEn: 'Yemen', nameAr: 'اليمن', flag: '🇾🇪', dialCode: '+967', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MA', nameBn: 'মরক্কো', nameEn: 'Morocco', nameAr: 'المغرب', flag: '🇲🇦', dialCode: '+212', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DZ', nameBn: 'আলজেরিয়া', nameEn: 'Algeria', nameAr: 'الجزائر', flag: '🇩🇿', dialCode: '+213', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TN', nameBn: 'তিউনিসিয়া', nameEn: 'Tunisia', nameAr: 'تونس', flag: '🇹🇳', dialCode: '+216', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LY', nameBn: 'লিবিয়া', nameEn: 'Libya', nameAr: 'ليبيا', flag: '🇱🇾', dialCode: '+218', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SD', nameBn: 'সুদান', nameEn: 'Sudan', nameAr: 'السودان', flag: '🇸🇩', dialCode: '+249', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TR', nameBn: 'তুরস্ক', nameEn: 'Turkey', nameAr: 'تركيا', flag: '🇹🇷', dialCode: '+90', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IR', nameBn: 'ইরান', nameEn: 'Iran', nameAr: 'إيران', flag: '🇮🇷', dialCode: '+98', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+
+  // South, Central & East Asia
+  { code: 'NP', nameBn: 'নেপাল', nameEn: 'Nepal', nameAr: 'نيبال', flag: '🇳🇵', dialCode: '+977', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LK', nameBn: 'শ্রীলঙ্কা', nameEn: 'Sri Lanka', nameAr: 'سريلانكا', flag: '🇱🇰', dialCode: '+94', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MV', nameBn: 'মালদ্বীপ', nameEn: 'Maldives', nameAr: 'المالديف', flag: '🇲🇻', dialCode: '+960', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BT', nameBn: 'ভুটান', nameEn: 'Bhutan', nameAr: 'بوتان', flag: '🇧🇹', dialCode: '+975', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AF', nameBn: 'আফগানিস্তান', nameEn: 'Afghanistan', nameAr: 'أفغانستان', flag: '🇦🇫', dialCode: '+93', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MY', nameBn: 'মালয়েশিয়া', nameEn: 'Malaysia', nameAr: 'ماليزيا', flag: '🇲🇾', dialCode: '+60', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SG', nameBn: 'সিঙ্গাপুর', nameEn: 'Singapore', nameAr: 'سنغافورة', flag: '🇸🇬', dialCode: '+65', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ID', nameBn: 'ইন্দোনেশিয়া', nameEn: 'Indonesia', nameAr: 'إندونيسيا', flag: '🇮🇩', dialCode: '+62', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TH', nameBn: 'থাইল্যান্ড', nameEn: 'Thailand', nameAr: 'تايلاند', flag: '🇹🇭', dialCode: '+66', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'VN', nameBn: 'ভিয়েতনাম', nameEn: 'Vietnam', nameAr: 'فيتنام', flag: '🇻🇳', dialCode: '+84', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PH', nameBn: 'ফিলিপাইন', nameEn: 'Philippines', nameAr: 'الفلبين', flag: '🇵🇭', dialCode: '+63', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MM', nameBn: 'মিয়ানমার', nameEn: 'Myanmar', nameAr: 'ميانمار', flag: '🇲🇲', dialCode: '+95', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KH', nameBn: 'কম্বোডিয়া', nameEn: 'Cambodia', nameAr: 'كمبوديا', flag: '🇰🇭', dialCode: '+855', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BN', nameBn: 'ব্রুনেই', nameEn: 'Brunei', nameAr: 'بروناي', flag: '🇧🇳', dialCode: '+673', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'JP', nameBn: 'জাপান', nameEn: 'Japan', nameAr: 'اليابان', flag: '🇯🇵', dialCode: '+81', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KR', nameBn: 'দক্ষিণ কোরিয়া', nameEn: 'South Korea', nameAr: 'كوريا الجنوبية', flag: '🇰🇷', dialCode: '+82', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CN', nameBn: 'চীন', nameEn: 'China', nameAr: 'الصين', flag: '🇨🇳', dialCode: '+86', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HK', nameBn: 'হংকং', nameEn: 'Hong Kong', nameAr: 'هونغ كونغ', flag: '🇭🇰', dialCode: '+852', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TW', nameBn: 'তাইওয়ান', nameEn: 'Taiwan', nameAr: 'تايوان', flag: '🇹🇼', dialCode: '+886', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KZ', nameBn: 'কাজাখস্তান', nameEn: 'Kazakhstan', nameAr: 'كازاخستان', flag: '🇰🇿', dialCode: '+7', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UZ', nameBn: 'উজবেকিস্তান', nameEn: 'Uzbekistan', nameAr: 'أوزبكستان', flag: '🇺🇿', dialCode: '+998', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+
+  // Europe
   { code: 'DE', nameBn: 'জার্মানি', nameEn: 'Germany', nameAr: 'ألمانيا', flag: '🇩🇪', dialCode: '+49', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IT', nameBn: 'ইতালি', nameEn: 'Italy', nameAr: 'إيطاليا', flag: '🇮🇹', dialCode: '+39', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' }
+  { code: 'IT', nameBn: 'ইতালি', nameEn: 'Italy', nameAr: 'إيطاليا', flag: '🇮🇹', dialCode: '+39', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'FR', nameBn: 'ফ্রান্স', nameEn: 'France', nameAr: 'فرنسا', flag: '🇫🇷', dialCode: '+33', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ES', nameBn: 'স্পেন', nameEn: 'Spain', nameAr: 'إسبانيا', flag: '🇪🇸', dialCode: '+34', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PT', nameBn: 'পর্তুগাল', nameEn: 'Portugal', nameAr: 'البرتغال', flag: '🇵🇹', dialCode: '+351', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NL', nameBn: 'নেদারল্যান্ডস', nameEn: 'Netherlands', nameAr: 'هولندا', flag: '🇳🇱', dialCode: '+31', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BE', nameBn: 'বেলজিয়াম', nameEn: 'Belgium', nameAr: 'بلجيكا', flag: '🇧🇪', dialCode: '+32', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CH', nameBn: 'সুইজারল্যান্ড', nameEn: 'Switzerland', nameAr: 'سويسرا', flag: '🇨🇭', dialCode: '+41', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AT', nameBn: 'অস্ট্রিয়া', nameEn: 'Austria', nameAr: 'النمسا', flag: '🇦🇹', dialCode: '+43', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SE', nameBn: 'সুইডেন', nameEn: 'Sweden', nameAr: 'السويد', flag: '🇸🇪', dialCode: '+46', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NO', nameBn: 'নরওয়ে', nameEn: 'Norway', nameAr: 'النرويج', flag: '🇳🇴', dialCode: '+47', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DK', nameBn: 'ডেনমার্ক', nameEn: 'Denmark', nameAr: 'الدنمارك', flag: '🇩🇰', dialCode: '+45', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'FI', nameBn: 'ফিনল্যান্ড', nameEn: 'Finland', nameAr: 'فنلندا', flag: '🇫🇮', dialCode: '+358', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IE', nameBn: 'আয়ারল্যান্ড', nameEn: 'Ireland', nameAr: 'أيرلندا', flag: '🇮🇪', dialCode: '+353', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PL', nameBn: 'পোল্যান্ড', nameEn: 'Poland', nameAr: 'بولندا', flag: '🇵🇱', dialCode: '+48', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GR', nameBn: 'গ্রিস', nameEn: 'Greece', nameAr: 'اليونان', flag: '🇬🇷', dialCode: '+30', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'RO', nameBn: 'রোমানিয়া', nameEn: 'Romania', nameAr: 'رومانيا', flag: '🇷🇴', dialCode: '+40', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CZ', nameBn: 'চেক প্রজাতন্ত্র', nameEn: 'Czechia', nameAr: 'التشيك', flag: '🇨🇿', dialCode: '+420', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HU', nameBn: 'হাঙ্গেরি', nameEn: 'Hungary', nameAr: 'المجر', flag: '🇭🇺', dialCode: '+36', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'RU', nameBn: 'রাশিয়া', nameEn: 'Russia', nameAr: 'روسيا', flag: '🇷🇺', dialCode: '+7', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UA', nameBn: 'ইউক্রেন', nameEn: 'Ukraine', nameAr: 'أوكرانيا', flag: '🇺🇦', dialCode: '+380', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+
+  // Americas & Oceania
+  { code: 'CA', nameBn: 'কানাডা', nameEn: 'Canada', nameAr: 'كندا', flag: '🇨🇦', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AU', nameBn: 'অস্ট্রেলিয়া', nameEn: 'Australia', nameAr: 'أستراليا', flag: '🇦🇺', dialCode: '+61', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NZ', nameBn: 'নিউজিল্যান্ড', nameEn: 'New Zealand', nameAr: 'نيوزيلندا', flag: '🇳🇿', dialCode: '+64', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BR', nameBn: 'ব্রাজিল', nameEn: 'Brazil', nameAr: 'البرازيل', flag: '🇧🇷', dialCode: '+55', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MX', nameBn: 'মেক্সিকো', nameEn: 'Mexico', nameAr: 'المكسيك', flag: '🇲🇽', dialCode: '+52', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AR', nameBn: 'আর্জেন্টিনা', nameEn: 'Argentina', nameAr: 'الأرجنتين', flag: '🇦🇷', dialCode: '+54', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CO', nameBn: 'কলম্বিয়া', nameEn: 'Colombia', nameAr: 'كولومبيا', flag: '🇨🇴', dialCode: '+57', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CL', nameBn: 'চিলি', nameEn: 'Chile', nameAr: 'تشيلي', flag: '🇨🇱', dialCode: '+56', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PE', nameBn: 'পেরু', nameEn: 'Peru', nameAr: 'بيرو', flag: '🇵🇪', dialCode: '+51', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+
+  // Africa
+  { code: 'ZA', nameBn: 'দক্ষিণ আফ্রিকা', nameEn: 'South Africa', nameAr: 'جنوب أفريقيا', flag: '🇿🇦', dialCode: '+27', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NG', nameBn: 'নাইজেরিয়া', nameEn: 'Nigeria', nameAr: 'نيجيريا', flag: '🇳🇬', dialCode: '+234', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KE', nameBn: 'কেনিয়া', nameEn: 'Kenya', nameAr: 'كينيا', flag: '🇰🇪', dialCode: '+254', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GH', nameBn: 'ঘানা', nameEn: 'Ghana', nameAr: 'غانا', flag: '🇬🇭', dialCode: '+233', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ET', nameBn: 'ইথিওপিয়া', nameEn: 'Ethiopia', nameAr: 'إثيوبيا', flag: '🇪🇹', dialCode: '+251', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TZ', nameBn: 'তানজানিয়া', nameEn: 'Tanzania', nameAr: 'تنزانيا', flag: '🇹🇿', dialCode: '+255', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UG', nameBn: 'উগান্ডা', nameEn: 'Uganda', nameAr: 'أوغندا', flag: '🇺🇬', dialCode: '+256', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SN', nameBn: 'সেনেগাল', nameEn: 'Senegal', nameAr: 'السنغال', flag: '🇸🇳', dialCode: '+221', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CI', nameBn: 'আইভরি কোস্ট', nameEn: 'Ivory Coast', nameAr: 'ساحل العاج', flag: '🇨🇮', dialCode: '+225', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CM', nameBn: 'ক্যামেরুন', nameEn: 'Cameroon', nameAr: 'الكاميرون', flag: '🇨🇲', dialCode: '+237', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' }
 ];
 
 let currentRegistrationCountry = COUNTRY_DATABASE[0]; // Default Bangladesh
@@ -2853,6 +2934,32 @@ function getCountryByCode(code) {
     return false;
   }) || COUNTRY_DATABASE[0];
 }
+
+function populateAllCountrySelects(langOverride) {
+  const currentLang = normalizeAppLang(langOverride || (window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
+  const buildOptions = function(selectedVal, bgClass) {
+    return COUNTRY_DATABASE.map(function(item) {
+      const displayName = currentLang === 'bn' ? item.nameBn : (currentLang === 'ar' ? (item.nameAr || item.nameEn) : item.nameEn);
+      const selAttr = item.code === selectedVal ? ' selected' : '';
+      return `<option value="${item.code}" class="${bgClass} text-white"${selAttr}>${item.flag} ${displayName} (${item.dialCode})</option>`;
+    }).join('');
+  };
+
+  const loginSelect = document.getElementById('login-country-select');
+  if (loginSelect) {
+    const prevLogin = loginSelect.value || 'BD';
+    loginSelect.innerHTML = buildOptions(prevLogin, 'bg-[#141e3c]');
+    loginSelect.value = getCountryByCode(prevLogin).code;
+  }
+
+  const regSelect = document.getElementById('register-country-select');
+  if (regSelect) {
+    const prevReg = regSelect.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
+    regSelect.innerHTML = buildOptions(prevReg, 'bg-[#07173d]');
+    regSelect.value = getCountryByCode(prevReg).code;
+  }
+}
+window.populateAllCountrySelects = populateAllCountrySelects;
 
 function selectRegistrationCountry(code) {
   const country = getCountryByCode(code);
@@ -2896,7 +3003,8 @@ function selectRegistrationCountry(code) {
   // Re-render country list only if modal is visible
   const cModal = document.getElementById('country-picker-modal');
   if (cModal && !cModal.classList.contains('hidden')) {
-    renderCountryList();
+    const searchEl = document.getElementById('country-picker-search');
+    renderCountryList(searchEl ? searchEl.value : '');
   }
 }
 
@@ -2923,6 +3031,9 @@ window.selectRegistrationCountry = selectRegistrationCountry;
 window.selectLoginCountry = selectLoginCountry;
 window.getCountryByCode = getCountryByCode;
 
+// Initialize full country dropdowns immediately
+populateAllCountrySelects();
+
 // Immediate global event delegation for country dropdown (change only, no duplicate input spam)
 document.addEventListener('change', function(e) {
   if (e.target && e.target.id === 'login-country-select') {
@@ -2930,6 +3041,13 @@ document.addEventListener('change', function(e) {
   }
   if (e.target && e.target.id === 'register-country-select') {
     selectRegistrationCountry(e.target.value);
+  }
+});
+
+// Live search filter inside Country Picker Modal
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'country-picker-search') {
+    renderCountryList(e.target.value);
   }
 });
 
@@ -2946,9 +3064,19 @@ document.addEventListener('click', function(e) {
 function openCountryPickerModal() {
   const modal = document.getElementById('country-picker-modal');
   if (!modal) return;
+  const currentLang = normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
+  const titleEl = document.getElementById('country-picker-title');
+  if (titleEl) {
+    titleEl.textContent = tLang(currentLang, 'দেশ ও ফোন কোড নির্বাচন করুন', 'Select Country & Dial Code', 'اختر الدولة ورمز الهاتف');
+  }
+  const searchEl = document.getElementById('country-picker-search');
+  if (searchEl) {
+    searchEl.value = '';
+    searchEl.placeholder = tLang(currentLang, 'দেশ বা কোড খুঁজুন (+880, Pakistan...)', 'Search country or code (+1, UK, Egypt...)', 'ابحث عن الدولة أو الرمز...');
+  }
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  renderCountryList();
+  renderCountryList('');
 }
 
 function closeCountryPickerModal() {
@@ -2958,13 +3086,30 @@ function closeCountryPickerModal() {
   modal.classList.remove('flex');
 }
 
-function renderCountryList() {
+function renderCountryList(filterQuery) {
   const container = document.getElementById('country-list-container');
   if (!container) return;
 
   const currentLang = normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
+  const q = String(filterQuery || '').trim().toLowerCase();
 
-  container.innerHTML = COUNTRY_DATABASE.map(function(item) {
+  const filtered = q ? COUNTRY_DATABASE.filter(function(item) {
+    return (
+      item.nameEn.toLowerCase().includes(q) ||
+      item.nameBn.toLowerCase().includes(q) ||
+      (item.nameAr && item.nameAr.toLowerCase().includes(q)) ||
+      item.dialCode.toLowerCase().includes(q) ||
+      item.dialCode.replace('+', '').includes(q) ||
+      item.code.toLowerCase().includes(q)
+    );
+  }) : COUNTRY_DATABASE;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">${tLang(currentLang, 'কোনো দেশ পাওয়া যায়নি', 'No matching country found', 'لم يتم العثور على دولة مطابقة')}</p>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(function(item) {
     const isSelected = currentRegistrationCountry && currentRegistrationCountry.code === item.code;
     const displayName = currentLang === 'bn' ? item.nameBn : (currentLang === 'ar' ? (item.nameAr || item.nameEn) : item.nameEn);
     return `

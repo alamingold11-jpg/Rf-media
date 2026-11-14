@@ -1845,6 +1845,9 @@
       if (typeof window.updateHomeMemberUpdates === 'function') {
         window.updateHomeMemberUpdates();
       }
+      if (typeof window.populateAllCountrySelects === 'function') {
+        window.populateAllCountrySelects(lang);
+      }
     } catch(e) {}
   }
 

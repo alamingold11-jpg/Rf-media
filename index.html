@@ -679,7 +679,7 @@ button:active:not(:disabled), .cursor-pointer:active {
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                 </svg>
                 <select id="login-country-select" class="w-full bg-transparent border-0 text-[16px] font-bold text-white cursor-pointer outline-none appearance-none pr-8" style="color-scheme: dark;">
-                  <option value="BD" class="bg-[#141e3c] text-white" selected data-i18n="country_bd">বাংলাদেশ (+880)</option>
+                  <option value="BD" class="bg-[#141e3c] text-white" selected>🇧🇩 Bangladesh (+880)</option>
                   <option value="EG" class="bg-[#141e3c] text-white">🇪🇬 Egypt (+20)</option>
                   <option value="IN" class="bg-[#141e3c] text-white">🇮🇳 India (+91)</option>
                   <option value="US" class="bg-[#141e3c] text-white">🇺🇸 United States (+1)</option>
@@ -4957,7 +4957,7 @@ button:active:not(:disabled), .cursor-pointer:active {
     </div>
   </div>
 
-  <!-- Country & Currency Selector Modal (শুধুমাত্র বাংলাদেশ ও ভারত) -->
+  <!-- Country & Currency Selector Modal -->
   <div id="country-picker-modal" class="fixed inset-0 z-[10010] items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 transition-all duration-300 hidden" role="dialog" aria-modal="true" aria-labelledby="country-picker-title">
     <div class="relative w-full max-w-sm bg-gradient-to-b from-[#0a1e4a] to-[#05112e] border border-[#1e4488] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-left animate-in fade-in zoom-in-95 duration-200">
       
@@ -4969,14 +4969,19 @@ button:active:not(:disabled), .cursor-pointer:active {
         <div class="flex items-center gap-2">
           <span class="w-7 h-7 rounded-lg bg-[#35c6e7]/15 border border-[#35c6e7]/30 flex items-center justify-center text-sm shadow-sm">🌍</span>
           <div>
-            <h3 id="country-picker-title" class="text-sm font-bold text-white tracking-wide">Select Country / দেশ নির্বাচন করুন</h3>
+            <h3 id="country-picker-title" class="text-sm font-bold text-white tracking-wide">Select Country</h3>
           </div>
         </div>
-        <button type="button" id="close-country-picker-btn" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition active:scale-90 cursor-pointer" aria-label="বন্ধ করুন">✕</button>
+        <button type="button" id="close-country-picker-btn" class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition active:scale-90 cursor-pointer" aria-label="Close">✕</button>
       </div>
 
-      <!-- Countries List (Bangladesh and India) -->
-      <div id="country-list-container" class="p-3 space-y-2 max-h-[60vh] overflow-y-auto">
+      <!-- Country Search Bar -->
+      <div class="px-3 pt-3 pb-1 relative z-10">
+        <input id="country-picker-search" type="search" autocomplete="off" placeholder="Search country or dial code (+880, +92, Egypt...)" class="w-full px-3.5 py-2.5 rounded-xl bg-[#061842] border border-[#1b3e85] focus:border-[#35c6e7] text-sm text-white placeholder-slate-400 outline-none transition">
+      </div>
+
+      <!-- Countries List -->
+      <div id="country-list-container" class="p-3 space-y-2 max-h-[58vh] overflow-y-auto">
       </div>
     </div>
   </div>
