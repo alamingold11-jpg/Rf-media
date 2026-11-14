@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -12,6 +12,12 @@ function apiDepositPlugin() {
   return {
     name: 'api-deposit-plugin',
     configureServer(server) {
+      try {
+        const loaded = loadEnv(server.config.mode || 'development', process.cwd(), '');
+        if (loaded && loaded.GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
+          process.env.GEMINI_API_KEY = loaded.GEMINI_API_KEY;
+        }
+      } catch (e) {}
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url, `http://${req.headers.host || 'localhost:3000'}`);
         if (url.pathname === '/checkout' || url.pathname === '/payment') {

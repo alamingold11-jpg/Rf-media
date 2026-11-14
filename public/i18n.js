@@ -1,8 +1,17 @@
-// Alo App Multi-Language (i18n) Engine
-// Supports Bengali (bn), Hindi (hi), English (en)
+// PW New Media Multi-Language (i18n) Engine
+// Supports English (en - Default), Arabic (ar), Bengali (bn)
 
 (function() {
   'use strict';
+
+  const VALID_LANGS = ['en', 'ar', 'bn'];
+
+  function normalizeLangCode(lang) {
+    const clean = String(lang || '').trim().toLowerCase();
+    if (clean === 'en' || clean === 'ar' || clean === 'bn') return clean;
+    if (clean === 'hi') return 'en';
+    return 'en';
+  }
 
   const translations = {
     bn: {
@@ -52,8 +61,9 @@
       'login_welcome_back': 'আবার স্বাগতম',
       'login_subtitle': 'আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।',
       'country_label': 'দেশ',
-      'country_bd': 'বাংলাদেশ (+880)',
-      'country_in': 'ভারত (+91)',
+      'country_bd': '🇧🇩 বাংলাদেশ (+880)',
+      'country_eg': '🇪🇬 মিশর (+20)',
+      'country_in': '🇮🇳 ভারত (+91)',
       'phone_label': 'ফোন নম্বর',
       'phone_placeholder': 'আপনার ফোন নম্বর লিখুন',
       'password_label': 'পাসওয়ার্ড',
@@ -63,6 +73,7 @@
       'remember_me': 'আমাকে লগইন রাখুন',
       'login_btn': 'লগইন',
       'login_submit': 'লগইন',
+      'demo_login': 'ডেমো অ্যাকাউন্টে দ্রুত প্রবেশ',
       'new_here': 'নতুন?',
       'create_account': 'অ্যাকাউন্ট খুলুন',
       'terms_service': 'সেবার শর্তাবলি',
@@ -84,7 +95,7 @@
       'confirm_password_placeholder': 'আপনার পাসওয়ার্ড নিশ্চিত করুন',
       'invite_code_label': 'আমন্ত্রণ কোড',
       'invite_code_placeholder': 'আমন্ত্রণ কোড (যদি থাকে)',
-      'signup_submit': 'এখন সাইইন আপ করুন',
+      'signup_submit': 'এখন সাইন আপ করুন',
       'already_account': 'আগে থেকেই অ্যাকাউন্ট আছে?',
       'register_success': 'নিবন্ধন সফল!',
 
@@ -200,7 +211,7 @@
       'records': 'VIP',
       'tasks': 'Tasks',
       'mine': 'Mine',
-      'login': 'Login',
+      'login': 'Log in',
       'register': 'Sign Up',
       'logout': 'Sign Out',
       'back': 'Back',
@@ -219,12 +230,12 @@
       'bdt': 'BDT',
       'customer_service_title': 'Customer Service',
       'customer_service_direct': 'Direct Solution',
-      'customer_service_telegram': 'Personal Telegram Support',
+      'customer_service_telegram': 'Personal Contact via Telegram',
 
       // Home & Headers
       'brand_name': 'PW New Media',
-      'hero_title': 'Bring Fresh Light to Your Daily Earnings',
-      'hero_subtitle': 'Welcome to your personal digital earnings platform. Simple, transparent, and built for you.',
+      'hero_title': 'Bring PW New Media to Daily Earnings',
+      'hero_subtitle': 'Welcome to your personal space. Simple, transparent, and built for you.',
       'get_started': 'Get Started Now',
       'have_account': 'I Have an Account',
       'start_today': 'Start Today',
@@ -240,13 +251,14 @@
       'login_welcome_back': 'Welcome back',
       'login_subtitle': 'Log in to continue to your account.',
       'country_label': 'Country',
-      'country_bd': 'Bangladesh (+880)',
-      'country_in': 'India (+91)',
+      'country_bd': '🇧🇩 Bangladesh (+880)',
+      'country_eg': '🇪🇬 Egypt (+20)',
+      'country_in': '🇮🇳 India (+91)',
       'phone_label': 'Phone number',
       'phone_placeholder': 'Enter your phone number',
       'password_label': 'Password',
-      'password_placeholder': 'Enter your password',
       'forgot_password': 'Forgot password?',
+      'password_placeholder': 'Enter your password',
       'keep_logged_in': 'Keep me logged in',
       'remember_me': 'Keep me logged in',
       'login_btn': 'Log in',
@@ -263,371 +275,8 @@
       'welcome_goldmine': 'Welcome to PW New Media',
 
       // Register
-      'register_title': 'Register for PW New Media',
+      'register_title': 'Register',
       'register_subtitle': 'Enter your details to create an account',
-      'sms_code_label': 'SMS Verification Code',
-      'sms_code_placeholder': 'Enter SMS verification code',
-      'send_sms_code': 'Send Code',
-      'enter_password': 'Create your password',
-      'confirm_password_label': 'Confirm Password',
-      'confirm_password_placeholder': 'Confirm your password',
-      'invite_code_label': 'Invitation Code',
-      'invite_code_placeholder': 'Invitation code (optional)',
-      'signup_submit': 'Sign Up Now',
-      'already_account': 'Already have an account?',
-      'register_success': 'Registration Successful!',
-
-      // Profile & Pass
-      'superior': 'Superior:',
-      'account_number': 'Account:',
-      'invite_code': 'Invite Code:',
-      'member_id': 'ID:',
-      'total_balance': 'Total Balance',
-      'available_balance': 'Available Balance',
-      'frozen_balance': 'Frozen',
-      'today_income': "Today's Income",
-      'today_task_income': 'Task Income',
-      'total_revenue': 'Total Revenue',
-      'incomplete_missions': 'Incomplete Tasks',
-      'completed_missions': 'Completed Tasks',
-      'my_pass': 'My Pass',
-      'withdraw': 'Withdraw',
-      'deposit': 'Deposit',
-      'team_report': 'Team Report',
-      'personal_info': 'Personal Info',
-      'task_records': 'Task Records',
-      'customer_service': 'Support',
-      'share': 'Share',
-      'change_language': 'Change Language',
-
-      // Team Report
-      'team_report_title': 'Team Report',
-      'my_team': 'My Team',
-      'team_balance': 'Team Balance (BDT)',
-      'team_flow': 'Team Flow (BDT)',
-      'team_recharge': 'Total Recharge (BDT)',
-      'team_cashout': 'Total Cashout (BDT)',
-      'first_charge_count': 'First Deposits',
-      'direct_push_count': 'Direct Referrals (Tier 1)',
-      'total_team_size': 'Total Team Size',
-      'new_team_members': 'New Members (24h)',
-      'tier_1': 'Tier 1',
-      'tier_2': 'Tier 2',
-      'tier_3': 'Tier 3',
-      'tier_1_direct': 'Tier 1 (Direct)',
-      'tier_2_label': 'Tier 2',
-      'tier_3_label': 'Tier 3',
-      'total_people': 'Members',
-      'recharge_amount': 'Recharge Amount',
-      'rebate': 'Rebate',
-      'rebate_10': '10% Rebate',
-      'rebate_5': '5% Rebate',
-      'rebate_2': '2% Rebate',
-      'tier_1_comm': 'Tier 1 Commission (Direct):',
-      'tier_2_comm': 'Tier 2 Commission:',
-      'tier_3_comm': 'Tier 3 Commission:',
-      'copy_code': 'Copy Code',
-      'invite_page': 'Invite Page',
-      'your_invite_code': 'Your Invite Code:',
-      'package': 'Package',
-      'balance': 'Balance',
-      'recharge': 'Recharge',
-      'joined': 'Joined:',
-      'member_list': 'Member List',
-      'real_data': 'Real Data',
-      'empty_team_all': 'No team members added yet',
-      'empty_team_tier': 'No members in this tier yet',
-      'invite_hint': 'Share your referral code with friends. Earn 10% commission on Tier 1, 5% on Tier 2, and 2% on Tier 3 directly to your balance!',
-      'loading_team': 'Loading team records from database...',
-
-      // Withdraw & Payment
-      'withdraw_title': 'Withdrawal',
-      'withdraw_details': 'Withdrawal Details',
-      'withdraw_history': 'Withdrawal History',
-      'withdraw_records': 'Withdrawal Records',
-      'withdraw_amount_placeholder': 'Enter withdrawal amount (Min 700)',
-      'withdraw_amount_label': 'Withdrawal Amount',
-      'actual_arrival': 'Actual Received',
-      'handling_fee': 'Fee (18%)',
-      'bkash_number': 'bKash Number',
-      'bkash_setup': 'bKash Setup',
-      'confirm_withdraw': 'Confirm Withdrawal',
-      'payment_method': 'Payment Method',
-
-      // Tasks
-      'all_tasks': 'All',
-      'doing_tasks': 'Doing',
-      'review_tasks': 'Review',
-      'done_tasks': 'Done',
-      'open_task': 'Open Task',
-      'submit_task': 'Submit Task',
-      'reward': 'Reward:',
-      'start_task': 'Start Task',
-      'task_reward_per': 'Per Task Income',
-
-      // VIP / Packages
-      'vip_hall': 'VIP Hall',
-      'packages_benefits': 'Packages & Benefits',
-      'price': 'Price:',
-      'daily_income': 'Daily Income:',
-      'buy_now': 'Buy Now',
-      'join_now': 'Join Now',
-      'current_tier': 'Current Tier',
-      'task_count': 'Task Count',
-
-      // Personal
-      'avatar': 'Avatar',
-      'account_binding': 'Account Binding',
-      'usdt_address': 'USDT Address',
-      'set_now': 'Set Up'
-    },
-
-    hi: {
-      // Common & Navigation
-      'home': 'होम',
-      'hall': 'हॉल',
-      'records': 'वीआईपी',
-      'tasks': 'टास्क',
-      'mine': 'मेरा प्रोफाइल',
-      'login': 'लॉग इन',
-      'register': 'साइन अप',
-      'logout': 'साइन आउट',
-      'back': 'वापस',
-      'confirm': 'पुष्टि करें',
-      'cancel': 'रद्द करें',
-      'save': 'सहेजें',
-      'copy': 'कॉपी',
-      'copied': 'कॉपी हो गया',
-      'active': 'सक्रिय',
-      'pending': 'लंबित',
-      'completed': 'पूर्ण',
-      'failed': 'असफल',
-      'all': 'सभी',
-      'status': 'स्थिति',
-      'date': 'दिनांक',
-      'bdt': 'INR',
-      'customer_service_title': 'ग्राहक सेवा',
-      'customer_service_direct': 'सीधा समाधान',
-      'customer_service_telegram': 'व्यक्तिगत टेलीग्राम समर्थन',
-
-      // Home & Headers
-      'brand_name': 'PW New Media',
-      'hero_title': 'दैनिक कार्यों में लाएं PW New Media',
-      'hero_subtitle': 'आपके व्यक्तिगत स्पेस में आपका स्वागत है। सरल, पारदर्शी और आपके लिए बनाया गया डिजिटल प्लेटफॉर्म।',
-      'get_started': 'अभी शुरू करें',
-      'have_account': 'मेरा खाता है',
-      'start_today': 'आज ही शुरू करें',
-      'quick_access': 'त्वरित पहुंच',
-      'anytime_anywhere': 'कभी भी, कहीं भी',
-      'your_way': 'अपने तरीके से',
-      'smooth_experience': 'सहज और आरामदायक अनुभव',
-      'footer_text': 'आपकी हर शुरुआत शानदार हो',
-
-      // Login
-      'login_title': 'अपने खाते में लॉग इन करें',
-      'welcome_back': 'पुनः स्वागत है',
-      'login_subtitle': 'अपनी जानकारी देकर वहीं से शुरू करें जहाँ आपने छोड़ा था।',
-      'phone_label': 'फ़ोन नंबर',
-      'phone_placeholder': 'फ़ोन नंबर दर्ज करें',
-      'password_label': 'पासवर्ड',
-      'password_placeholder': 'अपना पासवर्ड दर्ज करें',
-      'forgot_password': 'पासवर्ड भूल गए?',
-      'remember_me': 'मुझे लॉग इन रखें',
-      'login_submit': 'लॉग इन करें',
-      'demo_login': 'डेमो खाते से त्वरित प्रवेश',
-      'new_here': 'यहाँ नए हैं?',
-      'create_account': 'नया खाता बनाएं',
-      'back_to_home': 'होमपेज पर वापस जाएं',
-      'login_success': 'लॉग इन सफल!',
-      'welcome_goldmine': 'PW New Media में स्वागत है',
-
-      // Register
-      'register_title': 'PW New Media में स्वागत है',
-      'register_subtitle': 'आपका विश्वसनीय डिजिटल आय मंच',
-      'sms_code_label': 'एसएमएस सत्यापन कोड',
-      'sms_code_placeholder': 'सत्यापन कोड दर्ज करें',
-      'send_sms_code': 'सत्यापन कोड भेजें',
-      'enter_password': 'अपना पासवर्ड दर्ज करें',
-      'confirm_password_label': 'पासवर्ड की पुष्टि करें',
-      'confirm_password_placeholder': 'पासवर्ड पुनः दर्ज करें',
-      'invite_code_label': 'निमंत्रण कोड',
-      'invite_code_placeholder': 'निमंत्रण कोड (यदि हो)',
-      'signup_submit': 'साइन अप करें',
-      'already_account': 'क्या पहले से खाता है?',
-      'register_success': 'पंजीकरण सफल!',
-
-      // Profile & Pass
-      'superior': 'मेरे वरिष्ठ:',
-      'account_number': 'खाता संख्या:',
-      'invite_code': 'निमंत्रण कोड:',
-      'member_id': 'आईडी:',
-      'total_balance': 'कुल शेष राशि',
-      'available_balance': 'उपलब्ध शेष',
-      'frozen_balance': 'फ्रीज बैलेंस',
-      'today_income': 'आज की कुल आय',
-      'today_task_income': 'आज की कार्य आय',
-      'total_revenue': 'कुल आय',
-      'incomplete_missions': 'अधूरे कार्य',
-      'completed_missions': 'पूर्ण कार्य',
-      'my_pass': 'मेरा पास',
-      'withdraw': 'निकासी',
-      'deposit': 'जमा',
-      'team_report': 'टीम रिपोर्ट',
-      'personal_info': 'व्यक्तिगत जानकारी',
-      'task_records': 'कार्य रिकॉर्ड',
-      'customer_service': 'ग्राहक सेवा',
-      'share': 'शेयर करें',
-      'change_language': 'भाषा बदलें',
-
-      // Team Report
-      'team_report_title': 'टीम रिपोर्ट',
-      'my_team': 'मेरी टीम',
-      'team_balance': 'टीम बैलेंस',
-      'team_flow': 'टीम फ्लो',
-      'team_recharge': 'टीम कुल रिचार्ज',
-      'team_cashout': 'टीम कुल निकासी',
-      'first_charge_count': 'प्रथम रिचार्ज संख्या',
-      'direct_push_count': 'प्रत्यक्ष आमंत्रण (स्तर 1)',
-      'total_team_size': 'कुल टीम आकार',
-      'new_team_members': 'नए सदस्य (24 घंटे)',
-      'tier_1': 'स्तर 1',
-      'tier_2': 'स्तर 2',
-      'tier_3': 'स्तर 3',
-      'tier_1_direct': 'स्तर 1 (प्रत्यक्ष)',
-      'tier_2_label': 'स्तर 2',
-      'tier_3_label': 'स्तर 3',
-      'total_people': 'कुल सदस्य',
-      'recharge_amount': 'रिचार्ज राशि',
-      'rebate': 'कमीशन',
-      'rebate_10': '10% कमीशन',
-      'rebate_5': '5% कमीशन',
-      'rebate_2': '2% कमीशन',
-      'tier_1_comm': 'स्तर 1 कमीशन (प्रत्यक्ष):',
-      'tier_2_comm': 'स्तर 2 कमीशन:',
-      'tier_3_comm': 'स्तर 3 कमीशन:',
-      'copy_code': 'कोड कॉपी करें',
-      'invite_page': 'आमंत्रण पृष्ठ',
-      'your_invite_code': 'आपका निमंत्रण कोड:',
-      'package': 'पैकेज',
-      'balance': 'बैलेंस',
-      'recharge': 'रिचार्ज',
-      'joined': 'शामिल हुए:',
-      'member_list': 'सदस्य सूची',
-      'real_data': 'वास्तविक डेटा',
-      'empty_team_all': 'अभी तक कोई सदस्य शामिल नहीं हुआ',
-      'empty_team_tier': 'इस स्तर में अभी कोई सदस्य नहीं है',
-      'invite_hint': 'मित्रों को निमंत्रण लिंक या कोड भेजें। स्तर 1 से 10%, स्तर 2 से 5%, और स्तर 3 से 2% कमीशन सीधे आपके खाते में प्राप्त करें!',
-      'loading_team': 'डेटाबेस से टीम लोड हो रही है...',
-
-      // Withdraw & Payment
-      'withdraw_title': 'निकासी',
-      'withdraw_details': 'निकासी विवरण',
-      'withdraw_history': 'निकासी इतिहास',
-      'withdraw_records': 'निकासी रिकॉर्ड',
-      'withdraw_amount_placeholder': 'निकासी राशि दर्ज करें',
-      'withdraw_amount_label': 'निकासी राशि',
-      'actual_arrival': 'वास्तविक प्राप्त राशि',
-      'handling_fee': 'शुल्क (18%)',
-      'bkash_number': 'खाता नंबर',
-      'bkash_setup': 'खाता सेट करें',
-      'confirm_withdraw': 'निकासी की पुष्टि करें',
-      'payment_method': 'भुगतान विधि',
-
-      // Tasks
-      'all_tasks': 'सभी',
-      'doing_tasks': 'प्रगति में',
-      'review_tasks': 'समीक्षाधीन',
-      'done_tasks': 'पूर्ण',
-      'open_task': 'कार्य खोलें',
-      'submit_task': 'कार्य सबमिट करें',
-      'reward': 'इनाम:',
-      'start_task': 'कार्य शुरू करें',
-      'task_reward_per': 'प्रति कार्य आय',
-
-      // VIP / Packages
-      'vip_hall': 'वीआईपी हॉल',
-      'packages_benefits': 'पैकेज और लाभ',
-      'price': 'मूल्य:',
-      'daily_income': 'दैनिक आय:',
-      'buy_now': 'अभी खरीदें',
-      'join_now': 'अभी जुड़ें',
-      'current_tier': 'वर्तमान स्तर',
-      'task_count': 'कार्य संख्या',
-
-      // Personal
-      'avatar': 'अवतार',
-      'account_binding': 'खाता बाइंडिंग',
-      'usdt_address': 'USDT पता',
-      'set_now': 'सेट करें'
-    },
-    en: {
-      // Common & Navigation
-      'home': 'Home',
-      'hall': 'Hall',
-      'records': 'VIP',
-      'tasks': 'Tasks',
-      'mine': 'Mine',
-      'login': 'Log in',
-      'register': 'Create an account',
-      'logout': 'Sign Out',
-      'back': 'Back',
-      'confirm': 'Confirm',
-      'cancel': 'Cancel',
-      'save': 'Save',
-      'copy': 'Copy',
-      'copied': 'Copied',
-      'active': 'Active',
-      'pending': 'Pending',
-      'completed': 'Completed',
-      'failed': 'Failed',
-      'all': 'All',
-      'status': 'Status',
-      'date': 'Date',
-      'bdt': 'BDT',
-
-      // Home & Headers
-      'brand_name': 'PW New Media',
-      'hero_title': 'Bring PW New Media to Daily Tasks',
-      'hero_subtitle': 'Welcome to your personal space. Simple, transparent, and built for you.',
-      'get_started': 'Get Started',
-      'have_account': 'I Have an Account',
-      'start_today': 'Start Today',
-      'quick_access': 'Quick Access',
-      'anytime_anywhere': 'Anytime, Anywhere',
-      'your_way': 'Your Way',
-      'smooth_experience': 'Smooth Experience',
-      'footer_text': 'May your every beginning be prosperous',
-
-      // Login
-      'login_title': 'Log in to continue to your account.',
-      'welcome_back': 'Welcome back',
-      'login_welcome_back': 'Welcome back',
-      'login_subtitle': 'Log in to continue to your account.',
-      'country_label': 'Country',
-      'country_bd': 'Bangladesh (+880)',
-      'country_in': 'India (+91)',
-      'phone_label': 'Phone number',
-      'phone_placeholder': 'Enter your phone number',
-      'password_label': 'Password',
-      'forgot_password': 'Forgot password?',
-      'password_placeholder': 'Enter your password',
-      'keep_logged_in': 'Keep me logged in',
-      'remember_me': 'Keep me logged in',
-      'login_btn': 'Log in',
-      'login_submit': 'Log in',
-      'new_here': 'New here?',
-      'create_account': 'Create an account',
-      'terms_service': 'Terms of Service',
-      'privacy_policy': 'Privacy Policy',
-      'err_valid_phone': 'Enter a valid phone number',
-      'err_enter_password': 'Enter your password',
-      'back_to_home': 'Back to Homepage',
-      'login_success': 'Login successful!',
-      'welcome_goldmine': 'Welcome to PW New Media',
-
-      // Register
-      'register_title': 'Welcome to PW New Media',
-      'register_subtitle': 'Your Trusted Digital Earning Platform',
       'sms_code_label': 'SMS Verification Code',
       'sms_code_placeholder': 'Enter SMS verification code',
       'send_sms_code': 'Send Code',
@@ -648,8 +297,8 @@
       'total_balance': 'Total Balance',
       'available_balance': 'Available Balance',
       'frozen_balance': 'Frozen',
-      'today_income': 'Today Total Income',
-      'today_task_income': 'Today Task Income',
+      'today_income': "Today's Income",
+      'today_task_income': "Today's Task Income",
       'total_revenue': 'Total Revenue',
       'incomplete_missions': 'Incomplete Tasks',
       'completed_missions': 'Completed Tasks',
@@ -670,7 +319,7 @@
       'team_flow': 'Team Flow (BDT)',
       'team_recharge': 'Team Recharge (BDT)',
       'team_cashout': 'Team Cashout (BDT)',
-      'first_charge_count': 'First Recharge Count',
+      'first_charge_count': 'First Deposits',
       'direct_push_count': 'Direct Referrals (Tier 1)',
       'total_team_size': 'Total Team Size',
       'new_team_members': 'New Members (24h)',
@@ -700,15 +349,15 @@
       'real_data': 'Real Data',
       'empty_team_all': 'No team members joined yet',
       'empty_team_tier': 'No members in this tier yet',
-      'invite_hint': 'Share your invitation link or code to invite friends. Earn Tier 1 (10%), Tier 2 (5%), and Tier 3 (2%) commission directly to your balance!',
-      'loading_team': 'Loading team from database...',
+      'invite_hint': 'Share your referral link or code with friends. Earn 10% on Tier 1, 5% on Tier 2, and 2% on Tier 3 directly to your balance!',
+      'loading_team': 'Loading team records from database...',
 
       // Withdraw & Payment
       'withdraw_title': 'Withdraw',
       'withdraw_details': 'Withdrawal Details',
       'withdraw_history': 'Withdrawal History',
       'withdraw_records': 'Withdrawal Records',
-      'withdraw_amount_placeholder': 'Enter withdrawal amount (min 700)',
+      'withdraw_amount_placeholder': 'Enter withdrawal amount (Min 700)',
       'withdraw_amount_label': 'Withdrawal Amount',
       'actual_arrival': 'Actual Received',
       'handling_fee': 'Fee (18%)',
@@ -743,762 +392,1015 @@
       'account_binding': 'Account Binding',
       'usdt_address': 'USDT Address',
       'set_now': 'Set Up'
+    },
+
+    ar: {
+      // Common & Navigation
+      'home': 'الرئيسية',
+      'hall': 'القاعة',
+      'records': 'الأعضاء',
+      'tasks': 'المهام',
+      'mine': 'حسابي',
+      'login': 'تسجيل الدخول',
+      'register': 'إنشاء حساب',
+      'logout': 'تسجيل الخروج',
+      'back': 'رجوع',
+      'confirm': 'تأكيد',
+      'cancel': 'إلغاء',
+      'save': 'حفظ',
+      'copy': 'نسخ',
+      'copied': 'تم النسخ',
+      'active': 'نشط',
+      'pending': 'قيد الانتظار',
+      'completed': 'مكتمل',
+      'failed': 'فشل',
+      'all': 'الكل',
+      'status': 'الحالة',
+      'date': 'التاريخ',
+      'bdt': 'BDT',
+      'customer_service_title': 'خدمة العملاء',
+      'customer_service_direct': 'حل مباشر',
+      'customer_service_telegram': 'تواصل شخصي عبر تيليجرام',
+
+      // Home & Headers
+      'brand_name': 'PW New Media',
+      'hero_title': 'اجعل PW New Media جزءاً من أرباحك اليومية',
+      'hero_subtitle': 'مرحباً بك في منصتك الرقمية الشخصية. بسيطة وشفافة ومصممة من أجلك.',
+      'get_started': 'ابدأ الآن',
+      'have_account': 'لدي حساب بالفعل',
+      'start_today': 'ابدأ اليوم',
+      'quick_access': 'وصول سريع',
+      'anytime_anywhere': 'في أي وقت وأي مكان',
+      'your_way': 'بطريقتك الخاصة',
+      'smooth_experience': 'تجربة سلسة ومريحة',
+      'footer_text': 'لتكن كل بداية لك مليئة بالنجاح',
+
+      // Login
+      'login_title': 'سجّل الدخول للمتابعة إلى حسابك.',
+      'welcome_back': 'مرحباً بعودتك',
+      'login_welcome_back': 'مرحباً بعودتك',
+      'login_subtitle': 'سجّل الدخول للمتابعة إلى حسابك.',
+      'country_label': 'الدولة',
+      'country_bd': '🇧🇩 بنغلاديش (+880)',
+      'country_eg': '🇪🇬 مصر (+20)',
+      'country_in': '🇮🇳 الهند (+91)',
+      'phone_label': 'رقم الهاتف',
+      'phone_placeholder': 'أدخل رقم هاتفك',
+      'password_label': 'كلمة المرور',
+      'forgot_password': 'نسيت كلمة المرور؟',
+      'password_placeholder': 'أدخل كلمة المرور',
+      'keep_logged_in': 'تذكر تسجيل دخولي',
+      'remember_me': 'تذكر تسجيل دخولي',
+      'login_btn': 'تسجيل الدخول',
+      'login_submit': 'تسجيل الدخول',
+      'demo_login': 'دخول سريع بالحساب التجريبي',
+      'new_here': 'جديد هنا؟',
+      'create_account': 'إنشاء حساب',
+      'terms_service': 'شروط الخدمة',
+      'privacy_policy': 'سياسة الخصوصية',
+      'err_valid_phone': 'أدخل رقم هاتف صحيح',
+      'err_enter_password': 'أدخل كلمة المرور',
+      'back_to_home': 'العودة إلى الرئيسية',
+      'login_success': 'تم تسجيل الدخول بنجاح!',
+      'welcome_goldmine': 'مرحباً بك في PW New Media',
+
+      // Register
+      'register_title': 'إنشاء حساب',
+      'register_subtitle': 'أدخل بياناتك لإنشاء حساب جديد',
+      'sms_code_label': 'رمز التحقق عبر SMS',
+      'sms_code_placeholder': 'أدخل رمز التحقق SMS',
+      'send_sms_code': 'إرسال الرمز',
+      'enter_password': 'أدخل كلمة المرور',
+      'confirm_password_label': 'تأكيد كلمة المرور',
+      'confirm_password_placeholder': 'أعد إدخال كلمة المرور',
+      'invite_code_label': 'رمز الدعوة',
+      'invite_code_placeholder': 'رمز الدعوة (اختياري)',
+      'signup_submit': 'سجل الآن',
+      'already_account': 'لديك حساب بالفعل؟',
+      'register_success': 'تم التسجيل بنجاح!',
+
+      // Profile & Pass
+      'superior': 'المشرف الأعلى:',
+      'account_number': 'رقم الحساب:',
+      'invite_code': 'رمز الدعوة:',
+      'member_id': 'المعرف:',
+      'total_balance': 'الرصيد الإجمالي',
+      'available_balance': 'الرصيد المتاح',
+      'frozen_balance': 'مجمد',
+      'today_income': 'إجمالي دخل اليوم',
+      'today_task_income': 'دخل المهام اليوم',
+      'total_revenue': 'إجمالي الإيرادات',
+      'incomplete_missions': 'مهام غير مكتملة',
+      'completed_missions': 'مهام مكتملة',
+      'my_pass': 'بطاقتي',
+      'withdraw': 'سحب',
+      'deposit': 'إيداع',
+      'team_report': 'تقرير الفريق',
+      'personal_info': 'المعلومات الشخصية',
+      'task_records': 'سجل المهام',
+      'customer_service': 'خدمة العملاء',
+      'share': 'مشاركة',
+      'change_language': 'تغيير اللغة',
+
+      // Team Report
+      'team_report_title': 'تقرير الفريق',
+      'my_team': 'فريقي',
+      'team_balance': 'رصيد الفريق',
+      'team_flow': 'حجم تداول الفريق',
+      'team_recharge': 'إجمالي شحن الفريق',
+      'team_cashout': 'إجمالي سحب الفريق',
+      'first_charge_count': 'عدد الإيداعات الأولى',
+      'direct_push_count': 'الإحالات المباشرة (المستوى 1)',
+      'total_team_size': 'إجمالي حجم الفريق',
+      'new_team_members': 'أعضاء جدد (24 ساعة)',
+      'tier_1': 'المستوى 1',
+      'tier_2': 'المستوى 2',
+      'tier_3': 'المستوى 3',
+      'tier_1_direct': 'المستوى 1 (مباشر)',
+      'tier_2_label': 'المستوى 2',
+      'tier_3_label': 'المستوى 3',
+      'total_people': 'إجمالي الأعضاء',
+      'recharge_amount': 'مبلغ الشحن',
+      'rebate': 'العمولة',
+      'rebate_10': 'عمولة 10%',
+      'rebate_5': 'عمولة 5%',
+      'rebate_2': 'عمولة 2%',
+      'tier_1_comm': 'عمولة المستوى 1 (مباشر):',
+      'tier_2_comm': 'عمولة المستوى 2:',
+      'tier_3_comm': 'عمولة المستوى 3:',
+      'copy_code': 'نسخ الرمز',
+      'invite_page': 'صفحة الدعوة',
+      'your_invite_code': 'رمز الدعوة الخاص بك:',
+      'package': 'الباقة',
+      'balance': 'الرصيد',
+      'recharge': 'إعادة الشحن',
+      'joined': 'انضم:',
+      'member_list': 'قائمة الأعضاء',
+      'real_data': 'بيانات حقيقية',
+      'empty_team_all': 'لم ينضم أي عضو إلى فريقك بعد',
+      'empty_team_tier': 'لا يوجد أعضاء في هذا المستوى بعد',
+      'invite_hint': 'شارك رابط أو رمز الدعوة مع أصدقائك. اربح 10% في المستوى الأول و5% في المستوى الثاني و2% في المستوى الثالث مباشرة إلى رصيدك!',
+      'loading_team': 'جاري تحميل بيانات الفريق من قاعدة البيانات...',
+
+      // Withdraw & Payment
+      'withdraw_title': 'السحب',
+      'withdraw_details': 'تفاصيل السحب',
+      'withdraw_history': 'سجل السحب',
+      'withdraw_records': 'سجلات السحب',
+      'withdraw_amount_placeholder': 'أدخل مبلغ السحب',
+      'withdraw_amount_label': 'مبلغ السحب',
+      'actual_arrival': 'المبلغ المستلم فعلياً',
+      'handling_fee': 'الرسوم (18%)',
+      'bkash_number': 'رقم bKash',
+      'bkash_setup': 'إعداد bKash',
+      'confirm_withdraw': 'تأكيد السحب',
+      'payment_method': 'طريقة الدفع',
+
+      // Tasks
+      'all_tasks': 'الكل',
+      'doing_tasks': 'قيد التنفيذ',
+      'review_tasks': 'قيد المراجعة',
+      'done_tasks': 'مكتمل',
+      'open_task': 'فتح المهمة',
+      'submit_task': 'إرسال المهمة',
+      'reward': 'المكافأة:',
+      'start_task': 'ابدأ المهمة',
+      'task_reward_per': 'ربح كل مهمة',
+
+      // VIP / Packages
+      'vip_hall': 'قاعة VIP',
+      'packages_benefits': 'الباقات والمزايا',
+      'price': 'السعر:',
+      'daily_income': 'الدخل اليومي:',
+      'buy_now': 'اشترِ الآن',
+      'join_now': 'انضم الآن',
+      'current_tier': 'المستوى الحالي',
+      'task_count': 'عدد المهام',
+
+      // Personal
+      'avatar': 'الصورة الشخصية',
+      'account_binding': 'ربط الحساب',
+      'usdt_address': 'عنوان USDT',
+      'set_now': 'إعداد'
     }
   };
 
-  // Phrases to replace throughout the DOM (Bengali -> Target language)
+  // Phrases to replace throughout the DOM (Bengali key -> { en, ar, bn? })
   const phraseDictionary = {
-    "আলো": { bn: "PW New Media", en: "PW New Media", hi: "PW New Media" },
-    "Alo": { bn: "PW New Media", en: "PW New Media", hi: "PW New Media" },
-    "প্রথম পাতা": { en: "Home", hi: "होम" },
-    "হল": { en: "Hall", hi: "हॉल" },
-    "সদস্য": { en: "VIP", hi: "वीआईपी" },
-    "টাস্ক": { en: "Tasks", hi: "टास्क" },
-    "আমার": { en: "Mine", hi: "प्रोफाइल" },
-    "লগইন": { en: "Login", hi: "लॉग इन" },
-    "অ্যাকাউন্ট খুলুন": { en: "Sign Up", hi: "साइन अप" },
-    "নিশ্চিতভাবে শুরু করুন": { en: "Get Started Now", hi: "शुरू करें" },
-    "আমার অ্যাকাউন্ট আছে": { en: "I Have an Account", hi: "मेरा खाता है" },
-    "সহজ, স্বচ্ছ এবং আপনার জন্য তৈরি": { en: "Simple, transparent, and built for you", hi: "सरल, पारदर्शी और आपके लिए निर्मित" },
-    "স্বাগতম কার্ড": { en: "Welcome Card", hi: "स्वागत कार्ड" },
-    "আপনার স্পেস": { en: "Your Space", hi: "आपका स्थान" },
-    "শুরু হোক আজই": { en: "Start Today", hi: "आज ही शुरू करें" },
-    "দ্রুত অ্যাক্সেস": { en: "Quick Access", hi: "त्वरित पहुँच" },
-    "যেকোনো সময়, যেকোনো জায়গায়": { en: "Anytime, Anywhere", hi: "कभी भी, कहीं भी" },
-    "আপনার মতো করে": { en: "Your Own Way", hi: "अपने तरीके से" },
-    "সহজ ও আরামদায়ক অভিজ্ঞতা": { en: "Smooth & Comfortable Experience", hi: "सहज और आरामदायक अनुभव" },
-    "আপনার প্রতিটি শুরু হোক সুন্দর": { en: "May every beginning bring you prosperity", hi: "आपकी हर शुरुआत समृद्ध हो" },
-    "আপনার নতুন শুরু এখানেই": { en: "Your fresh start begins here", hi: "आपकी नई शुरुआत यहाँ से होती है" },
-    "প্রতিদিনের কাজে আনুন PW New Media": { en: "Bring Fresh Light to Your Daily Earnings", hi: "अपनी दैनिक आय में PW New Media लाएँ" },
-    "আপনার ব্যক্তিগত স্পেসে স্বাগতম": { en: "Welcome to your personal space", hi: "आपके व्यक्तिगत स्पेस में स्वागत है" },
-    "Welcome back": { bn: "আবার স্বাগতম", en: "Welcome back", hi: "वापसी पर स्वागत है" },
-    "আবার স্বাগতম": { bn: "আবার স্বাগতম", en: "Welcome back", hi: "वापसी पर स्वागत है" },
-    "Log in to continue to your account.": { bn: "আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।", en: "Log in to continue to your account.", hi: "अपने खाते में जारी रखने के लिए लॉगिन करें।" },
-    "আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।": { bn: "আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।", en: "Log in to continue to your account.", hi: "अपने खाते में जारी रखने के लिए लॉगिन करें।" },
-    "Country": { bn: "দেশ", en: "Country", hi: "देश" },
-    "দেশ": { bn: "দেশ", en: "Country", hi: "देश" },
-    "Bangladesh (+880)": { bn: "বাংলাদেশ (+880)", en: "Bangladesh (+880)", hi: "बांग्लादेश (+880)" },
-    "বাংলাদেশ (+880)": { bn: "বাংলাদেশ (+880)", en: "Bangladesh (+880)", hi: "बांग्लादेश (+880)" },
-    "Phone number": { bn: "ফোন নম্বর", en: "Phone number", hi: "फ़ोन नंबर" },
-    "ফোন নম্বর": { bn: "ফোন নম্বর", en: "Phone number", hi: "फ़ोन नंबर" },
-    "Enter your phone number": { bn: "আপনার ফোন নম্বর লিখুন", en: "Enter your phone number", hi: "अपना फ़ोन नंबर दर्ज करें" },
-    "আপনার ফোন নম্বর লিখুন": { bn: "আপনার ফোন নম্বর লিখুন", en: "Enter your phone number", hi: "अपना फ़ोन नंबर दर्ज करें" },
-    "Password": { bn: "পাসওয়ার্ড", en: "Password", hi: "पासवर्ड" },
-    "পাসওয়ার্ড": { bn: "পাসওয়ার্ড", en: "Password", hi: "पासवर्ड" },
-    "Forgot password?": { bn: "পাসওয়ার্ড ভুলে গেছেন?", en: "Forgot password?", hi: "पासवर्ड भूल गए?" },
-    "পাসওয়ার্ড ভুলে গেছেন?": { bn: "পাসওয়ার্ড ভুলে গেছেন?", en: "Forgot password?", hi: "पासवर्ड भूल गए?" },
-    "Enter your password": { bn: "আপনার পাসওয়ার্ড লিখুন", en: "Enter your password", hi: "अपना पासवर्ड दर्ज करें" },
-    "আপনার পাসওয়ার্ড লিখুন": { bn: "আপনার পাসওয়ার্ড লিখুন", en: "Enter your password", hi: "अपना पासवर्ड दर्ज करें" },
-    "Keep me logged in": { bn: "আমাকে লগইন রাখুন", en: "Keep me logged in", hi: "मुझे लॉग इन रखें" },
-    "আমাকে লগইন রাখুন": { bn: "আমাকে লগইন রাখুন", en: "Keep me logged in", hi: "मुझे लॉग इन रखें" },
-    "Log in": { bn: "লগইন", en: "Log in", hi: "लॉग इन" },
-    "লগইন": { bn: "লগইন", en: "Log in", hi: "लॉग इन" },
-    "New here?": { bn: "নতুন?", en: "New here?", hi: "यहाँ नए हैं?" },
-    "নতুন?": { bn: "নতুন?", en: "New here?", hi: "यहाँ नए हैं?" },
-    "Create an account": { bn: "অ্যাকাউন্ট খুলুন", en: "Create an account", hi: "खाता बनाएँ" },
-    "অ্যাকাউন্ট খুলুন": { bn: "অ্যাকাউন্ট খুলুন", en: "Create an account", hi: "खाता बनाएँ" },
-    "Terms of Service": { bn: "সেবার শর্তাবলি", en: "Terms of Service", hi: "सेवा की शर्तें" },
-    "সেবার শর্তাবলি": { bn: "সেবার শর্তাবলি", en: "Terms of Service", hi: "सेवा की शर्तें" },
-    "Privacy Policy": { bn: "গোপনীয়তা নীতি", en: "Privacy Policy", hi: "गोपनीयता नीति" },
-    "গোপনীয়তা নীতি": { bn: "গোপনীয়তা নীতি", en: "Privacy Policy", hi: "गोपनीयता नीति" },
-    "Enter a valid phone number": { bn: "সঠিক ফোন নম্বর লিখুন", en: "Enter a valid phone number", hi: "एक मान्य फ़ोन नंबर दर्ज करें" },
-    "সঠিক ফোন নম্বর লিখুন": { bn: "সঠিক ফোন নম্বর লিখুন", en: "Enter a valid phone number", hi: "एक मान्य फ़ोन नंबर दर्ज करें" },
-    "আপনার অ্যাকাউন্টে লগইন করুন": { en: "Log in to continue to your account.", hi: "अपने खाते में जारी रखने के लिए लॉगिन करें।" },
-    "আপনার তথ্য দিয়ে লগইন করে যেখানে থেমেছিলেন, সেখান থেকেই শুরু করুন।": { en: "Log in to continue to your account.", hi: "अपने विवरण से लॉग इन करके जहाँ रुके थे वहीं से शुरू करें।" },
-    "আমাকে লগইন অবস্থায় রাখুন": { en: "Keep me logged in", hi: "मुझे लॉग इन रखें" },
-    "লগইন করুন": { en: "Log In", hi: "लॉग इन करें" },
-    "নতুন এখানে?": { en: "New here?", hi: "यहाँ नए हैं?" },
-    "নতুন অ্যাকাউন্ট তৈরি করুন": { en: "Create an account", hi: "नया खाता बनाएँ" },
-    "হোমপেজে ফিরে যান": { en: "Back to Homepage", hi: "होमपेज पर वापस जाएँ" },
-    "লগইন সফল!": { en: "Login Successful!", hi: "लॉग इन सफल!" },
-    "স্বর্ণের খনিতে স্বাগতম": { en: "Welcome to Gold Mine", hi: "गोल्ड माइन में स्वागत है" },
-    "দেখুন": { en: "Show", hi: "देखें" },
-    "আপনার নির্ভরযোগ্য ডিজিটাল আয়ের প্ল্যাটফর্ম": { en: "Your Trusted Digital Income Platform", hi: "आपका विश्वसनीय डिजिटल कमाई का मंच" },
-    "এসএমএস যাচাইকরণ কোড": { en: "SMS Verification Code", hi: "एसएमएस सत्यापन कोड" },
-    "যাচাইকরণ কোড পাঠান": { en: "Send Code", hi: "सत्यापन कोड भेजें" },
-    "পাসওয়ার্ড নিশ্চিত করুন": { en: "Confirm Password", hi: "पासवर्ड की पुष्टि करें" },
-    "আমন্ত্রণ কোড": { en: "Invitation Code", hi: "निमंत्रण कोड" },
-    "এখন সাইইন আপ করুন": { en: "Sign Up Now", hi: "अभी साइन अप करें" },
-    "আগে থেকেই অ্যাকাউন্ট আছে?": { en: "Already have an account?", hi: "पहले से खाता है?" },
-    "নিবন্ধন সফল!": { en: "Registration Successful!", hi: "पंजीकरण सफल!" },
-    "আমার উচ্চতর:": { en: "My Superior:", hi: "मेरे वरिष्ठ:" },
-    "হিসাব নাম্বার:": { en: "Account:", hi: "खाता संख्या:" },
-    "আমন্ত্রণ কোড:": { en: "Invite Code:", hi: "निमंत्रण कोड:" },
-    "সাইন আউট": { en: "Sign Out", hi: "साइन आउट" },
-    "আমার পাস": { en: "My Pass", hi: "मेरा पास" },
-    "প্রত্যাহার": { en: "Withdrawal", hi: "निकासी" },
-    "জমা": { en: "Deposit", hi: "जमा" },
-    "দলের রিপোর্ট": { en: "Team Report", hi: "टीम रिपोर्ट" },
-    "ব্যক্তিগত তথ্য": { en: "Personal Info", hi: "व्यक्तिगत जानकारी" },
-    "কাজের রেকর্ড": { en: "Task Records", hi: "कार्य रिकॉर्ड" },
-    "গ্রাহক সেবা": { en: "Support", hi: "ग्राहक सहायता" },
-    "শেয়ার করুন": { en: "Share", hi: "शेयर करें" },
-    "আজকের মোট আয়:": { en: "Today's Income:", hi: "आज की कुल आय:" },
-    "আজকের কাজ আয়:": { en: "Task Income:", hi: "आज की कार्य आय:" },
-    "মোট রাজস্ব": { en: "Total Revenue", hi: "कुल राजस्व" },
-    "অসম্পূর্ণ মিশন": { en: "Incomplete Tasks", hi: "अपूर्ण मिशन" },
-    "সম্পন্ন মিশন": { en: "Completed Tasks", hi: "पूर्ण मिशन" },
-    "হিমায়িত": { en: "Frozen", hi: "फ्रीज़" },
-    "উপলব্ধ ব্যালেন্স": { en: "Available Balance", hi: "उपलब्ध बैलेंस" },
-    "মোট ব্যালেন্স": { en: "Total Balance", hi: "कुल बैलेंस" },
-    "মোট দলের ভারসাম্য(BDT)": { en: "Team Balance (BDT)", hi: "टीम बैलेंस" },
-    "মোট দলের প্রবাহ(BDT)": { en: "Team Flow (BDT)", hi: "टीम टर्नओवर" },
-    "মোট রিচার্জ(BDT)": { en: "Total Recharge (BDT)", hi: "कुल रिचार्ज" },
-    "মোট নগদ আউট(BDT)": { en: "Total Cashout (BDT)", hi: "कुल निकासी" },
-    "প্রথম চার্জের সংখ্যা": { en: "First Deposit Count", hi: "प्रथम रिचार्ज संख्या" },
-    "সরাসরি ধাক্কা নম্বর": { en: "Direct Referrals (Tier 1)", hi: "प्रत्यक्ष रेफरल (टीयर 1)" },
-    "দলের মোট আকার": { en: "Total Team Size", hi: "टीम का कुल आकार" },
-    "নতুন দল নম্বর": { en: "New Members (24h)", hi: "नए सदस्य (24 घंटे)" },
-    "আমার দল": { en: "My Team", hi: "मेरी टीम" },
-    "প্রথম স্তর": { en: "Tier 1", hi: "पहला स्तर" },
-    "দ্বিতীয় স্তর": { en: "Tier 2", hi: "दूसरा स्तर" },
-    "তৃতীয় স্তর": { en: "Tier 3", hi: "तीसरा स्तर" },
-    "এই স্তরে এখনো কোনো সদস্য যুক্ত হয়নি": { en: "No members joined in this tier yet", hi: "इस स्तर में अभी कोई सदस्य नहीं जुड़ा है" },
-    " জন": { en: " members", hi: " सदस्य" },
-    "উত্তোলন পাসওয়ার্ড": { en: "Withdrawal Password", hi: "निकासी पासवर्ड" },
-    "ফান্ড পাসওয়ার্ড": { en: "Fund Password", hi: "फंड पासवर्ड" },
-    "উত্তোলন পাসওয়ার্ড লিখুন": { en: "Enter withdrawal password", hi: "निकासी पासवर्ड दर्ज करें" },
-    "৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন": { en: "Enter 6-digit withdrawal password", hi: "6-अंकीय निकासी पासवर्ड दर्ज करें" },
-    "কনফার্ম পাসওয়ার্ড": { en: "Confirm Password", hi: "कन्फर्म पासवर्ड" },
-    "কনফার্ম পাসওয়ার্ড লিখুন": { en: "Enter confirm password", hi: "कन्फर्म पासवर्ड दर्ज करें" },
-    "৬ ডিজিটের পাসওয়ার্ড কনফার্ম করুন": { en: "Confirm 6-digit password", hi: "6-अंकीय पासवर्ड कन्फर्म करें" },
-    "কার্যপ্রণালী সফলভাবে জমা দেওয়া হয়েছে": { en: "Operation submitted successfully", hi: "प्रक्रिया सफलतापूर्वक सबमिट की गई" },
-    "✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)": { en: "✓ Permanently Saved (One-time)", hi: "✓ स्थायी रूप से सुरक्षित (एक बार)" },
-    "🔒 সংরক্ষিত": { en: "🔒 Saved", hi: "🔒 सुरक्षित" },
-    "আপনার ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সফলভাবে এককালীন সংরক্ষণ করা হয়েছে। এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়।": { en: "Your 6-digit withdrawal password has been permanently saved. It cannot be changed or edited.", hi: "आपका 6-अंकीय निकासी पासवर्ड स्थायी रूप से सुरक्षित कर दिया गया है। इसे अब बदला या संपादित नहीं किया जा सकता।" },
-    "পছন্দ করুন": { en: "Select Method", hi: "चुनें" },
-    "বিকাশ সেট নেই": { en: "bKash Not Bound", hi: "bKash सेट नहीं है" },
-    "নগদ সেট নেই": { en: "Nagad Not Bound", hi: "Nagad सेट नहीं है" },
-    "USDT সেট নেই": { en: "USDT Not Bound", hi: "USDT सेट नहीं है" },
-    "প্রত্যাহার পদ্ধতি": { en: "Withdrawal Method", hi: "निकासी विधि" },
-    "তোলা টাকার পরিমাণ": { en: "Withdrawal Amount", hi: "निकासी राशि" },
-    "তোলা টাকার": { en: "Withdrawal", hi: "निकासी" },
-    "পরিমাণ": { en: "Amount", hi: "राशि" },
-    "প্রত্যাহার পরিমাণ লিখুন দয়া করে": { en: "Please enter withdrawal amount", hi: "कृपया निकासी राशि दर्ज करें" },
-    "অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন": { en: "Please enter fund password", hi: "कृपया फंड पासवर्ड दर्ज करें" },
-    "৬ ডিজিটের ফান্ডের পাসওয়ার্ড লিখুন": { en: "Enter 6-digit fund password", hi: "6-अंकीय फंड पासवर्ड दर्ज करें" },
-    "মাসিক উত্তোলন 0 frecuencia": { en: "Monthly withdrawal 0 frequency", hi: "मासिक निकासी 0 आवृत्ति" },
-    "BDT উত্তোলন 48-96 ঘণ্টার মধ্যে আসে": { en: "BDT withdrawal arrives within 48-96 hours", hi: "BDT निकासी 48-96 घंटों के भीतर आती है" },
-    "USDT প্রত্যাহার 12 ঘণ্টার মধ্যে আসে": { en: "USDT withdrawal arrives within 12 hours", hi: "USDT निकासी 12 घंटों के भीतर आती है" },
-    "দলের তথ্য লোড হচ্ছে…": { en: "Loading team info...", hi: "टीम की जानकारी लोड हो रही है..." },
-    "অবস্থান": { en: "VIP", hi: "वीआईपी" },
-    "ভিআইপি হল": { en: "VIP Hall", hi: "वीआईपी हॉल" },
-    "উত্তোলন": { en: "Withdraw", hi: "निकासी" },
-    "হোম": { en: "Home", hi: "होम" },
-    "ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম": { en: "Investment & Mission Platform", hi: "निवेश एवं मिशन प्लेटफॉर्म" },
-    "প্রতিদিনের কাজে আনুন": { en: "Bring to Daily Earnings", hi: "दैनिक आय में लाएं" },
-    "ভারত (+91)": { en: "India (+91)", hi: "भारत (+91)" },
-    "সাইন আপ করুন": { en: "Sign Up", hi: "साइन अप करें" },
-    "নিবন্ধন করুন": { en: "Register", hi: "पंजीकरण करें" },
-    "শুরু করুন": { en: "Get Started", hi: "शुरू करें" },
-    "এখনই শুরু করুন": { en: "Start Now", hi: "अभी शुरू करें" },
-    "রিওয়ার্ড জিতুন": { en: "Win Rewards", hi: "रिवॉर्ड जीतें" },
-    "দ্রুত পেমেন্ট": { en: "Fast Payment", hi: "त्वरित भुगतान" },
-    "নির্ভরযোগ্য সিস্টেম": { en: "Reliable System", hi: "विश्वसनीय प्रणाली" },
-    "সহজ কাজ": { en: "Easy Tasks", hi: "सरल कार्य" },
-    "একসাথে আয় করুন": { en: "Earn Together", hi: "साथ में कमाएं" },
-    "রেফার করুন": { en: "Refer Now", hi: "रेफर करें" },
-    "পূর্ববর্তী ব্যানার": { en: "Previous Slide", hi: "पिछला स्लाइड" },
-    "পরবর্তী ব্যানার": { en: "Next Slide", hi: "अगला स्लाइड" },
-    "সরাসরি সমাধান": { en: "Direct Solution", hi: "प्रत्यक्ष समाधान" },
-    "বন্ধুদের স্ক্যান করতে": { en: "Scan to Invite Friends", hi: "दोस्तों को स्कैन कराएं" },
-    "আমন্ত্রণ করুন": { en: "Invite", hi: "आमंत्रित करें" },
-    "আমন্ত্রণ": { en: "Invitation", hi: "निमंत्रण" },
-    "বন্ধুরা": { en: "Friends", hi: "मित्र" },
-    "বন্ধুদের ভিআইপি লেভেল আপগ্রেড করতে আমন্ত্রণ করুন": { en: "Invite friends to upgrade VIP level", hi: "मित्रों को वीआईपी अपग्रेड करने के लिए आमंत्रित करें" },
-    "মাসিক বেতন": { en: "Monthly Salary", hi: "मासिक वेतन" },
-    "অগ্রগতি": { en: "Progress", hi: "प्रगति" },
-    "বোনাস সক্রিয়করণ": { en: "Bonus Activation", hi: "बोनस सक्रियण" },
-    "প্রকৃত": { en: "Actual", hi: "वास्तविक" },
-    "অবস্থা": { en: "Status", hi: "स्थिति" },
-    "তারিখ": { en: "Date", hi: "दिनांक" },
-    "সংরক্ষণ": { en: "Save", hi: "सुरक्षित करें" },
-    "ক্রয় করুন": { en: "Buy Now", hi: "खरीदें" },
-    "করুন": { en: "Do", hi: "करें" },
-    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", hi: "बचत योजना" },
-    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", hi: "बचत योजना" },
-    "পার্স": { en: "Wallet", hi: "वॉलेट" },
-    "নতুন সঞ্চয় শুরু করুন": { en: "Start New Savings", hi: "नई बचत शुरू करें" },
-    "একবারে ৪৫ দিন লাভ সহ": { en: "In 45 days with full profit", hi: "45 दिनों में पूरे लाभ के साथ" },
-    "একজন গ্রাহক কেবল একবারই সঞ্চয় করতে পারবেন": { en: "Each member can participate in savings plan only once", hi: "प्रत्येक सदस्य केवल एक बार बचत योजना ले सकता है" },
-    "পরিকল্পনার মেয়াদ": { en: "Plan Duration", hi: "योजना अवधि" },
-    "৪৫ দিন": { en: "45 Days", hi: "45 दिन" },
-    "প্রফিট রেট": { en: "Profit Rate", hi: "लाभ दर" },
-    "দৈনিক ৫%": { en: "Daily 5%", hi: "दैनिक 5%" },
-    "দৈনিক প্রফিট (৫%):": { en: "Daily Profit (5%):", hi: "दैनिक लाभ (5%):" },
-    "৪৫ দিনে মোট মুনাফা (২২৫%):": { en: "Total 45-Day Profit (225%):", hi: "45 दिनों में कुल लाभ (225%):" },
-    "একবারে ৪৫ দিন পর মোট ফেরত:": { en: "Total Return After 45 Days:", hi: "45 दिन बाद कुल वापसी:" },
-    "লাভ সহ": { en: "With Profit", hi: "लाभ सहित" },
-    "অনলাইন সাপোর্ট সক্রিয় (24/7)": { en: "Online Support Active (24/7)", hi: "ऑनलाइन सहायता सक्रिय (24/7)" },
-    "অনলাইন লাইভ মেসেজ পাঠান": { en: "Send Live Message Online", hi: "ऑनलाइन लाइव संदेश भेजें" },
-    "অফিশিয়াল মিডিয়া ক্যাম্পেইন": { en: "Official Media Campaign", hi: "आधिकारिक मीडिया अभियान" },
-    "দৈনিক উত্তোলনযোগ্য": { en: "Daily Withdrawable", hi: "दैनिक निकासी योग्य" },
-    "সুদের হার": { en: "Interest Rate", hi: "ब्याज दर" },
-    "চক্র (মেয়াদ)": { en: "Cycle (Duration)", hi: "चक्र (अवधि)" },
-    "৩০ দিন": { en: "30 Days", hi: "30 दिन" },
-    "দৈনিক বরাদ্দকৃত কাজ": { en: "Daily Assigned Tasks", hi: "दैनिक सौंपे गए कार्य" },
-    "১ ইউনিট": { en: "1 Unit", hi: "1 यूनिट" },
-    "কাজের বিবরণ ও আয়ের হিসাব": { en: "Task Details & Income Calculation", hi: "कार्य विवरण एवं आय गणना" },
-    "মেয়াদ শেষে মোট প্রাপ্তি:": { en: "Total Return at Maturity:", hi: "परिपक्वता पर कुल प्राप्ति:" },
-    "লাভ (প্রতিদিন উত্তোলনযোগ্য)": { en: "Profit (Daily Withdrawable)", hi: "लाभ (दैनिक निकासी योग्य)" },
-    "আমরা কীভাবে টাকা দিচ্ছি এবং কোম্পানি কীভাবে আয় করছে?": { en: "How we pay and how the company earns?", hi: "हम भुगतान कैसे करते हैं और कंपनी कैसे कमाती है?" },
-    "স্পনসর ও কনটেন্ট নির্মাতাদের বাজেট:": { en: "Sponsors & Content Creators Budget:", hi: "प्रायोजकों और सामग्री निर्माताओं का बजट:" },
-    "আপনার প্রতিদিনের সহজ কাজ:": { en: "Your Daily Easy Tasks:", hi: "आपके दैनिक सरल कार्य:" },
-    "সরাসরি কাজের পারিশ্রমিক:": { en: "Direct Task Compensation:", hi: "प्रत्यक्ष कार्य पारिश्रमिक:" },
-    "প্রতিদিন নিশ্চিত ও নিরাপদ উত্তোলন:": { en: "Daily Guaranteed & Secure Withdrawal:", hi: "दैनिक सुनिश्चित एवं सुरक्षित निकासी:" },
-    "প্রকৃত নাম": { en: "Real Name", hi: "असली नाम" },
-    "আপনার আসল পূর্ণ নাম লিখুন": { en: "Enter your real full name", hi: "अपना असली पूरा नाम दर्ज करें" },
-    "বিকাশ অ্যাকাউন্ট": { en: "bKash Account", hi: "bKash खाता" },
-    "বিকাশ Personal": { en: "bKash Personal", hi: "bKash व्यक्तिगत" },
-    "নগদ Personal": { en: "Nagad Personal", hi: "Nagad व्यक्तिगत" },
-    "অ্যাকাউন্ট যুক্ত নেই": { en: "Account not linked", hi: "खाता लिंक नहीं है" },
-    "আপনার উত্তোলনের মাধ্যম নির্বাচন করুন অথবা নতুন সেট করুন": { en: "Select your withdrawal method or set up a new one", hi: "अपना निकासी माध्यम चुनें या नया सेट करें" },
-    "স্তর 1": { en: "Tier 1", hi: "टीयर 1" },
-    "স্তর 2": { en: "Tier 2", hi: "टीयर 2" },
-    "স্তর 3": { en: "Tier 3", hi: "टीयर 3" },
-    "স্তর ১ (সরাসরি)": { en: "Tier 1 (Direct)", hi: "टीयर 1 (प्रत्यक्ष)" },
-    "স্তর ১": { en: "Tier 1", hi: "टीयर 1" },
-    "স্তর ২": { en: "Tier 2", hi: "टीयर 2" },
-    "স্তর ৩": { en: "Tier 3", hi: "टीयर 3" },
-    "মোট মানুষ": { en: "Total Members", hi: "कुल सदस्य" },
-    "রিচার্জ পরিমাণ": { en: "Recharge Amount", hi: "रिचार्ज राशि" },
-    "রিবেট": { en: "Rebate", hi: "कमीशन छूट" },
-    "১০% রিবেট": { en: "10% Rebate", hi: "10% कमीशन" },
-    "৫% রিবেট": { en: "5% Rebate", hi: "5% कमीशन" },
-    "২% রিবেট": { en: "2% Rebate", hi: "2% कमीशन" },
-    "স্তর ১ কমিশন (সরাসরি):": { en: "Tier 1 Commission (Direct):", hi: "टीयर 1 कमीशन (प्रत्यक्ष):" },
-    "স্তর ২ কমিশন:": { en: "Tier 2 Commission:", hi: "टीयर 2 कमीशन:" },
-    "স্তর ৩ কমিশন:": { en: "Tier 3 Commission:", hi: "टीयर 3 कमीशन:" },
-    "কোড কপি": { en: "Copy Code", hi: "कोड कॉपी करें" },
-    "আমন্ত্রণ পেজ": { en: "Invite Page", hi: "निमंत्रण पृष्ठ" },
-    "আপনার আমন্ত্রণ কোড:": { en: "Your Invite Code:", hi: "आपका निमंत्रण कोड:" },
-    "প্যাকেজ": { en: "Package", hi: "पैकेज" },
-    "ব্যালেন্স": { en: "Balance", hi: "बैलेंस" },
-    "রিচার্জ": { en: "Recharge", hi: "रिचार्ज" },
-    "যুক্ত:": { en: "Joined:", hi: "शामिल हुए:" },
-    "সদস্য তালিকা": { en: "Member List", hi: "सदस्य सूची" },
-    "রিয়েল ডাটা": { en: "Real Data", hi: "वास्तविक डेटा" },
-    "সমস্ত": { en: "All", hi: "सभी" },
-    "চলমান": { en: "In Progress", hi: "प्रगति पर" },
-    "পর্যালোচনা": { en: "Review", hi: "समीक्षा" },
-    "সম্পন্ন": { en: "Completed", hi: "पूर्ण" },
-    "কাজ খুলুন": { en: "Open Task", hi: "कार्य खोलें" },
-    "জমা দিন": { en: "Submit", hi: "सबमिट करें" },
-    "পুরস্কার:": { en: "Reward:", hi: "इनाम:" },
-    "এখনই যোগ দিন": { en: "Join Now", hi: "अभी जुड़ें" },
-    "বর্তমান স্তর": { en: "Current Level", hi: "वर्तमान स्तर" },
-    "দৈনিক আয়:": { en: "Daily Income:", hi: "दैनिक आय:" },
-    "মূল্য:": { en: "Price:", hi: "मूल्य:" },
-    "ক্রয় করুন": { en: "Buy Now", hi: "खरीदें" },
-    "উত্তোলন বিবরণ": { en: "Withdrawal Details", hi: "निकासी विवरण" },
-    "উত্তোলনের ইতিহাস": { en: "Withdrawal History", hi: "निकासी इतिहास" },
-    "উত্তোলনের রেকর্ড": { en: "Withdrawal Records", hi: "निकासी रिकॉर्ड" },
-    "প্রকৃত প্রাপ্তি": { en: "Actual Received", hi: "वास्तविक प्राप्त राशि" },
-    "ফি (18%)": { en: "Fee (18%)", hi: "शुल्क (18%)" },
-    "বিকাশ সেটআপ": { en: "bKash Setup", hi: "खाता सेटअप" },
-    "উত্তোলন নিশ্চিত করুন": { en: "Confirm Withdrawal", hi: "निकासी की पुष्टि करें" },
-    "অর্থপ্রদানের পদ্ধতি": { en: "Payment Method", hi: "भुगतान विधि" },
-    "অবতার": { en: "Avatar", hi: "अवतार" },
-    "অ্যাকাউন্ট বাঁধাই": { en: "Account Binding", hi: "खाता बाइंडिंग" },
-    "USDT ঠিকানা": { en: "USDT Address", hi: "USDT पता" },
-    "USDT (BEP20)": { en: "USDT (BEP20)", hi: "USDT (BEP20)" },
-    "USDT অ্যাকাউন্ট": { en: "USDT Account", hi: "USDT खाता" },
-    "USDT সেট নেই": { en: "USDT Not Set", hi: "USDT सेट नहीं है" },
-    "BEP20 ADREES": { en: "BEP20 ADDRESS", hi: "BEP20 पता" },
-    "BEP20 ওয়ালেট ঠিকানা লিখুন (0x...)": { en: "Enter BEP20 wallet address (0x...)", hi: "BEP20 वॉलेट पता दर्ज करें (0x...)" },
-    "সেট করুন": { en: "Set Up", hi: "सेट करें" },
-    "নগদ অ্যাকাউন্ট": { en: "Nagad Account", hi: "Nagad Account" },
-    "নগদ সেট নেই": { en: "Nagad Not Bound", hi: "Nagad Not Bound" },
-    "নগদ সেট করুন": { en: "Bind Nagad", hi: "Bind Nagad" },
-    "নগদ ওয়ালেট বাঁধাই": { en: "Bind Nagad Wallet", hi: "Bind Nagad Wallet" },
-    "✓ নগদ সেট করা আছে": { en: "✓ Nagad Bound", hi: "✓ Nagad Bound" },
-    "নগদ সেট করা আছে": { en: "Nagad Bound", hi: "Nagad Bound" },
-    "আপনার নগদ নম্বর লিখুন": { en: "Enter your Nagad number", hi: "Enter your Nagad number" },
-    "সঠিক নগদ মোবাইল ব্যাংক নম্বর লিখুন": { en: "Please enter a valid Nagad mobile banking number", hi: "Please enter a valid Nagad mobile banking number" },
-    "নগদ সফলভাবে সেট করা হয়েছে": { en: "Nagad bound successfully!", hi: "Nagad bound successfully!" },
-    "⚠️ উত্তোলন করার পূর্বে নগদ সেট করতে হবে": { en: "⚠️ Please bind Nagad before withdrawal", hi: "⚠️ Please bind Nagad before withdrawal" },
-    "আপনার নির্ভরযোগ্য ডিজিটাল আর্নিং ও মিশন প্ল্যাটফর্ম": { en: "Your Trusted Digital Earning & Mission Platform", hi: "Your Trusted Digital Earning & Mission Platform" },
-    "আপনার নির্ভরযোগ্য প্ল্যাটফর্ম": { en: "Your Trusted Platform", hi: "Your Trusted Platform" },
-    "প্রধান নেভিগেশন": { en: "Main Navigation", hi: "Main Navigation" },
-    "ভাষা নির্বাচন": { en: "Select Language", hi: "भाषा चुनें" },
-    "বাংলা": { en: "Bengali", hi: "বাংলা" },
-    "আপনার ব্যক্তিগত স্পেসে স্বাগতম। সহজে অ্যাকাউন্ট তৈরি করুন, নিরাপদে লগইন করুন, আর শুরু করুন আপনার পরবর্তী অধ্যায়।": { en: "Welcome to your personal space. Create an account easily, log in securely, and start your next chapter.", hi: "Welcome to your personal space. Create an account easily, log in securely, and start your next chapter." },
-    "সহজ, স্বচ্ছ এবং আপনার জন্য তৈরি।": { en: "Simple, transparent, and built for you.", hi: "Simple, transparent, and built for you." },
-    "২০২৫": { en: "2025", hi: "2025" },
-    "২০২৬": { en: "2026", hi: "2026" },
-    "আপনার প্রতিটি শুরু হোক সুন্দর।": { en: "May all your beginnings be prosperous.", hi: "May all your beginnings be prosperous." },
-    "পাসওয়ার্ড পুনরুদ্ধার এখানে চালু নেই।": { en: "Password reset is not available here.", hi: "Password reset is not available here." },
-    "আপনার জন্য রাখা সবকিছু, এক জায়গায়।": { en: "Everything reserved for you, all in one place.", hi: "Everything reserved for you, all in one place." },
-    "আপনার ব্যক্তিগত স্পেসে আবার ফিরে আসুন। নিরাপদে লগইন করে আপনার কাজ এগিয়ে নিন।": { en: "Welcome back to your personal space. Log in securely and proceed with your tasks.", hi: "Welcome back to your personal space. Log in securely and proceed with your tasks." },
-    "একটি ভালো শুরু প্রতিদিনকে বদলে দিতে পারে।": { en: "A great beginning can transform every day.", hi: "A great beginning can transform every day." },
-    "আপনার পথ": { en: "Your Journey", hi: "Your Journey" },
-    "নিবন্ধন স্বাগতম": { en: "Welcome to Registration", hi: "Welcome to Registration" },
-    "আপনার অ্যাকাউন্ট তৈরি করতে তথ্য দিন": { en: "Enter details to create your account", hi: "Enter details to create your account" },
-    "পাসওয়ার্ড দেখান": { en: "Show Password", hi: "Show Password" },
-    "পাসওয়ার্ড লুকান": { en: "Hide Password", hi: "पासवर्ड छिपाएँ" },
-    "ড্যাশবোর্ড": { en: "Dashboard", hi: "डैशबोर्ड" },
-    "আমার প্রোফাইল": { en: "My Profile", hi: "मेरी प्रोफाइल" },
-    "আমার উচ্চতর": { en: "My Superior", hi: "मेरे वरिष्ठ" },
-    "সাপোর্ট চ্যাট": { en: "Support Chat", hi: "सपोर्ट चैट" },
-    "অনলাইন গ্রাহক সেবা সহায়তা শীঘ্রই চালু হবে।": { en: "Online customer service support is coming soon.", hi: "ऑनलाइन ग्राहक सेवा जल्द ही उपलब्ध होगी।" },
-    "হিসাব নাম্বার, আমন্ত্রণ কোড, সাইন আউট": { en: "Account Number, Invite Code, Sign Out", hi: "खाता संख्या, निमंत्रण कोड, साइन आउट" },
-    "প্রোফাইল অ্যাভাটার": { en: "Profile Avatar", hi: "प्रोफ़ाइल अवतार" },
-    "লগআউট": { en: "Log Out", hi: "लॉग आउट" },
-    "ভারসাম্য:": { en: "Balance:", hi: "बैलेंस:" },
-    "ভারসাম্য": { en: "Balance", hi: "बैलेंस" },
-    "আমার পার্স": { en: "My Wallet", hi: "मेरा वॉलेट" },
-    "শিরোনাম": { en: "Title", hi: "शीर्षक" },
-    "সীমা": { en: "Limit", hi: "सीमा" },
-    "ভাল": { en: "Good", hi: "अच्छा" },
-    "চমৎকার": { en: "Excellent", hi: "उत्कृष्ट" },
-    "ব্যক্তিগত ভারসাম্য": { en: "Personal Balance", hi: "व्यक्तिगत बैलेंस" },
-    "ব্যক্তিগত ভারসাম্য(BDT)": { en: "Personal Balance(BDT)", hi: "व्यक्तिगत बैलेंस(BDT)" },
-    "ব্যক্তিগত ভারসাম্য(INR)": { en: "Personal Balance(INR)", hi: "व्यक्तिगत बैलेंस(INR)" },
-    "গতকালের উপার্জন": { en: "Yesterday's Income", hi: "कल की कमाई" },
-    "গতকালের উপার্জন(BDT)": { en: "Yesterday's Income(BDT)", hi: "कल की कमाई(BDT)" },
-    "গতকালের উপার্জন(INR)": { en: "Yesterday's Income(INR)", hi: "कल की कमाई(INR)" },
-    "গতকালকের উপার্জন": { en: "Yesterday's Income", hi: "कल की कमाई" },
-    "গতকালকের উপার্জন(BDT)": { en: "Yesterday's Income(BDT)", hi: "कल की कमाई(BDT)" },
-    "গতকালকের উপার্জন(INR)": { en: "Yesterday's Income(INR)", hi: "कल की कमाई(INR)" },
-    "আজ উপার্জন": { en: "Today's Income", hi: "आज की कमाई" },
-    "আজ উপার্জন(BDT)": { en: "Today's Income(BDT)", hi: "आज की कमाई(BDT)" },
-    "আজ উপার্জন(INR)": { en: "Today's Income(INR)", hi: "आज की कमाई(INR)" },
-    "এই সপ্তাহে আয়": { en: "This Week's Income", hi: "इस सप्ताह की आय" },
-    "এই সপ্তাহে আয়(BDT)": { en: "This Week's Income(BDT)", hi: "इस सप्ताह की आय(BDT)" },
-    "এই সপ্তাহে আয়(INR)": { en: "This Week's Income(INR)", hi: "इस सप्ताह की आय(INR)" },
-    "এই মাসে আয়": { en: "This Month's Income", hi: "इस महीने की आय" },
-    "এই মাসে আয়(BDT)": { en: "This Month's Income(BDT)", hi: "इस महीने की आय(BDT)" },
-    "এই মাসে আয়(INR)": { en: "This Month's Income(INR)", hi: "इस महीने की आय(INR)" },
-    "গত মাসে আয়": { en: "Last Month's Income", hi: "पिछले महीने की आय" },
-    "গত মাসে আয়(BDT)": { en: "Last Month's Income(BDT)", hi: "पिछले महीने की आय(BDT)" },
-    "গত মাসে আয়(INR)": { en: "Last Month's Income(INR)", hi: "पिछले महीने की आय(INR)" },
-    "মোট রাজস্ব(BDT)": { en: "Total Revenue(BDT)", hi: "कुल राजस्व(BDT)" },
-    "মোট রাজস্ব(INR)": { en: "Total Revenue(INR)", hi: "कुल राजस्व(INR)" },
-    "কাজটি আজই সম্পূর্ণ করুন": { en: "Complete tasks today", hi: "कार्य आज ही पूरा करें" },
-    "কাজটি আজই সম্পূর্ণ করুন(এক)": { en: "Tasks Completed Today", hi: "आज पूर्ण किए गए कार्य" },
-    "আজকের জন্য বাকি কাজ": { en: "Remaining tasks for today", hi: "आज के शेष कार्य" },
-    "আজকের জন্য বাকি কাজ(এক)": { en: "Remaining tasks today", hi: "आज के शेष कार्य" },
-    "অ্যাপ ডাউনলোডের সুবিধা শীঘ্রই আসবে।": { en: "App download feature is coming soon.", hi: "ऐप डाउनलोड सुविधा जल्द ही आएगी।" },
-    "APP ডাউনলোড": { en: "APP Download", hi: "ऐप डाउनलोड" },
-    "ডাউনলোড": { en: "Download", hi: "डाउनलोड" },
-    "অ্যাকাউন্ট": { en: "Account", hi: "खाता" },
-    "টিম ও আয়": { en: "Team & Income", hi: "टीम और आय" },
-    "সাপোর্ট ও আরও": { en: "Support & More", hi: "सपोर्ट और अधिक" },
-    "দৈনিক বিবৃতি": { en: "Daily Statement", hi: "दैनिक विवरण" },
-    "অ্যাকাউন্ট পরিবর্তনের রেকর্ড এখানে উপলভ্য নয়।": { en: "Account change history is not available here.", hi: "खाता परिवर्तन रिकॉर्ड यहाँ उपलब्ध नहीं है।" },
-    "অ্যাকাউন্ট পরিবর্তন রেকর্ড": { en: "Account Change Record", hi: "खाता परिवर्तन रिकॉर्ड" },
-    "বন্ধুকে আমন্ত্রণ জানান": { en: "Invite Friends", hi: "मित्र को आमंत्रित करें" },
-    "আরও সেবা": { en: "More Services", hi: "अधिक सेवाएँ" },
-    "সঞ্চয় পরিকল্পনার বিস্তারিত এখানে উপলভ্য নয়।": { en: "Savings plan details are not available here.", hi: "बचत योजना का विवरण यहाँ उपलब्ध नहीं है।" },
-    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", hi: "बचत योजना" },
-    "টেলিগ্রাম সহায়তার লিংক এখানে যুক্ত করা হয়নি।": { en: "Telegram support link is not configured.", hi: "टेलीग्राम सहायता लिंक यहाँ उपलब्ध नहीं है।" },
-    "টেলিগ্রাম": { en: "Telegram", hi: "टेलीग्राम" },
-    "নিরাপত্তা কেন্দ্রের সুবিধা এখানে চালু নেই।": { en: "Security Center feature is not active.", hi: "सुरक्षा केंद्र सुविधा अभी सक्रिय नहीं है।" },
-    "নিরাপত্তা কেন্দ্র": { en: "Security Center", hi: "सुरक्षा केंद्र" },
-    "ভাগ্যবান স্পিনের সুবিধা এখানে চালু নেই।": { en: "Lucky Spin feature is not active.", hi: "लकी स्पिन सुविधा अभी सक्रिय नहीं है।" },
-    "ভাগ্যবান স্পিন": { en: "Lucky Spin", hi: "लकी स्पिन" },
-    "আপনার প্রথম কক্ষে একজন সফল বন্ধু যোগ করলে একটি কর্মদক্ষতা যাচাইয়ের সুযোগ": { en: "Add a successful friend to your first room for an opportunity to verify efficiency", hi: "अपने पहले कक्ष में एक सफल मित्र जोड़ने पर कार्यक्षमता जांचने का अवसर" },
-    "আজকের জয়ের জন্য সদস্য সংখ্যা": { en: "Members for today's win", hi: "आज की जीत के लिए सदस्य संख्या" },
-    "আজকের ঘোড়ানো সংখ্যা": { en: "Today's Spin Count", hi: "आज के स्पिन की संख्या" },
-    "আয়ের ধারাবাহিকতা": { en: "Income Continuity", hi: "आय की निरंतरता" },
-    "আপনার ড্র": { en: "Your Draws", hi: "आपके ड्रॉ" },
-    "স্পিন ঘুরান": { en: "Spin Now", hi: "स्पिन करें" },
-    "বন্ধুকে আমন্ত্রণ জানান ও ড্র অর্জন করুন": { en: "Invite Friends & Earn Draws", hi: "दोस्तों को आमंत्रित करें और ड्रॉ पाएं" },
-    "সাম্প্রতিক স্পিন পুরস্কার": { en: "Recent Spin Rewards", hi: "हालिया स्पिन पुरस्कार" },
-    "পুরস্কারের টাকা সরাসরি আপনার মেইন ব্যালেন্সে যোগ হয়েছে।": { en: "Your reward has been credited directly to your main balance.", hi: "पुरस्कार की राशि सीधे आपके मुख्य बैलेंस में जोड़ दी गई है।" },
-    "স্বাগতম": { en: "Welcome", hi: "स्वागत है" },
-    "আপনার আগ্রহের জগৎ": { en: "Your World of Interest", hi: "आपकी रुचि का संसार" },
-    "শুরু হোক এখান থেকে": { en: "Start from here", hi: "यहाँ से शुरू करें" },
-    "নতুন মিশন দেখুন, শিখুন এবং প্রতিদিন এগিয়ে চলুন।": { en: "Explore new missions, learn, and grow every day.", hi: "नए मिशन देखें, सीखें और हर दिन आगे बढ़ें।" },
-    "আলোকময় সৃজনশীলতার স্লাইডার": { en: "Creative Media Slider", hi: "रचनात्मक मीडिया स्लाइडर" },
-    "নতুন সম্ভাবনার শুরু": { en: "Beginning of New Opportunities", hi: "नए अवसरों की शुरुआत" },
-    "শিখুন, এগিয়ে চলুন": { en: "Learn and Proceed", hi: "सीखें और आगे बढ़ें" },
-    "প্রতিদিন এক ধাপ সামনে": { en: "One step forward every day", hi: "हर दिन एक कदम आगे" },
-    "দলের প্রসার সম্পর্কিত নমুনা আপডেট": { en: "Sample team growth updates", hi: "टीम विस्तार संबंधी नमूना अपडेट" },
-    "একজন ব্যবহারকারীকে সুপারিশ করার জন্য": { en: "for recommending a user", hi: "एक उपयोगकर्ता की सिफारिश करने के लिए" },
-    "প্রচার পুরস্কার পাওয়ার জন্য অভিনন্দন": { en: "Congratulations on receiving promotion reward", hi: "प्रचार पुरस्कार प्राप्त करने पर बधाई" },
-    "প্রচার পুরস্কার পাওয়ার জন্য অভিনন্দন!": { en: "Congratulations on receiving promotional reward!", hi: "प्रचार पुरस्कार प्राप्त करने पर बधाई!" },
-    "এলাকা": { en: "Region", hi: "क्षेत्र" },
-    "আয়ের": { en: "Income", hi: "आय का" },
-    "ম্যানেজার": { en: "Manager", hi: "मैनेजर" },
-    "অফিসিয়াল কাস্টমার ম্যানেজার": { en: "Official Customer Manager", hi: "आधिकारिक ग्राहक प्रबंधक" },
-    "মিশন হল": { en: "Mission Hall", hi: "मिशन हॉल" },
-    "সামাজিক মিশন": { en: "Social Missions", hi: "सोशल मिशन" },
-    "লাইক ও অনুসরণ": { en: "Like & Follow", hi: "लाइक और फॉलो" },
-    "সদস্যদের আপডেট": { en: "Member Updates", hi: "सदस्यों के अपडेट" },
-    "সাম্প্রতিক সদস্য আপডেট": { en: "Recent Member Updates", hi: "हालिया सदस्य अपडेट" },
-    "আজ ৫টি মিশন সম্পন্ন করেছেন": { en: "Completed 5 missions today", hi: "आज 5 मिशन पूरे किए" },
-    "আজ ৩টি মিশন সম্পন্ন করেছেন": { en: "Completed 3 missions today", hi: "आज 3 मिशन पूरे किए" },
-    "আজ ২টি মিশন সম্পন্ন করেছেন": { en: "Completed 2 missions today", hi: "आज 2 मिशन पूरे किए" },
-    "আজ ৪টি মিশন সম্পন্ন করেছেন": { en: "Completed 4 missions today", hi: "आज 4 मिशन पूरे किए" },
-    "আজ ৬টি মিশন সম্পন্ন করেছেন": { en: "Completed 6 missions today", hi: "आज 6 मिशन पूरे किए" },
-    "আজ ১২টি মিশন সম্পন্ন করেছেন": { en: "Completed 12 missions today", hi: "आज 12 मिशन पूरे किए" },
-    "সদস্য: ১৮****৫৪": { en: "Member: 18****54", hi: "सदस्य: 18****54" },
-    "সদস্য: ১৭****২৭": { en: "Member: 17****27", hi: "सदस्य: 17****27" },
-    "সদস্য: ১৩****২৯": { en: "Member: 13****29", hi: "सदस्य: 13****29" },
-    "সদস্য: ২১****৬৪": { en: "Member: 21****64", hi: "सदस्य: 21****64" },
-    "সদস্য: ১৯****০৮": { en: "Member: 19****08", hi: "सदस्य: 19****08" },
-    "+১০০.০০": { en: "+100.00", hi: "+100.00" },
-    "+৪০.০০": { en: "+40.00", hi: "+40.00" },
-    "+৬০.০০": { en: "+60.00", hi: "+60.00" },
-    "+১৮০.০০": { en: "+180.00", hi: "+180.00" },
-    "+৪৮০.০০": { en: "+480.00", hi: "+480.00" },
-    "হল প্যাকেজ": { en: "Hall Packages", hi: "हॉल पैकेज" },
-    "কাজের তালিকা খুলুন": { en: "Open Task List", hi: "कार्य सूची खोलें" },
-    "দৈনন্দিন কর্ম:": { en: "Daily Tasks:", hi: "दैनिक कार्य:" },
-    "দৈনন্দিন কর্ম": { en: "Daily Tasks", hi: "दैनिक कार्य" },
-    "দৈনিক কর্ম:": { en: "Daily Tasks:", hi: "दैनिक कार्य:" },
-    "দৈনিক কর্ম": { en: "Daily Tasks", hi: "दैनिक कार्य" },
-    "ক্রয় করা হয়নি": { en: "Not purchased", hi: "खरीदा नहीं गया" },
-    "প্রয়োজন:": { en: "Required:", hi: "आवश्यक:" },
-    "পছন্দ লক্ষ্য করা": { en: "Like & Follow", hi: "लाइक व फॉलो करें" },
-    "পরিমাণ:": { en: "Quantity:", hi: "मात्रा:" },
-    "একক দাম": { en: "Unit Price", hi: "इकाई मूल्य" },
-    "হল সম্পর্কে তথ্য": { en: "Information About Hall", hi: "हॉल के बारे में जानकारी" },
-    "আপনার অগ্রগতির পরবর্তী ধাপ": { en: "Your next level of progression", hi: "आपकी प्रगति का अगला कदम" },
-    "ফ্রিতে শুধু": { en: "In Free trial only", hi: "मुफ़्त में केवल" },
-    "কাজ করতে পারবেন। বাকি কাজ করতে গেলে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।": { en: "tasks can be completed. To perform remaining tasks, please purchase a package with your balance.", hi: "कार्य कर सकते हैं। अतिरिक्त कार्यों के लिए पैकेज खरीदना आवश्यक है।" },
-    "সব ব্যালেন্স ও পুরস্কার ভার্চুয়াল ডেমো হিসাব": { en: "All balances and rewards are platform earnings", hi: "सभी बैलेंस और पुरस्कार प्लेटफ़ॉर्म कमाई हैं" },
-    "বাস্তব টাকা নয়।": { en: "subject to policy verification.", hi: "वास्तविक धन नहीं है।" },
-    "বন্ধুদের আমন্ত্রণ জানান": { en: "Invite Friends", hi: "दोस्तों को आमंत्रित करें" },
-    "তোমার বন্ধু": { en: "Your friend", hi: "आपका मित्र" },
-    "যোগদানের জন্য আপনাকে আমন্ত্রণ জানাই": { en: "Invites you to join", hi: "आपको जुड़ने के लिए आमंत्रित करते हैं" },
-    "আমন্ত্রণ কোড কপি করুন": { en: "Copy Invite Code", hi: "निमंत्रण कोड कॉपी करें" },
-    "আমন্ত্রণ লিঙ্ক কপি করুন": { en: "Copy Invite Link", hi: "निमंत्रण लिंक कॉपी करें" },
-    "বন্ধুদের আমন্ত্রণ": { en: "Invite Friends", hi: "मित्रों को आमंत्रण" },
-    "বন্ধুদের আমন্ত্রণ করুন,": { en: "Invite friends,", hi: "मित्रों को आमंत्रित करें," },
-    "স্বর্ণের খনি জিতুন": { en: "Unlock Wealth Rewards", hi: "धन पुरस्कार अनलॉक करें" },
-    "আপনার আমন্ত্রণ কোডটি বন্ধুদের সঙ্গে শেয়ার করুন।": { en: "Share your invitation code with friends.", hi: "अपना निमंत्रण कोड मित्रों के साथ साझा करें।" },
-    "কোড স্ক্যান করে তারা যোগ দিতে পারবে।": { en: "They can join easily by scanning this code.", hi: "कोड स्कैन करके वे आसानी से जुड़ सकते हैं।" },
-    "কোড তৈরি হচ্ছে": { en: "Generating code...", hi: "कोड जनरेट हो रहा है..." },
-    "আপনার আমন্ত্রণ লিংক": { en: "Your Invitation Link", hi: "आपका निमंत्रण लिंक" },
-    "লিংক কপি করুন": { en: "Copy Link", hi: "लिंक कॉपी करें" },
-    "বরফে পরিণত করা:": { en: "Frozen:", hi: "फ्रीज़:" },
-    "বরফে পরিণত করা": { en: "Frozen Balance", hi: "फ्रीज़ बैलेंस" },
-    "উপলব্ধ:": { en: "Available:", hi: "उपलब्ध:" },
-    "উপলব্ধ": { en: "Available", hi: "उपलब्ध" },
-    "লাভ শেয়ারিং": { en: "Profit Sharing", hi: "लाभ साझाकरण" },
-    "অনুপাত": { en: "Ratio", hi: "Ratio" },
-    "আগমন": { en: "Arrival", hi: "Arrival" },
-    "স্থানান্তরিত": { en: "Transferred", hi: "Transferred" },
-    "কোন রেকর্ড নেই": { en: "No records found", hi: "कोई रिकॉर्ड नहीं मिला" },
-    "বন্ধ করুন": { en: "Close", hi: "बंद करें" },
-    "প্রত্যাহার পদ্ধতি": { en: "Withdrawal Method", hi: "निकासी विधि" },
-    "বিকাশ সেট নেই": { en: "bKash Not Bound", hi: "खाता लिंक नहीं है" },
-    "তোলা টাকার পরিমাণ": { en: "Withdrawal Amount", hi: "निकासी राशि" },
-    "তোলা টাকার": { en: "Withdrawal", hi: "निकासी" },
-    "প্রত্যাহার পরিমাণ লিখুন দয়া করে": { en: "Please enter withdrawal amount", hi: "कृपया निकासी राशि दर्ज करें" },
-    "ফান্ড পাসওয়ার্ড": { en: "Fund Password", hi: "फंड पासवर्ड" },
-    "অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন": { en: "Please enter your fund password", hi: "कृपया फंड पासवर्ड दर्ज करें" },
-    "মাসিক উত্তোলন": { en: "Monthly Withdrawal", hi: "मासिक निकासी" },
-    "উত্তোলন 48-96 ঘণ্টার মধ্যে আসে": { en: "Withdrawal arrives within 48-96 hours", hi: "निकासी 48-96 घंटे में आती है" },
-    "প্রত্যাহার 12 ঘণ্টার মধ্যে আসে": { en: "Withdrawal arrives within 12 hours", hi: "निकासी 12 घंटे में आती है" },
-    "বাতিল করুন": { en: "Cancel", hi: "रद्द करें" },
-    "নিশ্চিত করুন": { en: "Confirm", hi: "पुष्टि करें" },
-    "পছন্দ কর": { en: "Choose", hi: "चुनें" },
-    "সেট না": { en: "Not Set", hi: "सेट नहीं" },
-    "সহায়তা সেবা এখানে চালু নেই।": { en: "Help service is not active.", hi: "सहायता सेवा अभी चालू नहीं है।" },
-    "সহায়তা": { en: "Support", hi: "सहायता" },
-    "প্রোফাইল ছবি পরিবর্তনের সুবিধা এখানে চালু নেই।": { en: "Changing profile avatar is currently disabled.", hi: "प्रोफ़ाइल चित्र परिवर्तन अभी अक्षम है।" },
-    "অ্যাকাউন্ট বাঁধাই এখানে চালু নেই।": { en: "Account binding is currently disabled.", hi: "खाता बाइंडिंग सुविधा यहाँ सक्रिय नहीं है।" },
-    "ঠিকানা যোগ করার সুবিধা এখানে চালু নেই।": { en: "Adding address is currently disabled.", hi: "पता जोड़ने की सुविधा यहाँ उपलब्ध नहीं है।" },
-    "বিকাশ অ্যাকাউন্ট": { en: "bKash Account", hi: "बैंक खाता" },
-    "প্রবেশের গুপ্তসংকেত পরিবর্তনের সুবিধা এখানে চালু নেই।": { en: "Password modification is currently disabled.", hi: "पासवर्ड परिवर्तन की सुविधा यहाँ सक्रिय नहीं है।" },
-    "প্রবেশের গুপ্তসংকেত": { en: "Login Password", hi: "लॉगिन पासवर्ड" },
-    "ফান্ড পাসওয়ার্ড সেট করার সুবিধা এখানে চালু নেই।": { en: "Fund password setup is currently disabled.", hi: "फंड पासवर्ड सेट करने की सुविधा यहाँ उपलब्ध नहीं है।" },
-    "বিকাশ সেট করুন": { en: "Bind bKash", hi: "खाता सेट करें" },
-    "সহায়তা সেবা শীঘ্রই চালু হবে।": { en: "Support service will be available shortly.", hi: "सहायता सेवा जल्द ही उपलब्ध होगी।" },
-    "বিকাশ ওয়ালেট বাঁধাই": { en: "Bind bKash Wallet", hi: "वॉलेट बाइंडिंग" },
-    "মোবাইল ব্যাংকিং উত্তোলন অ্যাকাউন্ট": { en: "Mobile Banking Withdrawal Account", hi: "निकासी खाता" },
-    "সম্পুর্ন নাম": { en: "Full Name", hi: "पूरा नाम" },
-    "আবশ্যক": { en: "Required", hi: "आवश्यक" },
-    "আপনার সম্পূর্ণ নাম লিখুন": { en: "Enter your full name", hi: "अपना पूरा नाम दर्ज करें" },
-    "মোবাইল ব্যাংক নাম্বার": { en: "Mobile Banking Number", hi: "मोबाइल बैंक नंबर" },
-    "আপনার বিকাশ নম্বর লিখুন": { en: "Enter your bKash number", hi: "अपना खाता नंबर दर्ज करें" },
-    "USDT অ্যাকাউন্ট (BEP20)": { en: "USDT Account (BEP20)", hi: "USDT खाता (BEP20)" },
-    "গুরুত্বপূর্ণ নির্দেশনা:": { en: "Important Instructions:", hi: "महत्वपूर्ण निर्देश:" },
-    "অনুগ্রহ করে নিশ্চিত করুন যে আপনার সম্পুর্ন নাম এবং মোবাইল ব্যাংক নম্বর সঠিক।": { en: "Please ensure that your full name and mobile bank number are completely accurate.", hi: "कृपया सुनिश्चित करें कि आपका पूरा नाम और बैंक/खाता नंबर सही है।" },
-    "একটি বিকাশ নম্বর শুধুমাত্র একটি অ্যাকাউন্টের সাথে যুক্ত হতে পারে।": { en: "One bKash number can only be bound to a single account.", hi: "एक खाता केवल एक नंबर से ही जोड़ा जा सकता है।" },
-    "টাকা প্রত্যাহারের সময় আপনার উপার্জিত অর্থ সরাসরি এই বিকাশ নম্বরে পৌঁছাবে।": { en: "During withdrawal, your funds will be sent directly to this verified bKash number.", hi: "निकासी के समय आपकी कमाई सीधे इस पंजीकृत खाते में भेजी जाएगी।" },
-    "প্যাকেজসমূহ": { en: "VIP Packages", hi: "वीआईपी पैकेज" },
-    "আপনার বর্তমান স্তর:": { en: "Your Current Tier:", hi: "आपका वर्तमान स्तर:" },
-    "উপলব্ধ ব্যালেন্স:": { en: "Available Balance:", hi: "उपलब्ध बैलेंस:" },
-    "ব্যালেন্স রিচার্জ (জমা)": { en: "Recharge Balance (Deposit)", hi: "बैलेंस रिचार्ज (जमा)" },
-    "রিচার্জের পরিমাণ নির্বাচন করুন:": { en: "Select Recharge Amount:", hi: "रिचार्ज राशि चुनें:" },
-    "অথবা নির্দিষ্ট পরিমাণ": { en: "Or Specific Amount", hi: "या विशिष्ट राशि" },
-    "পেমেন্ট মেথড:": { en: "Payment Method:", hi: "भुगतान विधि:" },
-    "বিকাশ": { en: "bKash", hi: "bKash / बैंक" },
-    "নগদ": { en: "Nagad", hi: "Nagad / वॉलेट" },
-    "USDT (Crypto)": { en: "USDT (Crypto)", hi: "USDT (Crypto)" },
-    "USDT:": { en: "USDT:", hi: "USDT:" },
-    "USDT": { en: "USDT", hi: "USDT" },
-    "ক্রিপ্টো": { en: "Crypto (USDT)", hi: "क्रिप्टो (USDT)" },
-    "রিচার্জ সম্পন্ন করুন": { en: "Complete Recharge", hi: "रिचार्ज पूरा करें" },
-    "ফ্রি স্তর": { en: "Free Tier", hi: "निःशुल्क स्तर" },
-    "দৈনিক কাজ:": { en: "Daily Tasks:", hi: "दैनिक कार्य:" },
-    "প্রতি কাজ:": { en: "Per Task:", hi: "प्रति कार्य:" },
-    "বেসিক প্যাকেজ": { en: "Basic Package", hi: "बेसिक पैकेज" },
-    "প্যাকেজ ক্রয় করুন": { en: "Buy Package", hi: "पैकेज खरीदें" },
-    "প্যাকেজ ক্রয়": { en: "Buy Package", hi: "पैकेज खरीदें" },
-    "স্ট্যান্ডার্ড প্যাকেজ": { en: "Standard Package", hi: "स्टैंडर्ड पैकेज" },
-    "সিলভার প্যাকেজ": { en: "Silver Package", hi: "सिल्वर पैकेज" },
-    "গোল্ড প্যাকেজ": { en: "Gold Package", hi: "गोल्ड पैकेज" },
-    "প্রিমিয়াম প্যাকেজ": { en: "Premium Package", hi: "प्रीमियम पैकेज" },
-    "এলিট প্যাকেজ": { en: "Elite Package", hi: "एलीट पैकेज" },
-    "মিশন স্তর": { en: "Mission Tier", hi: "मिशन स्तर" },
-    "কেটে দিন": { en: "Dismiss", hi: "हटाएँ" },
-    "আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ": { en: "Available tasks for your active package", hi: "आपके सक्रिय पैकेज के लिए उपलब्ध कार्य" },
-    "কাজের ধরন:": { en: "Task Type:", hi: "कार्य प्रकार:" },
-    "অ্যাকাউন্ট অনুসরণ করুন": { en: "Follow Account", hi: "खाता फॉलो करें" },
-    "স্তর:": { en: "Tier:", hi: "स्तर:" },
-    "অগ্রগতি:": { en: "Progress:", hi: "प्रगति:" },
-    "দৈনিক পুরস্কার": { en: "Daily Reward", hi: "दैनिक पुरस्कार" },
-    "গ্রহণ": { en: "Receive / Claim", hi: "प्राप्त करें" },
-    "গ্রহণ করুন": { en: "Claim Now", hi: "प्राप्त करें" },
-    "গৃহীত": { en: "Claimed", hi: "प्राप्त किया" },
-    "সরাসরি ব্যালেন্সে গ্রহণ করুন": { en: "Claim Directly to Balance", hi: "सीधे बैलेंस में प्राप्त करें" },
-    "টিম": { en: "Team", hi: "टीम" },
-    "মোট কমিশন": { en: "Total Commission", hi: "कुल कमीशन" },
-    "আজকের কমিশন": { en: "Today's Commission", hi: "आज का कमीशन" },
-    "টিম সদস্য": { en: "Team Members", hi: "टीम के सदस्य" },
-    "আজ নতুন": { en: "New Today", hi: "आज नए" },
-    "শেয়ার লিঙ্ক": { en: "Share Link", hi: "शेयर लिंक" },
-    "বন্ধুদের স্ক্যান করতে আমন্ত্রণ করুন": { en: "Invite friends to scan", hi: "स्कैन करने के लिए आमंत्रित करें" },
-    "কপি": { en: "Copy", hi: "कॉपी" },
-    "কাজের ধরন: একটি ভিডিওতে লাইক দিন": { en: "Task Type: Like a video", hi: "कार्य प्रकार: वीडियो लाइक करें" },
-    "প্রোফাইল দেখুন": { en: "View Profile", hi: "प्रोफाइल देखें" },
-    "মিশন রেকর্ড": { en: "Mission Records", hi: "मिशन रिकॉर्ड" },
-    "মিশনের অবস্থা": { en: "Mission Status", hi: "मिशन स्थिति" },
-    "ব্যর্থ হয়েছে": { en: "Failed", hi: "विफल रहा" },
-    "মিশন বিবরণ": { en: "Mission Details", hi: "मिशन विवरण" },
-    "মিশন তালিকায় ফিরে যান": { en: "Back to Missions List", hi: "मिशन सूची पर वापस जाएँ" },
-    "টাস্ক শিরোনাম:": { en: "Task Title:", hi: "कार्य शीर्षक:" },
-    "টাস্ক শিরোনাম": { en: "Task Title", hi: "कार्य शीर्षक" },
-    "মিশন সুবিধা:": { en: "Mission Reward:", hi: "मिशन इनाम:" },
-    "মিশন সুবিধা": { en: "Mission Reward", hi: "मिशन इनाम" },
-    "মিশনের বিবরণ:": { en: "Mission Description:", hi: "मिशन विवरण:" },
-    "মিশনের বিবরণ": { en: "Mission Description", hi: "मिशन विवरण" },
-    "পছন্দ লক্ষ্য করা": { en: "Target Engagement", hi: "लक्षित जुड़ाव" },
-    "টাস্ক লিঙ্ক:": { en: "Task Link:", hi: "कार्य लिंक:" },
-    "টাস্ক লিঙ্ক": { en: "Task Link", hi: "कार्य लिंक" },
-    "খোলা সংযুক্তি": { en: "Open Link", hi: "लिंक खोलें" },
-    "অনুলিপি": { en: "Copy", hi: "कॉपी" },
-    "সৃষ্টির সময়:": { en: "Created Time:", hi: "निर्माण समय:" },
-    "সৃষ্টির সময়": { en: "Created Time", hi: "निर्माण समय" },
-    "মন্তব্য": { en: "Comments", hi: "टिप्पणियाँ" },
-    "ক্যামেরা": { en: "Camera", hi: "कैमरा" },
-    "দয়া করে এখানে প্রবেশ করুন": { en: "Please enter details here", hi: "कृपया यहाँ विवरण दर्ज करें" },
-    "গ্যালারি খুলুন": { en: "Open Gallery", hi: "गैलरी खोलें" },
-    "স্ক্রিনশট": { en: "Screenshot", hi: "स्क्रीनशॉट" },
-    "আপলোড": { en: "Upload", hi: "अपलोड" },
-    "গ্যালারি থেকে স্ক্রিনশট আপলোড করুন": { en: "Upload screenshot verification from gallery", hi: "गैलरी से स्क्रीनशॉट अपलोड करें" },
-    "স্ক্রিনশট মুছুন": { en: "Delete screenshot", hi: "स्क्रीनशॉट हटाएँ" },
-    "প্রিভিউ দেখুন": { en: "View Preview", hi: "पूर्वावलोकन देखें" },
-    "ছাড়": { en: "Rebate / Discount", hi: "छूट / कमीशन" },
-    "মোট দলের ভারসাম্য": { en: "Total Team Balance", hi: "कुल टीम बैलेंस" },
-    "মোট দলের ভারসাম্য(BDT)": { en: "Total Team Balance", hi: "कुल टीम बैलेंस" },
-    "মোট দলের ভারসাম্য(INR)": { en: "Total Team Balance", hi: "कुल टीम बैलेंस" },
-    "মোট দল প্রবাহ": { en: "Total Team Turnover", hi: "कुल टीम टर्नओवर" },
-    "মোট দল প্রবাহ(BDT)": { en: "Total Team Turnover", hi: "कुल टीम टर्नओवर" },
-    "মোট দল প্রবাহ(INR)": { en: "Total Team Turnover", hi: "कुल टीम टर्नओवर" },
-    "মোট দল রিচার্জ": { en: "Total Team Recharge", hi: "कुल टीम रिचार्ज" },
-    "মোট দল রিচার্জ(BDT)": { en: "Total Team Recharge", hi: "कुल टीम रिचार्ज" },
-    "মোট দল রিচার্জ(INR)": { en: "Total Team Recharge", hi: "कुल टीम रिचार्ज" },
-    "দল মোট নগদ আউট": { en: "Total Team Cashout", hi: "कुल टीम निकासी" },
-    "দল মোট নগদ আউট(BDT)": { en: "Total Team Cashout", hi: "कुल टीम निकासी" },
-    "দল মোট নগদ আউট(INR)": { en: "Total Team Cashout", hi: "कुल टीम निकासी" },
-    "প্রথম চার্জের সংখ্যা(মানুষ)": { en: "First Recharge Count (Users)", hi: "प्रथम रिचार्ज संख्या (लोग)" },
-    "প্রথম চার্জের সংখ্যা": { en: "First Recharge Count", hi: "प्रथम रिचार्ज संख्या" },
-    "সরাসরি ধাক্কা নম্বর(মানুষ)": { en: "Direct Push Count (Users)", hi: "सीधे रेफरल संख्या (लोग)" },
-    "সরাসরি ধাক্কা নম্বর": { en: "Direct Push Count", hi: "सीधे रेफरल संख्या" },
-    "দলের আকার": { en: "Team Size", hi: "टीम का आकार" },
-    "দলের আকার(মানুষ)": { en: "Team Size (Users)", hi: "टीम का आकार (लोग)" },
-    "নতুন মানুষ": { en: "New Members", hi: "नए सदस्य" },
-    "নতুন মানুষ(মানুষ)": { en: "New Members (Users)", hi: "नए सदस्य (लोग)" },
-    "মোট মানুষ": { en: "Total Members", hi: "कुल सदस्य" },
-    "মোট মানুষ(মানুষ)": { en: "Total Members (Users)", hi: "कुल सदस्य (लोग)" },
-    "রিচার্জ পরিমাণ": { en: "Recharge Amount", hi: "रिचार्ज राशि" },
-    "রিচার্জ পরিমাণ(BDT)": { en: "Recharge Amount", hi: "रिचार्ज राशि" },
-    "রিচার্জ পরিমাণ(INR)": { en: "Recharge Amount", hi: "रिचार्ज राशि" },
-    "রিচার্জ রিবেট": { en: "Recharge Rebate", hi: "रिचार्ज कमीशन" },
-    "রিচার্জ রিবেট(BDT)": { en: "Recharge Rebate", hi: "रिचार्ज कमीशन" },
-    "রিচার্জ রিবেট(INR)": { en: "Recharge Rebate", hi: "रिचार्ज कमीशन" },
-    "আমার দল": { en: "My Team", hi: "मेरी टीम" },
-    "স্তর 1": { en: "Tier 1", hi: "स्तर 1" },
-    "স্তর 2": { en: "Tier 2", hi: "स्तर 2" },
-    "স্তর 3": { en: "Tier 3", hi: "स्तर 3" },
-    "দৈনিক ৬টি কাজ · প্রতি কাজের আয়": { en: "Daily 6 tasks · Income per task", hi: "दैनिक 6 कार्य · प्रति कार्य आय" },
-    "প্রধান মেনু": { en: "Main Menu", hi: "मुख्य मेनू" },
-    "স্ক্রিনশট প্রিভিউ": { en: "Screenshot Preview", hi: "स्क्रीनशॉट पूर्वावलोकन" },
-    "সম্পূর্ণ স্ক্রিনশট": { en: "Full Screenshot", hi: "पूर्ण स्क्रीनशॉट" },
-    "ঠিক আছে": { en: "OK", hi: "ठीक है" },
-    "বন্ধ করতে চাপুন": { en: "Tap to close", hi: "बंद करने के लिए टैप करें" },
-    "প্যাকেজ ও ব্যালেন্স ম্যানেজমেন্ট": { en: "Package & Balance Management", hi: "पैकेज और बैलेंस प्रबंधन" },
-    "বাকি কাজের জন্য ব্যালেন্স প্রয়োজন": { en: "Balance is required for additional tasks", hi: "अतिरिक्त कार्यों के लिए बैलेंस आवश्यक है" },
-    "ব্যালেন্স রিচার্জ": { en: "Recharge Balance", hi: "बैलेंस रिचार्ज" },
-    "আপনার বর্তমান ব্যালেন্স:": { en: "Your Current Balance:", hi: "आपका वर्तमान बैलेंस:" },
-    "প্যাকেজ মূল্য:": { en: "Package Price:", hi: "पैकेज मूल्य:" },
-    "ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন": { en: "Purchase Package with Balance", hi: "बैलेंस से पैकेज खरीदें" },
-    "ব্যালেন্স রিচার্জ ট্যাবে যান": { en: "Go to Recharge Tab", hi: "रिचार्ज टैब पर जाएँ" },
-    "কেটে বন্ধ করুন": { en: "Close", hi: "बंद करें" },
-    "বন্ধুদের আমন্ত্রণ করুন": { en: "Invite Friends", hi: "मित्रों को आमंत्रित करें" },
-    "মিশন জমা": { en: "Submit Mission", hi: "मिशन सबमिट करें" },
-    "কোড তৈরি করা যায়নি।": { en: "Failed to generate code.", hi: "कोड उत्पन्न नहीं किया जा सका।" },
-    "আমন্ত্রণ কোড পেতে আগে লগইন করুন।": { en: "Please log in first to view invitation code.", hi: "निमंत्रण कोड प्राप्त करने के लिए कृपया पहले लॉग इन करें।" },
-    "ডাটাবেজে তথ্য যাচাই করা হচ্ছে": { en: "Verifying credentials with database...", hi: "डेटाबेस में विवरण सत्यापित किया जा रहा है..." },
-    "ফোন নম্বর অথবা পাসওয়ার্ড সঠিক নয়।": { en: "Phone number or password is incorrect.", hi: "फ़ोन नंबर या पासवर्ड गलत है।" },
-    "লগইন করা যায়নি। আবার চেষ্টা করুন।": { en: "Login failed. Please try again.", hi: "लॉग इन नहीं किया जा सका। कृपया पुनः प्रयास करें।" },
-    "আপনার অ্যাকাউন্ট তৈরি হয়েছে": { en: "Your account has been created", hi: "आपका खाता तैयार हो गया है" },
-    "ডাটাবেজে সফলভাবে তৈরি হয়েছে।": { en: "successfully registered in database.", hi: "सफलतापूर्वक डेटाबेस में पंजीकृत हो गया।" },
-    "দুটি পাসওয়ার্ড মিলছে না।": { en: "Passwords do not match.", hi: "दोनों पासवर्ड मेल नहीं खाते।" },
-    "সঠিক বাংলাদেশি ফোন নম্বর লিখুন": { en: "Please enter a valid phone number", hi: "कृपया सही फ़ोन नंबर दर्ज करें" },
-    "ডাটাবেজে নিবন্ধন যাচাই করা হচ্ছে": { en: "Verifying registration in database...", hi: "डेटाबेस में पंजीकरण सत्यापित किया जा रहा है..." },
-    "এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।": { en: "An account already exists with this phone number. Please log in.", hi: "इस नंबर पर पहले से खाता मौजूद है। कृपया लॉग इन करें।" },
-    "অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।": { en: "Failed to create account. Please try again.", hi: "खाता नहीं बनाया जा सका। कृपया पुनः प्रयास करें।" },
-    "যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন": { en: "Please enter a valid phone number to receive verification code", hi: "सत्यापन कोड प्राप्त करने के लिए कृपया सही फ़ोन नंबर दर्ज करें" },
-    "যাচাইকরণ কোড পাঠানো হয়েছে:": { en: "Verification code sent:", hi: "सत्यापन कोड भेजा गया:" },
-    "অনুগ্রহ করে রিচার্জের সঠিক পরিমাণ দিন।": { en: "Please enter a valid recharge amount.", hi: "कृपया वैध रिचार्ज राशि दर्ज करें।" },
-    "রিচার্জ সফল হয়েছে": { en: "Recharge successful!", hi: "रिचार्ज सफल रहा!" },
-    "বর্তমান ব্যালেন্স:": { en: "Current Balance:", hi: "वर्तमान बैलेंस:" },
-    "পছন্দ": { en: "Selected", hi: "चयनित" },
-    "বিকাশ সেট করা আছে": { en: "bKash is bound", hi: "खाता सेट है" },
-    "তথ্য আপডেট করুন": { en: "Update Information", hi: "जानकारी अपडेट करें" },
-    "অনুগ্রহ করে সম্পুর্ন নাম লিখুন": { en: "Please enter your full name", hi: "कृपया अपना पूरा नाम दर्ज करें" },
-    "অনুগ্রহ করে মোবাইল ব্যাংক নাম্বার লিখুন": { en: "Please enter your mobile banking account number", hi: "कृपया अपना खाता नंबर दर्ज करें" },
-    "সঠিক বিকাশ মোবাইল ব্যাংক নম্বর লিখুন": { en: "Please enter a valid bKash number", hi: "Please enter a valid bKash number" },
-    "বিকাশ সফলভাবে সেট করা হয়েছে": { en: "bKash bound successfully!", hi: "bKash bound successfully!" },
-    "ভিডিও লাইক করুন ও সুন্দর মন্তব্য করুন": { en: "Like the video and leave a positive comment", hi: "Like the video and leave a positive comment" },
-    "নতুন ট্রেন্ডিং ভিডিও সম্পূর্ণ দেখে লাইক দিন": { en: "Watch new trending video completely and like", hi: "Watch new trending video completely and like" },
-    "অফিশিয়াল ক্রিয়েটর অ্যাকাউন্ট ফলো করুন": { en: "Follow official creator account", hi: "Follow official creator account" },
-    "ক্রিয়েটরের প্রোফাইল ভিজিট করে ৩টি ভিডিওতে লাইক দিন": { en: "Visit creator profile and like 3 videos", hi: "Visit creator profile and like 3 videos" },
-    "ভিডিওটি বন্ধুদের সাথে শেয়ার করুন এবং বুকমার্ক করুন": { en: "Share video with friends and bookmark", hi: "Share video with friends and bookmark" },
-    "সাউন্ডট্র্যাক ব্যবহার করে ফেভারিটে যুক্ত করুন": { en: "Add soundtrack to favorites", hi: "Add soundtrack to favorites" },
-    "লাইভ স্ট্রিম ১৫ সেকেন্ড দেখুন ও লাইক দিন": { en: "Watch livestream for 15 seconds and like", hi: "Watch livestream for 15 seconds and like" },
-    "শিক্ষামূলক শর্ট ভিডিওতে লাইক ও কমেন্ট দিন": { en: "Like and comment on educational short video", hi: "Like and comment on educational short video" },
-    "ব্র্যান্ড চ্যানেলে ফলো দিন ও ভিডিও দেখুন": { en: "Follow brand channel and watch video", hi: "Follow brand channel and watch video" },
-    "ভাইরাল ক্লিপে লাভ রিয়্যাক্ট দিন": { en: "React with Love to viral clip", hi: "React with Love to viral clip" },
-    "চ্যানেলটি সাবস্ক্রাইব করুন ও বেল আইকন চাপুন": { en: "Subscribe to channel and press bell icon", hi: "Subscribe to channel and press bell icon" },
-    "ভিডিওটি সম্পূর্ণ দেখে লাইক দিন": { en: "Watch full video and hit like", hi: "Watch full video and hit like" },
-    "ভিডিওতে ইতিবাচক ও গঠনমূলক মন্তব্য করুন": { en: "Leave positive and constructive feedback on video", hi: "Leave positive and constructive feedback on video" },
-    "অফিসিয়াল পেজে লাইক ও ফলো করুন": { en: "Like and follow official page", hi: "Like and follow official page" },
-    "সাম্প্রতিক পোস্টে লাইক ও শেয়ার করুন": { en: "Like and share recent posts", hi: "Like and share recent posts" },
-    "টাস্ক সম্পন্ন হয়েছে": { en: "Task Completed", hi: "कार्य पूरा हुआ" },
-    "টাস্ক গ্রহণ করুন": { en: "Accept Task", hi: "कार्य स्वीकार करें" },
-    "মিশন সফল": { en: "Mission Success", hi: "मिशन सफल" },
-    "মিশন গৃহীত হয়েছে": { en: "Mission Accepted", hi: "मिशन स्वीकार किया गया" },
-    "টাকা উত্তোলন সফল": { en: "Withdrawal Successful", hi: "निकासी सफल" },
-    "টাকা উত্তোলন প্রক্রিয়াধীন": { en: "Withdrawal Processing", hi: "निकासी प्रक्रियाधीन" },
-    "ন্যূনতম উত্তোলন ৩০০ টাকা": { en: "Minimum withdrawal is 300 BDT", hi: "न्यूनतम निकासी राशि निर्धारित है" },
-    "দেশ নির্বাচন করুন": { en: "Select Country", hi: "देश चुनें" },
-    "হিসাব নাম্বার": { en: "Account Number", hi: "खाता संख्या" },
-    "আজকের মোট আয়": { en: "Today's Total Income", hi: "आज की कुल आय" },
-    "আজকের কাজ আয়": { en: "Today's Task Income", hi: "आज की कार्य आय" },
-    "উপলব্ধ ব্যালেন্স": { en: "Available Balance", hi: "उपलब्ध बैलेंस" },
-    "উপলব্ধ ব্যালेंस": { en: "Available Balance", hi: "उपलब्ध बैलेंस" },
-    "দৈনিক আয়": { en: "Daily Income", hi: "दैनिक आय" },
-    "দৈনিক লাভ": { en: "Daily Profit", hi: "दैनिक लाभ" },
-    "মোট আয়:": { en: "Total Income:", hi: "कुल आय:" },
-    "মোট আয়": { en: "Total Income", hi: "कुल आय" },
-    "মোট লাভ": { en: "Total Profit", hi: "कुल लाभ" },
-    "ক্রয় করা হয়েছে": { en: "Purchased", hi: "खरीदा गया" },
-    "ক্রয় প্রয়োজন": { en: "Purchase Required", hi: "खरीद आवश्यक" },
-    "ক্রয় প্রয়োজন 🔒": { en: "Purchase Required 🔒", hi: "खरीद आवश्यक 🔒" },
-    "আনলকড ✓": { en: "Unlocked ✓", hi: "अनलॉक ✓" },
-    "আনলকড": { en: "Unlocked", hi: "अनलॉक" },
-    "দৈনিক কাজ:": { en: "Daily Tasks:", hi: "दैनिक कार्य:" },
-    "দৈনিক কাজ": { en: "Daily Tasks", hi: "दैनिक कार्य" },
-    "প্রতি কাজ:": { en: "Per Task:", hi: "प्रति कार्य:" },
-    "প্রতি কাজ": { en: "Per Task", hi: "प्रति कार्य" },
-    "প্রতি কাজের আয়": { en: "Income Per Task", hi: "प्रति कार्य आय" },
-    "৫টি": { en: "5 tasks", hi: "5 कार्य" },
-    "৬টি": { en: "6 tasks", hi: "6 कार्य" },
-    "১২টি": { en: "12 tasks", hi: "12 कार्य" },
-    "১৫টি": { en: "15 tasks", hi: "15 कार्य" },
-    "২৫টি": { en: "25 tasks", hi: "25 कार्य" },
-    "৩৫টি": { en: "35 tasks", hi: "35 कार्य" },
-    "প্যাকেজ বিবরণ": { en: "Package Details", hi: "पैकेज विवरण" },
-    "বাস্তব টাকা নয়": { en: "Virtual credits, not real money", hi: "वास्तविक धन नहीं है" },
-    "পরিমাণ": { en: "Amount", hi: "राशि" },
-    "টাকা প্রত্যাহারের সময়": { en: "Withdrawal processing time", hi: "निकासी के समय" },
-    "টাকার পরিমাণ লিখুন": { en: "Enter amount", hi: "राशि दर्ज करें" },
-    "ভাষা পরিবর্তন": { en: "Change Language", hi: "भाषा बदलें" },
-    "ইংরেজি": { en: "English", hi: "English" },
-    "আপনার আমন্ত্রণ লিংক": { en: "Your Invitation Link", hi: "आपका निमंत्रण लिंक" },
-    "আপনার আমন্ত্রণ لنک": { en: "Your Invitation Link", hi: "आपका निमंत्रण लिंक" },
-    "সঠিক বাংলাদেশি ১০-১১ ডিজিটের ফোন নম্বর লিখুন।": { en: "Please enter a valid phone number.", hi: "कृपया सही फ़ोन नंबर दर्ज करें।" },
-    "অনুগ্রহ করে সঠিক ফোন নম্বর লিখুন।": { en: "Please enter a valid phone number.", hi: "कृपया सही फ़ोन नंबर दर्ज करें।" },
-    "ফিরে যান": { en: "Back", hi: "वापस जाएँ" },
-    "ক্রয় করা হয়েছে ✓": { en: "Purchased ✓", hi: "खरीदा गया ✓" },
-    "দৈনিক লাভ:": { en: "Daily Profit:", hi: "दैनिक लाभ:" },
-    "অনুগ্রহ করে আপনার দেশ নির্বাচন করুন।": { en: "Please select your country.", hi: "कृपया अपना देश चुनें।" },
-    "চলমান": { en: "In Progress", hi: "प्रगति पर" },
-    "পর্যালোচনা": { en: "Review", hi: "समीक्षा" },
-    "পর্যালোচনাধীন": { en: "Under Review", hi: "समीक्षाधीन" },
-    "পর্যালোচনাধীন:": { en: "Under Review:", hi: "समीक्षाधीन:" },
-    "পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে": { en: "Review Successful — Reward credited", hi: "समीक्षा सफल — इनाम बैलेंस में जुड़ गया" },
-    "সম্পন্নের সময়:": { en: "Completed at:", hi: "पूर्ण होने का समय:" },
-    "গ্রহণের সময়:": { en: "Accepted at:", hi: "स्वीकृति समय:" },
-    "জমা দেওয়া প্রমাণ:": { en: "Submitted Proof:", hi: "सबमिट किया गया प्रमाण:" },
-    "প্রিভিউ দেখুন 🔍": { en: "Preview 🔍", hi: "प्रिव्यू देखें 🔍" },
-    "অনুমোদন সম্পন্ন করুন ⚡": { en: "Approve Now ⚡", hi: "स्वीकृत करें ⚡" },
-    "অনুমোদন সম্পন্ন করুন": { en: "Approve Now", hi: "स्वीकृत करें" },
-    "এই স্তর থেকে কেটে বের হন (ভিআইপি হলে ফিরে যান)": { en: "Exit this tier (Return to VIP Hall)", hi: "इस स्तर से बाहर निकलें (वीआईपी हॉल पर लौटें)" },
-    "এই স্তর থেকে কেটে বের হন": { en: "Exit this tier", hi: "इस स्तर से बाहर निकलें" },
-    "ভিআইপি হলে ফিরে যান": { en: "Return to VIP Hall", hi: "वीआईपी हॉल पर लौटें" },
-    "মিশন স্তর": { en: "Mission Tier", hi: "मिशन स्तर" },
-    "মিশন তালিকা": { en: "Mission List", hi: "मिशन सूची" },
-    "টাস্ক মেনুতে গিয়ে কাজ জমা দিন।": { en: "Go to Tasks menu to submit proof.", hi: "टास्क मेनू में जाकर कार्य सबमिट करें।" },
-    "কাজ গৃহীত হয়েছে!": { en: "Task accepted!", hi: "कार्य स्वीकार किया गया!" },
-    "আজকের বাকি কাজ:": { en: "Remaining tasks today:", hi: "आज के शेष कार्य:" },
-    "সীমা পূর্ণ হয়েছে": { en: "Limit reached", hi: "सीमा पूर्ण हो गई" },
-    "সীমা পূর্ণ": { en: "Limit Reached", hi: "सीमा पूर्ण" },
-    "খোলা সংযুক্তি": { en: "Open Link", hi: "लिंक खोलें" },
-    "অনুলিপি": { en: "Copy", hi: "कॉपी" },
-    "সৃষ্টির সময়:": { en: "Created Time:", hi: "निर्माण समय:" },
-    "সৃষ্টির সময়": { en: "Created Time", hi: "निर्माण समय" },
-    "টাস্ক লিঙ্ক:": { en: "Task Link:", hi: "कार्य लिंक:" },
-    "টাস্ক শিরোনাম:": { en: "Task Title:", hi: "कार्य शीर्षक:" },
-    "মিশন সুবিধা:": { en: "Mission Reward:", hi: "मिशन इनाम:" },
-    "মিশনের বিবরণ:": { en: "Mission Details:", hi: "मिशन विवरण:" },
-    "দয়া করে এখানে প্রবেশ করুন...": { en: "Please enter here...", hi: "कृपया यहाँ दर्ज करें..." },
-    "দয়া করে এখানে প্রবেশ করুন": { en: "Please enter here", hi: "कृपया यहाँ दर्ज करें" },
-    "স্ক্রিনশট আপলোড করুন": { en: "Upload Screenshot", hi: "स्क्रीनशॉट अपलोड करें" },
-    "জমা দিন →": { en: "Submit →", hi: "सबमिट करें →" },
-    "জমা দিন": { en: "Submit", hi: "सबमिट करें" },
-    "জমা": { en: "Submit", hi: "सबमिट" },
-    "বাতিল করুন": { en: "Cancel", hi: "रद्द करें" },
-    "বাতিল": { en: "Cancel", hi: "रद्द करें" },
-    "কেটে দিন": { en: "Close", hi: "बंद करें" },
-    "লিংক সফলভাবে অনুলিপি (কপি) করা হয়েছে!": { en: "Link copied successfully!", hi: "लिंक सफलतापूर्वक कॉपी किया गया!" },
-    "কপি সম্পন্ন!": { en: "Copied!", hi: "कॉपी हो गया!" },
-    "লিংক নতুন ট্যাবে খোলা হচ্ছে।": { en: "Opening link in new tab.", hi: "लिंक नए टैब में खोला जा रहा है।" },
-    "সরাসরি এখানে ক্লিক করুন ↗": { en: "Click directly here ↗", hi: "सीधे यहाँ क्लिक करें ↗" },
-    "টাস্কের লিংক পাওয়া যায়নি!": { en: "Task link not found!", hi: "कार्य लिंक नहीं मिला!" },
-    "স্ক্রিনশট আপলোড করুন দয়া করে": { en: "Please upload a screenshot", hi: "कृपया स्क्रीनशॉट अपलोड करें" },
-    "মিশন সফলভাবে জমা দেওয়া হয়েছে!": { en: "Mission submitted successfully!", hi: "मिशन सफलतापूर्वक सबमिट किया गया!" },
-    "এখন এটি পর্যালোচনাধীন রয়েছে।": { en: "It is now under review.", hi: "अब यह समीक्षाधीन है।" },
-    "টাস্ক মেনুতে যান": { en: "Go to Tasks Menu", hi: "टास्क मेनू पर जाएँ" },
-    "ব্যক্তিগত ভারসাম্য": { en: "Personal Balance", hi: "व्यक्तिगत संतुलन" },
-    "গতকালের উপার্জন": { en: "Yesterday's Earnings", hi: "कल की कमाई" },
-    "আজ উপার্জন": { en: "Today's Earnings", hi: "आज की कमाई" },
-    "এই সপ্তাহে আয়": { en: "This Week's Earnings", hi: "इस सप्ताह की आय" },
-    "এই মাসে আয়": { en: "This Month's Earnings", hi: "इस महीने की आय" },
-    "গত মাসে আয়": { en: "Last Month's Earnings", hi: "पिछले महीने की आय" },
-    "কাজটি আজই সম্পূর্ণ করুন": { en: "Completed tasks today", hi: "आज पूरे किए गए कार्य" },
-    "কাজটি আজই সম্পূর্ণ করুন(এক)": { en: "Completed tasks today", hi: "आज पूरे किए गए कार्य" },
-    "আজকের জন্য বাকি কাজ": { en: "Remaining tasks today", hi: "आज के शेष कार्य" },
-    "আজকের জন্য বাকি কাজ(এক)": { en: "Remaining tasks today", hi: "आज के शेष कार्य" },
-    "ভারসাম্য:": { en: "Balance:", hi: "संतुलन:" },
-    "আমার পার্স": { en: "My Wallet", hi: "मेरा वॉलेट" },
-    "শিরোনাম": { en: "Tier", hi: "स्तर" },
-    "সীমা": { en: "Limit", hi: "सीमा" },
-    "ভাল": { en: "Good", hi: "अच्छा" },
-    "চমৎকার": { en: "Excellent", hi: "उत्कृष्ट" },
-    "বরফে পরিণত করা:": { en: "Frozen:", hi: "जमा (फ्रोज़न):" },
-    "উপলব্ধ:": { en: "Available:", hi: "उपलब्ध:" },
-    "স্থানান্তরিত": { en: "Transferred", hi: "स्थानांतरित" },
-    "প্রকৃত আগমন": { en: "Actual Received", hi: "वास्तविक प्राप्त" },
-    "লাভ শেয়ারিং অনুপাত": { en: "Profit Share Ratio", hi: "लाभ शेयर अनुपात" }
+    "আলো": { bn: "PW New Media", en: "PW New Media", ar: "PW New Media" },
+    "Alo": { bn: "PW New Media", en: "PW New Media", ar: "PW New Media" },
+    "প্রথম পাতা": { en: "Home", ar: "الرئيسية" },
+    "হল": { en: "Hall", ar: "القاعة" },
+    "সদস্য": { en: "VIP", ar: "الأعضاء" },
+    "টাস্ক": { en: "Tasks", ar: "المهام" },
+    "আমার": { en: "Mine", ar: "حسابي" },
+    "লগইন": { en: "Login", ar: "تسجيل الدخول" },
+    "অ্যাকাউন্ট খুলুন": { en: "Sign Up", ar: "إنشاء حساب" },
+    "নিশ্চিতভাবে শুরু করুন": { en: "Get Started Now", ar: "ابدأ الآن" },
+    "আমার অ্যাকাউন্ট আছে": { en: "I Have an Account", ar: "لدي حساب بالفعل" },
+    "সহজ, স্বচ্ছ এবং আপনার জন্য তৈরি": { en: "Simple, transparent, and built for you", ar: "بسيطة وشفافة ومصممة من أجلك" },
+    "স্বাগতম কার্ড": { en: "Welcome Card", ar: "بطاقة الترحيب" },
+    "আপনার স্পেস": { en: "Your Space", ar: "مساحتك الخاصة" },
+    "শুরু হোক আজই": { en: "Start Today", ar: "ابدأ اليوم" },
+    "দ্রুত অ্যাক্সেস": { en: "Quick Access", ar: "وصول سريع" },
+    "যেকোনো সময়, যেকোনো জায়গায়": { en: "Anytime, Anywhere", ar: "في أي وقت وأي مكان" },
+    "আপনার মতো করে": { en: "Your Own Way", ar: "بطريقتك الخاصة" },
+    "সহজ ও আরামদায়ক অভিজ্ঞতা": { en: "Smooth & Comfortable Experience", ar: "تجربة سلسة ومريحة" },
+    "আপনার প্রতিটি শুরু হোক সুন্দর": { en: "May every beginning bring you prosperity", ar: "لتكن كل بداية لك مليئة بالنجاح" },
+    "আপনার নতুন শুরু এখানেই": { en: "Your fresh start begins here", ar: "بدايتك الجديدة تبدأ من هنا" },
+    "প্রতিদিনের কাজে আনুন PW New Media": { en: "Bring Fresh Light to Your Daily Earnings", ar: "اجعل PW New Media جزءاً من أرباحك اليومية" },
+    "আপনার ব্যক্তিগত স্পেসে স্বাগতম": { en: "Welcome to your personal space", ar: "مرحباً بك في مساحتك الشخصية" },
+    "Welcome back": { bn: "আবার স্বাগতম", en: "Welcome back", ar: "مرحباً بعودتك" },
+    "আবার স্বাগতম": { bn: "আবার স্বাগতম", en: "Welcome back", ar: "مرحباً بعودتك" },
+    "Log in to continue to your account.": { bn: "আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।", en: "Log in to continue to your account.", ar: "سجّل الدخول للمتابعة إلى حسابك." },
+    "আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।": { bn: "আপনার অ্যাকাউন্টে চালিয়ে যেতে লগইন করুন।", en: "Log in to continue to your account.", ar: "سجّل الدخول للمتابعة إلى حسابك." },
+    "Country": { bn: "দেশ", en: "Country", ar: "الدولة" },
+    "দেশ": { bn: "দেশ", en: "Country", ar: "الدولة" },
+    "Bangladesh (+880)": { bn: "বাংলাদেশ (+880)", en: "Bangladesh (+880)", ar: "بنغلاديش (+880)" },
+    "বাংলাদেশ (+880)": { bn: "বাংলাদেশ (+880)", en: "Bangladesh (+880)", ar: "بنغلاديش (+880)" },
+    "Egypt (+20)": { bn: "মিশর (+20)", en: "Egypt (+20)", ar: "مصر (+20)" },
+    "মিশর (+20)": { bn: "মিশর (+20)", en: "Egypt (+20)", ar: "مصر (+20)" },
+    "মিশর (Egypt)": { bn: "মিশর (Egypt)", en: "Egypt", ar: "مصر" },
+    "মিশর": { bn: "মিশর", en: "Egypt", ar: "مصر" },
+    "Phone number": { bn: "ফোন নম্বর", en: "Phone number", ar: "رقم الهاتف" },
+    "ফোন নম্বর": { bn: "ফোন নম্বর", en: "Phone number", ar: "رقم الهاتف" },
+    "Enter your phone number": { bn: "আপনার ফোন নম্বর লিখুন", en: "Enter your phone number", ar: "أدخل رقم هاتفك" },
+    "আপনার ফোন নম্বর লিখুন": { bn: "আপনার ফোন নম্বর লিখুন", en: "Enter your phone number", ar: "أدخل رقم هاتفك" },
+    "Password": { bn: "পাসওয়ার্ড", en: "Password", ar: "كلمة المرور" },
+    "পাসওয়ার্ড": { bn: "পাসওয়ার্ড", en: "Password", ar: "كلمة المرور" },
+    "Forgot password?": { bn: "পাসওয়ার্ড ভুলে গেছেন?", en: "Forgot password?", ar: "نسيت كلمة المرور؟" },
+    "পাসওয়ার্ড ভুলে গেছেন?": { bn: "পাসওয়ার্ড ভুলে গেছেন?", en: "Forgot password?", ar: "نسيت كلمة المرور؟" },
+    "Enter your password": { bn: "আপনার পাসওয়ার্ড লিখুন", en: "Enter your password", ar: "أدخل كلمة المرور" },
+    "আপনার পাসওয়ার্ড লিখুন": { bn: "আপনার পাসওয়ার্ড লিখুন", en: "Enter your password", ar: "أدخل كلمة المرور" },
+    "Keep me logged in": { bn: "আমাকে লগইন রাখুন", en: "Keep me logged in", ar: "تذكر تسجيل دخولي" },
+    "আমাকে লগইন রাখুন": { bn: "আমাকে লগইন রাখুন", en: "Keep me logged in", ar: "تذكر تسجيل دخولي" },
+    "Log in": { bn: "লগইন", en: "Log in", ar: "تسجيل الدخول" },
+    "লগইন": { bn: "লগইন", en: "Log in", ar: "تسجيل الدخول" },
+    "New here?": { bn: "নতুন?", en: "New here?", ar: "جديد هنا؟" },
+    "নতুন?": { bn: "নতুন?", en: "New here?", ar: "جديد هنا؟" },
+    "Create an account": { bn: "অ্যাকাউন্ট খুলুন", en: "Create an account", ar: "إنشاء حساب" },
+    "অ্যাকাউন্ট খুলুন": { bn: "অ্যাকাউন্ট খুলুন", en: "Create an account", ar: "إنشاء حساب" },
+    "Terms of Service": { bn: "সেবার শর্তাবলি", en: "Terms of Service", ar: "شروط الخدمة" },
+    "সেবার শর্তাবলি": { bn: "সেবার শর্তাবলি", en: "Terms of Service", ar: "شروط الخدمة" },
+    "Privacy Policy": { bn: "গোপনীয়তা নীতি", en: "Privacy Policy", ar: "سياسة الخصوصية" },
+    "গোপনীয়তা নীতি": { bn: "গোপনীয়তা নীতি", en: "Privacy Policy", ar: "سياسة الخصوصية" },
+    "Enter a valid phone number": { bn: "সঠিক ফোন নম্বর লিখুন", en: "Enter a valid phone number", ar: "أدخل رقم هاتف صحيح" },
+    "সঠিক ফোন নম্বর লিখুন": { bn: "সঠিক ফোন নম্বর লিখুন", en: "Enter a valid phone number", ar: "أدخل رقم هاتف صحيح" },
+    "আপনার অ্যাকাউন্টে লগইন করুন": { en: "Log in to continue to your account.", ar: "سجّل الدخول للمتابعة إلى حسابك." },
+    "আপনার তথ্য দিয়ে লগইন করে যেখানে থেমেছিলেন, সেখান থেকেই শুরু করুন।": { en: "Log in to continue to your account.", ar: "سجّل الدخول للمتابعة من حيث توقفت." },
+    "আমাকে লগইন অবস্থায় রাখুন": { en: "Keep me logged in", ar: "تذكر تسجيل دخولي" },
+    "লগইন করুন": { en: "Log In", ar: "تسجيل الدخول" },
+    "নতুন এখানে?": { en: "New here?", ar: "جديد هنا؟" },
+    "নতুন অ্যাকাউন্ট তৈরি করুন": { en: "Create an account", ar: "إنشاء حساب جديد" },
+    "হোমপেজে ফিরে যান": { en: "Back to Homepage", ar: "العودة إلى الرئيسية" },
+    "লগইন সফল!": { en: "Login Successful!", ar: "تم تسجيل الدخول بنجاح!" },
+    "স্বর্ণের খনিতে স্বাগতম": { en: "Welcome to PW New Media", ar: "مرحباً بك في PW New Media" },
+    "দেখুন": { en: "Show", ar: "عرض" },
+    "আপনার নির্ভরযোগ্য ডিজিটাল আয়ের প্ল্যাটফর্ম": { en: "Your Trusted Digital Income Platform", ar: "منصتك الرقمية الموثوقة للربح" },
+    "এসএমএস যাচাইকরণ কোড": { en: "SMS Verification Code", ar: "رمز التحقق عبر SMS" },
+    "যাচাইকরণ কোড পাঠান": { en: "Send Code", ar: "إرسال الرمز" },
+    "পাসওয়ার্ড নিশ্চিত করুন": { en: "Confirm Password", ar: "تأكيد كلمة المرور" },
+    "আমন্ত্রণ কোড": { en: "Invitation Code", ar: "رمز الدعوة" },
+    "এখন সাইইন আপ করুন": { bn: "এখন সাইন আপ করুন", en: "Sign Up Now", ar: "سجل الآن" },
+    "এখন সাইন আপ করুন": { bn: "এখন সাইন আপ করুন", en: "Sign Up Now", ar: "سجل الآن" },
+    "আগে থেকেই অ্যাকাউন্ট আছে?": { bn: "আগে থেকেই অ্যাকাউন্ট আছে?", en: "Already have an account?", ar: "لديك حساب بالفعل؟" },
+    "নিবন্ধন সফল!": { en: "Registration Successful!", ar: "تم التسجيل بنجاح!" },
+    "আমার উচ্চতর:": { en: "My Superior:", ar: "المشرف الأعلى:" },
+    "হিসাব নাম্বার:": { en: "Account Number:", ar: "رقم الحساب:" },
+    "আমন্ত্রণ কোড:": { en: "Invite Code:", ar: "رمز الدعوة:" },
+    "সাইন আউট": { en: "Sign Out", ar: "تسجيل الخروج" },
+    "আমার পাস": { en: "My Pass", ar: "بطاقتي" },
+    "প্রত্যাহার": { en: "Withdrawal", ar: "السحب" },
+    "জমা": { en: "Deposit", ar: "إيداع" },
+    "দলের রিপোর্ট": { en: "Team Report", ar: "تقرير الفريق" },
+    "ব্যক্তিগত তথ্য": { en: "Personal Info", ar: "المعلومات الشخصية" },
+    "কাজের রেকর্ড": { en: "Task Records", ar: "سجل المهام" },
+    "গ্রাহক সেবা": { en: "Support", ar: "خدمة العملاء" },
+    "শেয়ার করুন": { en: "Share", ar: "مشاركة" },
+    "আজকের মোট আয়:": { en: "Today's Income:", ar: "إجمالي دخل اليوم:" },
+    "আজকের কাজ আয়:": { en: "Task Income:", ar: "دخل المهام اليوم:" },
+    "মোট রাজস্ব": { en: "Total Revenue", ar: "إجمالي الإيرادات" },
+    "অসম্পূর্ণ মিশন": { en: "Incomplete Tasks", ar: "مهام غير مكتملة" },
+    "সম্পন্ন মিশন": { en: "Completed Tasks", ar: "مهام مكتملة" },
+    "হিমায়িত": { en: "Frozen", ar: "مجمد" },
+    "উপলব্ধ ব্যালেন্স": { en: "Available Balance", ar: "الرصيد المتاح" },
+    "মোট ব্যালেন্স": { en: "Total Balance", ar: "الرصيد الإجمالي" },
+    "মোট দলের ভারসাম্য(BDT)": { en: "Team Balance (BDT)", ar: "رصيد الفريق" },
+    "মোট দলের প্রবাহ(BDT)": { en: "Team Flow (BDT)", ar: "حجم تداول الفريق" },
+    "মোট রিচার্জ(BDT)": { en: "Total Recharge (BDT)", ar: "إجمالي الشحن" },
+    "মোট নগদ আউট(BDT)": { en: "Total Cashout (BDT)", ar: "إجمالي السحب" },
+    "প্রথম চার্জের সংখ্যা": { en: "First Deposit Count", ar: "عدد الإيداعات الأولى" },
+    "সরাসরি ধাক্কা নম্বর": { en: "Direct Referrals (Tier 1)", ar: "الإحالات المباشرة (المستوى 1)" },
+    "দলের মোট আকার": { en: "Total Team Size", ar: "إجمالي حجم الفريق" },
+    "নতুন দল নম্বর": { en: "New Members (24h)", ar: "أعضاء جدد (24 ساعة)" },
+    "আমার দল": { en: "My Team", ar: "فريقي" },
+    "প্রথম স্তর": { en: "Tier 1", ar: "المستوى 1" },
+    "দ্বিতীয় স্তর": { en: "Tier 2", ar: "المستوى 2" },
+    "তৃতীয় স্তর": { en: "Tier 3", ar: "المستوى 3" },
+    "এই স্তরে এখনো কোনো সদস্য যুক্ত হয়নি": { en: "No members joined in this tier yet", ar: "لا يوجد أعضاء في هذا المستوى بعد" },
+    "আপনার জন্য": { en: "For You", ar: "مخصص لك" },
+    "🇧🇩 বাংলাদেশ · BDT (৳)": { en: "🇧🇩 Bangladesh · BDT (৳)", ar: "🇧🇩 بنغلاديش · BDT (৳)" },
+    "বাংলাদেশ": { en: "Bangladesh", ar: "بنغلاديش" },
+    "উত্তোলন পাসওয়ার্ড": { en: "Withdrawal Password", ar: "كلمة مرور السحب" },
+    "ফান্ড পাসওয়ার্ড": { en: "Fund Password", ar: "كلمة مرور الصندوق" },
+    "উত্তোলন পাসওয়ার্ড লিখুন": { en: "Enter withdrawal password", ar: "أدخل كلمة مرور السحب" },
+    "৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন": { en: "Enter 6-digit withdrawal password", ar: "أدخل كلمة مرور السحب المكونة من 6 أرقام" },
+    "কনফার্ম পাসওয়ার্ড": { en: "Confirm Password", ar: "تأكيد كلمة المرور" },
+    "কনফার্ম পাসওয়ার্ড লিখুন": { en: "Enter confirm password", ar: "أعد إدخال كلمة المرور" },
+    "৬ ডিজিটের পাসওয়ার্ড কনফার্ম করুন": { en: "Confirm 6-digit password", ar: "تأكيد كلمة المرور من 6 أرقام" },
+    "কার্যপ্রণালী সফলভাবে জমা দেওয়া হয়েছে": { en: "Operation submitted successfully", ar: "تم إرسال العملية بنجاح" },
+    "✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)": { en: "✓ Permanently Saved (One-time)", ar: "✓ محفوظ بشكل دائم (لمرة واحدة)" },
+    "🔒 সংরক্ষিত": { en: "🔒 Saved", ar: "🔒 محفوظ" },
+    "আপনার ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সফলভাবে এককালীন সংরক্ষণ করা হয়েছে। এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়।": { en: "Your 6-digit withdrawal password has been permanently saved. It cannot be changed or edited.", ar: "تم حفظ كلمة مرور السحب المكونة من 6 أرقام بشكل دائم ولا يمكن تعديلها." },
+    "পছন্দ করুন": { en: "Select Method", ar: "اختر الطريقة" },
+    "বিকাশ সেট নেই": { en: "bKash Not Bound", ar: "bKash غير مرتبط" },
+    "নগদ সেট নেই": { en: "Nagad Not Bound", ar: "Nagad غير مرتبط" },
+    "USDT সেট নেই": { en: "USDT Not Bound", ar: "USDT غير مرتبط" },
+    "প্রত্যাহার পদ্ধতি": { en: "Withdrawal Method", ar: "طريقة السحب" },
+    "তোলা টাকার পরিমাণ": { en: "Withdrawal Amount", ar: "مبلغ السحب" },
+    "তোলা টাকার": { en: "Withdrawal", ar: "السحب" },
+    "পরিমাণ": { en: "Amount", ar: "المبلغ" },
+    "প্রত্যাহার পরিমাণ লিখুন দয়া করে": { en: "Please enter withdrawal amount", ar: "يرجى إدخال مبلغ السحب" },
+    "অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন": { en: "Please enter fund password", ar: "يرجى إدخال كلمة مرور الصندوق" },
+    "৬ ডিজিটের ফান্ডের পাসওয়ার্ড লিখুন": { en: "Enter 6-digit fund password", ar: "أدخل كلمة مرور الصندوق من 6 أرقام" },
+    "মাসিক উত্তোলন 0 frecuencia": { en: "Monthly withdrawal 0 frequency", ar: "السحب الشهري 0 مرة" },
+    "BDT উত্তোলন 48-96 ঘণ্টার মধ্যে আসে": { en: "BDT withdrawal arrives within 48-96 hours", ar: "يصل سحب BDT خلال 48-96 ساعة" },
+    "USDT প্রত্যাহার 12 ঘণ্টার মধ্যে আসে": { en: "USDT withdrawal arrives within 12 hours", ar: "يصل سحب USDT خلال 12 ساعة" },
+    "দলের তথ্য লোড হচ্ছে…": { en: "Loading team info...", ar: "جاري تحميل بيانات الفريق..." },
+    "অবস্থান": { en: "VIP", ar: "VIP" },
+    "ভিআইপি হল": { en: "VIP Hall", ar: "قاعة VIP" },
+    "উত্তোলন": { en: "Withdraw", ar: "سحب" },
+    "হোম": { en: "Home", ar: "الرئيسية" },
+    "ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম": { en: "Investment & Mission Platform", ar: "منصة الاستثمار والمهام" },
+    "প্রতিদিনের কাজে আনুন": { en: "Bring to Daily Earnings", ar: "حقق أرباحاً يومية" },
+    "ভারত (+91)": { en: "India (+91)", ar: "الهند (+91)" },
+    "সাইন আপ করুন": { en: "Sign Up", ar: "إنشاء حساب" },
+    "নিবন্ধন করুন": { en: "Register", ar: "إنشاء حساب" },
+    "শুরু করুন": { en: "Get Started", ar: "ابدأ الآن" },
+    "এখনই শুরু করুন": { en: "Start Now", ar: "ابدأ الآن" },
+    "রিওয়ার্ড জিতুন": { en: "Win Rewards", ar: "اربح مكافآت" },
+    "দ্রুত পেমেন্ট": { en: "Fast Payment", ar: "دفع سريع" },
+    "নির্ভরযোগ্য সিস্টেম": { en: "Reliable System", ar: "نظام موثوق" },
+    "সহজ কাজ": { en: "Easy Tasks", ar: "مهام سهلة" },
+    "একসাথে আয় করুন": { en: "Earn Together", ar: "اربحوا معاً" },
+    "রেফার করুন": { en: "Refer Now", ar: "ادعُ الآن" },
+    "পূর্ববর্তী ব্যানার": { en: "Previous Slide", ar: "الشريحة السابقة" },
+    "পরবর্তী ব্যানার": { en: "Next Slide", ar: "الشريحة التالية" },
+    "সরাসরি সমাধান": { en: "Direct Solution", ar: "حل مباشر" },
+    "বন্ধুদের স্ক্যান করতে": { en: "Scan to Invite Friends", ar: "امسح الرمز لدعوة الأصدقاء" },
+    "আমন্ত্রণ করুন": { en: "Invite", ar: "دعوة" },
+    "আমন্ত্রণ": { en: "Invitation", ar: "دعوة" },
+    "বন্ধুরা": { en: "Friends", ar: "الأصدقاء" },
+    "বন্ধুদের ভিআইপি লেভেল আপগ্রেড করতে আমন্ত্রণ করুন": { en: "Invite friends to upgrade VIP level", ar: "ادعُ الأصدقاء لترقية مستوى VIP" },
+    "মাসিক বেতন": { en: "Monthly Salary", ar: "الراتب الشهري" },
+    "অগ্রগতি": { en: "Progress", ar: "التقدم" },
+    "বোনাস সক্রিয়করণ": { en: "Bonus Activation", ar: "تفعيل المكافأة" },
+    "প্রকৃত": { en: "Actual", ar: "الفعلي" },
+    "অবস্থা": { en: "Status", ar: "الحالة" },
+    "তারিখ": { en: "Date", ar: "التاريخ" },
+    "সংরক্ষণ": { en: "Save", ar: "حفظ" },
+    "ক্রয় করুন": { en: "Buy Now", ar: "اشترِ الآن" },
+    "করুন": { en: "Do", ar: "تنفيذ" },
+    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", ar: "خطة الادخار" },
+    "সঞ্চয় পরিকল্পনা": { en: "Savings Plan", ar: "خطة الادخار" },
+    "পার্স": { en: "Wallet", ar: "المحفظة" },
+    "নতুন সঞ্চয় শুরু করুন": { en: "Start New Savings", ar: "ابدأ ادخاراً جديداً" },
+    "একবারে ৪৫ দিন লাভ সহ": { en: "In 45 days with full profit", ar: "بعد 45 يوماً مع كامل الأرباح" },
+    "একজন গ্রাহক কেবল একবারই সঞ্চয় করতে পারবেন": { en: "Each member can participate in savings plan only once", ar: "يمكن لكل عضو الاشتراك في خطة الادخار مرة واحدة فقط" },
+    "পরিকল্পনার মেয়াদ": { en: "Plan Duration", ar: "مدة الخطة" },
+    "৪৫ দিন": { en: "45 Days", ar: "45 يوماً" },
+    "প্রফিট রেট": { en: "Profit Rate", ar: "نسبة الربح" },
+    "দৈনিক ৫%": { en: "Daily 5%", ar: "5% يومياً" },
+    "দৈনিক প্রফিট (৫%):": { en: "Daily Profit (5%):", ar: "الربح اليومي (5%):" },
+    "৪৫ দিনে মোট মুনাফা (২২৫%):": { en: "Total 45-Day Profit (225%):", ar: "إجمالي الربح خلال 45 يوماً (225%):" },
+    "একবারে ৪৫ দিন পর মোট ফেরত:": { en: "Total Return After 45 Days:", ar: "إجمالي العائد بعد 45 يوماً:" },
+    "লাভ সহ": { en: "With Profit", ar: "مع الأرباح" },
+    "অনলাইন সাপোর্ট সক্রিয় (24/7)": { en: "Online Support Active (24/7)", ar: "الدعم المباشر نشط (24/7)" },
+    "অনলাইন লাইভ মেসেজ পাঠান": { en: "Send Live Message Online", ar: "إرسال رسالة مباشرة عبر الإنترنت" },
+    "অফিশিয়াল মিডিয়া ক্যাম্পেইন": { en: "Official Media Campaign", ar: "الحملة الإعلامية الرسمية" },
+    "দৈনিক উত্তোলনযোগ্য": { en: "Daily Withdrawable", ar: "قابل للسحب يومياً" },
+    "সুদের হার": { en: "Interest Rate", ar: "نسبة الفائدة" },
+    "চক্র (মেয়াদ)": { en: "Cycle (Duration)", ar: "الدورة (المدة)" },
+    "৩০ দিন": { en: "30 Days", ar: "30 يوماً" },
+    "দৈনিক বরাদ্দকৃত কাজ": { en: "Daily Assigned Tasks", ar: "المهام المخصصة يومياً" },
+    "১ ইউনিট": { en: "1 Unit", ar: "وحدة واحدة" },
+    "কাজের বিবরণ ও আয়ের হিসাব": { en: "Task Details & Income Calculation", ar: "تفاصيل المهام وحساب الدخل" },
+    "মেয়াদ শেষে মোট প্রাপ্তি:": { en: "Total Return at Maturity:", ar: "إجمالي العائد عند الاستحقاق:" },
+    "লাভ (প্রতিদিন উত্তোলনযোগ্য)": { en: "Profit (Daily Withdrawable)", ar: "الربح (قابل للسحب يومياً)" },
+    "আমরা কীভাবে টাকা দিচ্ছি এবং কোম্পানি কীভাবে আয় করছে?": { en: "How we pay and how the company earns?", ar: "كيف ندفع وكيف تحقق الشركة الأرباح؟" },
+    "স্পনসর ও কনটেন্ট নির্মাতাদের বাজেট:": { en: "Sponsors & Content Creators Budget:", ar: "ميزانية الرعاة ومنشئي المحتوى:" },
+    "আপনার প্রতিদিনের সহজ কাজ:": { en: "Your Daily Easy Tasks:", ar: "مهامك اليومية البسيطة:" },
+    "সরাসরি কাজের পারিশ্রমিক:": { en: "Direct Task Compensation:", ar: "مكافأة المهام المباشرة:" },
+    "প্রতিদিন নিশ্চিত ও নিরাপদ উত্তোলন:": { en: "Daily Guaranteed & Secure Withdrawal:", ar: "سحب يومي مضمون وآمن:" },
+    "প্রকৃত নাম": { en: "Real Name", ar: "الاسم الحقيقي" },
+    "আপনার আসল পূর্ণ নাম লিখুন": { en: "Enter your real full name", ar: "أدخل اسمك الكامل الحقيقي" },
+    "বিকাশ অ্যাকাউন্ট": { en: "bKash Account", ar: "حساب bKash" },
+    "বিকাশ Personal": { en: "bKash Personal", ar: "bKash شخصي" },
+    "নগদ Personal": { en: "Nagad Personal", ar: "Nagad شخصي" },
+    "অ্যাকাউন্ট যুক্ত নেই": { en: "Account not linked", ar: "الحساب غير مرتبط" },
+    "আপনার উত্তোলনের মাধ্যম নির্বাচন করুন অথবা নতুন সেট করুন": { en: "Select your withdrawal method or set up a new one", ar: "اختر وسيلة السحب أو قم بإعداد وسيلة جديدة" },
+    "স্তর 1": { en: "Tier 1", ar: "المستوى 1" },
+    "স্তর 2": { en: "Tier 2", ar: "المستوى 2" },
+    "স্তর 3": { en: "Tier 3", ar: "المستوى 3" },
+    "স্তর ১ (সরাসরি)": { en: "Tier 1 (Direct)", ar: "المستوى 1 (مباشر)" },
+    "স্তর ১": { en: "Tier 1", ar: "المستوى 1" },
+    "স্তর ২": { en: "Tier 2", ar: "المستوى 2" },
+    "স্তর ৩": { en: "Tier 3", ar: "المستوى 3" },
+    "মোট মানুষ": { en: "Total Members", ar: "إجمالي الأعضاء" },
+    "রিচার্জ পরিমাণ": { en: "Recharge Amount", ar: "مبلغ الشحن" },
+    "রিবেট": { en: "Rebate", ar: "العمولة" },
+    "১০% রিবেট": { en: "10% Rebate", ar: "عمولة 10%" },
+    "৫% রিবেট": { en: "5% Rebate", ar: "عمولة 5%" },
+    "২% রিবেট": { en: "2% Rebate", ar: "عمولة 2%" },
+    "স্তর ১ কমিশন (সরাসরি):": { en: "Tier 1 Commission (Direct):", ar: "عمولة المستوى 1 (مباشر):" },
+    "স্তর ২ কমিশন:": { en: "Tier 2 Commission:", ar: "عمولة المستوى 2:" },
+    "স্তর ৩ কমিশন:": { en: "Tier 3 Commission:", ar: "عمولة المستوى 3:" },
+    "কোড কপি": { en: "Copy Code", ar: "نسخ الرمز" },
+    "আমন্ত্রণ পেজ": { en: "Invite Page", ar: "صفحة الدعوة" },
+    "আপনার আমন্ত্রণ কোড:": { en: "Your Invite Code:", ar: "رمز الدعوة الخاص بك:" },
+    "প্যাকেজ": { en: "Package", ar: "الباقة" },
+    "ব্যালেন্স": { en: "Balance", ar: "الرصيد" },
+    "রিচার্জ": { en: "Recharge", ar: "إعادة الشحن" },
+    "যুক্ত:": { en: "Joined:", ar: "انضم:" },
+    "সদস্য তালিকা": { en: "Member List", ar: "قائمة الأعضاء" },
+    "রিয়েল ডাটা": { en: "Real Data", ar: "بيانات حقيقية" },
+    "সমস্ত": { en: "All", ar: "الكل" },
+    "চলমান": { en: "In Progress", ar: "قيد التنفيذ" },
+    "পর্যালোচনা": { en: "Review", ar: "مراجعة" },
+    "সম্পন্ন": { en: "Completed", ar: "مكتمل" },
+    "কাজ খুলুন": { en: "Open Task", ar: "فتح المهمة" },
+    "জমা দিন": { en: "Submit", ar: "إرسال" },
+    "পুরস্কার:": { en: "Reward:", ar: "المكافأة:" },
+    "এখনই যোগ দিন": { en: "Join Now", ar: "انضم الآن" },
+    "বর্তমান স্তর": { en: "Current Level", ar: "المستوى الحالي" },
+    "দৈনিক আয়:": { en: "Daily Income:", ar: "الدخل اليومي:" },
+    "মূল্য:": { en: "Price:", ar: "السعر:" },
+    "ক্রয় করুন": { en: "Buy Now", ar: "اشترِ الآن" },
+    "উত্তোলন বিবরণ": { en: "Withdrawal Details", ar: "تفاصيل السحب" },
+    "উত্তোলনের ইতিহাস": { en: "Withdrawal History", ar: "سجل السحب" },
+    "উত্তোলনের রেকর্ড": { en: "Withdrawal Records", ar: "سجلات السحب" },
+    "প্রকৃত প্রাপ্তি": { en: "Actual Received", ar: "المبلغ المستلم فعلياً" },
+    "ফি (18%)": { en: "Fee (18%)", ar: "الرسوم (18%)" },
+    "বিকাশ সেটআপ": { en: "bKash Setup", ar: "إعداد bKash" },
+    "উত্তোলন নিশ্চিত করুন": { en: "Confirm Withdrawal", ar: "تأكيد السحب" },
+    "অর্থপ্রদানের পদ্ধতি": { en: "Payment Method", ar: "طريقة الدفع" },
+    "অবতার": { en: "Avatar", ar: "الصورة الشخصية" },
+    "অ্যাকাউন্ট বাঁধাই": { en: "Account Binding", ar: "ربط الحساب" },
+    "USDT ঠিকানা": { en: "USDT Address", ar: "عنوان USDT" },
+    "USDT (BEP20)": { en: "USDT (BEP20)", ar: "USDT (BEP20)" },
+    "USDT অ্যাকাউন্ট": { en: "USDT Account", ar: "حساب USDT" },
+    "BEP20 ADREES": { en: "BEP20 ADDRESS", ar: "عنوان BEP20" },
+    "BEP20 ওয়ালেট ঠিকানা লিখুন (0x...)": { en: "Enter BEP20 wallet address (0x...)", ar: "أدخل عنوان محفظة BEP20 (...0x)" },
+    "সেট করুন": { en: "Set Up", ar: "إعداد" },
+    "নগদ অ্যাকাউন্ট": { en: "Nagad Account", ar: "حساب Nagad" },
+    "নগদ সেট করুন": { en: "Bind Nagad", ar: "ربط Nagad" },
+    "নগদ ওয়ালেট বাঁধাই": { en: "Bind Nagad Wallet", ar: "ربط محفظة Nagad" },
+    "✓ নগদ সেট করা আছে": { en: "✓ Nagad Bound", ar: "✓ Nagad مرتبط" },
+    "নগদ সেট করা আছে": { en: "Nagad Bound", ar: "Nagad مرتبط" },
+    "আপনার নগদ নম্বর লিখুন": { en: "Enter your Nagad number", ar: "أدخل رقم Nagad الخاص بك" },
+    "সঠিক নগদ মোবাইল ব্যাংক নম্বর লিখুন": { en: "Please enter a valid Nagad mobile banking number", ar: "يرجى إدخال رقم Nagad صحيح" },
+    "নগদ সফলভাবে সেট করা হয়েছে": { en: "Nagad bound successfully!", ar: "تم ربط Nagad بنجاح!" },
+    "⚠️ উত্তোলন করার পূর্বে নগদ সেট করতে হবে": { en: "⚠️ Please bind Nagad before withdrawal", ar: "⚠️ يرجى ربط Nagad قبل السحب" },
+    "আপনার নির্ভরযোগ্য ডিজিটাল আর্নিং ও মিশন প্ল্যাটফর্ম": { en: "Your Trusted Digital Earning & Mission Platform", ar: "منصتك الرقمية الموثوقة للربح والمهام" },
+    "আপনার নির্ভরযোগ্য প্ল্যাটফর্ম": { en: "Your Trusted Platform", ar: "منصتك الموثوقة" },
+    "প্রধান নেভিগেশন": { en: "Main Navigation", ar: "التنقل الرئيسي" },
+    "ভাষা নির্বাচন": { en: "Select Language", ar: "اختر اللغة" },
+    "বাংলা": { en: "Bengali", ar: "البنغالية" },
+    "আপনার ব্যক্তিগত স্পেসে স্বাগতম। সহজে অ্যাকাউন্ট তৈরি করুন, নিরাপদে লগইন করুন, আর শুরু করুন আপনার পরবর্তী অধ্যায়।": { en: "Welcome to your personal space. Create an account easily, log in securely, and start your next chapter.", ar: "مرحباً بك في مساحتك الشخصية. أنشئ حسابك بسهولة وسجل دخولك بأمان وابدأ رحلتك." },
+    "সহজ, স্বচ্ছ এবং আপনার জন্য তৈরি।": { en: "Simple, transparent, and built for you.", ar: "بسيطة وشفافة ومصممة من أجلك." },
+    "২০২৫": { en: "2025", ar: "2025" },
+    "২০২৬": { en: "2026", ar: "2026" },
+    "আপনার প্রতিটি শুরু হোক সুন্দর।": { en: "May all your beginnings be prosperous.", ar: "لتكن كل بداية لك مليئة بالنجاح." },
+    "পাসওয়ার্ড পুনরুদ্ধার এখানে চালু নেই।": { en: "Password reset is not available here.", ar: "إعادة تعيين كلمة المرور غير متاحة هنا." },
+    "আপনার জন্য রাখা সবকিছু, এক জায়গায়।": { en: "Everything reserved for you, all in one place.", ar: "كل ما خصص لك في مكان واحد." },
+    "আপনার ব্যক্তিগত স্পেসে আবার ফিরে আসুন। নিরাপদে লগইন করে আপনার কাজ এগিয়ে নিন।": { en: "Welcome back to your personal space. Log in securely and proceed with your tasks.", ar: "مرحباً بعودتك إلى مساحتك الشخصية. سجل دخولك بأمان وأنجز مهامك." },
+    "একটি ভালো শুরু প্রতিদিনকে বদলে দিতে পারে।": { en: "A great beginning can transform every day.", ar: "البداية الجيدة قادرة على تغيير كل يوم." },
+    "আপনার পথ": { en: "Your Journey", ar: "مسيرتك" },
+    "নিবন্ধন স্বাগতম": { en: "Welcome to Registration", ar: "مرحباً بك في التسجيل" },
+    "আপনার অ্যাকাউন্ট তৈরি করতে তথ্য দিন": { en: "Enter details to create your account", ar: "أدخل البيانات لإنشاء حسابك" },
+    "পাসওয়ার্ড দেখান": { en: "Show Password", ar: "إظهار كلمة المرور" },
+    "পাসওয়ার্ড লুকান": { en: "Hide Password", ar: "إخفاء كلمة المرور" },
+    "ড্যাশবোর্ড": { en: "Dashboard", ar: "لوحة التحكم" },
+    "আমার প্রোফাইল": { en: "My Profile", ar: "ملفي الشخصي" },
+    "আমার উচ্চতর": { en: "My Superior", ar: "المشرف الأعلى" },
+    "সাপোর্ট চ্যাট": { en: "Support Chat", ar: "دردشة الدعم" },
+    "অনলাইন গ্রাহক সেবা সহায়তা শীঘ্রই চালু হবে।": { en: "Online customer service support is coming soon.", ar: "دعم خدمة العملاء المباشر سيكون متاحاً قريباً." },
+    "হিসাব নাম্বার, আমন্ত্রণ কোড, সাইন আউট": { en: "Account Number, Invite Code, Sign Out", ar: "رقم الحساب، رمز الدعوة، تسجيل الخروج" },
+    "প্রোফাইল অ্যাভাটার": { en: "Profile Avatar", ar: "صورة الملف الشخصي" },
+    "লগআউট": { en: "Log Out", ar: "تسجيل الخروج" },
+    "ভারসাম্য:": { en: "Balance:", ar: "الرصيد:" },
+    "ভারসাম্য": { en: "Balance", ar: "الرصيد" },
+    "আমার পার্স": { en: "My Wallet", ar: "محفظتي" },
+    "শিরোনাম": { en: "Tier", ar: "المستوى" },
+    "সীমা": { en: "Limit", ar: "الحد" },
+    "ভাল": { en: "Good", ar: "جيد" },
+    "চমৎকার": { en: "Excellent", ar: "ممتاز" },
+    "ব্যক্তিগত ভারসাম্য": { en: "Personal Balance", ar: "الرصيد الشخصي" },
+    "ব্যক্তিগত ভারসাম্য(BDT)": { en: "Personal Balance(BDT)", ar: "الرصيد الشخصي (BDT)" },
+    "ব্যক্তিগত ভারসাম্য(INR)": { en: "Personal Balance(USD)", ar: "الرصيد الشخصي (USD)" },
+    "গতকালের উপার্জন": { en: "Yesterday's Earnings", ar: "أرباح الأمس" },
+    "গতকালের উপার্জন(BDT)": { en: "Yesterday's Income(BDT)", ar: "أرباح الأمس (BDT)" },
+    "গতকালের উপার্জন(INR)": { en: "Yesterday's Income(USD)", ar: "أرباح الأمس (USD)" },
+    "গতকালকের উপার্জন": { en: "Yesterday's Income", ar: "أرباح الأمس" },
+    "গতকালকের উপার্জন(BDT)": { en: "Yesterday's Income(BDT)", ar: "أرباح الأمس (BDT)" },
+    "গতকালকের উপার্জন(INR)": { en: "Yesterday's Income(USD)", ar: "أرباح الأمس (USD)" },
+    "আজ উপার্জন": { en: "Today's Earnings", ar: "أرباح اليوم" },
+    "আজ উপার্জন(BDT)": { en: "Today's Income(BDT)", ar: "أرباح اليوم (BDT)" },
+    "আজ উপার্জন(INR)": { en: "Today's Income(USD)", ar: "أرباح اليوم (USD)" },
+    "এই সপ্তাহে আয়": { en: "This Week's Earnings", ar: "أرباح هذا الأسبوع" },
+    "এই সপ্তাহে আয়(BDT)": { en: "This Week's Income(BDT)", ar: "أرباح هذا الأسبوع (BDT)" },
+    "এই সপ্তাহে আয়(INR)": { en: "This Week's Income(USD)", ar: "أرباح هذا الأسبوع (USD)" },
+    "এই মাসে আয়": { en: "This Month's Earnings", ar: "أرباح هذا الشهر" },
+    "এই মাসে আয়(BDT)": { en: "This Month's Income(BDT)", ar: "أرباح هذا الشهر (BDT)" },
+    "এই মাসে আয়(INR)": { en: "This Month's Income(USD)", ar: "أرباح هذا الشهر (USD)" },
+    "গত মাসে আয়": { en: "Last Month's Earnings", ar: "أرباح الشهر الماضي" },
+    "গত মাসে আয়(BDT)": { en: "Last Month's Income(BDT)", ar: "أرباح الشهر الماضي (BDT)" },
+    "গত মাসে আয়(INR)": { en: "Last Month's Income(USD)", ar: "أرباح الشهر الماضي (USD)" },
+    "মোট রাজস্ব(BDT)": { en: "Total Revenue(BDT)", ar: "إجمالي الإيرادات (BDT)" },
+    "মোট রাজস্ব(INR)": { en: "Total Revenue(USD)", ar: "إجمالي الإيرادات (USD)" },
+    "কাজটি আজই সম্পূর্ণ করুন": { en: "Completed tasks today", ar: "المهام المكتملة اليوم" },
+    "কাজটি আজই সম্পূর্ণ করুন(এক)": { en: "Tasks Completed Today", ar: "المهام المكتملة اليوم" },
+    "আজকের জন্য বাকি কাজ": { en: "Remaining tasks today", ar: "المهام المتبقية لليوم" },
+    "আজকের জন্য বাকি কাজ(এক)": { en: "Remaining tasks today", ar: "المهام المتبقية لليوم" },
+    "অ্যাপ ডাউনলোডের সুবিধা শীঘ্রই আসবে।": { en: "App download will be available soon.", ar: "ميزة تنزيل التطبيق ستتوفر قريباً." },
+    "APP ডাউনলোড": { en: "APP Download", ar: "تنزيل التطبيق" },
+    "ডাউনলোড": { en: "Download", ar: "تنزيل" },
+    "অ্যাকাউন্ট": { en: "Account", ar: "الحساب" },
+    "টিম ও আয়": { en: "Team & Income", ar: "الفريق والدخل" },
+    "সাপোর্ট ও আরও": { en: "Support & More", ar: "الدعم والمزيد" },
+    "দৈনিক বিবৃতি": { en: "Daily Statement", ar: "البيان اليومي" },
+    "অ্যাকাউন্ট পরিবর্তনের রেকর্ড এখানে উপলভ্য নয়।": { en: "Account change records are not available here.", ar: "سجل تغييرات الحساب غير متاح هنا." },
+    "অ্যাকাউন্ট পরিবর্তন রেকর্ড": { en: "Account Change Record", ar: "سجل تغيير الحساب" },
+    "বন্ধুকে আমন্ত্রণ জানান": { en: "Invite Friends", ar: "ادعُ صديقاً" },
+    "আরও সেবা": { en: "More Services", ar: "المزيد من الخدمات" },
+    "সঞ্চয় পরিকল্পনার বিস্তারিত এখানে উপলভ্য নয়।": { en: "Savings plan details are not available here.", ar: "تفاصيل خطة الادخار غير متاحة هنا." },
+    "টেলিগ্রাম সহায়তার লিংক এখানে যুক্ত করা হয়নি।": { en: "Telegram support link is not configured here.", ar: "رابط دعم تيليجرام غير مضاف هنا." },
+    "টেলিগ্রাম": { en: "Telegram", ar: "تيليجرام" },
+    "নিরাপত্তা কেন্দ্রের সুবিধা এখানে চালু নেই।": { en: "Security center is not enabled here.", ar: "مركز الأمان غير مفعّل هنا." },
+    "নিরাপত্তা কেন্দ্র": { en: "Security Center", ar: "مركز الأمان" },
+    "ভাগ্যবান স্পিনের সুবিধা এখানে চালু নেই।": { en: "Lucky Spin feature is not active.", ar: "ميزة عجلة الحظ غير نشطة هنا." },
+    "ভাগ্যবান স্পিন": { en: "Lucky Spin", ar: "عجلة الحظ" },
+    "আপনার প্রথম কক্ষে একজন সফল বন্ধু যোগ করলে একটি কর্মদক্ষতা যাচাইয়ের সুযোগ": { en: "Add a successful friend to your first room for an opportunity to verify efficiency", ar: "أضف صديقاً ناجحاً في مستواك الأول للحصول على فرصة سحب الحظ" },
+    "আজকের জয়ের জন্য সদস্য সংখ্যা": { en: "Members for today's win", ar: "الأعضاء المؤهلون اليوم" },
+    "আজকের ঘোড়ানো সংখ্যা": { en: "Today's Spin Count", ar: "عدد الدورات اليوم" },
+    "আয়ের ধারাবাহিকতা": { en: "Income Continuity", ar: "استمرارية الدخل" },
+    "আপনার ড্র": { en: "Your Draws", ar: "فرص السحب" },
+    "স্পিন ঘুরান": { en: "Spin Now", ar: "أدر العجلة" },
+    "বন্ধুকে আমন্ত্রণ জানান ও ড্র অর্জন করুন": { en: "Invite Friends & Earn Draws", ar: "ادعُ الأصدقاء واكسب دورات" },
+    "সাম্প্রতিক স্পিন পুরস্কার": { en: "Recent Spin Rewards", ar: "جوائز العجلة الأخيرة" },
+    "পুরস্কারের টাকা সরাসরি আপনার মেইন ব্যালেন্সে যোগ হয়েছে।": { en: "Your reward has been credited directly to your main balance.", ar: "تمت إضافة قيمة الجائزة مباشرة إلى رصيدك الرئيسي." },
+    "স্বাগতম": { en: "Welcome", ar: "مرحباً" },
+    "আপনার আগ্রহের জগৎ": { en: "Your World of Interest", ar: "عالم اهتماماتك" },
+    "শুরু হোক এখান থেকে": { en: "Start from here", ar: "ابدأ من هنا" },
+    "নতুন মিশন দেখুন, শিখুন এবং প্রতিদিন এগিয়ে চলুন।": { en: "Explore new missions, learn, and grow every day.", ar: "استكشف مهاماً جديدة وتعلّم وتقدّم كل يوم." },
+    "আলোকময় সৃজনশীলতার স্লাইডার": { en: "Creative Media Slider", ar: "عرض الوسائط الإبداعي" },
+    "নতুন সম্ভাবনার শুরু": { en: "Beginning of New Opportunities", ar: "بداية فرص جديدة" },
+    "শিখুন, এগিয়ে চলুন": { en: "Learn and Proceed", ar: "تعلّم وتقدّم" },
+    "প্রতিদিন এক ধাপ সামনে": { en: "One step forward every day", ar: "خطوة للأمام كل يوم" },
+    "দলের প্রসার সম্পর্কিত নমুনা আপডেট": { en: "Sample team growth updates", ar: "تحديثات نمو الفريق" },
+    "একজন ব্যবহারকারীকে সুপারিশ করার জন্য": { en: "for recommending a user", ar: "لإحالة مستخدم جديد" },
+    "প্রচার পুরস্কার পাওয়ার জন্য অভিনন্দন": { en: "Congratulations on receiving promotion reward", ar: "تهانينا على استلام مكافأة الترويج" },
+    "প্রচার পুরস্কার পাওয়ার জন্য অভিনন্দন!": { en: "Congratulations on receiving promotional reward!", ar: "تهانينا على حصولك على مكافأة الترويج!" },
+    "এলাকা": { en: "Region", ar: "المنطقة" },
+    "আয়ের": { en: "Income", ar: "الدخل" },
+    "ম্যানেজার": { en: "Manager", ar: "المدير" },
+    "অফিসিয়াল কাস্টমার ম্যানেজার": { en: "Official Customer Manager", ar: "مدير خدمة العملاء الرسمي" },
+    "মিশন হল": { en: "Mission Hall", ar: "قاعة المهام" },
+    "সামাজিক মিশন": { en: "Social Missions", ar: "المهام الاجتماعية" },
+    "লাইক ও অনুসরণ": { en: "Like Only", ar: "إعجاب فقط" },
+    "শুধু লাইক দিন": { en: "Like Only", ar: "إعجاب فقط" },
+    "Like Only": { en: "Like Only", ar: "إعجاب فقط" },
+    "সদস্যদের আপডেট": { en: "Member Updates", ar: "تحديثات الأعضاء" },
+    "সাম্প্রতিক সদস্য আপডেট": { en: "Recent Member Updates", ar: "أحدث تحديثات الأعضاء" },
+    "আজ ৫টি মিশন সম্পন্ন করেছেন": { en: "Completed 5 missions today", ar: "أتم 5 مهام اليوم" },
+    "আজ ৩টি মিশন সম্পন্ন করেছেন": { en: "Completed 3 missions today", ar: "أتم 3 مهام اليوم" },
+    "আজ ২টি মিশন সম্পন্ন করেছেন": { en: "Completed 2 missions today", ar: "أتم مهمتين اليوم" },
+    "আজ ৪টি মিশন সম্পন্ন করেছেন": { en: "Completed 4 missions today", ar: "أتم 4 مهام اليوم" },
+    "আজ ৬টি মিশন সম্পন্ন করেছেন": { en: "Completed 6 missions today", ar: "أتم 6 مهام اليوم" },
+    "আজ ১২টি মিশন সম্পন্ন করেছেন": { en: "Completed 12 missions today", ar: "أتم 12 مهمة اليوم" },
+    "সদস্য: ১৮****৫৪": { en: "Member: 18****54", ar: "عضو: 18****54" },
+    "সদস্য: ১৭****২৭": { en: "Member: 17****27", ar: "عضو: 17****27" },
+    "সদস্য: ১৩****২৯": { en: "Member: 13****29", ar: "عضو: 13****29" },
+    "সদস্য: ২১****৬৪": { en: "Member: 21****64", ar: "عضو: 21****64" },
+    "সদস্য: ১৯****০৮": { en: "Member: 19****08", ar: "عضو: 19****08" },
+    "+১০০.০০": { en: "+100.00", ar: "+100.00" },
+    "+৪০.০০": { en: "+40.00", ar: "+40.00" },
+    "+৬০.০০": { en: "+60.00", ar: "+60.00" },
+    "+১৮০.০০": { en: "+180.00", ar: "+180.00" },
+    "+৪৮০.০০": { en: "+480.00", ar: "+480.00" },
+    "হল প্যাকেজ": { en: "Hall Packages", ar: "باقات القاعة" },
+    "কাজের তালিকা খুলুন": { en: "Open Task List", ar: "فتح قائمة المهام" },
+    "দৈনন্দিন কর্ম:": { en: "Daily Tasks:", ar: "المهام اليومية:" },
+    "দৈনন্দিন কর্ম": { en: "Daily Tasks", ar: "المهام اليومية" },
+    "দৈনিক কর্ম:": { en: "Daily Tasks:", ar: "المهام اليومية:" },
+    "দৈনিক কর্ম": { en: "Daily Tasks", ar: "المهام اليومية" },
+    "ক্রয় করা হয়নি": { en: "Not purchased", ar: "لم يتم الشراء" },
+    "প্রয়োজন:": { en: "Required:", ar: "المطلوب:" },
+    "পছন্দ লক্ষ্য করা": { en: "Like & Follow", ar: "إعجاب ومتابعة" },
+    "পরিমাণ:": { en: "Quantity:", ar: "الكمية:" },
+    "একক দাম": { en: "Unit Price", ar: "سعر الوحدة" },
+    "হল সম্পর্কে তথ্য": { en: "Information About Hall", ar: "معلومات حول القاعة" },
+    "আপনার অগ্রগতির পরবর্তী ধাপ": { en: "Your next level of progression", ar: "خطوتك التالية للتقدم" },
+    "ফ্রিতে শুধু": { en: "In Free trial only", ar: "في الباقة المجانية فقط" },
+    "কাজ করতে পারবেন। বাকি কাজ করতে গেলে আপনার ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করতে হবে।": { en: "tasks can be completed. To perform remaining tasks, please purchase a package with your balance.", ar: "مهام يمكن إتمامها. لإنجاز المزيد، يرجى شراء باقة من رصيدك." },
+    "সব ব্যালেন্স ও পুরস্কার ভার্চুয়াল ডেমো হিসাব": { en: "All balances and rewards are platform earnings", ar: "جميع الأرصدة والمكافآت هي أرباح المنصة" },
+    "বাস্তব টাকা নয়।": { en: "subject to policy verification.", ar: "خاضعة لسياسة التحقق." },
+    "বন্ধুদের আমন্ত্রণ জানান": { en: "Invite Friends", ar: "دعوة الأصدقاء" },
+    "তোমার বন্ধু": { en: "Your friend", ar: "صديقك" },
+    "যোগদানের জন্য আপনাকে আমন্ত্রণ জানাই": { en: "Invites you to join", ar: "يدعوك للانضمام" },
+    "আমন্ত্রণ কোড কপি করুন": { en: "Copy Invite Code", ar: "نسخ رمز الدعوة" },
+    "আমন্ত্রণ লিঙ্ক কপি করুন": { en: "Copy Invite Link", ar: "نسخ رابط الدعوة" },
+    "বন্ধুদের আমন্ত্রণ": { en: "Invite Friends", ar: "دعوة الأصدقاء" },
+    "বন্ধুদের আমন্ত্রণ করুন,": { en: "Invite friends,", ar: "ادعُ أصدقاءك،" },
+    "স্বর্ণের খনি জিতুন": { en: "Unlock Wealth Rewards", ar: "افتح مكافآت الأرباح" },
+    "আপনার আমন্ত্রণ কোডটি বন্ধুদের সঙ্গে শেয়ার করুন।": { en: "Share your invitation code with friends.", ar: "شارك رمز دعوتك مع أصدقائك." },
+    "কোড স্ক্যান করে তারা যোগ দিতে পারবে।": { en: "They can join easily by scanning this code.", ar: "يمكنهم الانضمام بسهولة عبر مسح هذا الرمز." },
+    "কোড তৈরি হচ্ছে": { en: "Generating code...", ar: "جاري إنشاء الرمز..." },
+    "আপনার আমন্ত্রণ লিংক": { en: "Your Invitation Link", ar: "رابط الدعوة الخاص بك" },
+    "আপনার আমন্ত্রণ لنک": { bn: "আপনার আমন্ত্রণ লিংক", en: "Your Invitation Link", ar: "رابط الدعوة الخاص بك" },
+    "লিংক কপি করুন": { en: "Copy Link", ar: "نسخ الرابط" },
+    "বরফে পরিণত করা:": { en: "Frozen:", ar: "مجمد:" },
+    "বরফে পরিণত করা": { en: "Frozen Balance", ar: "الرصيد المجمد" },
+    "উপলব্ধ:": { en: "Available:", ar: "المتاح:" },
+    "উপলব্ধ": { en: "Available", ar: "متاح" },
+    "লাভ শেয়ারিং": { en: "Profit Sharing", ar: "مشاركة الأرباح" },
+    "অনুপাত": { en: "Ratio", ar: "النسبة" },
+    "আগমন": { en: "Arrival", ar: "الوصول" },
+    "স্থানান্তরিত": { en: "Transferred", ar: "تم التحويل" },
+    "কোন রেকর্ড নেই": { en: "No records found", ar: "لا توجد سجلات" },
+    "বন্ধ করুন": { en: "Close", ar: "إغلاق" },
+    "মাসিক উত্তোলন": { en: "Monthly Withdrawal", ar: "السحب الشهري" },
+    "উত্তোলন 48-96 ঘণ্টার মধ্যে আসে": { en: "Withdrawal arrives within 48-96 hours", ar: "يصل السحب خلال 48-96 ساعة" },
+    "প্রত্যাহার 12 ঘণ্টার মধ্যে আসে": { en: "Withdrawal arrives within 12 hours", ar: "يصل السحب خلال 12 ساعة" },
+    "বাতিল করুন": { en: "Cancel", ar: "إلغاء" },
+    "নিশ্চিত করুন": { en: "Confirm", ar: "تأكيد" },
+    "পছন্দ কর": { en: "Choose", ar: "اختر" },
+    "সেট না": { en: "Not Set", ar: "غير معيّن" },
+    "সহায়তা সেবা এখানে চালু নেই।": { en: "Help service is not enabled here.", ar: "خدمة المساعدة غير مفعّلة هنا." },
+    "সহায়তা": { en: "Support", ar: "الدعم" },
+    "প্রোফাইল ছবি পরিবর্তনের সুবিধা এখানে চালু নেই।": { en: "Profile photo editing is not enabled here.", ar: "تغيير الصورة الشخصية غير مفعّل هنا." },
+    "অ্যাকাউন্ট বাঁধাই এখানে চালু নেই।": { en: "Account binding is currently disabled.", ar: "ربط الحساب غير متاح حالياً." },
+    "ঠিকানা যোগ করার সুবিধা এখানে চালু নেই।": { en: "Adding address is currently disabled.", ar: "إضافة العنوان غير متاحة حالياً." },
+    "প্রবেশের গুপ্তসংকেত পরিবর্তনের সুবিধা এখানে চালু নেই।": { en: "Login password change is not enabled here.", ar: "تغيير كلمة مرور الدخول غير مفعّل هنا." },
+    "প্রবেশের গুপ্তসংকেত": { en: "Login Password", ar: "كلمة مرور الدخول" },
+    "ফান্ড পাসওয়ার্ড সেট করার সুবিধা এখানে চালু নেই।": { en: "Fund password setup is currently disabled.", ar: "إعداد كلمة مرور الصندوق غير متاح حالياً." },
+    "বিকাশ সেট করুন": { en: "Bind bKash", ar: "ربط bKash" },
+    "সহায়তা সেবা শীঘ্রই চালু হবে।": { en: "Support service will be available shortly.", ar: "ستتوفر خدمة الدعم قريباً." },
+    "বিকাশ ওয়ালেট বাঁধাই": { en: "Bind bKash Wallet", ar: "ربط محفظة bKash" },
+    "মোবাইল ব্যাংকিং উত্তোলন অ্যাকাউন্ট": { en: "Mobile Banking Withdrawal Account", ar: "حساب السحب البنكي عبر الهاتف" },
+    "সম্পুর্ন নাম": { en: "Full Name", ar: "الاسم الكامل" },
+    "আবশ্যক": { en: "Required", ar: "مطلوب" },
+    "আপনার সম্পূর্ণ নাম লিখুন": { en: "Enter your full name", ar: "أدخل اسمك الكامل" },
+    "মোবাইল ব্যাংক নাম্বার": { en: "Mobile Banking Number", ar: "رقم المحفظة البنكية" },
+    "আপনার বিকাশ নম্বর লিখুন": { en: "Enter your bKash number", ar: "أدخل رقم bKash الخاص بك" },
+    "USDT অ্যাকাউন্ট (BEP20)": { en: "USDT Account (BEP20)", ar: "حساب USDT (BEP20)" },
+    "গুরুত্বপূর্ণ নির্দেশনা:": { en: "Important Instructions:", ar: "تعليمات مهمة:" },
+    "অনুগ্রহ করে নিশ্চিত করুন যে আপনার সম্পুর্ন নাম এবং মোবাইল ব্যাংক নম্বর সঠিক।": { en: "Please ensure that your full name and mobile bank number are completely accurate.", ar: "يرجى التأكد من صحة اسمك الكامل ورقم المحفظة البنكية." },
+    "একটি বিকাশ নম্বর শুধাত্র একটি অ্যাকাউন্টের সাথে যুক্ত হতে পারে।": { en: "One bKash number can only be bound to a single account.", ar: "يمكن ربط رقم bKash واحد بحساب واحد فقط." },
+    "একটি বিকাশ নম্বর শুধুমাত্র একটি অ্যাকাউন্টের সাথে যুক্ত হতে পারে।": { en: "One bKash number can only be bound to a single account.", ar: "يمكن ربط رقم bKash واحد بحساب واحد فقط." },
+    "টাকা প্রত্যাহারের সময় আপনার উপার্জিত অর্থ সরাসরি এই বিকাশ নম্বরে পৌঁছাবে।": { en: "During withdrawal, your funds will be sent directly to this verified bKash number.", ar: "عند السحب، ستصل أموالك مباشرة إلى رقم bKash الموثق هذا." },
+    "প্যাকেজসমূহ": { en: "VIP Packages", ar: "باقات VIP" },
+    "আপনার বর্তমান স্তর:": { en: "Your Current Tier:", ar: "مستواك الحالي:" },
+    "উপলব্ধ ব্যালেন্স:": { en: "Available Balance:", ar: "الرصيد المتاح:" },
+    "ব্যালেন্স রিচার্জ (জমা)": { en: "Recharge Balance (Deposit)", ar: "شحن الرصيد (إيداع)" },
+    "রিচার্জের পরিমাণ নির্বাচন করুন:": { en: "Select Recharge Amount:", ar: "اختر مبلغ الشحن:" },
+    "অথবা নির্দিষ্ট পরিমাণ": { en: "Or Specific Amount", ar: "أو مبلغ محدد" },
+    "পেমেন্ট মেথড:": { en: "Payment Method:", ar: "طريقة الدفع:" },
+    "বিকাশ": { en: "bKash", ar: "bKash" },
+    "নগদ": { en: "Nagad", ar: "Nagad" },
+    "USDT (Crypto)": { en: "USDT (Crypto)", ar: "USDT (عملات رقمية)" },
+    "USDT:": { en: "USDT:", ar: "USDT:" },
+    "ক্রিপ্টো": { en: "Crypto (USDT)", ar: "كريبتو (USDT)" },
+    "রিচার্জ সম্পন্ন করুন": { en: "Complete Recharge", ar: "إتمام الشحن" },
+    "ফ্রি স্তর": { en: "Free Tier", ar: "المستوى المجاني" },
+    "দৈনিক কাজ:": { en: "Daily Tasks:", ar: "المهام اليومية:" },
+    "প্রতি কাজ:": { en: "Per Task:", ar: "لكل مهمة:" },
+    "বেসিক প্যাকেজ": { en: "Basic Package", ar: "الباقة الأساسية" },
+    "প্যাকেজ ক্রয় করুন": { en: "Buy Package", ar: "شراء الباقة" },
+    "প্যাকেজ ক্রয়": { en: "Buy Package", ar: "شراء الباقة" },
+    "স্ট্যান্ডার্ড প্যাকেজ": { en: "Standard Package", ar: "الباقة القياسية" },
+    "সিলভার প্যাকেজ": { en: "Silver Package", ar: "الباقة الفضية" },
+    "গোল্ড প্যাকেজ": { en: "Gold Package", ar: "الباقة الذهبية" },
+    "প্রিমিয়াম প্যাকেজ": { en: "Premium Package", ar: "الباقة المميزة" },
+    "এলিট প্যাকেজ": { en: "Elite Package", ar: "باقة النخبة" },
+    "মিশন স্তর": { en: "Mission Tier", ar: "مستوى المهمة" },
+    "কেটে দিন": { en: "Dismiss", ar: "إغلاق" },
+    "আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ": { en: "Available tasks for your active package", ar: "المهام المتاحة لباقتك الحالية" },
+    "কাজের ধরন:": { en: "Task Type:", ar: "نوع المهمة:" },
+    "অ্যাকাউন্ট অনুসরণ করুন": { en: "Follow Account", ar: "متابعة الحساب" },
+    "স্তর:": { en: "Tier:", ar: "المستوى:" },
+    "অগ্রগতি:": { en: "Progress:", ar: "التقدم:" },
+    "দৈনিক পুরস্কার": { en: "Daily Reward", ar: "المكافأة اليومية" },
+    "গ্রহণ": { en: "Accept", ar: "قبول" },
+    "গ্রহণ করুন": { en: "Claim Now", ar: "استلم الآن" },
+    "গৃহীত": { en: "Accepted", ar: "تم القبول" },
+    "সরাসরি ব্যালেন্সে গ্রহণ করুন": { en: "Claim Directly to Balance", ar: "استلام مباشر إلى الرصيد" },
+    "টিম": { en: "Team", ar: "الفريق" },
+    "মোট কমিশন": { en: "Total Commission", ar: "إجمالي العمولات" },
+    "আজকের কমিশন": { en: "Today's Commission", ar: "عمولة اليوم" },
+    "টিম সদস্য": { en: "Team Members", ar: "أعضاء الفريق" },
+    "আজ নতুন": { en: "New Today", ar: "جدد اليوم" },
+    "শেয়ার লিঙ্ক": { en: "Share Link", ar: "رابط المشاركة" },
+    "বন্ধুদের স্ক্যান করতে আমন্ত্রণ করুন": { en: "Invite friends to scan", ar: "ادعُ الأصدقاء للمسح" },
+    "কপি": { en: "Copy", ar: "نسخ" },
+    "কাজের ধরন: একটি ভিডিওতে লাইক দিন": { en: "Task Type: Like a video", ar: "نوع المهمة: الإعجاب بفيديو" },
+    "প্রোফাইল দেখুন": { en: "View Profile", ar: "عرض الملف الشخصي" },
+    "মিশন রেকর্ড": { en: "Mission Records", ar: "سجل المهام" },
+    "মিশনের অবস্থা": { en: "Mission Status", ar: "حالة المهمة" },
+    "ব্যর্থ হয়েছে": { en: "Failed", ar: "فشلت" },
+    "মিশন বিবরণ": { en: "Mission Details", ar: "تفاصيل المهمة" },
+    "মিশন তালিকায় ফিরে যান": { en: "Back to Missions List", ar: "العودة إلى قائمة المهام" },
+    "টাস্ক শিরোনাম:": { en: "Task Title:", ar: "عنوان المهمة:" },
+    "টাস্ক শিরোনাম": { en: "Task Title", ar: "عنوان المهمة" },
+    "মিশন সুবিধা:": { en: "Mission Reward:", ar: "مكافأة المهمة:" },
+    "মিশন সুবিধা": { en: "Mission Reward", ar: "مكافأة المهمة" },
+    "মিশনের বিবরণ:": { en: "Mission Description:", ar: "وصف المهمة:" },
+    "মিশনের বিবরণ": { en: "Mission Description", ar: "وصف المهمة" },
+    "টাস্ক লিঙ্ক:": { en: "Task Link:", ar: "رابط المهمة:" },
+    "টাস্ক লিঙ্ক": { en: "Task Link", ar: "رابط المهمة" },
+    "খোলা সংযুক্তি": { en: "Open Link", ar: "فتح الرابط" },
+    "অনুলিপি": { en: "Copy", ar: "نسخ" },
+    "সৃষ্টির সময়:": { en: "Created Time:", ar: "وقت الإنشاء:" },
+    "সৃষ্টির সময়": { en: "Created Time", ar: "وقت الإنشاء" },
+    "মন্তব্য": { en: "Comments", ar: "التعليقات" },
+    "ক্যামেরা": { en: "Camera", ar: "الكاميرا" },
+    "দয়া করে এখানে প্রবেশ করুন": { en: "Please enter details here", ar: "يرجى إدخال التفاصيل هنا" },
+    "গ্যালারি খুলুন": { en: "Open Gallery", ar: "فتح المعرض" },
+    "স্ক্রিনশট": { en: "Screenshot", ar: "لقطة شاشة" },
+    "আপলোড": { en: "Upload", ar: "رفع" },
+    "গ্যালারি থেকে স্ক্রিনশট আপলোড করুন": { en: "Upload screenshot from gallery", ar: "ارفع لقطة شاشة من المعرض" },
+    "স্ক্রিনশট মুছুন": { en: "Remove screenshot", ar: "حذف لقطة الشاشة" },
+    "প্রিভিউ দেখুন": { en: "View Preview", ar: "معاينة" },
+    "ছাড়": { en: "Rebate", ar: "العمولة" },
+    "মোট দলের ভারসাম্য": { en: "Total Team Balance", ar: "إجمالي رصيد الفريق" },
+    "মোট দল প্রবাহ": { en: "Total Team Turnover", ar: "إجمالي تدفق الفريق" },
+    "মোট দল প্রবাহ(BDT)": { en: "Total Team Turnover", ar: "إجمالي تدفق الفريق" },
+    "মোট দল প্রবাহ(INR)": { en: "Total Team Turnover", ar: "إجمالي تدفق الفريق" },
+    "মোট দল রিচার্জ": { en: "Total Team Recharge", ar: "إجمالي شحن الفريق" },
+    "মোট দল রিচার্জ(BDT)": { en: "Total Team Recharge", ar: "إجمالي شحن الفريق" },
+    "মোট দল রিচার্জ(INR)": { en: "Total Team Recharge", ar: "إجمالي شحن الفريق" },
+    "দল মোট নগদ আউট": { en: "Total Team Cashout", ar: "إجمالي سحب الفريق" },
+    "দল মোট নগদ আউট(BDT)": { en: "Total Team Cashout", ar: "إجمالي سحب الفريق" },
+    "দল মোট নগদ আউট(INR)": { en: "Total Team Cashout", ar: "إجمالي سحب الفريق" },
+    "প্রথম চার্জের সংখ্যা(মানুষ)": { en: "First Recharge Count (Users)", ar: "عدد الإيداعات الأولى (أعضاء)" },
+    "সরাসরি ধাক্কা নম্বর(মানুষ)": { en: "Direct Referrals (Users)", ar: "الإحالات المباشرة (أعضاء)" },
+    "দলের আকার": { en: "Team Size", ar: "حجم الفريق" },
+    "দলের আকার(মানুষ)": { en: "Team Size (Users)", ar: "حجم الفريق (أعضاء)" },
+    "নতুন মানুষ": { en: "New Members", ar: "أعضاء جدد" },
+    "নতুন মানুষ(মানুষ)": { en: "New Members (Users)", ar: "أعضاء جدد (أعضاء)" },
+    "মোট মানুষ(মানুষ)": { en: "Total Members (Users)", ar: "إجمالي الأعضاء" },
+    "রিচার্জ পরিমাণ(BDT)": { en: "Recharge Amount", ar: "مبلغ الشحن" },
+    "রিচার্জ পরিমাণ(INR)": { en: "Recharge Amount", ar: "مبلغ الشحن" },
+    "রিচার্জ রিবেট": { en: "Recharge Rebate", ar: "عمولة الشحن" },
+    "রিচার্জ রিবেট(BDT)": { en: "Recharge Rebate", ar: "عمولة الشحن" },
+    "রিচার্জ রিবেট(INR)": { en: "Recharge Rebate", ar: "عمولة الشحن" },
+    "দৈনিক ৬টি কাজ · প্রতি কাজের আয়": { en: "Daily 6 tasks · Income per task", ar: "6 مهام يومياً · ربح كل مهمة" },
+    "প্রধান মেনু": { en: "Main Menu", ar: "القائمة الرئيسية" },
+    "স্ক্রিনশট প্রিভিউ": { en: "Screenshot Preview", ar: "معاينة لقطة الشاشة" },
+    "সম্পূর্ণ স্ক্রিনশট": { en: "Full Screenshot", ar: "لقطة شاشة كاملة" },
+    "ঠিক আছে": { en: "OK", ar: "حسناً" },
+    "বন্ধ করতে চাপুন": { en: "Tap to close", ar: "اضغط للإغلاق" },
+    "প্যাকেজ ও ব্যালেন্স ম্যানেজমেন্ট": { en: "Package & Balance Management", ar: "إدارة الباقات والرصيد" },
+    "বাকি কাজের জন্য ব্যালেন্স প্রয়োজন": { en: "Balance is required for additional tasks", ar: "يلزم وجود رصيد للمهام الإضافية" },
+    "ব্যালেন্স রিচার্জ": { en: "Recharge Balance", ar: "شحن الرصيد" },
+    "আপনার বর্তমান ব্যালেন্স:": { en: "Your Current Balance:", ar: "رصيدك الحالي:" },
+    "প্যাকেজ মূল্য:": { en: "Package Price:", ar: "سعر الباقة:" },
+    "ব্যালেন্স দিয়ে প্যাকেজ ক্রয় করুন": { en: "Purchase Package with Balance", ar: "شراء الباقة بالرصيد" },
+    "ব্যালেন্স রিচার্জ ট্যাবে যান": { en: "Go to Recharge Tab", ar: "انتقل إلى تبويب الشحن" },
+    "কেটে বন্ধ করুন": { en: "Close", ar: "إغلاق" },
+    "বন্ধুদের আমন্ত্রণ করুন": { en: "Invite Friends", ar: "ادعُ الأصدقاء" },
+    "মিশন জমা": { en: "Submit Mission", ar: "إرسال المهمة" },
+    "কোড তৈরি করা যায়নি।": { en: "Failed to generate code.", ar: "تعذر إنشاء الرمز." },
+    "আমন্ত্রণ কোড পেতে আগে লগইন করুন।": { en: "Please log in first to view invitation code.", ar: "يرجى تسجيل الدخول أولاً لعرض رمز الدعوة." },
+    "ডাটাবেজে তথ্য যাচাই করা হচ্ছে": { en: "Verifying credentials with database...", ar: "جاري التحقق من البيانات..." },
+    "ফোন নম্বর অথবা পাসওয়ার্ড সঠিক নয়।": { en: "Phone number or password is incorrect.", ar: "رقم الهاتف أو كلمة المرور غير صحيحة." },
+    "লগইন করা যায়নি। আবার চেষ্টা করুন।": { en: "Login failed. Please try again.", ar: "فشل تسجيل الدخول. يرجى المحاولة مرة أخرى." },
+    "আপনার অ্যাকাউন্ট তৈরি হয়েছে": { en: "Your account has been created", ar: "تم إنشاء حسابك بنجاح" },
+    "ডাটাবেজে সফলভাবে তৈরি হয়েছে।": { en: "successfully registered in database.", ar: "تم تسجيله في قاعدة البيانات بنجاح." },
+    "দুটি পাসওয়ার্ড মিলছে না।": { en: "Passwords do not match.", ar: "كلمتا المرور غير متطابقتين." },
+    "সঠিক বাংলাদেশি ফোন নম্বর লিখুন": { en: "Please enter a valid phone number", ar: "يرجى إدخال رقم هاتف صحيح" },
+    "ডাটাবেজে নিবন্ধন যাচাই করা হচ্ছে": { en: "Verifying registration in database...", ar: "جاري التحقق من التسجيل في قاعدة البيانات..." },
+    "এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।": { en: "An account already exists with this phone number. Please log in.", ar: "يوجد حساب مسجل بهذا الرقم بالفعل. يرجى تسجيل الدخول." },
+    "অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।": { en: "Failed to create account. Please try again.", ar: "تعذر إنشاء الحساب. يرجى المحاولة مرة أخرى." },
+    "যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন": { en: "Please enter a valid phone number to receive verification code", ar: "يرجى إدخال رقم هاتف صحيح لاستلام رمز التحقق" },
+    "যাচাইকরণ কোড পাঠানো হয়েছে:": { en: "Verification code sent:", ar: "تم إرسال رمز التحقق:" },
+    "অনুগ্রহ করে রিচার্জের সঠিক পরিমাণ দিন।": { en: "Please enter a valid recharge amount.", ar: "يرجى إدخال مبلغ شحن صحيح." },
+    "রিচার্জ সফল হয়েছে": { en: "Recharge successful!", ar: "تم الشحن بنجاح!" },
+    "বর্তমান ব্যালেন্স:": { en: "Current Balance:", ar: "الرصيد الحالي:" },
+    "পছন্দ": { en: "Selected", ar: "محدد" },
+    "বিকাশ সেট করা আছে": { en: "bKash is bound", ar: "تم ربط bKash" },
+    "তথ্য আপডেট করুন": { en: "Update Information", ar: "تحديث البيانات" },
+    "অনুগ্রহ করে সম্পুর্ন নাম লিখুন": { en: "Please enter your full name", ar: "يرجى إدخال الاسم الكامل" },
+    "অনুগ্রহ করে মোবাইল ব্যাংক নাম্বার লিখুন": { en: "Please enter your mobile banking account number", ar: "يرجى إدخال رقم الحساب البنكي عبر الهاتف" },
+    "সঠিক বিকাশ মোবাইল ব্যাংক নম্বর লিখুন": { en: "Please enter a valid bKash number", ar: "يرجى إدخال رقم bKash صحيح" },
+    "বিকাশ সফলভাবে সেট করা হয়েছে": { en: "bKash bound successfully!", ar: "تم ربط bKash بنجاح!" },
+    "ভিডিওটি দেখুন এবং শুধু লাইক দিন": { en: "Open the video and simply tap Like", ar: "افتح الفيديو واضغط إعجاب فقط" },
+    "নতুন ট্রেন্ডিং ভিডিওতে শুধু লাইক দিন": { en: "Simply like the new trending video", ar: "اضغط إعجاب فقط على الفيديو الرائج الجديد" },
+    "শুধু লাইক দিন ও স্ক্রিনশট জমা দিন": { en: "Simply tap Like and submit screenshot", ar: "اضغط إعجاب فقط وأرسل لقطة الشاشة" },
+    "ভাইরাল ক্লিপে শুধু লাভ রিয়্যাক্ট দিন": { en: "Simply give a Like/Love reaction to the viral clip", ar: "اضغط إعجاب فقط على المقطع الرائج" },
+    "ভিডিওটি সম্পূর্ণ দেখে লাইক দিন": { en: "Open video and simply tap like", ar: "افتح الفيديو واضغط إعجاب فقط" },
+    "অফিসিয়াল পেজের পোস্টে শুধু লাইক দিন": { en: "Simply like the official page post", ar: "اضغط إعجاب فقط على منشور الصفحة الرسمية" },
+    "সাম্প্রতিক পোস্টে শুধু লাইক দিন": { en: "Simply like the recent post", ar: "اضغط إعجاب فقط على المنشور الأخير" },
+    "টাস্ক সম্পন্ন হয়েছে": { en: "Task Completed", ar: "تم إكمال المهمة" },
+    "টাস্ক গ্রহণ করুন": { en: "Accept Task", ar: "قبول المهمة" },
+    "মিশন সফল": { en: "Mission Success", ar: "نجاح المهمة" },
+    "মিশন গৃহীত হয়েছে": { en: "Mission Accepted", ar: "تم قبول المهمة" },
+    "টাকা উত্তোলন সফল": { en: "Withdrawal Successful", ar: "تم السحب بنجاح" },
+    "টাকা উত্তোলন প্রক্রিয়াধীন": { en: "Withdrawal Processing", ar: "جاري معالجة السحب" },
+    "ন্যূনতম উত্তোলন ৩০০ টাকা": { en: "Minimum withdrawal is 300 BDT", ar: "الحد الأدنى للسحب 300 BDT" },
+    "দেশ নির্বাচন করুন": { en: "Select Country", ar: "اختر الدولة" },
+    "হিসাব নাম্বার": { en: "Account Number", ar: "رقم الحساب" },
+    "আজকের মোট আয়": { en: "Today's Total Income", ar: "إجمالي دخل اليوم" },
+    "আজকের কাজ আয়": { en: "Today's Task Income", ar: "دخل المهام اليوم" },
+    "দৈনিক আয়": { en: "Daily Income", ar: "الدخل اليومي" },
+    "দৈনিক লাভ": { en: "Daily Profit", ar: "الربح اليومي" },
+    "মোট আয়:": { en: "Total Income:", ar: "إجمالي الدخل:" },
+    "মোট আয়": { en: "Total Income", ar: "إجمالي الدخل" },
+    "মোট লাভ": { en: "Total Profit", ar: "إجمالي الربح" },
+    "ক্রয় করা হয়েছে": { en: "Purchased", ar: "تم الشراء" },
+    "ক্রয় প্রয়োজন": { en: "Purchase Required", ar: "يتطلب الشراء" },
+    "ক্রয় প্রয়োজন 🔒": { en: "Purchase Required 🔒", ar: "يتطلب الشراء 🔒" },
+    "আনলকড ✓": { en: "Unlocked ✓", ar: "مفتوح ✓" },
+    "আনলকড": { en: "Unlocked", ar: "مفتوح" },
+    "দৈনিক কাজ": { en: "Daily Tasks", ar: "المهام اليومية" },
+    "প্রতি কাজ": { en: "Per Task", ar: "لكل مهمة" },
+    "প্রতি কাজের আয়": { en: "Income Per Task", ar: "ربح المهمة" },
+    "৫টি": { en: "5 tasks", ar: "5 مهام" },
+    "৬টি": { en: "6 tasks", ar: "6 مهام" },
+    "১২টি": { en: "12 tasks", ar: "12 مهمة" },
+    "১৫টি": { en: "15 tasks", ar: "15 مهمة" },
+    "২৫টি": { en: "25 tasks", ar: "25 مهمة" },
+    "৩৫টি": { en: "35 tasks", ar: "35 مهمة" },
+    "প্যাকেজ বিবরণ": { en: "Package Details", ar: "تفاصيل الباقة" },
+    "বাস্তব টাকা নয়": { en: "Virtual credits, not real money", ar: "رصيد افتراضي" },
+    "টাকা প্রত্যাহারের সময়": { en: "Withdrawal processing time", ar: "وقت معالجة السحب" },
+    "টাকার পরিমাণ লিখুন": { en: "Enter amount", ar: "أدخل المبلغ" },
+    "ভাষা পরিবর্তন": { en: "Change Language", ar: "تغيير اللغة" },
+    "ইংরেজি": { en: "English", ar: "الإنجليزية" },
+    "সঠিক বাংলাদেশি ১০-১১ ডিজিটের ফোন নম্বর লিখুন।": { en: "Please enter a valid phone number.", ar: "يرجى إدخال رقم هاتف صحيح." },
+    "অনুগ্রহ করে সঠিক ফোন নম্বর লিখুন।": { en: "Please enter a valid phone number.", ar: "يرجى إدخال رقم هاتف صحيح." },
+    "ফিরে যান": { en: "Back", ar: "رجوع" },
+    "ক্রয় করা হয়েছে ✓": { en: "Purchased ✓", ar: "تم الشراء ✓" },
+    "দৈনিক লাভ:": { en: "Daily Profit:", ar: "الربح اليومي:" },
+    "অনুগ্রহ করে আপনার দেশ নির্বাচন করুন।": { en: "Please select your country.", ar: "يرجى اختيار دولتك." },
+    "পর্যালোচনাধীন": { en: "Under Review", ar: "قيد المراجعة" },
+    "পর্যালোচনাধীন:": { en: "Under Review:", ar: "قيد المراجعة:" },
+    "পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে": { en: "Review Successful — Reward credited", ar: "نجحت المراجعة — تمت إضافة المكافأة" },
+    "সম্পন্নের সময়:": { en: "Completed at:", ar: "وقت الإكمال:" },
+    "গ্রহণের সময়:": { en: "Accepted at:", ar: "وقت القبول:" },
+    "জমা দেওয়া প্রমাণ:": { en: "Submitted Proof:", ar: "الإثبات المرسل:" },
+    "অনুমোদন সম্পন্ন করুন ⚡": { en: "Approve Now ⚡", ar: "اعتماد الآن ⚡" },
+    "অনুমোদন সম্পন্ন করুন": { en: "Approve Now", ar: "اعتماد الآن" },
+    "এই স্তর থেকে কেটে বের হন (ভিআইপি হলে ফিরে যান)": { en: "Exit this tier (Return to VIP Hall)", ar: "الخروج من هذا المستوى (العودة لقاعة VIP)" },
+    "এই স্তর থেকে কেটে বের হন": { en: "Exit this tier", ar: "الخروج من هذا المستوى" },
+    "ভিআইপি হলে ফিরে যান": { en: "Return to VIP Hall", ar: "العودة لقاعة VIP" },
+    "মিশন তালিকা": { en: "Mission List", ar: "قائمة المهام" },
+    "টাস্ক মেনুতে গিয়ে কাজ জমা দিন।": { en: "Go to Tasks menu to submit proof.", ar: "انتقل إلى قائمة المهام لإرسال الإثبات." },
+    "কাজ গৃহীত হয়েছে!": { en: "Task accepted!", ar: "تم قبول المهمة!" },
+    "আজকের বাকি কাজ:": { en: "Remaining tasks today:", ar: "المهام المتبقية اليوم:" },
+    "সীমা পূর্ণ হয়েছে": { en: "Limit reached", ar: "تم الوصول للحد الأقصى" },
+    "সীমা পূর্ণ": { en: "Limit Reached", ar: "اكتمال الحد" },
+    "দয়া করে এখানে প্রবেশ করুন...": { en: "Please enter here...", ar: "يرجى الإدخال هنا..." },
+    "স্ক্রিনশট আপলোড করুন": { en: "Upload Screenshot", ar: "رفع لقطة شاشة" },
+    "জমা দিন →": { en: "Submit →", ar: "إرسال →" },
+    "জমা": { en: "Submit", ar: "إرسال" },
+    "বাতিল": { en: "Cancel", ar: "إلغاء" },
+    "লিংক সফলভাবে অনুলিপি (কপি) করা হয়েছে!": { en: "Link copied successfully!", ar: "تم نسخ الرابط بنجاح!" },
+    "কপি সম্পন্ন!": { en: "Copied!", ar: "تم النسخ!" },
+    "লিংক নতুন ট্যাবে খোলা হচ্ছে।": { en: "Opening link in new tab.", ar: "جاري فتح الرابط في نافذة جديدة." },
+    "সরাসরি এখানে ক্লিক করুন ↗": { en: "Click directly here ↗", ar: "اضغط مباشرة هنا ↗" },
+    "টাস্কের লিংক পাওয়া যায়নি!": { en: "Task link not found!", ar: "رابط المهمة غير موجود!" },
+    "স্ক্রিনশট আপলোড করুন দয়া করে": { en: "Please upload a screenshot", ar: "يرجى رفع لقطة شاشة" },
+    "মিশন সফলভাবে জমা দেওয়া হয়েছে!": { en: "Mission submitted successfully!", ar: "تم إرسال المهمة بنجاح!" },
+    "এখন এটি পর্যালোচনাধীন রয়েছে।": { en: "It is now under review.", ar: "وهي الآن قيد المراجعة." },
+    "টাস্ক মেনুতে যান": { en: "Go to Tasks Menu", ar: "الانتقال إلى المهام" },
+    "প্রকৃত আগমন": { en: "Actual Received", ar: "المستلم فعلياً" },
+    "লাভ শেয়ারিং অনুপাত": { en: "Profit Share Ratio", ar: "نسبة مشاركة الأرباح" },
+    "অ্যাকাউন্ট নেই?": { en: "Don't have an account?", ar: "ليس لديك حساب؟" },
+    "© ২০২৫ PW New Media। আপনার প্রতিটি শুরু হোক সুন্দর।": { en: "© 2025 PW New Media. Make every start great.", ar: "© 2025 PW New Media. لتكن كل بداية لك مليئة بالنجاح." },
+    "ভাষা নির্বাচন / Select Language": { en: "Select Language", ar: "اختر اللغة" },
+    "দেশ ও কারেন্সি": { en: "Country & Currency", ar: "الدولة والعملة" },
+    "বাংলাদেশ (Bangladeshi Taka)": { en: "Bangladesh (BDT)", ar: "بنغلاديش (BDT)" },
+    "টাস্ক সম্পন্ন করে আয় করুন": { en: "Earn by Completing Tasks", ar: "اربح عبر إكمال المهام" },
+    "TikTok, YouTube ও Facebook-এ": { en: "On TikTok, YouTube & Facebook", ar: "على TikTok و YouTube و Facebook" },
+    "ভিডিওতে শুধু লাইক দিন — প্রতিটি টাস্কের জন্য রিওয়ার্ড অর্জন করুন।": { en: "Simply like videos — earn rewards for every completed task.", ar: "اضغط إعجاب فقط على الفيديوهات — واحصل على مكافآت لكل مهمة مكتملة." },
+    "টাস্ক সম্পন্ন করুন,": { en: "Complete Tasks,", ar: "أكمل المهام،" },
+    "আপনার সম্পন্ন করা টাস্ক এবং অর্জিত রিওয়ার্ড সহজেই দেখুন।": { en: "Easily track your completed tasks and earned rewards.", ar: "تابع مهامك المكتملة ومكافآتك بسهولة." },
+    "সবার জন্য": { en: "For Everyone", ar: "للجميع" },
+    "আপনার রেফারেল লিংক শেয়ার করুন এবং আপনার টিমের কার্যক্রম দেখুন।": { en: "Share your referral link and track your team activity.", ar: "شارك رابط الإحالة الخاص بك وتابع نشاط فريقك." },
+    "ভিআইপি এলাকা": { en: "VIP Zone", ar: "منطقة VIP" },
+    "চলমান মিশন": { en: "Active Missions", ar: "المهام الجارية" },
+    "একজন ব্যবহারকারীকে সুপারিশ করার জন্য": { en: "For referring a new member —", ar: "لإحالة عضو جديد —" },
+    "আপনার অর্জন, আপনার সম্মান": { en: "Your Achievement, Your Honor", ar: "إنجازك هو فخرك" },
+    "নির্ধারিত লক্ষ্য পূরণ করে পদমর্যাদা ও মাসিক বেতন অর্জন করুন।": { en: "Reach the target milestones to unlock ranks and monthly salary.", ar: "حقق الأهداف المطلوبة لفتح الرتب والحصول على راتب شهري." },
+    "অবস্থান ১ মাসিক বেতন": { en: "Position 1 Monthly Salary", ar: "راتب المنصب 1 الشهري" },
+    "অবস্থান ১": { en: "Position 1", ar: "المنصب 1" },
+    "অবস্থান ২": { en: "Position 2", ar: "المنصب 2" },
+    "অবস্থান ৩": { en: "Position 3", ar: "المنصب 3" },
+    "অবস্থান ৪": { en: "Position 4", ar: "المنصب 4" },
+    "অবস্থান ৫": { en: "Position 5", ar: "المنصب 5" },
+    "অবস্থান ৬": { en: "Position 6", ar: "المنصب 6" },
+    "অবস্থান ৭": { en: "Position 7", ar: "المنصب 7" },
+    "অবস্থান ৮": { en: "Position 8", ar: "المنصب 8" },
+    "আপনার প্রথম স্তরে ৩ জন সক্রিয় সদস্য যুক্ত হলে যোগ্য হবেন।": { en: "Qualify when 3 active members join your Tier 1.", ar: "تتأهل عند انضمام 3 أعضاء نشطين إلى مستواك الأول." },
+    "আপনার প্রথম ৫ জন বা তার বেশি": { en: "With your first 5 or more", ar: "مع أول 5 أو أكثر من" },
+    "আপনার প্রথম ৮ জন বা তার বেশি": { en: "With your first 8 or more", ar: "مع أول 8 أو أكثر من" },
+    "আপনার প্রথম ১৫ জন বা তার বেশি": { en: "With your first 15 or more", ar: "مع أول 15 أو أكثر من" },
+    "আপনার প্রথম ২৫ জন বা তার বেশি": { en: "With your first 25 or more", ar: "مع أول 25 أو أكثر من" },
+    "আপনার প্রথম ৪০ জন বা তার বেশি": { en: "With your first 40 or more", ar: "مع أول 40 أو أكثر من" },
+    "আপনার প্রথম ৭০ জন বা তার বেশি": { en: "With your first 70 or more", ar: "مع أول 70 أو أكثر من" },
+    "আপনার প্রথম ১০০ জন বা তার বেশি": { en: "With your first 100 or more", ar: "مع أول 100 أو أكثر من" },
+    "A, B ও C-লেভেল": { en: "A, B & C-Level", ar: "المستويات A و B و C" },
+    "A ও B-লেভেল": { en: "A & B-Level", ar: "المستويين A و B" },
+    "সদস্য থাকলে যোগ্য হবেন।": { en: "active members, you qualify.", ar: "عضواً نشطاً، تتأهل تلقائياً." },
+    "🔒 মাসিক বেতন": { en: "🔒 Monthly Salary", ar: "🔒 الراتب الشهري" },
+    "নির্ধারিত লক্ষ্য পূরণ বেতন": { en: "Milestone Achievement Salary", ar: "راتب تحقيق الأهداف" },
+    "বেতনের পরিমাণ": { en: "Salary Amount", ar: "قيمة الراتب" },
+    "প্রয়োজনীয় সক্রিয় সদস্য:": { en: "Required Active Members:", ar: "الأعضاء النشطون المطلوبون:" },
+    "৩ জন সক্রিয় সদস্য": { en: "3 Active Members", ar: "3 أعضاء نشطين" },
+    "আপনার বর্তমান অগ্রগতি:": { en: "Your Current Progress:", ar: "تقدمك الحالي:" },
+    "০ / ৩ জন (০%)": { en: "0 / 3 (0%)", ar: "0 / 3 (0%)" },
+    "আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। নির্ধারিত সক্রিয় সদস্য পূরণ হলেই আপনার অবস্থান সক্রিয় হবে এবং মাসিক বেতন সরাসরি মূল ব্যালেন্সে গ্রহণ করতে পারবেন।": { en: "Invite friends with your referral link. Once the required active members join, your rank activates and you can claim monthly salary directly to your main balance.", ar: "ادعُ أصدقاءك عبر رابط الدعوة الخاص بك. بمجرد انضمام الأعضاء النشطين المطلوبين، تتفعل رتبتك ويمكنك استلام راتبك الشهري مباشرة إلى رصيدك الرئيسي." },
+    "🔒 শর্ত পূরণ হয়নি (লকড)": { en: "🔒 Requirement Not Met (Locked)", ar: "🔒 لم تستوفِ الشروط (مقفل)" },
+    "আমন্ত্রণ লিংক কপি করুন": { en: "Copy Invitation Link", ar: "نسخ رابط الدعوة" },
+    "এই বিকাশ অ্যাকাউন্টটি এককালীন সফলভাবে সংরক্ষিত রয়েছে। এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়।": { en: "This bKash account is permanently bound and cannot be edited.", ar: "تم حفظ حساب bKash هذا بشكل دائم ولا يمكن تعديله." },
+    "এই নগদ অ্যাকাউন্টটি এককালীন সফলভাবে সংরক্ষিত রয়েছে। এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়।": { en: "This Nagad account is permanently bound and cannot be edited.", ar: "تم حفظ حساب Nagad هذا بشكل دائم ولا يمكن تعديله." },
+    "এই USDT (BEP20) ওয়ালেটটি এককালীন সফলভাবে সংরক্ষিত রয়েছে। এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়।": { en: "This USDT (BEP20) wallet is permanently bound and cannot be edited.", ar: "تم حفظ محفظة USDT (BEP20) هذه بشكل دائم ولا يمكن تعديلها." },
+    "• শুধুমাত্র BNB Smart Chain (BEP20) নেটওয়ার্কের USDT ওয়ালেট অ্যাড্রেস দিন (0x দিয়ে শুরু)। এটি এককালীন সংরক্ষণ করা হবে।": { en: "• Enter only a BNB Smart Chain (BEP20) USDT wallet address starting with 0x. This binding is permanent.", ar: "• أدخل فقط عنوان محفظة USDT على شبكة BNB Smart Chain (BEP20) يبدأ بـ 0x. يتم الحفظ بشكل دائم." },
+    "আপনার প্রকৃত নাম সফলভাবে সংরক্ষিত রয়েছে। এটি এককালীন সংরক্ষণ, তাই পরিবর্তনযোগ্য নয়।": { en: "Your real name is permanently saved and cannot be changed.", ar: "تم حفظ اسمك الحقيقي بشكل دائم ولا يمكن تغييره." },
+    "• আপনার জাতীয় পরিচয়পত্র বা ব্যাংক অ্যাকাউন্টে থাকা আসল নাম দিন। এই নাম বিকাশ ও নগদ উভয় অ্যাকাউন্টে এককালীন স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে।": { en: "• Enter your legal name as it appears on your National ID or payout account. It is saved permanently.", ar: "• أدخل اسمك القانوني كما يظهر في هويتك أو حساب السحب الخاص بك." },
+    "গ্রহণ করা হচ্ছে": { en: "Accepting...", ar: "جاري القبول..." },
+    "LV0 (ফ্রি)": { en: "LV0 (Free)", ar: "LV0 (مجاني)" },
+    "+ রিচার্জ": { en: "+ Recharge", ar: "+ شحن" },
+    "✕ বন্ধ করুন": { en: "✕ Close", ar: "✕ إغلاق" },
+    "অথবা নির্দিষ্ট পরিমাণ (": { en: "Or custom amount (", ar: "أو مبلغ مخصص (" },
+    "রিচার্জ সম্পন্ন করুন ⚡": { en: "Complete Recharge ⚡", ar: "إتمام الشحن ⚡" },
+    "পণ্যের বিস্তারিত দেখুন": { en: "View Product Details", ar: "عرض تفاصيل الباقة" },
+    "প্যাকেজ বিবরণী": { en: "Package Details", ar: "تفاصيل الباقة" },
+    "নির্ধারিত প্যাকেজ মূল্য": { en: "Package Price", ar: "سعر الباقة" },
+    "/ ৩০ দিন মেয়াদ": { en: "/ 30-Day Validity", ar: "/ صلاحية 30 يوماً" },
+    "প্যাকেজের মূল তথ্য": { en: "Key Package Metrics", ar: "البيانات الأساسية للباقة" },
+    "উৎপাদনশীলতা (দৈনিক আয়)": { en: "Daily Output (Daily Income)", ar: "الإنتاج اليومي (الدخل اليومي)" },
+    "মোট লভ্যাংশ (৩০ দিন)": { en: "Total Return (30 Days)", ar: "إجمالي العائد (30 يوماً)" },
+    "ক্রয়ের পরিমাণ": { en: "Purchase Limit", ar: "حد الشراء" },
+    "কাজের বিবরণ ও আয়ের হিসাব": { en: "Task Overview & Earnings Breakdown", ar: "نظرة عامة على المهام والأرباح" },
+    "এই প্যাকেজে আপনার মূল কাজ হলো টিকটক, ফেসবুক ও ইউটিউবের ভিডিওতে শুধু লাইক দেওয়া।": { en: "In this package, your main task is simply liking videos on TikTok, Facebook, and YouTube.", ar: "في هذه الباقة، مهمتك الأساسية هي الضغط على إعجاب فقط في فيديوهات TikTok و Facebook و YouTube." },
+    "প্রতিটি কাজ শেষ করার সাথে সাথে কাজের নির্দিষ্ট পারিশ্রমিক সরাসরি আপনার ব্যালেন্সে জমা হবে। মেয়াদ চলাকালীন প্রতিদিনের উপার্জিত টাকা আপনি কোনো ঝামেলা ছাড়াই নিজের বিকাশ, নগদ কিংবা বাইনান্স (Binance USDT) অ্যাকাউন্টে তাৎক্ষণিক তুলে নিতে পারবেন।": { en: "Upon completing and verifying each task, the task reward is credited directly to your balance. You can withdraw earnings seamlessly to your bound payout wallet (USDT BEP20 / local payout).", ar: "عند إكمال كل مهمة والتحقق منها، تُضاف مكافأتها مباشرة إلى رصيدك ويمكنك سحب أرباحك بسهولة إلى محفظة السحب المرتبطة بك." },
+    "প্যাকেজের মেয়াদ ৩০ দিন। এই ৩০ দিন আপনি প্রতিদিন নিয়মমাফিক কাজ করে নিশ্চিত আয় করতে পারবেন।": { en: "Package validity is 30 days. Complete your daily allocated tasks every day throughout the term for steady earnings.", ar: "مدة الباقة 30 يوماً. أكمل مهامك المخصصة يومياً طوال المدة لتحقيق دخل ثابت." },
+    "মোট আয় (৩০ দিন):": { en: "Total Income (30 Days):", ar: "إجمالي الدخل (30 يوماً):" },
+    "* ক্রয়ের সীমা প্রতি ব্যক্তি সর্বোচ্চ ১টি প্যাকেজ": { en: "* Limit: Maximum 1 active subscription per tier per user", ar: "* الحد الأقصى: اشتراك واحد نشط لكل مستوى لكل مستخدم" },
+    "আমরা কীভাবে টাকা দিচ্ছি এবং কোম্পানি কীভাবে আয় করছে?": { en: "How Payouts Work & Revenue Model", ar: "آلية الدفع ومصادر إيرادات الشركة" },
+    "স্পনসর ও কনটেন্ট নির্মাতাদের বাজেট:": { en: "Sponsor & Creator Promotion Budgets:", ar: "ميزانيات الترويج من الرعاة وصناع المحتوى:" },
+    "বিভিন্ন জনপ্রিয় টিকটকার, ইউটিউব চ্যানেল এবং ব্র্যান্ড প্রতিষ্ঠান তাদের ভিডিওতে ভিউজ ও লাইক বাড়ানোর জন্য আমাদের প্ল্যাটফর্মকে বিজ্ঞাপনী প্রচার তহবিল প্রদান করে।": { en: "Creators, YouTube channels, and brands allocate promotional budgets to our platform to boost organic views, likes, and engagement.", ar: "يخصص صناع المحتوى وقنوات YouTube والعلامات التجارية ميزانيات إعلانية لمنصتنا لتعزيز المشاهدات والإعجابات والتفاعل الحقيقي." },
+    "আপনার প্রতিদিনের সহজ কাজ:": { en: "Simple Daily Tasks:", ar: "مهامك اليومية البسيطة:" },
+    "আপনি প্রতিদিন মাত্র ৫-১০ মিনিট সময় নিয়ে বরাদ্দকৃত ভিডিওগুলোতে শুধু লাইক দিয়ে সহজ কাজগুলো সম্পন্ন করেন এবং স্ক্রিনশট জমা দেন।": { en: "Spend just 5–10 minutes daily simply liking the assigned videos and uploading screenshot proof.", ar: "اقضِ 5-10 دقائق يومياً في الضغط على إعجاب فقط للفيديوهات المخصصة ورفع لقطة الشاشة." },
+    "সরাসরি কাজের পারিশ্রমিক:": { en: "Direct Task Rewards:", ar: "مكافآت المهام المباشرة:" },
+    "স্পনসরদের দেওয়া টাকার একটি বড় অংশ সরাসরি আপনাদের মতো পরিশ্রমী সদস্যদের মাঝে কাজের পারিশ্রমিক ও লভ্যাংশ হিসেবে বণ্টন করা হয়।": { en: "A large share of sponsor campaign revenue is distributed directly to active members as task rewards and tier returns.", ar: "يتم توزيع جزء كبير من ميزانيات الحملات الإعلانية مباشرة على الأعضاء النشطين كمكافآت مهام وعوائد." },
+    "প্রতিদিন নিশ্চিত ও নিরাপদ উত্তোলন:": { en: "Reliable & Fast Withdrawals:", ar: "سحوبات يومية موثوقة وسريعة:" },
+    "কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি সাথে সাথে বিকাশ, নগদ অথবা Binance-এ উত্তোলন করতে পারবেন।": { en: "No hidden terms or complicated hurdles. Withdraw your daily earnings smoothly to your linked payout wallet.", ar: "بدون رسوم خفية أو شروط معقدة. اسحب أرباحك اليومية بسلاسة إلى محفظة السحب المرتبطة بك." },
+    "প্যাকেজের মূল্য": { en: "Package Price", ar: "سعر الباقة" },
+    "ব্যর্থ / বাতিল": { en: "Failed / Cancelled", ar: "فشل / ملغى" },
+    "ব্যর্থ": { en: "Failed", ar: "فشل" },
+    "⚠ কাজটি ব্যর্থ হয়েছে — পুনরায় আপিল করুন": { en: "⚠ Task Failed — Submit an Appeal", ar: "⚠ فشلت المهمة — قدّم استئنافاً" },
+    "⚠ টাস্ক ব্যর্থ হয়েছে — পুনরায় আপিল করুন": { en: "⚠ Task Failed — Submit an Appeal", ar: "⚠ فشلت المهمة — قدّم استئنافاً" },
+    "সঠিক লাইক দেওয়া স্ক্রিনশট আপলোড করুন এবং প্রয়োজনে নিচে আপিলের কারণ লিখে পুনরায় জমা দিন।": { en: "Upload a screenshot showing your valid Like and explain your appeal below if needed before resubmitting.", ar: "يرجى رفع لقطة شاشة تُظهر الإعجاب الصحيح وكتابة سبب الاستئناف أدناه إذا لزم الأمر ثم إعادة الإرسال." },
+    "পুনরায় জমা দিন (আপিল) →": { en: "Resubmit (Appeal) →", ar: "إعادة الإرسال (استئناف) →" },
+    "অনলাইন পেমেন্ট গেটওয়ে": { en: "Online Payment Gateway", ar: "بوابة الدفع الإلكتروني" },
+    "আপনার পরিমাণ লিখুন-": { en: "Enter amount -", ar: "أدخل المبلغ -" },
+    "অন্য নেটওয়ার্ক বা পরিবর্তন করুন": { en: "Switch Network or Method", ar: "تغيير الشبكة أو الطريقة" },
+    "(মানুষ)": { en: "(Users)", ar: "(أعضاء)" },
+    "আপনার উপলব্ধ ব্যালেন্স": { en: "Your Available Balance", ar: "رصيدك المتاح" },
+    "আপনার সঞ্চয়ের পরিমাণ লিখুন": { en: "Enter Savings Amount", ar: "أدخل مبلغ الادخار" },
+    "+ সঞ্চয় নিশ্চিত করুন": { en: "+ Confirm Savings", ar: "+ تأكيد الادخار" },
+    "* সঞ্চয় নেওয়ার পর অ্যাকাউন্টটি স্বয়ংক্রিয়ভাবে লক হয়ে যাবে ও ৪৫ দিন পর সম্পূর্ণ মূলধন ও লাভ একবারে পাওয়া যাবে।": { en: "* After enrollment, the principal is locked for 45 days and full principal + profit is paid at maturity.", ar: "* بعد الاشتراك، يتم تجميد رأس المال لمدة 45 يوماً ويُصرف كاملاً مع الأرباح عند الاستحقاق." },
+    "এখনো কোনো স্পিন পুরস্কার রেকর্ড নেই": { en: "No lucky spin rewards yet.", ar: "لا توجد مكافآت عجلة الحظ بعد." },
+    "অভিনন্দন!": { en: "Congratulations!", ar: "تهانينا!" },
+    "ম্যানেজার (Account Manager)": { en: "Account Manager", ar: "مدير الحساب" },
+    "টাস্ক সম্পন্ন করা, প্যাকেজ অ্যাক্টিভেশন, ক্যাশ আউট বা রিচার্জ সংক্রান্ত যেকোনো প্রয়োজনে সরাসরি আপনার অফিসিয়াল ম্যানেজারের সাথে যোগাযোগ করুন।": { en: "Contact your official Account Manager directly for task help, package activation, withdrawals, or deposits.", ar: "تواصل مباشرة مع مدير حسابك الرسمي للمساعدة في المهام أو تفعيل الباقات أو السحب أو الإيداع." },
+    "ম্যানেজার আইডি": { en: "Manager ID", ar: "معرف المدير" },
+    "কপি করুন": { en: "Copy", ar: "نسخ" },
+    "টেলিগ্রাম ম্যানেজারের সাথে চ্যাট করুন": { en: "Chat with Telegram Manager", ar: "تحدث مع المدير على تيليجرام" },
+    "নিষ্ক্রিয়": { en: "Inactive", ar: "غير نشط" },
+    "সক্রিয়": { en: "Active", ar: "نشط" },
+    "বন্ধু সংখ্যা": { en: "Friends", ar: "الأصدقاء" },
+    "সক্রিয় সদস্য": { en: "Active Members", ar: "الأعضاء النشطون" },
+    "আমানত": { en: "Deposits", ar: "الإيداعات" },
+    "নগদ আউট": { en: "Cashout", ar: "السحب" },
+    "ফ্রিতে শুধু LV0 · বাকি কাজের জন্য ব্যালেন্স প্রয়োজন": { en: "Only LV0 is free · Other tiers require balance", ar: "المستوى LV0 مجاني فقط · المستويات الأخرى تتطلب رصيداً" },
+    "LV1 · বেসিক প্যাকেজ": { en: "LV1 · Basic Package", ar: "LV1 · الباقة الأساسية" },
+    "কপি সম্পন্ন": { en: "Copied!", ar: "تم النسخ!" },
+    "দলের তথ্য লোড হচ্ছে…": { en: "Loading team data…", ar: "جاري تحميل بيانات الفريق..." },
+    "আবেদন জমা দিন": { en: "Submit Request", ar: "إرسال الطلب" },
+    "জমা দিন ও অটো এপ্রুভ করুন": { en: "Submit & Auto-Approve", ar: "إرسال وموافقة تلقائية" },
+    "বিজ্ঞাপন দেখে আয়": { en: "Earn from Tasks", ar: "اربح من المهام" },
+    "অ্যাকাউন্ট তৈরি করতে আপনার বিবরণ লিখুন": { en: "Enter your details to create an account", ar: "أدخل بياناتك لإنشاء حساب جديد" },
+    "(রেট: ১$ = ১২৬৳)": { en: "(Rate: $1 = ৳126)", ar: "(السعر: $1 = ৳126)" },
+    "≈ $0.00 USD (রেট: ১$ = ১২৬৳)": { en: "≈ $0.00 USD (Rate: $1 = ৳126)", ar: "≈ $0.00 USD (السعر: $1 = ৳126)" },
+    "ব্যক্তিগত যোগাযোগ মাধ্যম টেলিগ্রাম": { en: "Personal Contact via Telegram", ar: "تواصل شخصي عبر تيليجرام" },
+    "০ BDT (ফ্রি)": { en: "0 BDT (Free)", ar: "0 BDT (مجاني)" },
+    "সোশ্যাল মিডিয়া প্যাকেজ (LV1)": { en: "Social Media Package (LV1)", ar: "باقة التواصل الاجتماعي (LV1)" },
+    "দৈনিক ৬টি কাজ · প্রতি কাজ ৩০ ৳": { en: "6 Daily Tasks · ৳30 Per Task", ar: "6 مهام يومياً · ৳30 لكل مهمة" },
+    "৬টি কাজ (প্রতি কাজ ৳ ৩০)": { en: "6 Tasks (৳30 Each)", ar: "6 مهام (৳30 لكل مهمة)" }
   };
 
   // Placeholders dictionary
@@ -1506,57 +1408,122 @@
     'login-email': {
       bn: 'আপনার ফোন নম্বর লিখুন',
       en: 'Enter your phone number',
-      hi: 'फ़ोन नंबर दर्ज करें'
+      ar: 'أدخل رقم هاتفك'
     },
     'login-password': {
       bn: 'আপনার পাসওয়ার্ড লিখুন',
       en: 'Enter your password',
-      hi: 'अपना पासवर्ड दर्ज करें'
+      ar: 'أدخل كلمة المرور'
     },
     'register-phone': {
-      bn: '',
-      en: '',
-      hi: ''
+      bn: 'ফোন নম্বর লিখুন',
+      en: 'Enter phone number',
+      ar: 'أدخل رقم الهاتف'
     },
     'register-sms-code': {
       bn: 'এসএমএস যাচাইকরণ কোড লিখুন',
       en: 'Enter SMS verification code',
-      hi: 'एसएमएस सत्यापन कोड दर्ज करें'
+      ar: 'أدخل رمز التحقق SMS'
     },
     'register-password': {
       bn: 'আপনার পাসওয়ার্ড দিন',
-      en: 'Enter your password',
-      hi: 'अपना पासवर्ड दर्ज करें'
+      en: 'Enter password',
+      ar: 'أدخل كلمة المرور'
     },
     'confirm-password': {
       bn: 'আপনার পাসওয়ার্ড নিশ্চিত করুন',
-      en: 'Confirm your password',
-      hi: 'अपने पासवर्ड की पुष्टि करें'
+      en: 'Confirm password',
+      ar: 'تأكيد كلمة المرور'
     },
     'register-invite-code': {
       bn: 'আমন্ত্রণ কোড (যদি থাকে)',
       en: 'Invitation code (optional)',
-      hi: 'निमंत्रण कोड (वैकल्पिक)'
+      ar: 'رمز الدعوة (اختياري)'
     },
     'withdraw-amount-input': {
-      bn: 'উত্তোলনের পরিমাণ লিখুন (ন্যূনতম 700)',
-      en: 'Enter withdrawal amount (Min 700)',
-      hi: 'निकासी राशि दर्ज करें (न्यूनतम 700)'
+      bn: 'উত্তোলনের পরিমাণ লিখুন',
+      en: 'Enter withdrawal amount',
+      ar: 'أدخل مبلغ السحب'
     },
     'custom-deposit-amount': {
       bn: 'টাকার পরিমাণ লিখুন',
       en: 'Enter deposit amount',
-      hi: 'जमा राशि दर्ज करें'
+      ar: 'أدخل مبلغ الإيداع'
+    },
+    'gateway-custom-amount': {
+      bn: '৩০০ থেকে ৫০,০০০',
+      en: '300 to 50,000',
+      ar: 'من 300 إلى 50,000'
     },
     'withdraw-sheet-amount': {
       bn: 'প্রত্যাহার পরিমাণ লিখুন দয়া করে',
       en: 'Please enter withdrawal amount',
-      hi: 'कृपया निकासी राशि दर्ज करें'
+      ar: 'يرجى إدخال مبلغ السحب'
     },
     'withdraw-sheet-fund-password': {
-      bn: 'অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন',
-      en: 'Please enter your fund password',
-      hi: 'कृपया फंड पासवर्ड दर्ज करें'
+      bn: '৬ ডিজিটের ফান্ডের পাসওয়ার্ড লিখুন',
+      en: 'Enter 6-digit fund password',
+      ar: 'أدخل كلمة مرور الصندوق من 6 أرقام'
+    },
+    'bkash-fullname-input': {
+      bn: 'প্রকৃত নাম লিখুন',
+      en: 'Enter full name',
+      ar: 'أدخل الاسم الكامل'
+    },
+    'bkash-phone-input': {
+      bn: 'বিকাশ নম্বর লিখুন',
+      en: 'Enter bKash number',
+      ar: 'أدخل رقم bKash'
+    },
+    'nagad-fullname-input': {
+      bn: 'প্রকৃত নাম লিখুন',
+      en: 'Enter full name',
+      ar: 'أدخل الاسم الكامل'
+    },
+    'nagad-phone-input': {
+      bn: 'নগদ নম্বর লিখুন',
+      en: 'Enter Nagad number',
+      ar: 'أدخل رقم Nagad'
+    },
+    'usdt-fullname-input': {
+      bn: 'প্রকৃত নাম লিখুন',
+      en: 'Enter full name',
+      ar: 'أدخل الاسم الكامل'
+    },
+    'usdt-address-input': {
+      bn: 'BEP20 ওয়ালেট ঠিকানা লিখুন (0x...)',
+      en: 'Enter BEP20 wallet address (0x...)',
+      ar: 'أدخل عنوان محفظة BEP20 (...0x)'
+    },
+    'realname-fullname-input': {
+      bn: 'আপনার প্রকৃত নাম লিখুন',
+      en: 'Enter your full legal name',
+      ar: 'أدخل اسمك القانوني الكامل'
+    },
+    'fund-password-new-input': {
+      bn: '৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন',
+      en: 'Enter 6-digit withdrawal password',
+      ar: 'أدخل كلمة مرور السحب من 6 أرقام'
+    },
+    'fund-password-confirm-input': {
+      bn: '৬ ডিজিটের পাসওয়ার্ড কনফার্ম করুন',
+      en: 'Confirm 6-digit password',
+      ar: 'تأكيد كلمة المرور من 6 أرقام'
+    },
+    'savings-deposit-input': {
+      bn: 'আপনার সঞ্চয় লিখুন (যেমন: ৩৫০০)',
+      en: 'Enter savings amount (e.g. 30)',
+      ar: 'أدخل مبلغ الادخار'
+    },
+    'bd-recharge-amount-input': {
+      bn: '৩০০ থেকে ৫০,০০০',
+      en: '300 to 50,000',
+      ar: 'من 300 إلى 50,000'
+    },
+    'mission-submit-comment': {
+      bn: 'দয়া করে এখানে প্রবেশ করুন...',
+      en: 'Please enter comment here...',
+      ar: 'يرجى كتابة التعليق هنا...'
     }
   };
 
@@ -1564,45 +1531,59 @@
     try {
       const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
       if (user) {
-        if (user.country === 'IN' || user.currency === 'INR' || user.dialCode === '+91' || user.countryNameEn === 'India' || user.countryName === 'India' || user.countryName === 'ইন্ডিয়া' || user.countryName === 'ভারত') {
-          return 'IN';
+        if (user.country) {
+          return String(user.country).trim().toUpperCase();
+        }
+        if (user.currency === 'USD' || (user.dialCode && user.dialCode !== '+880')) {
+          return user.country || 'US';
         }
         return 'BD';
       }
     } catch(e) {}
     const regCode = document.getElementById('register-country-code');
-    if (regCode && regCode.value === 'IN') return 'IN';
+    if (regCode && regCode.value) return String(regCode.value).trim().toUpperCase();
     const regSelect = document.getElementById('register-country-select');
-    if (regSelect && regSelect.value === 'IN') return 'IN';
+    if (regSelect && regSelect.value) return String(regSelect.value).trim().toUpperCase();
+    const loginSelect = document.getElementById('login-country-select');
+    if (loginSelect && loginSelect.value) return String(loginSelect.value).trim().toUpperCase();
     return 'BD';
   }
 
-  function getCountryAllowedLanguages(countryCode) {
-    return ['bn', 'en', 'hi'];
+  function getCountryAllowedLanguages() {
+    return VALID_LANGS.slice();
   }
 
-  function syncCountryLanguageOptions(countryCode) {
-    const c = countryCode || getCurrentCountryCode();
-    const allowed = ['bn', 'en', 'hi'];
-    if (!allowed.includes(currentLang)) {
-      currentLang = 'bn';
-      try {
-        localStorage.setItem('alo_lang', currentLang);
-        const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
-        if (user) {
-          user.language = currentLang;
-          localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-        }
-      } catch(e) {}
+  // Initial language resolution: English ('en') is default. Never overridden by country.
+  let currentLang = 'en';
+  try {
+    const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+    const storedLang = localStorage.getItem('alo_lang');
+    if (user && user.language) {
+      currentLang = normalizeLangCode(user.language);
+    } else if (storedLang) {
+      currentLang = normalizeLangCode(storedLang);
+    } else {
+      currentLang = 'en';
     }
+    if (storedLang === 'hi') {
+      localStorage.setItem('alo_lang', currentLang);
+    }
+  } catch(e) {
+    currentLang = 'en';
+  }
 
+  function syncCountryLanguageOptions() {
+    currentLang = normalizeLangCode(currentLang);
     const selectors = document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
-    const targetTag = 'ALL';
+    const targetTag = 'EN_AR_BN';
     selectors.forEach(function(sel) {
       if (!sel) return;
       if (sel.dataset.countryTag !== targetTag) {
         sel.dataset.countryTag = targetTag;
-        sel.innerHTML = '<option value="bn">Bengali</option><option value="en">English</option><option value="hi">India (हिन्दी)</option>';
+        sel.innerHTML =
+          '<option value="en" class="bg-[#050e21] text-white">English</option>' +
+          '<option value="ar" class="bg-[#050e21] text-white">العربية</option>' +
+          '<option value="bn" class="bg-[#050e21] text-white">বাংলা</option>';
       }
       if (sel.value !== currentLang) {
         sel.value = currentLang;
@@ -1610,48 +1591,123 @@
     });
   }
 
-  let currentLang = 'bn';
-  try {
-    const country = getCurrentCountryCode();
-    const isInd = (country === 'IN');
-    const storedLang = localStorage.getItem('alo_lang');
-    if (storedLang === 'en' || storedLang === 'bn' || storedLang === 'hi') {
-      currentLang = storedLang;
-    } else if (isInd) {
-      currentLang = 'hi';
-    } else {
-      currentLang = 'bn';
-    }
-  } catch(e) {
-    currentLang = 'bn';
-  }
-
   function getTranslation(key, lang) {
-    const l = lang || currentLang;
+    const l = normalizeLangCode(lang || currentLang);
     if (translations[l] && translations[l][key]) {
       return translations[l][key];
     }
-    return (translations.bn && translations.bn[key]) || key;
+    return (translations.en && translations.en[key]) || (translations.bn && translations.bn[key]) || key;
+  }
+
+  // Lossless Text Node cache so switching en <-> ar <-> bn preserves original source cleanly
+  const originalTextMap = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  const originalAttrMap = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+
+  // Build reverse index once for fast lookup from en/ar/bn variants to canonical phraseDictionary key
+  const sortedPhraseKeys = Object.keys(phraseDictionary).sort(function(a, b) {
+    return b.length - a.length;
+  });
+
+  function resolvePhraseEntry(rawText) {
+    if (phraseDictionary[rawText]) {
+      return { key: rawText, entry: phraseDictionary[rawText] };
+    }
+    for (let i = 0; i < sortedPhraseKeys.length; i++) {
+      const k = sortedPhraseKeys[i];
+      const e = phraseDictionary[k];
+      if ((e.en && e.en === rawText) || (e.ar && e.ar === rawText) || (e.bn && e.bn === rawText)) {
+        return { key: k, entry: e };
+      }
+    }
+    return null;
+  }
+
+  function translateTextString(sourceStr, lang) {
+    let val = sourceStr;
+    let changed = false;
+
+    const exact = resolvePhraseEntry(val.trim());
+    if (exact) {
+      const targetExact = exact.entry[lang] || (lang === 'bn' ? exact.key : exact.entry.en) || val.trim();
+      const lead = val.match(/^\s*/)[0];
+      const trail = val.match(/\s*$/)[0];
+      const nextVal = lead + targetExact + trail;
+      if (nextVal !== val) {
+        val = nextVal;
+        changed = true;
+      }
+    } else {
+      sortedPhraseKeys.forEach(function(phrase) {
+        if (/^\d+$/.test(phrase) || phrase.length < 2) return;
+        const entry = phraseDictionary[phrase];
+        const target = entry[lang] || (lang === 'bn' ? (entry.bn || phrase) : (entry.en || phrase));
+
+        if (val.includes(phrase)) {
+          if (phrase !== target) {
+            val = val.split(phrase).join(target);
+            changed = true;
+          }
+        } else {
+          const variants = [entry.bn, entry.en, entry.ar];
+          for (let v = 0; v < variants.length; v++) {
+            const candidate = variants[v];
+            if (candidate && !/^\d+$/.test(candidate.trim()) && candidate.trim().length >= 3 && val.includes(candidate)) {
+              if (candidate !== target) {
+                val = val.split(candidate).join(target);
+                changed = true;
+              }
+              break;
+            }
+          }
+        }
+      });
+    }
+
+    // Boundary-safe replacement for standalone "জন"
+    if (lang !== 'bn') {
+      const memberWord = lang === 'ar' ? 'أعضاء' : 'members';
+      if (val.trim() === 'জন') {
+        val = val.replace('জন', memberWord);
+        changed = true;
+      } else if (/(^|[\s\d০-৯(])জন(?=$|[\s,.()।:])/.test(val)) {
+        val = val.replace(/(^|[\s\d০-৯(])জন(?=$|[\s,.()।:])/g, '$1' + memberWord);
+        changed = true;
+      }
+    }
+
+    // Convert any leftover Bengali digits (০-৯) to Western digits (0-9) when lang !== 'bn'
+    if (lang !== 'bn' && /[০-৯]/.test(val)) {
+      val = val.replace(/[০-৯]/g, function(d) {
+        return String('০১২৩৪৫৬৭৮৯'.indexOf(d));
+      });
+      changed = true;
+    }
+
+    return { value: val, changed: changed };
   }
 
   // Translate all text nodes in the DOM
   function translateDOM(targetLang) {
-    const lang = targetLang || currentLang;
+    const lang = normalizeLangCode(targetLang || currentLang);
 
-    // 1. Update document attributes
+    // 1. Update document attributes & title
     if (document.documentElement) {
       document.documentElement.lang = lang;
-      if (lang === 'bn') {
-        document.documentElement.classList.add('lang-bn');
-        if (document.body) document.body.classList.add('lang-bn');
-      } else {
-        document.documentElement.classList.remove('lang-bn');
-        if (document.body) document.body.classList.remove('lang-bn');
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+      document.documentElement.classList.toggle('lang-bn', lang === 'bn');
+      document.documentElement.classList.toggle('lang-ar', lang === 'ar');
+      if (document.body) {
+        document.body.classList.toggle('lang-bn', lang === 'bn');
+        document.body.classList.toggle('lang-ar', lang === 'ar');
       }
-      if (lang === 'ar') {
-        document.documentElement.setAttribute('dir', 'rtl');
+
+      if (lang === 'bn') {
+        document.title = 'PW New Media | ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম';
+      } else if (lang === 'ar') {
+        document.title = 'PW New Media | منصة الاستثمار والمهام';
       } else {
-        document.documentElement.setAttribute('dir', 'ltr');
+        document.title = 'PW New Media | Investment & Mission Platform';
       }
     }
 
@@ -1660,10 +1716,12 @@
 
     // 3. Update input placeholders from placeholderMap
     Object.keys(placeholderMap).forEach(function(id) {
-      const el = document.getElementById(id);
-      if (el && placeholderMap[id][lang]) {
-        el.placeholder = placeholderMap[id][lang];
-      }
+      const els = document.querySelectorAll('[id="' + id + '"]');
+      els.forEach(function(el) {
+        if (el && placeholderMap[id][lang] !== undefined) {
+          el.placeholder = placeholderMap[id][lang];
+        }
+      });
     });
 
     // 4. Update elements with data-i18n attribute
@@ -1680,7 +1738,7 @@
       if (val) el.placeholder = val;
     });
 
-    // 5. Replace text in DOM tree using phraseDictionary
+    // 5. Replace text in DOM tree using phraseDictionary (with WeakMap round-trip memory)
     const walker = document.createTreeWalker(
       document.body || document.documentElement,
       NodeFilter.SHOW_TEXT,
@@ -1692,7 +1750,9 @@
           if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'NOSCRIPT' || tag === 'CODE' || tag === 'PRE') {
             return NodeFilter.FILTER_REJECT;
           }
-          // Strictly protect user dynamic account information, phone numbers, and invite codes
+          if (parent.hasAttribute('data-i18n')) {
+            return NodeFilter.FILTER_REJECT;
+          }
           if (parent.closest && parent.closest(
             '#profile-account-number, #profile-invite-code, #profile-member-id, #dashboard-user-name, ' +
             '#balance-display, #usdt-balance-display, [data-profile-value], .notranslate, [data-no-translate], ' +
@@ -1701,7 +1761,8 @@
             return NodeFilter.FILTER_REJECT;
           }
           const text = node.nodeValue.trim();
-          if (!text || text.length < 2) return NodeFilter.FILTER_SKIP;
+          if (!text) return NodeFilter.FILTER_SKIP;
+          if (text.length < 2 && !/[\u0980-\u09FF\u0600-\u06FF]/.test(text)) return NodeFilter.FILTER_SKIP;
           return NodeFilter.FILTER_ACCEPT;
         }
       }
@@ -1712,49 +1773,55 @@
       nodesToReplace.push(walker.currentNode);
     }
 
-    const phrases = Object.keys(phraseDictionary).sort(function(a, b) {
-      return b.length - a.length; // Match longest phrases first
+    nodesToReplace.forEach(function(node) {
+      const currentVal = node.nodeValue;
+      let baseSource = currentVal;
+
+      if (originalTextMap) {
+        const rec = originalTextMap.get(node);
+        if (rec && rec.last === currentVal) {
+          baseSource = rec.orig;
+        } else {
+          originalTextMap.set(node, { orig: currentVal, last: currentVal });
+          baseSource = currentVal;
+        }
+      }
+
+      const res = translateTextString(baseSource, lang);
+      if (res.value !== currentVal) {
+        node.nodeValue = res.value;
+        if (originalTextMap) {
+          const rec = originalTextMap.get(node);
+          if (rec) rec.last = res.value;
+        }
+      }
     });
 
-    nodesToReplace.forEach(function(node) {
-      let val = node.nodeValue;
-      let changed = false;
-
-      // Check Bengali original phrases
-      phrases.forEach(function(phrase) {
-        // Skip purely numeric phrases or single digits from blanket string replace
-        if (/^\d+$/.test(phrase) || phrase.length < 2) return;
-
-        if (val.includes(phrase)) {
-          const target = lang === 'bn' ? phrase : (phraseDictionary[phrase][lang] || phrase);
-          if (phrase !== target) {
-            val = val.split(phrase).join(target);
-            changed = true;
-          }
+    // 5b. Translate [title] tooltips losslessly
+    document.querySelectorAll('[title]').forEach(function(el) {
+      if (el.closest && el.closest('.notranslate, [data-no-translate]')) return;
+      const curTitle = el.getAttribute('title');
+      if (!curTitle) return;
+      let baseTitle = curTitle;
+      if (originalAttrMap) {
+        const rec = originalAttrMap.get(el);
+        if (rec && rec.last === curTitle) {
+          baseTitle = rec.orig;
         } else {
-          // If already in English or Hindi, allow switching back or between them
-          const enVal = phraseDictionary[phrase].en;
-          const hiVal = phraseDictionary[phrase].hi;
-
-          // Never reverse-replace bare digits or short words under 3 chars
-          if (enVal && !/^\d+$/.test(enVal.trim()) && enVal.trim().length >= 3 && val.includes(enVal)) {
-            const target = lang === 'bn' ? phrase : (phraseDictionary[phrase][lang] || enVal);
-            if (enVal !== target) {
-              val = val.split(enVal).join(target);
-              changed = true;
-            }
-          } else if (hiVal && !/^\d+$/.test(hiVal.trim()) && hiVal.trim().length >= 3 && val.includes(hiVal)) {
-            const target = lang === 'bn' ? phrase : (phraseDictionary[phrase][lang] || hiVal);
-            if (hiVal !== target) {
-              val = val.split(hiVal).join(target);
-              changed = true;
-            }
+          originalAttrMap.set(el, { orig: curTitle, last: curTitle });
+          baseTitle = curTitle;
+        }
+      }
+      const match = resolvePhraseEntry(baseTitle);
+      if (match) {
+        const target = match.entry[lang] || (lang === 'bn' ? (match.entry.bn || match.key) : match.entry.en) || baseTitle;
+        if (target && target !== curTitle) {
+          el.setAttribute('title', target);
+          if (originalAttrMap) {
+            const rec = originalAttrMap.get(el);
+            if (rec) rec.last = target;
           }
         }
-      });
-
-      if (changed) {
-        node.nodeValue = val;
       }
     });
 
@@ -1763,37 +1830,41 @@
       if (typeof window.updateDashboardTitleForLang === 'function') {
         window.updateDashboardTitleForLang(lang);
       }
+      if (typeof window.updatePaymentAndWithdrawalForUser === 'function') {
+        window.updatePaymentAndWithdrawalForUser();
+      }
       if (typeof window.updateTeamReportMetrics === 'function') {
         window.updateTeamReportMetrics();
       }
       if (typeof window.updateProfileMetrics === 'function') {
         window.updateProfileMetrics();
       }
+      if (typeof window.updateHomeWithdrawalTicker === 'function') {
+        window.updateHomeWithdrawalTicker();
+      }
+      if (typeof window.updateHomeMemberUpdates === 'function') {
+        window.updateHomeMemberUpdates();
+      }
     } catch(e) {}
   }
 
-  function setAppLanguage(newLang) {
+  function setAppLanguage(newLang, options) {
     const prevLang = currentLang;
-    const country = getCurrentCountryCode();
-    const allowed = ['bn', 'en', 'hi'];
-    if (!newLang || !allowed.includes(newLang)) {
-      newLang = 'bn';
-    }
-
-    const changed = (prevLang !== newLang);
-    currentLang = newLang;
+    const normalized = normalizeLangCode(newLang);
+    const changed = (prevLang !== normalized);
+    currentLang = normalized;
 
     try {
-      localStorage.setItem('alo_lang', newLang);
+      localStorage.setItem('alo_lang', normalized);
       const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
       if (user) {
-        user.language = newLang;
+        user.language = normalized;
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       }
     } catch(e) {}
 
-    syncCountryLanguageOptions(country);
-    translateDOM(newLang);
+    syncCountryLanguageOptions();
+    translateDOM(normalized);
 
     if (changed) {
       try {
@@ -1805,36 +1876,39 @@
         }
       } catch(e) {}
 
-      // Dispatch global event only on real language changes
-      window.dispatchEvent(new CustomEvent('alo-language-changed', { detail: { lang: newLang } }));
+      window.dispatchEvent(new CustomEvent('alo-language-changed', {
+        detail: {
+          lang: normalized,
+          userInitiated: !(options && options.silent)
+        }
+      }));
     }
-
-    console.log('[i18n] Language set to:', newLang, 'Country:', country);
   }
 
   // Expose to window
   window.aloI18n = {
     setLanguage: setAppLanguage,
     getLanguage: function() { return currentLang; },
+    normalizeLangCode: normalizeLangCode,
     t: getTranslation,
     translateDOM: translateDOM,
     translations: translations,
     syncCountryLanguageOptions: syncCountryLanguageOptions,
-    getCurrentCountryCode: getCurrentCountryCode
+    getCurrentCountryCode: getCurrentCountryCode,
+    getCountryAllowedLanguages: getCountryAllowedLanguages
   };
   window.setAppLanguage = setAppLanguage;
   window.syncCountryLanguageOptions = syncCountryLanguageOptions;
   window.t = getTranslation;
 
-  // Auto-bind change events on all language selectors
+  // Bind change events on all language selectors
   function bindLanguageSelectors() {
     syncCountryLanguageOptions();
     document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher').forEach(function(sel) {
       if (sel && !sel.dataset.i18nBound) {
         sel.dataset.i18nBound = 'true';
         sel.addEventListener('change', function(e) {
-          const selected = e.target.value;
-          setAppLanguage(selected);
+          setAppLanguage(e.target.value, { silent: false });
         });
       }
       if (sel && sel.value !== currentLang) sel.value = currentLang;
@@ -1843,8 +1917,8 @@
 
   // Global delegated listener ensures dynamic selects always trigger
   document.addEventListener('change', function(e) {
-    if (e.target && (e.target.matches && e.target.matches('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher'))) {
-      setAppLanguage(e.target.value);
+    if (e.target && e.target.matches && e.target.matches('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher')) {
+      setAppLanguage(e.target.value, { silent: false });
     }
   });
 

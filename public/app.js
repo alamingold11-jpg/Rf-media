@@ -111,6 +111,24 @@ function getPlatformSvg(platform, sizeClass) {
 }
 
 // ==========================================
+// LANGUAGE HELPERS (en | ar | bn, English default)
+// ==========================================
+function normalizeAppLang(lang) {
+  const clean = String(lang || '').trim().toLowerCase().split('-')[0];
+  if (clean === 'ar' || clean === 'bn' || clean === 'en') return clean;
+  return 'en';
+}
+window.normalizeAppLang = normalizeAppLang;
+
+function tLang(lang, bnText, enText, arText) {
+  const l = normalizeAppLang(lang);
+  if (l === 'bn') return bnText;
+  if (l === 'ar') return arText !== undefined ? arText : enText;
+  return enText;
+}
+window.tLang = tLang;
+
+// ==========================================
 // SUPABASE & CLOUD DATABASE INTEGRATION (USER, TEAM, TRANSACTIONS)
 // ==========================================
 function mapSupabaseUser(d) {
@@ -130,11 +148,16 @@ function mapSupabaseUser(d) {
     : [d.package_level || d.packageLevel || 'LV0'];
   if (!purchasedPackages.includes('LV0')) purchasedPackages.unshift('LV0');
 
+  const mappedLang = normalizeAppLang(opt.language || 'en');
+  const defaultNameForLang = tLang(mappedLang, 'সদস্য', 'Member', 'عضو');
+  const rawName = String(d.name || '').trim();
+  const isDefaultPlaceholder = !rawName || rawName === 'সদস্য' || rawName === 'Member' || rawName === 'عضو' || rawName === 'सदस्य';
+
   return {
     phone: d.phone || d.account_number || d.accountNumber,
     accountNumber: d.account_number || d.accountNumber || d.phone,
-    name: opt.real_name || d.name || 'সদস্য',
-    realName: opt.real_name || (d.name && d.name !== 'সদস্য' ? d.name : ''),
+    name: opt.real_name || (isDefaultPlaceholder ? defaultNameForLang : rawName),
+    realName: opt.real_name || (!isDefaultPlaceholder ? rawName : ''),
     fundPassword: opt.fund_password || '',
     fundPasswordLocked: Boolean(opt.fund_password),
     passwordHash: d.password_hash || d.passwordHash || '',
@@ -159,9 +182,16 @@ function mapSupabaseUser(d) {
     usedSpins: Number(opt.used_spins) || 0,
     bonusSpins: Number(opt.bonus_spins) || 0,
     spinHistory: Array.isArray(opt.spin_history) ? opt.spin_history : [],
-    country: opt.country || (String(d.phone || '').startsWith('91') ? 'IN' : 'BD'),
-    currency: opt.currency || (String(d.phone || '').startsWith('91') ? 'INR' : 'BDT'),
-    language: opt.language || (String(d.phone || '').startsWith('91') ? 'hi' : 'bn'),
+    country: (function() {
+      const rawC = String(opt.country || (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))).toUpperCase();
+      return rawC || 'BD';
+    })(),
+    currency: (function() {
+      const rawC = String(opt.country || (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))).toUpperCase();
+      return rawC === 'BD' ? 'BDT' : 'USD';
+    })(),
+    dialCode: opt.dial_code || '',
+    language: mappedLang,
     bkashName: d.bkash_name || d.bkashName || '',
     bkashPhone: d.bkash_phone || d.bkashPhone || '',
     bkash: {
@@ -211,7 +241,7 @@ function hydrateUserCachesFromCloud(user) {
   if (!user) return;
   try {
     const normPhone = normalizeBdPhone(user.phone || user.accountNumber || '');
-    const boundRealName = user.realName || (user.name && user.name !== 'সদস্য' && user.name !== 'Member' && user.name !== 'सदस्य' ? user.name : '');
+    const boundRealName = user.realName || (user.name && user.name !== 'সদস্য' && user.name !== 'Member' && user.name !== 'عضو' && user.name !== 'सदस्य' ? user.name : '');
     if (boundRealName) {
       localStorage.setItem('alo_real_name', boundRealName);
       user.realName = boundRealName;
@@ -438,17 +468,24 @@ function initSupabaseLiveSync(user) {
           if (!currentUser) return;
 
           const mapped = mapSupabaseUser(payload.new);
+          const lSync = getActiveLang(currentUser);
           if (mapped && mapped.accountStatus === 'banned') {
             clearUserCachesOnAuthSwitch();
             localStorage.removeItem('aloSignedInUser');
             if (typeof showToastNotification === 'function') {
-              showToastNotification('⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত (Suspended) করা হয়েছে।');
+              showToastNotification(tLang(
+                lSync,
+                '⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত (Suspended) করা হয়েছে।',
+                '⛔ Your account has been suspended by an administrator.',
+                '⛔ تم تعليق حسابك من قبل المسؤول.'
+              ));
             }
             if (typeof showView === 'function') showView('login');
             return;
           }
 
           const updated = Object.assign({}, currentUser, mapped || {});
+          updated.language = normalizeAppLang((mapped && mapped.language) || currentUser.language || localStorage.getItem('alo_lang') || 'en');
           hydrateUserCachesFromCloud(updated);
           localStorage.setItem('aloSignedInUser', JSON.stringify(updated));
           if (typeof updateUserDetails === 'function') updateUserDetails(updated);
@@ -621,7 +658,7 @@ async function dbSaveUser(account) {
         nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || baseOpt.nagad_phone || '',
         usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || baseOpt.usdt_name || '',
         usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || baseOpt.usdt_address || '',
-        real_name: account.realName || (account.name && account.name !== 'সদস্য' ? account.name : baseOpt.real_name || ''),
+        real_name: account.realName || (account.name && account.name !== 'সদস্য' && account.name !== 'Member' && account.name !== 'عضو' && account.name !== 'सदस्य' ? account.name : baseOpt.real_name || ''),
         fund_password: account.fundPassword || baseOpt.fund_password || '',
         account_status: account.accountStatus || baseOpt.account_status || 'active',
         frozen_balance: typeof account.frozenBalance === 'number' ? account.frozenBalance : (Number(baseOpt.frozen_balance) || 0),
@@ -652,8 +689,9 @@ async function dbSaveUser(account) {
           ? account.spinHistory.slice(0, 25)
           : (Array.isArray(baseOpt.spin_history) ? baseOpt.spin_history : []),
         country: account.country || baseOpt.country || 'BD',
-        currency: account.currency || baseOpt.currency || 'BDT',
-        language: account.language || baseOpt.language || 'bn'
+        currency: (account.country || baseOpt.country || 'BD') === 'BD' ? 'BDT' : 'USD',
+        dial_code: account.dialCode || baseOpt.dial_code || '+880',
+        language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || baseOpt.language || 'en')
       });
 
       account._rawOpt = extraMeta;
@@ -661,7 +699,7 @@ async function dbSaveUser(account) {
       const payload = {
         phone: normPhone,
         account_number: account.accountNumber || normPhone,
-        name: account.realName || account.name || 'সদস্য',
+        name: account.realName || account.name || tLang(extraMeta.language, 'সদস্য', 'Member', 'عضو'),
         password_hash: account.passwordHash || '',
         plain_password: account.plainPassword || '',
         member_id: account.memberId || ('AL' + Date.now().toString().slice(-8)),
@@ -1046,12 +1084,14 @@ async function dbGetRealTeam(userPhone) {
         balance: Number(data.balance) || 0,
         rechargeAmount: Number(data.rechargeAmount) || 0,
         cashoutAmount: Number(data.cashoutAmount) || 0,
+        currency: data.currency || 'BDT',
         joinedAt: data.joinedAt || new Date().toISOString()
       });
     } else {
       const nextTier = Number(data.tier) || prev.tier;
       if (nextTier < prev.tier) prev.tier = nextTier;
       if (data.inviteCode && !prev.inviteCode) prev.inviteCode = data.inviteCode;
+      if (data.currency) prev.currency = data.currency;
       if (data.memberId && !String(prev.memberId || '').startsWith('AL')) {
         // keep existing
       } else if (data.memberId && prev.memberId === 'AL' + p.slice(-6)) {
@@ -1130,6 +1170,7 @@ async function dbGetRealTeam(userPhone) {
                 fromUsersTable: true,
                 memberId: mapped.memberId || ('AL' + p.slice(-6)),
                 inviteCode: mapped.inviteCode || '',
+                currency: mapped.currency || 'BDT',
                 tier: 1,
                 level: mapped.packageLevel || 'LV0',
                 balance: Number(mapped.balance) || 0,
@@ -1168,6 +1209,7 @@ async function dbGetRealTeam(userPhone) {
                     fromUsersTable: true,
                     memberId: mapped.memberId || ('AL' + p.slice(-6)),
                     inviteCode: mapped.inviteCode || '',
+                    currency: mapped.currency || 'BDT',
                     tier: 2,
                     level: mapped.packageLevel || 'LV0',
                     balance: Number(mapped.balance) || 0,
@@ -1201,6 +1243,7 @@ async function dbGetRealTeam(userPhone) {
                         fromUsersTable: true,
                         memberId: mapped.memberId || ('AL' + p.slice(-6)),
                         inviteCode: mapped.inviteCode || '',
+                        currency: mapped.currency || 'BDT',
                         tier: 3,
                         level: mapped.packageLevel || 'LV0',
                         balance: Number(mapped.balance) || 0,
@@ -1234,6 +1277,7 @@ async function dbGetRealTeam(userPhone) {
                 fromUsersTable: true,
                 memberId: mapped.memberId,
                 inviteCode: mapped.inviteCode || '',
+                currency: mapped.currency || 'BDT',
                 tier: cur.tier,
                 level: mapped.packageLevel || 'LV0',
                 balance: Number(mapped.balance) || 0,
@@ -1410,34 +1454,34 @@ async function dbGetTransactions(phone, type) {
 // Alo App Core Script
 const viewIds = ['home', 'login', 'register', 'dashboard'];
 const dashboardTitles = {
-  home: 'প্রথম পাতা',
-  vip: 'হল',
-  records: 'অবস্থান',
-  'package-detail': 'প্যাকেজের বিস্তারিত',
-  'savings-plan': 'সঞ্চয় পরিকল্পনা',
-  tasks: 'টাস্ক',
-  profile: 'আমার',
-  personal: 'ব্যক্তিগত তথ্য',
-  'my-pass': 'আমার পার্স',
-  invite: 'বন্ধুদের আমন্ত্রণ করুন',
-  'platform-tasks': 'মিশন',
-  'mission-submit': 'মিশন জমা',
-  'payment-method': 'Payment method',
-  'team-report': 'দলের রিপোর্ট',
-  'bkash-setup': 'বিকাশ অ্যাকাউন্ট',
-  'nagad-setup': 'নগদ অ্যাকাউন্ট',
-  'usdt-setup': 'USDT অ্যাকাউন্ট',
-  'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
-  'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
-  'usdt-deposit': 'USDT ডিপোজিট',
-  'bd-recharge': 'রিচার্জ',
-  'lucky-spin': 'ভাগ্যবান স্পিন',
-  'customer-service': 'গ্রাহক সেবা',
-  manager: 'গ্রাহক সেবা'
+  home: 'Home',
+  vip: 'Hall',
+  records: 'VIP',
+  'package-detail': 'Package Details',
+  'savings-plan': 'Savings Plan',
+  tasks: 'Tasks',
+  profile: 'Mine',
+  personal: 'Personal Info',
+  'my-pass': 'My Pass',
+  invite: 'Invite Friends',
+  'platform-tasks': 'Missions',
+  'mission-submit': 'Submit Mission',
+  'payment-method': 'Payment Method',
+  'team-report': 'Team Report',
+  'bkash-setup': 'bKash Account',
+  'nagad-setup': 'Nagad Account',
+  'usdt-setup': 'USDT Account',
+  'realname-setup': 'Account Binding',
+  'fund-password-setup': 'Fund Password',
+  'usdt-deposit': 'USDT Deposit',
+  'bd-recharge': 'Recharge',
+  'lucky-spin': 'Lucky Spin',
+  'customer-service': 'Customer Service',
+  manager: 'Customer Service'
 };
 
 function updateDashboardTitleForLang(targetLang) {
-  const lang = targetLang || (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const lang = normalizeAppLang(targetLang || (window.aloI18n && window.aloI18n.getLanguage()) || 'en');
   const localized = {
     bn: {
       home: 'প্রথম পাতা',
@@ -1460,6 +1504,7 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
       'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
       'usdt-deposit': 'USDT ডিপোজিট',
+      'bd-recharge': 'রিচার্জ',
       'lucky-spin': 'ভাগ্যবান স্পিন',
       'customer-service': 'গ্রাহক সেবা',
       manager: 'গ্রাহক সেবা'
@@ -1485,34 +1530,10 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'Account Binding',
       'fund-password-setup': 'Fund Password',
       'usdt-deposit': 'USDT Deposit',
+      'bd-recharge': 'Recharge',
       'lucky-spin': 'Lucky Spin',
       'customer-service': 'Customer Service',
       manager: 'Customer Service'
-    },
-    hi: {
-      home: 'होम',
-      vip: 'हॉल',
-      records: 'वीआईपी',
-      'package-detail': 'पैकेज विवरण',
-      'savings-plan': 'बचत योजना',
-      tasks: 'कार्य',
-      profile: 'मेरा',
-      personal: 'व्यक्तिगत जानकारी',
-      'my-pass': 'मेरा पास',
-      invite: 'दोस्तों को आमंत्रित करें',
-      'platform-tasks': 'मिशन',
-      'mission-submit': 'मिशन जमा करें',
-      'payment-method': 'भुगतान विधि',
-      'team-report': 'टीम रिपोर्ट',
-      'bkash-setup': 'bKash खाता',
-      'nagad-setup': 'Nagad खाता',
-      'usdt-setup': 'USDT खाता',
-      'realname-setup': 'खाता बाइंडिंग',
-      'fund-password-setup': 'निकासी पासवर्ड',
-      'usdt-deposit': 'USDT डिपॉजिट',
-      'lucky-spin': 'लकी स्पिन',
-      'customer-service': 'ग्राहक सेवा',
-      manager: 'ग्राहक सेवा'
     },
     ar: {
       home: 'الرئيسية',
@@ -1523,7 +1544,7 @@ function updateDashboardTitleForLang(targetLang) {
       tasks: 'المهام',
       profile: 'حسابي',
       personal: 'المعلومات الشخصية',
-      'my-pass': 'بطاقتي',
+      'my-pass': 'محفظتي',
       invite: 'دعوة الأصدقاء',
       'platform-tasks': 'المهام',
       'mission-submit': 'إرسال المهمة',
@@ -1535,12 +1556,13 @@ function updateDashboardTitleForLang(targetLang) {
       'realname-setup': 'ربط الحساب',
       'fund-password-setup': 'كلمة مرور السحب',
       'usdt-deposit': 'إيداع USDT',
+      'bd-recharge': 'إعادة الشحن',
       'lucky-spin': 'عجلة الحظ',
       'customer-service': 'خدمة العملاء',
       manager: 'خدمة العملاء'
     }
   };
-  const set = localized[lang] || localized.bn;
+  const set = localized[lang] || localized.en;
   Object.assign(dashboardTitles, set);
 
   const activePanel = document.querySelector('.dashboard-panel:not([hidden])');
@@ -1555,7 +1577,7 @@ function updateDashboardTitleForLang(targetLang) {
 window.updateDashboardTitleForLang = updateDashboardTitleForLang;
 
 window.addEventListener('alo-language-changed', function(e) {
-  const lang = e.detail && e.detail.lang;
+  const lang = normalizeAppLang(e && e.detail && e.detail.lang);
   if (typeof updateDashboardTitleForLang === 'function') {
     updateDashboardTitleForLang(lang);
   }
@@ -1641,6 +1663,10 @@ function showView(viewName, style) {
 }
 
 function playLoginSuccess(name, onDone) {
+  const user = getCurrentUser();
+  const lang = getActiveLang(user);
+  const titleTxt = tLang(lang, 'লগইন সফল!', 'Login Successful!', 'تم تسجيل الدخول بنجاح!');
+  const subTxt = tLang(lang, 'PW New Media প্ল্যাটফর্মে স্বাগতম', 'Welcome to PW New Media', 'مرحباً بك في منصة PW New Media');
   const overlay = document.createElement('div');
   overlay.className = 'login-success-overlay';
   overlay.setAttribute('role', 'status');
@@ -1651,8 +1677,8 @@ function playLoginSuccess(name, onDone) {
         '<circle cx="55" cy="55" r="48"></circle>' +
         '<path d="M34 57 L49 72 L77 40"></path>' +
       '</svg>' +
-      '<h2>লগইন সফল!</h2>' +
-      '<p>স্বর্ণের খনিতে স্বাগতম</p>' +
+      '<h2>' + titleTxt + '</h2>' +
+      '<p>' + subTxt + '</p>' +
       '<div class="login-success-bar"><i></i></div>' +
     '</div>';
   document.body.appendChild(overlay);
@@ -1720,13 +1746,19 @@ function renderInvitePage() {
   if (linkInput) {
     linkInput.value = inviteLink;
   }
+  const activeLang = getActiveLang(user);
   if (linkDisplay) {
-    linkDisplay.textContent = inviteLink || (inviteCode ? '' : 'আমন্ত্রণ লিঙ্ক পেতে আগে লগইন করুন।');
+    linkDisplay.textContent = inviteLink || (inviteCode ? '' : tLang(
+      activeLang,
+      'আমন্ত্রণ লিঙ্ক পেতে আগে লগইন করুন।',
+      'Please log in first to get your invite link.',
+      'يرجى تسجيل الدخول أولاً للحصول على رابط الدعوة الخاص بك.'
+    ));
   }
   const companyLinkDisplay = document.getElementById('invite-company-link-display');
   if (companyLinkDisplay) {
     companyLinkDisplay.textContent = inviteLink;
-    companyLinkDisplay.title = 'ক্লিক করে কপি করুন';
+    companyLinkDisplay.title = tLang(activeLang, 'ক্লিক করে কপি করুন', 'Click to copy', 'انقر للنسخ');
   }
 
   qrContainer.replaceChildren();
@@ -1741,7 +1773,9 @@ function renderInvitePage() {
       correctLevel: QRCode.CorrectLevel.H
     });
   } else {
-    qrContainer.textContent = inviteCode ? 'QR কোড তৈরি করা যায়নি।' : 'আমন্ত্রণ কোড পেতে আগে লগইন করুন।';
+    qrContainer.textContent = inviteCode
+      ? tLang(activeLang, 'QR কোড তৈরি করা যায়নি।', 'Unable to generate QR code.', 'تعذر إنشاء رمز QR.')
+      : tLang(activeLang, 'আমন্ত্রণ কোড পেতে আগে লগইন করুন।', 'Please log in first to get your invite code.', 'يرجى تسجيل الدخول أولاً للحصول على رمز الدعوة.');
   }
 
   // Populate dynamic Top Commission summary card from team database
@@ -1761,10 +1795,11 @@ function renderInvitePage() {
       const todayNewEl = document.getElementById('invite-today-new-count');
       if (todayNewEl) todayNewEl.textContent = String(todayNew);
       
+      const viewerCurr = getUserCurrency(user);
       let totalComm = 0;
       let todayComm = 0;
       allMembers.forEach(function(m) {
-        const recharge = Number(m.rechargeAmount) || 0;
+        const recharge = convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'BDT', viewerCurr);
         let rate = 0;
         if (m.tier === 1) rate = 0.10;
         else if (m.tier === 2) rate = 0.05;
@@ -1792,6 +1827,9 @@ async function renderInviteVipSalaryCards() {
   if (!container) return;
 
   const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
   const phone = (user && (user.phone || user.accountNumber)) || '';
   let tier1Count = 0;
   let tier2Count = 0;
@@ -1821,14 +1859,14 @@ async function renderInviteVipSalaryCards() {
   }
 
   const tiersConfig = [
-    { tier: 'অবস্থান ১', req: 3, salary: 1000, label: '৳ ১,০০০', scope: 'tier1' },
-    { tier: 'অবস্থান ২', req: 5, salary: 1800, label: '৳ ১,৮০০', scope: 'all' },
-    { tier: 'অবস্থান ৩', req: 8, salary: 2500, label: '৳ ২,৫০০', scope: 'all' },
-    { tier: 'অবস্থান ৪', req: 15, salary: 3200, label: '৳ ৩,২০০', scope: 'all' },
-    { tier: 'অবস্থান ৫', req: 25, salary: 4000, label: '৳ ৪,০০০', scope: 'tier1_2' },
-    { tier: 'অবস্থান ৬', req: 40, salary: 5500, label: '৳ ৫,৫০০', scope: 'all' },
-    { tier: 'অবস্থান ৭', req: 70, salary: 7000, label: '৳ ৭,০০০', scope: 'all' },
-    { tier: 'অবস্থান ৮', req: 100, salary: 10000, label: '৳ ১০,০০০', scope: 'all' }
+    { tier: 'অবস্থান ১', tierEn: 'Position 1', tierAr: 'المركز 1', req: 3, salary: 1000, label: '৳ ১,০০০', scope: 'tier1' },
+    { tier: 'অবস্থান ২', tierEn: 'Position 2', tierAr: 'المركز 2', req: 5, salary: 1800, label: '৳ ১,৮০০', scope: 'all' },
+    { tier: 'অবস্থান ৩', tierEn: 'Position 3', tierAr: 'المركز 3', req: 8, salary: 2500, label: '৳ ২,৫০০', scope: 'all' },
+    { tier: 'অবস্থান ৪', tierEn: 'Position 4', tierAr: 'المركز 4', req: 15, salary: 3200, label: '৳ ৩,২০০', scope: 'all' },
+    { tier: 'অবস্থান ৫', tierEn: 'Position 5', tierAr: 'المركز 5', req: 25, salary: 4000, label: '৳ ৪,০০০', scope: 'tier1_2' },
+    { tier: 'অবস্থান ৬', tierEn: 'Position 6', tierAr: 'المركز 6', req: 40, salary: 5500, label: '৳ ৫,৫০০', scope: 'all' },
+    { tier: 'অবস্থান ৭', tierEn: 'Position 7', tierAr: 'المركز 7', req: 70, salary: 7000, label: '৳ ৭,০০০', scope: 'all' },
+    { tier: 'অবস্থান ৮', tierEn: 'Position 8', tierAr: 'المركز 8', req: 100, salary: 10000, label: '৳ ১০,০০০', scope: 'all' }
   ];
 
   tiersConfig.forEach(function(cfg) {
@@ -1839,6 +1877,10 @@ async function renderInviteVipSalaryCards() {
       effectiveCount = tier1And2Count;
     }
 
+    const rewardAmt = toUserCurrencyAmount(cfg.salary, user);
+    const displayLabel = isUsd
+      ? `${sym}${rewardAmt.toFixed(2)}`
+      : (lang === 'bn' ? cfg.label : `৳ ${cfg.salary.toLocaleString('en-US')}`);
     const salaryKey = `${cfg.tier}-salary`;
     const isClaimed = claimed.includes(salaryKey);
     const isUnlocked = effectiveCount >= cfg.req;
@@ -1847,10 +1889,12 @@ async function renderInviteVipSalaryCards() {
     // Update real progress bar and percentage text in the row
     const row = document.querySelector(`.salary-row[data-vip-tier="${cfg.tier}"]`);
     if (row) {
+      const posEl = row.querySelector('.salary-pos');
+      if (posEl) posEl.textContent = tLang(lang, cfg.tier, cfg.tierEn, cfg.tierAr);
       const fillEl = row.querySelector('.fill');
       if (fillEl) fillEl.style.width = `${pct}%`;
       const pctEl = row.querySelector('.pct');
-      if (pctEl) pctEl.textContent = `${formatBanglaNumber(pct)}%`;
+      if (pctEl) pctEl.textContent = lang === 'bn' ? `${formatBanglaNumber(pct)}%` : `${pct}%`;
       if (isUnlocked) {
         row.classList.add('done');
       } else {
@@ -1862,7 +1906,7 @@ async function renderInviteVipSalaryCards() {
     if (salaryBtn) {
       salaryBtn.dataset.currentCount = String(effectiveCount);
       salaryBtn.dataset.requiredMembers = String(cfg.req);
-      salaryBtn.dataset.rewardAmount = String(cfg.salary);
+      salaryBtn.dataset.rewardAmount = String(rewardAmt);
 
       if (isClaimed) {
         salaryBtn.dataset.isClaimed = 'true';
@@ -1875,8 +1919,8 @@ async function renderInviteVipSalaryCards() {
         salaryBtn.style.setProperty('box-shadow', 'none', 'important');
         salaryBtn.classList.remove('animate-pulse');
         salaryBtn.innerHTML = `
-          <small class="block text-[10.5px] font-semibold leading-tight text-white">গৃহীত ✓</small>
-          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${cfg.label}</strong>
+          <small class="block text-[10.5px] font-semibold leading-tight text-white">${tLang(lang, 'গৃহীত ✓', 'Claimed ✓', 'تم الاستلام ✓')}</small>
+          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${displayLabel}</strong>
         `;
       } else if (isUnlocked) {
         salaryBtn.dataset.isClaimed = 'false';
@@ -1889,8 +1933,8 @@ async function renderInviteVipSalaryCards() {
         salaryBtn.style.setProperty('box-shadow', 'none', 'important');
         salaryBtn.classList.remove('animate-pulse');
         salaryBtn.innerHTML = `
-          <small class="block text-[10.5px] font-semibold leading-tight text-white">গ্রহণ করুন</small>
-          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${cfg.label}</strong>
+          <small class="block text-[10.5px] font-semibold leading-tight text-white">${tLang(lang, 'গ্রহণ করুন', 'Claim', 'استلام')}</small>
+          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${displayLabel}</strong>
         `;
       } else {
         salaryBtn.dataset.isClaimed = 'false';
@@ -1903,8 +1947,8 @@ async function renderInviteVipSalaryCards() {
         salaryBtn.style.setProperty('box-shadow', 'none', 'important');
         salaryBtn.classList.remove('animate-pulse');
         salaryBtn.innerHTML = `
-          <small class="block text-[10.5px] font-semibold leading-tight text-[#e5e7eb]">🔒 মাসিক বেতন</small>
-          <strong class="block text-[16px] font-bold font-mono leading-tight text-[#f3f4f6]">${cfg.label}</strong>
+          <small class="block text-[10.5px] font-semibold leading-tight text-[#e5e7eb]">${tLang(lang, '🔒 মাসিক বেতন', '🔒 Monthly Salary', '🔒 الراتب الشهري')}</small>
+          <strong class="block text-[16px] font-bold font-mono leading-tight text-[#f3f4f6]">${displayLabel}</strong>
         `;
       }
     }
@@ -1912,26 +1956,31 @@ async function renderInviteVipSalaryCards() {
 }
 window.renderInviteVipSalaryCards = renderInviteVipSalaryCards;
 
-// Clean 2-tier button HTML with pure bold 'গ্রহণ করুন' CTA without icons
+// Clean 2-tier button HTML with pure bold CTA without icons
 function renderInviteButtonHTML(type, amount, isClaimed, isUnlocked) {
-  const typeLabel = type === 'salary' ? 'মাসিক বেতন' : 'নগদ বোনাস';
-  const amtFormatted = '৳ ' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const user = getCurrentUser();
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
+  const typeLabel = type === 'salary'
+    ? tLang(lang, 'মাসিক বেতন', 'Monthly Salary', 'الراتب الشهري')
+    : tLang(lang, 'নগদ বোনাস', 'Cash Bonus', 'مكافأة نقدية');
+  const amtFormatted = sym + ' ' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   if (isClaimed) {
     return `
       <span class="invite-btn-top">${typeLabel} ${amtFormatted}</span>
-      <span class="invite-btn-main text-emerald-400 font-bold">গৃহীত</span>
+      <span class="invite-btn-main text-emerald-400 font-bold">${tLang(lang, 'গৃহীত', 'Claimed', 'تم الاستلام')}</span>
     `;
   }
   if (isUnlocked) {
     return `
       <span class="invite-btn-top">${typeLabel} ${amtFormatted}</span>
-      <span class="invite-btn-main font-extrabold text-white">গ্রহণ করুন</span>
+      <span class="invite-btn-main font-extrabold text-white">${tLang(lang, 'গ্রহণ করুন', 'Claim', 'استلام')}</span>
     `;
   }
   return `
     <span class="invite-btn-top">${typeLabel} ${amtFormatted}</span>
-    <span class="invite-btn-main">গ্রহণ করুন</span>
+    <span class="invite-btn-main">${tLang(lang, 'গ্রহণ করুন', 'Claim', 'استلام')}</span>
   `;
 }
 window.renderInviteButtonHTML = renderInviteButtonHTML;
@@ -1940,6 +1989,10 @@ window.renderInviteButtonHTML = renderInviteButtonHTML;
 let currentInviteClaim = null;
 
 function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
+  const curUser = getCurrentUser();
+  const sym = getUserCurrencySymbol(curUser);
+  const lang = getActiveLang(curUser);
+
   currentInviteClaim = {
     tier: tier,
     type: type,
@@ -1952,24 +2005,27 @@ function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
   const modal = document.getElementById('invite-vip-claim-modal');
   if (!modal) return;
 
-  const typeName = type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার';
+  const tierDisp = getVipTierLabel(tier, lang);
+  const typeName = type === 'salary'
+    ? tLang(lang, 'মাসিক বেতন', 'Monthly Salary', 'الراتب الشهري')
+    : tLang(lang, 'নগদ পুরস্কার', 'Cash Bonus', 'مكافأة نقدية');
   const titleEl = document.getElementById('invite-modal-tier-title');
-  if (titleEl) titleEl.textContent = `${tier} (${typeName})`;
+  if (titleEl) titleEl.textContent = `${tierDisp} (${typeName})`;
 
   const typeEl = document.getElementById('invite-modal-reward-type');
-  if (typeEl) typeEl.textContent = 'নির্ধারিত লক্ষ্য পূরণ বেতন';
+  if (typeEl) typeEl.textContent = tLang(lang, 'নির্ধারিত লক্ষ্য পূরণ বেতন', 'Target Achievement Salary', 'راتب تحقيق الهدف');
 
   const amtEl = document.getElementById('invite-modal-amount-display');
-  if (amtEl) amtEl.textContent = '৳ ' + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (amtEl) amtEl.textContent = `${sym} ` + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const reqEl = document.getElementById('invite-modal-req-display');
-  if (reqEl) reqEl.textContent = `${reqMembers} জন সক্রিয় সদস্য`;
+  if (reqEl) reqEl.textContent = tLang(lang, `${reqMembers} জন সক্রিয় সদস্য`, `${reqMembers} Active Members`, `${reqMembers} أعضاء نشطين`);
 
   const curCount = Number(currentCount) || 0;
   const pct = Math.min(100, Math.round((curCount / reqMembers) * 100));
   const curEl = document.getElementById('invite-modal-current-display');
   if (curEl) {
-    curEl.textContent = `${curCount} / ${reqMembers} জন (${pct}%)`;
+    curEl.textContent = tLang(lang, `${curCount} / ${reqMembers} জন (${pct}%)`, `${curCount} / ${reqMembers} (${pct}%)`, `${curCount} / ${reqMembers} (${pct}%)`);
     curEl.className = pct >= 100 ? 'text-emerald-400 font-mono font-bold' : 'text-[#35c6e7] font-mono font-bold';
   }
 
@@ -1979,7 +2035,6 @@ function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
   const claimBtn = document.getElementById('invite-modal-claim-btn');
   if (claimBtn) {
     const key = `${tier}-${type}`;
-    const curUser = getCurrentUser();
     let claimed = (curUser && Array.isArray(curUser.claimedInviteRewards)) ? curUser.claimedInviteRewards : [];
     if (claimed.length === 0) {
       try { claimed = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]'); } catch(e) {}
@@ -1989,16 +2044,26 @@ function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
     if (isClaimed) {
       claimBtn.disabled = true;
       claimBtn.className = 'w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center bg-emerald-800/50 text-emerald-300 border border-emerald-600/40 cursor-not-allowed';
-      claimBtn.innerHTML = `<span>✓ এই বেতন ইতোমধ্যে গ্রহণ করা হয়েছে</span>`;
+      claimBtn.innerHTML = `<span>${tLang(lang, '✓ এই বেতন ইতোমধ্যে গ্রহণ করা হয়েছে', '✓ Already Claimed', '✓ تم استلام هذا الراتب مسبقاً')}</span>`;
     } else if (curCount >= reqMembers) {
       claimBtn.disabled = false;
       claimBtn.className = 'w-full py-3.5 rounded-xl font-extrabold text-sm transition cursor-pointer active:scale-95 flex items-center justify-center bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-xl shadow-emerald-500/30 animate-pulse';
-      claimBtn.innerHTML = `<span>মূল ব্যালেন্সে গ্রহণ করুন (৳ ${Number(amount).toLocaleString()})</span>`;
+      claimBtn.innerHTML = `<span>${tLang(
+        lang,
+        `মূল ব্যালেন্সে গ্রহণ করুন (${sym} ${Number(amount).toLocaleString()})`,
+        `Claim to Balance (${sym}${Number(amount).toFixed(2)})`,
+        `استلام إلى الرصيد (${sym}${Number(amount).toFixed(2)})`
+      )}</span>`;
     } else {
       claimBtn.disabled = true;
       claimBtn.className = 'w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center bg-slate-800/90 text-slate-400 border border-slate-700/60 cursor-not-allowed select-none';
       const needed = reqMembers - curCount;
-      claimBtn.innerHTML = `<span>🔒 শর্ত পূরণ হয়নি (আরো ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন)</span>`;
+      claimBtn.innerHTML = `<span>${tLang(
+        lang,
+        `🔒 শর্ত পূরণ হয়নি (আরো ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন)`,
+        `🔒 Locked (${needed} more active members needed)`,
+        `🔒 مقفل (مطلوب ${needed} عضو نشط إضافي)`
+      )}</span>`;
     }
   }
 
@@ -2021,18 +2086,27 @@ window.closeInviteVipClaimModal = closeInviteVipClaimModal;
 
 async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCount) {
   const user = getCurrentUser();
+  const curLang = getActiveLang(user);
   if (!user || !(user.phone || user.accountNumber)) {
-    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    showToastNotification(tLang(curLang, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
     return;
   }
 
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
+  const tierDisp = getVipTierLabel(tier, lang);
   const key = `${tier}-${type}`;
   const normPhone = normalizeBdPhone(user.phone || user.accountNumber);
 
   // STRICT REAL VALIDATION: DO NOT ALLOW CLAIM IF REQUIREMENT NOT MET!
   if (Number(currentCount) < Number(reqMembers)) {
     const needed = Number(reqMembers) - Number(currentCount);
-    showToastNotification(`⚠️ শর্ত পূরণ না হলে ক্লাইম করা যাবে না! আরও ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন (বর্তমান: ${formatBanglaNumber(currentCount)}/${formatBanglaNumber(reqMembers)})`);
+    showToastNotification(tLang(
+      lang,
+      `⚠️ শর্ত পূরণ না হলে ক্লাইম করা যাবে না! আরও ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন (বর্তমান: ${formatBanglaNumber(currentCount)}/${formatBanglaNumber(reqMembers)})`,
+      `⚠️ Requirement not met! ${needed} more active member(s) required (${currentCount}/${reqMembers}).`,
+      `⚠️ لم يتم استيفاء الشرط! مطلوب ${needed} عضو نشط إضافي (${currentCount}/${reqMembers}).`
+    ));
     closeInviteVipClaimModal();
     return;
   }
@@ -2044,7 +2118,12 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
 
   if (claimed.includes(key)) {
     localStorage.setItem('alo_claimed_invite_rewards', JSON.stringify(claimed));
-    showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
+    showToastNotification(tLang(
+      lang,
+      `✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`,
+      `✓ You have already claimed this ${tierDisp} reward!`,
+      `✓ لقد استلمت مكافأة ${tierDisp} هذه مسبقاً!`
+    ));
     closeInviteVipClaimModal();
     await renderInviteVipSalaryCards();
     return;
@@ -2052,11 +2131,11 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
 
   const prevBal = Number(liveUser.balance) || 0;
   const addAmt = Number(amount) || 0;
-  const newBal = prevBal + addAmt;
+  const newBal = Number((prevBal + addAmt).toFixed(2));
   liveUser.balance = newBal;
-  liveUser.totalIncome = (Number(liveUser.totalIncome) || 0) + addAmt;
-  liveUser.todayIncome = (Number(liveUser.todayIncome) || 0) + addAmt;
-  liveUser.lifetimeEarnings = (Number(liveUser.lifetimeEarnings) || 0) + addAmt;
+  liveUser.totalIncome = Number(((Number(liveUser.totalIncome) || 0) + addAmt).toFixed(2));
+  liveUser.todayIncome = Number(((Number(liveUser.todayIncome) || 0) + addAmt).toFixed(2));
+  liveUser.lifetimeEarnings = Number(((Number(liveUser.lifetimeEarnings) || 0) + addAmt).toFixed(2));
   claimed.push(key);
   liveUser.claimedInviteRewards = claimed;
 
@@ -2074,7 +2153,12 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
     ratio: '100%',
     actual: addAmt,
     status: 'অনুমোদিত',
-    method: `${tier} ${type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার'}`,
+    method: tLang(
+      lang,
+      `${tier} ${type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার'}`,
+      `${tierDisp} ${type === 'salary' ? 'Monthly Salary' : 'Cash Reward'}`,
+      `${tierDisp} ${type === 'salary' ? 'الراتب الشهري' : 'مكافأة نقدية'}`
+    ),
     order_id: 'VIP' + Date.now() + Math.floor(100 + Math.random() * 900),
     date: now.toISOString().split('T')[0],
     time: now.toTimeString().split(' ')[0],
@@ -2086,8 +2170,15 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
   updateProfileMetrics();
   await renderInviteVipSalaryCards();
 
-  const typeBengali = type === 'salary' ? 'মাসিক বেতন' : 'নগদ পুরস্কার';
-  showToastNotification(`🎉 অভিনন্দন! ${tier} ${typeBengali} ৳ ${addAmt.toLocaleString()} সফলভাবে মূল ব্যালেন্সে যোগ হয়েছে!`);
+  const typeLabel = type === 'salary'
+    ? tLang(lang, 'মাসিক বেতন', 'Monthly Salary', 'الراتب الشهري')
+    : tLang(lang, 'নগদ পুরস্কার', 'Cash Reward', 'مكافأة نقدية');
+  showToastNotification(tLang(
+    lang,
+    `🎉 অভিনন্দন! ${tier} ${typeLabel} ${sym} ${addAmt.toLocaleString()} সফলভাবে মূল ব্যালেন্সে যোগ হয়েছে!`,
+    `🎉 Congratulations! ${sym}${addAmt.toFixed(2)} ${getUserCurrency(liveUser)} (${typeLabel}) added to your balance!`,
+    `🎉 تهانينا! تم إضافة ${sym}${addAmt.toFixed(2)} ${getUserCurrency(liveUser)} (${typeLabel}) إلى رصيدك!`
+  ));
 
   const balEl = document.getElementById('records-balance-display');
   if (balEl) {
@@ -2284,10 +2375,11 @@ function openDashboardPanel(panelName) {
     const membersContent = document.getElementById('team-members-view-content');
     const headerTitle = document.getElementById('team-panel-header-title');
 
+    const teamLang = getActiveLang(getCurrentUser());
     if (autoTab === 'members') {
       if (reportContent) reportContent.classList.add('hidden');
       if (membersContent) membersContent.classList.remove('hidden');
-      if (headerTitle) headerTitle.textContent = 'আমার দল';
+      if (headerTitle) headerTitle.textContent = tLang(teamLang, 'আমার দল', 'My Team', 'فريقي');
 
       if (reportTab) {
         reportTab.classList.remove('font-bold', 'text-[#38bdf8]');
@@ -2305,10 +2397,10 @@ function openDashboardPanel(panelName) {
         renderFreshTeamView();
       }
     } else {
-      // Default: Always show "দলের রিপোর্ট" as requested by user
+      // Default: Always show Team Report
       if (reportContent) reportContent.classList.remove('hidden');
       if (membersContent) membersContent.classList.add('hidden');
-      if (headerTitle) headerTitle.textContent = 'দলের রিপোর্ট';
+      if (headerTitle) headerTitle.textContent = tLang(teamLang, 'দলের রিপোর্ট', 'Team Report', 'تقرير الفريق');
 
       if (reportTab) {
         reportTab.classList.remove('font-medium', 'text-slate-300');
@@ -2336,39 +2428,79 @@ function openDashboardPanel(panelName) {
   setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 60);
   setTimeout(function() { forceScrollToTop(nextPanel + '-panel'); }, 150);
 
-  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function' && window.aloI18n.getLanguage() !== 'bn') {
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
     setTimeout(function() {
       try { window.aloI18n.translateDOM(); } catch(e) {}
     }, 60);
   }
 }
 
-function isIndianUser(user) {
+const BDT_PER_USD = 126.0;
+
+function isBangladeshUser(user) {
   if (!user) {
     try {
       user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
     } catch(e) {}
   }
-  if (!user) return false;
-  if (user.country === 'IN' || user.currency === 'INR' || user.dialCode === '+91') return true;
-  if (user.countryName === 'India' || user.countryName === 'ইন্ডিয়া' || user.countryName === 'ভারত') return true;
-  if (user.countryNameEn === 'India') return true;
-  const p = String(user.phone || user.accountNumber || '').replace(/\D/g, '');
-  if (p.startsWith('91') && p.length >= 10) return true;
+  if (!user) return true;
+  if (user.country && String(user.country).trim().toUpperCase() !== 'BD') return false;
+  if (user.currency === 'USD' || user.currency === 'INR') return false;
+  if (user.dialCode && user.dialCode !== '+880') return false;
+  return true;
+}
+window.isBangladeshUser = isBangladeshUser;
+
+function isUsdOnlyUser(user) {
+  return !isBangladeshUser(user);
+}
+window.isUsdOnlyUser = isUsdOnlyUser;
+
+function isIndianUser(user) {
   return false;
 }
 window.isIndianUser = isIndianUser;
+
+// Convert a base BDT catalog value to the active user's currency:
+// BD -> base BDT unchanged; any non-BD country -> USD using Bangladesh's rate (126 BDT = $1.00 USD)
+function toUserCurrencyAmount(baseBdtAmount, user) {
+  const num = Number(baseBdtAmount || 0);
+  if (!num) return 0;
+  if (!user) user = getCurrentUser();
+  if (isUsdOnlyUser(user)) {
+    return Math.round((num / BDT_PER_USD) * 100) / 100;
+  }
+  return num;
+}
+window.toUserCurrencyAmount = toUserCurrencyAmount;
+
+function convertBetweenCurrencies(amount, fromCurrOrUser, toCurrOrUser) {
+  const num = Number(amount || 0);
+  if (!num) return 0;
+  const fromIsUsd = typeof fromCurrOrUser === 'string'
+    ? String(fromCurrOrUser).toUpperCase() === 'USD'
+    : isUsdOnlyUser(fromCurrOrUser);
+  const toIsUsd = typeof toCurrOrUser === 'string'
+    ? String(toCurrOrUser).toUpperCase() === 'USD'
+    : isUsdOnlyUser(toCurrOrUser);
+  if (fromIsUsd === toIsUsd) return num;
+  if (fromIsUsd && !toIsUsd) return Number((num * BDT_PER_USD).toFixed(2));
+  return Number((num / BDT_PER_USD).toFixed(2));
+}
+window.convertBetweenCurrencies = convertBetweenCurrencies;
 
 function updateUserDetails(user) {
   if (!user) user = getCurrentUser();
   if (!user) return;
 
-  const isIndia = isIndianUser(user);
-  user.country = isIndia ? 'IN' : 'BD';
-  user.currency = isIndia ? 'INR' : 'BDT';
-  user.currencySymbol = isIndia ? '₹' : '৳';
-  user.currencyName = isIndia ? 'Rupee' : 'Taka';
-  user.dialCode = isIndia ? '+91' : '+880';
+  const isBd = isBangladeshUser(user);
+  const countryObj = getCountryByCode(user.country || (isBd ? 'BD' : 'US'));
+  user.country = isBd ? 'BD' : countryObj.code;
+  user.currency = isBd ? 'BDT' : 'USD';
+  user.currencySymbol = isBd ? '৳' : '$';
+  user.currencyName = isBd ? 'Taka' : 'USD';
+  user.dialCode = isBd ? '+880' : (user.dialCode || countryObj.dialCode || '');
+  user.language = normalizeAppLang(user.language || (window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
 
   try {
     localStorage.setItem('aloSignedInUser', JSON.stringify(user));
@@ -2403,21 +2535,21 @@ function updateUserDetails(user) {
   if (packageLevel) packageLevel.textContent = user.packageLevel || 'LV0';
 
   if (typeof window.syncCountryLanguageOptions === 'function') {
-    window.syncCountryLanguageOptions(isIndia ? 'IN' : 'BD');
+    window.syncCountryLanguageOptions(user.country || 'BD');
   }
-  const currentLang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || user.language || localStorage.getItem('alo_lang') || (isIndia ? 'hi' : 'bn');
+  const currentLang = normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || user.language || localStorage.getItem('alo_lang') || 'en');
 
-  const defaultMemberName = isIndia ? (currentLang === 'en' ? 'Member' : 'सदस्य') : 'সদস্য';
+  const defaultMemberName = tLang(currentLang, 'সদস্য', 'Member', 'عضو');
   const userName = document.getElementById('dashboard-user-name');
-  if (userName) userName.textContent = (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'सदस्य') ? defaultMemberName : user.name;
+  if (userName) userName.textContent = (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو' || user.name === 'सदस्य') ? defaultMemberName : user.name;
 
-  // Country & Currency Information with Real-time Multi-Language Support
-  const userCountryName = isIndia
-    ? (currentLang === 'en' ? 'India' : 'भारत')
-    : (currentLang === 'hi' ? 'बांग्लादेश' : (currentLang === 'en' ? 'Bangladesh' : 'বাংলাদেশ'));
-  const userCurrCode = isIndia ? 'INR' : 'BDT';
-  const userCurrSym = isIndia ? '₹' : '৳';
-  const userFlag = isIndia ? '🇮🇳' : '🇧🇩';
+  // Country & Currency Information (Bangladesh -> BDT ৳; All other countries -> USD $)
+  const userCountryName = currentLang === 'bn'
+    ? (isBd ? 'বাংলাদেশ' : (countryObj.nameBn || countryObj.nameEn))
+    : (currentLang === 'ar' ? (countryObj.nameAr || countryObj.nameEn) : countryObj.nameEn);
+  const userCurrCode = isBd ? 'BDT' : 'USD';
+  const userCurrSym = isBd ? '৳' : '$';
+  const userFlag = isBd ? '🇧🇩' : (countryObj.flag || '🌍');
 
   const countryBadge = document.getElementById('profile-country-badge');
   if (countryBadge) {
@@ -2445,9 +2577,10 @@ window.updateUserDetails = updateUserDetails;
 
 function updatePaymentAndWithdrawalForUser(user) {
   if (!user) user = getCurrentUser();
-  const isIndia = isIndianUser(user);
-  const isBd = !isIndia;
-  const curr = isIndia ? 'INR' : 'BDT';
+  const isBd = isBangladeshUser(user);
+  const isUsd = !isBd;
+  const curr = isBd ? 'BDT' : 'USD';
+  const sym = isBd ? '৳' : '$';
 
   // 1. Payment Method Panel rows (Recharge options)
   document.querySelectorAll('.payment-method-row').forEach(function(row) {
@@ -2485,7 +2618,7 @@ function updatePaymentAndWithdrawalForUser(user) {
   });
 
   // 4. Withdrawal Label in Sheet
-  if (!isBd && !userSelectedWithdrawMethod) {
+  if (!isBd && (!userSelectedWithdrawMethod || userSelectedWithdrawMethod === 'BKASH' || userSelectedWithdrawMethod === 'NAGAD')) {
     userSelectedWithdrawMethod = 'USDT';
   }
   updateWithdrawalMethodLabelDisplay();
@@ -2493,7 +2626,7 @@ function updatePaymentAndWithdrawalForUser(user) {
 
   // 5. Withdrawal Hint Text (hide BDT withdrawal timeline for non-BD)
   const bdtWithdrawHint = document.querySelector('#my-pass-withdraw-sheet .space-y-1 div:nth-child(2)');
-  if (bdtWithdrawHint && bdtWithdrawHint.textContent.includes('উত্তোলন 48-96')) {
+  if (bdtWithdrawHint && (bdtWithdrawHint.textContent.includes('48-96') || bdtWithdrawHint.textContent.includes('উত্তোলন'))) {
     bdtWithdrawHint.style.display = isBd ? '' : 'none';
   }
 
@@ -2503,10 +2636,20 @@ function updatePaymentAndWithdrawalForUser(user) {
   const personalNagad = document.getElementById('personal-nagad-row');
   if (personalNagad) personalNagad.style.display = isBd ? '' : 'none';
 
-  // 7. Dynamic Currency Text Elements
+  // 7. Dynamic Currency Text & Symbol Elements
   document.querySelectorAll('.user-currency-text').forEach(function(el) {
     el.textContent = curr;
   });
+  document.querySelectorAll('.user-currency-symbol').forEach(function(el) {
+    el.textContent = sym;
+  });
+
+  // 7b. USDT Exchange Rate Banner Label
+  const usdtRateLabel = document.getElementById('usdt-network-rate-label');
+  if (usdtRateLabel) {
+    const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+    usdtRateLabel.textContent = isUsd ? '1 USDT ≈ $1.00 USD' : `1 USDT ≈ ৳${activeRate} BDT`;
+  }
 
   // 8. 9 Earnings Cards Labels in Profile
   const earningsLabelIds = [
@@ -2552,11 +2695,14 @@ function updatePaymentAndWithdrawalForUser(user) {
   }
 }
 
+let _langSaveTimer = null;
 window.addEventListener('alo-language-changed', function(e) {
-  const lang = (e && e.detail && e.detail.lang) || 'bn';
+  const lang = normalizeAppLang((e && e.detail && e.detail.lang) || (window.aloI18n && window.aloI18n.getLanguage()) || 'en');
   const user = getCurrentUser();
   if (user) {
     user.language = lang;
+    if (!user.profileData || typeof user.profileData !== 'object') user.profileData = {};
+    user.profileData.language = lang;
     try {
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
     } catch(err) {}
@@ -2565,6 +2711,12 @@ window.addEventListener('alo-language-changed', function(e) {
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
     if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
     if (typeof updateTeamReportMetrics === 'function') updateTeamReportMetrics();
+    if (e && e.detail && e.detail.userInitiated && typeof dbSaveUser === 'function') {
+      clearTimeout(_langSaveTimer);
+      _langSaveTimer = setTimeout(function() {
+        dbSaveUser(user).catch(function() {});
+      }, 350);
+    }
   }
 });
 
@@ -2626,21 +2778,57 @@ document.querySelectorAll('[data-message]').forEach(function(button) {
 
 function normalizeBdPhone(phoneStr, countryCode) {
   let digits = String(phoneStr || '').replace(/\D/g, '');
-  if (digits.startsWith('880')) digits = digits.slice(3);
-  else if (digits.startsWith('91') && digits.length === 12) digits = digits.slice(2);
-  if (digits.startsWith('0')) digits = digits.slice(1);
+  if (!digits) return '';
+  if (countryCode && String(countryCode).toUpperCase() !== 'BD') {
+    const country = typeof getCountryByCode === 'function' ? getCountryByCode(countryCode) : null;
+    const dialDigits = country && country.dialCode ? country.dialCode.replace(/\D/g, '') : '';
+    digits = digits.replace(/^0+/, '');
+    if (dialDigits && (!digits.startsWith(dialDigits) || (dialDigits === '1' && digits.length <= 10))) {
+      return dialDigits + digits;
+    }
+    return digits;
+  }
+  if (countryCode === 'BD') {
+    if (digits.startsWith('880')) digits = digits.slice(3);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    return digits;
+  }
+  // When countryCode is omitted: normalize BD numbers, keep international E.164 digits intact
+  if (digits.startsWith('880')) {
+    digits = digits.slice(3);
+    if (digits.startsWith('0')) digits = digits.slice(1);
+    return digits;
+  }
+  if (digits.startsWith('01') && digits.length === 11) {
+    return digits.slice(1);
+  }
   return digits;
 }
 
 // =========================================================================
 // COUNTRY-BASED CURRENCY SYSTEM (দেশ ও কারেন্সি সিস্টেম)
 // Rules:
-// Bangladesh (BD) -> BDT (৳) +880
-// India (IN)      -> INR (₹) +91
+// Bangladesh (BD)       -> BDT (৳) +880, $1 = 126 BDT
+// Egypt (EG) & others   -> USD ($) only, calculated from BD rate
+// UI Language defaults to English and preserves selected registration language
 // =========================================================================
 const COUNTRY_DATABASE = [
-  { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameHi: 'बांग्लादेश', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, defaultLang: 'bn', placeholder: '' },
-  { code: 'IN', nameBn: 'भारत', nameEn: 'India', nameHi: 'भारत', flag: '🇮🇳', dialCode: '+91', currency: 'INR', symbol: '₹', currencyName: 'Rupee', phoneLen: 10, defaultLang: 'hi', placeholder: '' }
+  { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameAr: 'بنغلاديش', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, placeholder: '' },
+  { code: 'EG', nameBn: 'মিশর (Egypt)', nameEn: 'Egypt', nameAr: 'مصر', flag: '🇪🇬', dialCode: '+20', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IN', nameBn: 'ভারত (India)', nameEn: 'India', nameAr: 'الهند', flag: '🇮🇳', dialCode: '+91', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'US', nameBn: 'যুক্তরাষ্ট্র (USA)', nameEn: 'United States', nameAr: 'الولايات المتحدة', flag: '🇺🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GB', nameBn: 'যুক্তরাজ্য (UK)', nameEn: 'United Kingdom', nameAr: 'المملكة المتحدة', flag: '🇬🇧', dialCode: '+44', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SA', nameBn: 'সৌদি আরব', nameEn: 'Saudi Arabia', nameAr: 'المملكة العربية السعودية', flag: '🇸🇦', dialCode: '+966', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AE', nameBn: 'দুবাই / UAE', nameEn: 'United Arab Emirates', nameAr: 'الإمارات العربية المتحدة', flag: '🇦🇪', dialCode: '+971', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MY', nameBn: 'মালয়েশিয়া', nameEn: 'Malaysia', nameAr: 'ماليزيا', flag: '🇲🇾', dialCode: '+60', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SG', nameBn: 'সিঙ্গাপুর', nameEn: 'Singapore', nameAr: 'سنغافورة', flag: '🇸🇬', dialCode: '+65', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CA', nameBn: 'কানাডা', nameEn: 'Canada', nameAr: 'كندا', flag: '🇨🇦', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AU', nameBn: 'অস্ট্রেলিয়া', nameEn: 'Australia', nameAr: 'أستراليا', flag: '🇦🇺', dialCode: '+61', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'QA', nameBn: 'কাতার', nameEn: 'Qatar', nameAr: 'قطر', flag: '🇶🇦', dialCode: '+974', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KW', nameBn: 'কুয়েত', nameEn: 'Kuwait', nameAr: 'الكويت', flag: '🇰🇼', dialCode: '+965', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'OM', nameBn: 'ওমান', nameEn: 'Oman', nameAr: 'عمان', flag: '🇴🇲', dialCode: '+968', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DE', nameBn: 'জার্মানি', nameEn: 'Germany', nameAr: 'ألمانيا', flag: '🇩🇪', dialCode: '+49', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IT', nameBn: 'ইতালি', nameEn: 'Italy', nameAr: 'إيطاليا', flag: '🇮🇹', dialCode: '+39', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' }
 ];
 
 let currentRegistrationCountry = COUNTRY_DATABASE[0]; // Default Bangladesh
@@ -2658,7 +2846,8 @@ function getCountryByCode(code) {
     if (digits && c.dialCode.replace(/\D/g, '') === digits) return true;
     if (c.nameBn === clean || c.nameBn.toLowerCase() === lower) return true;
     if (c.nameEn.toLowerCase() === lower) return true;
-    if (c.nameHi && (c.nameHi === clean || c.nameHi.toLowerCase() === lower)) return true;
+    if (c.nameAr && (c.nameAr === clean || c.nameAr.toLowerCase() === lower)) return true;
+    if (lower === 'egypt' || lower === 'মিশর' || lower === 'مصر' || lower === 'eg') return c.code === 'EG';
     if (lower === 'india' || lower === 'ইন্ডিয়া' || lower === 'ভারত' || lower === 'ind' || lower === 'in') return c.code === 'IN';
     if (lower === 'bangladesh' || lower === 'বাংলাদেশ' || lower === 'bd') return c.code === 'BD';
     return false;
@@ -2698,20 +2887,10 @@ function selectRegistrationCountry(code) {
   }
   const phoneInput = document.getElementById('register-phone');
   if (phoneInput) {
-    phoneInput.placeholder = '';
     phoneInput.maxLength = country.phoneLen || 15;
   }
-
-  // 4. Automatically switch website language if needed (without unnecessary re-triggers)
-  const curLangReg = (window.aloI18n && typeof window.aloI18n.getLanguage === 'function') ? window.aloI18n.getLanguage() : 'bn';
-  if (country.code === 'IN' && curLangReg === 'bn') {
-    if (typeof setAppLanguage === 'function') {
-      setAppLanguage('hi');
-    }
-  } else if (country.code === 'BD' && curLangReg === 'hi') {
-    if (typeof setAppLanguage === 'function') {
-      setAppLanguage('bn');
-    }
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+    window.aloI18n.translateDOM();
   }
 
   // Re-render country list only if modal is visible
@@ -2736,17 +2915,6 @@ function selectLoginCountry(code) {
   const emailInp = document.getElementById('login-email');
   if (emailInp) {
     emailInp.maxLength = country.phoneLen || 15;
-  }
-
-  const curLang = (window.aloI18n && typeof window.aloI18n.getLanguage === 'function') ? window.aloI18n.getLanguage() : 'bn';
-  if (country.code === 'IN' && curLang === 'bn') {
-    if (typeof setAppLanguage === 'function') {
-      setAppLanguage('hi');
-    }
-  } else if (country.code === 'BD' && curLang === 'hi') {
-    if (typeof setAppLanguage === 'function') {
-      setAppLanguage('bn');
-    }
   }
 }
 
@@ -2794,11 +2962,11 @@ function renderCountryList() {
   const container = document.getElementById('country-list-container');
   if (!container) return;
 
-  const currentLang = (window.aloI18n ? window.aloI18n.getLanguage() : 'en');
+  const currentLang = normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
 
   container.innerHTML = COUNTRY_DATABASE.map(function(item) {
     const isSelected = currentRegistrationCountry && currentRegistrationCountry.code === item.code;
-    const displayName = currentLang === 'hi' ? item.nameHi : (currentLang === 'en' ? item.nameEn : item.nameBn);
+    const displayName = currentLang === 'bn' ? item.nameBn : (currentLang === 'ar' ? (item.nameAr || item.nameEn) : item.nameEn);
     return `
       <button type="button" class="country-list-item w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-[#0c245c] transition text-left cursor-pointer ${isSelected ? 'bg-[#0f2e73] border border-[#35c6e7]/50 shadow-md' : 'bg-[#061842] border border-[#14326d]'}" data-country-code="${item.code}">
         <div class="flex items-center gap-3">
@@ -2821,25 +2989,24 @@ function renderCountryList() {
 }
 
 function getUserCurrency(user) {
-  return isIndianUser(user) ? 'INR' : 'BDT';
+  return isUsdOnlyUser(user) ? 'USD' : 'BDT';
 }
 
 function getUserCurrencySymbol(user) {
-  return isIndianUser(user) ? '₹' : '৳';
+  return isUsdOnlyUser(user) ? '$' : '৳';
 }
 
 function formatUserMoney(amount, user) {
   if (!user) user = getCurrentUser();
-  const curr = getUserCurrency(user);
   const sym = getUserCurrencySymbol(user);
   return `${sym} ${formatMoney(amount, user)}`;
 }
 
-// USD Exchange Rates as specifically requested:
-// Bangladesh: 126 BDT = $1.00 USD (e.g. 126৳ = $1.00, 20৳ = $0.16)
-// India: 84 INR = $1.00 USD (e.g. 84₹ = $1.00, 20₹ = $0.24)
+// USD Exchange Rates:
+// Bangladesh: 126 BDT = $1.00 USD (e.g. 126৳ = $1.00)
+// International (any country outside Bangladesh): native USD ($1.00 = $1.00 USD)
 function getUsdExchangeRate(user) {
-  return isIndianUser(user) ? 84.0 : 126.0;
+  return isUsdOnlyUser(user) ? 1.0 : BDT_PER_USD;
 }
 window.getUsdExchangeRate = getUsdExchangeRate;
 
@@ -2860,6 +3027,9 @@ function formatMoneyWithUsd(amount, user) {
   if (!user) user = getCurrentUser();
   const curr = getUserCurrency(user);
   const m = formatMoney(amount, user);
+  if (isUsdOnlyUser(user)) {
+    return `$${m} ${curr}`;
+  }
   const usd = formatUsd(amount, user);
   return `${m} ${curr} ($${usd})`;
 }
@@ -2876,13 +3046,13 @@ if (loginForm) {
     const phoneInput = (document.getElementById('login-email')?.value || '').trim();
     const password = document.getElementById('login-password')?.value || '';
 
-    const currentAppLang = (window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'bn';
-    const errValidPhone = currentAppLang === 'bn' ? 'সঠিক ফোন নম্বর লিখুন' : (currentAppLang === 'hi' ? 'एक मान्य फ़ोन नंबर दर्ज करें' : 'Enter a valid phone number');
-    const errEnterPassword = currentAppLang === 'bn' ? 'আপনার পাসওয়ার্ড লিখুন' : (currentAppLang === 'hi' ? 'अपना पासवर्ड दर्ज करें' : 'Enter your password');
+    const currentAppLang = normalizeAppLang((window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'en');
+    const errValidPhone = tLang(currentAppLang, 'সঠিক ফোন নম্বর লিখুন', 'Enter a valid phone number', 'أدخل رقم هاتف صالحاً');
+    const errEnterPassword = tLang(currentAppLang, 'আপনার পাসওয়ার্ড লিখুন', 'Enter your password', 'أدخل كلمة المرور الخاصة بك');
 
     // Clean phone number validation
     const rawDigits = phoneInput.replace(/\D/g, '');
-    if (!rawDigits || rawDigits.length < 8) {
+    if (!rawDigits || rawDigits.length < 7) {
       if (message) {
         message.textContent = errValidPhone;
         message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
@@ -2904,21 +3074,30 @@ if (loginForm) {
 
     const normPhone = normalizeBdPhone(phoneInput, loginCountry.code);
     if (message) {
-      message.textContent = currentAppLang === 'bn' ? 'যাচাই করা হচ্ছে…' : (currentAppLang === 'hi' ? 'सत्यापित किया जा रहा है...' : 'Verifying credentials…');
+      message.textContent = tLang(currentAppLang, 'যাচাই করা হচ্ছে…', 'Verifying credentials…', 'جاري التحقق…');
       message.className = 'min-h-5 text-center text-xs sm:text-sm font-medium text-slate-300 mt-2';
     }
 
     try {
       const passwordHash = await hashPassword(password);
-      const isLoginInd = loginCountry.code === 'IN';
+      const isLoginBd = loginCountry.code === 'BD';
 
-      // Check real Supabase database
+      // Check real Supabase database (and fallback raw digits without dial code for legacy non-BD test accounts)
       let account = await dbGetUser(normPhone);
+      if (!account && !isLoginBd) {
+        const legacyLocalDigits = rawDigits.replace(/^0+/, '');
+        if (legacyLocalDigits && legacyLocalDigits !== normPhone) {
+          account = await dbGetUser(legacyLocalDigits);
+        }
+      }
 
       if (!account) {
-        const notFoundMsg = isLoginInd
-          ? 'इस फ़ोन नंबर पर कोई खाता नहीं मिला। कृपया पंजीकरण करें।'
-          : (currentAppLang === 'bn' ? 'এই নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি। অনুগ্রহ করে নিবন্ধন করুন।' : 'No account found with this phone number. Please register.');
+        const notFoundMsg = tLang(
+          currentAppLang,
+          'এই নম্বরে কোনো অ্যাকাউন্ট পাওয়া যায়নি। অনুগ্রহ করে নিবন্ধন করুন।',
+          'No account found with this phone number. Please register.',
+          'لم يتم العثور على حساب بهذا الرقم. يرجى التسجيل.'
+        );
         if (message) {
           message.textContent = notFoundMsg;
           message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
@@ -2929,9 +3108,12 @@ if (loginForm) {
       const hashMatches = account.passwordHash && account.passwordHash === passwordHash;
       const plainMatches = account.plainPassword && account.plainPassword === password;
       if (!hashMatches && !plainMatches) {
-        const failMsg = isLoginInd
-          ? 'अमान्य फ़ोन नंबर या पासवर्ड।'
-          : (currentAppLang === 'bn' ? 'ভুল ফোন নম্বর বা পাসওয়ার্ড।' : 'Invalid phone number or password.');
+        const failMsg = tLang(
+          currentAppLang,
+          'ভুল ফোন নম্বর বা পাসওয়ার্ড।',
+          'Invalid phone number or password.',
+          'رقم الهاتف أو كلمة المرور غير صحيحة.'
+        );
         if (message) {
           message.textContent = failMsg;
           message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
@@ -2940,9 +3122,12 @@ if (loginForm) {
       }
 
       if (account.accountStatus === 'banned') {
-        const banMsg = isLoginInd
-          ? 'आपका खाता व्यवस्थापक द्वारा निलंबित कर दिया गया है।'
-          : (currentAppLang === 'bn' ? '⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত করা হয়েছে।' : '⛔ Your account has been suspended by the administrator.');
+        const banMsg = tLang(
+          currentAppLang,
+          '⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত করা হয়েছে।',
+          '⛔ Your account has been suspended by the administrator.',
+          '⛔ تم تعليق حسابك من قبل المسؤول.'
+        );
         if (message) {
           message.textContent = banMsg;
           message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
@@ -2956,10 +3141,13 @@ if (loginForm) {
       clearUserCachesOnAuthSwitch();
 
       const regNumber = account.accountNumber || account.phone || normPhone;
-      const isAccIndia = isIndianUser(account) || (loginCountry.code === 'IN') || (account.country === 'IN') || (account.currency === 'INR') || (account.dialCode === '+91');
-      const targetUserLang = isAccIndia ? (account.language === 'en' ? 'en' : 'hi') : (account.language || 'bn');
+      const accCountryCode = (account.country && String(account.country).toUpperCase()) || loginCountry.code || 'BD';
+      const isAccBd = accCountryCode === 'BD' && loginCountry.code === 'BD';
+      const resolvedCode = isAccBd ? 'BD' : (accCountryCode !== 'BD' ? accCountryCode : loginCountry.code);
+      const resolvedCountry = getCountryByCode(resolvedCode);
+      const targetUserLang = normalizeAppLang(account.language || currentAppLang || 'en');
       const signedInUser = Object.assign({}, account, {
-        name: account.name || (isAccIndia ? (targetUserLang === 'en' ? 'Member' : 'सदस्य') : 'সদস্য'),
+        name: (!account.name || account.name === 'সদস্য' || account.name === 'Member' || account.name === 'عضو' || account.name === 'सदस्य') ? tLang(targetUserLang, 'সদস্য', 'Member', 'عضو') : account.name,
         phone: regNumber,
         accountNumber: regNumber,
         memberId: account.memberId,
@@ -2968,22 +3156,21 @@ if (loginForm) {
         packageLevel: account.packageLevel || 'LV0',
         purchasedPackages: Array.isArray(account.purchasedPackages) && account.purchasedPackages.length > 0 ? account.purchasedPackages : ['LV0'],
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
-        country: isAccIndia ? 'IN' : 'BD',
-        countryName: isAccIndia ? (targetUserLang === 'en' ? 'India' : 'भारत') : 'বাংলাদেশ',
-        countryNameEn: isAccIndia ? 'India' : 'Bangladesh',
-        currency: isAccIndia ? 'INR' : 'BDT',
-        currencySymbol: isAccIndia ? '₹' : '৳',
-        currencyName: isAccIndia ? 'Rupee' : 'Taka',
-        dialCode: isAccIndia ? '+91' : '+880',
+        country: isAccBd ? 'BD' : resolvedCountry.code,
+        countryName: isAccBd ? 'বাংলাদেশ' : resolvedCountry.nameEn,
+        countryNameEn: isAccBd ? 'Bangladesh' : resolvedCountry.nameEn,
+        currency: isAccBd ? 'BDT' : 'USD',
+        currencySymbol: isAccBd ? '৳' : '$',
+        currencyName: isAccBd ? 'Taka' : 'USD',
+        dialCode: isAccBd ? '+880' : (account.dialCode || resolvedCountry.dialCode || ''),
         language: targetUserLang
       });
 
       hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
-      const userLang = isAccIndia ? (signedInUser.language === 'en' ? 'en' : 'hi') : (signedInUser.language || 'bn');
       if (typeof setAppLanguage === 'function') {
-        setAppLanguage(userLang);
+        setAppLanguage(targetUserLang, { silent: true });
       }
 
       if (message) message.textContent = '';
@@ -3009,24 +3196,16 @@ if (loginForm) {
         showView('dashboard', 'zoom');
       });
     } catch (error) {
-      if (message) message.textContent = (window.aloI18n && window.aloI18n.getLanguage() === 'bn') ? 'লগইন করা যায়নি। আবার চেষ্টা করুন।' : 'Login failed. Please check your credentials and try again.';
+      if (message) message.textContent = tLang(currentAppLang, 'লগইন করা যায়নি। আবার চেষ্টা করুন।', 'Login failed. Please check your credentials and try again.', 'فشل تسجيل الدخول. يرجى التحقق من بياناتك والمحاولة مرة أخرى.');
     }
   });
 }
 
 
 function showRegistrationSuccess(phone, countryName, currencyCode, currencySymbol, lang) {
-  const currentLang = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || 'bn';
-  let title = 'নিবন্ধন সফল!';
-  let desc = 'PW New Media প্ল্যাটফর্মে আপনাকে স্বাগতম!';
-
-  if (currentLang === 'hi') {
-    title = 'पंजीकरण सफल!';
-    desc = 'PW New Media में आपका स्वागत है!';
-  } else if (currentLang === 'en') {
-    title = 'Registration Successful!';
-    desc = 'Welcome to PW New Media platform!';
-  }
+  const currentLang = normalizeAppLang(lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en'));
+  const title = tLang(currentLang, 'নিবন্ধন সফল!', 'Registration Successful!', 'تم التسجيل بنجاح!');
+  const desc = tLang(currentLang, 'PW New Media প্ল্যাটফর্মে আপনাকে স্বাগতম!', 'Welcome to PW New Media platform!', 'مرحباً بك في منصة PW New Media!');
 
   const overlay = document.createElement('div');
   overlay.className = 'login-success-overlay is-visible';
@@ -3062,7 +3241,7 @@ function clearRegisterPasswordErrors() {
   if (confPassInput) confPassInput.setCustomValidity('');
   if (regPassInput) regPassInput.setCustomValidity('');
   const msg = document.getElementById('register-message');
-  if (msg && (msg.textContent.includes('match') || msg.textContent.includes('মিলছে') || msg.textContent.includes('মেল') || msg.textContent.includes('character') || msg.textContent.includes('অক্ষর'))) {
+  if (msg && (msg.textContent.includes('match') || msg.textContent.includes('মিলছে') || msg.textContent.includes('মেল') || msg.textContent.includes('character') || msg.textContent.includes('অক্ষর') || msg.textContent.includes('تتطابق') || msg.textContent.includes('أحرف'))) {
     msg.textContent = '';
   }
 }
@@ -3087,28 +3266,30 @@ if (registerForm) {
     const password = (passwordEl?.value || '').trim();
     const confirmVal = (confirmation?.value || '').trim();
 
-    // Country & Currency Selection (দেশ নির্বাচন নিশ্চিতকরণ)
+    // Country & Currency Selection: BD -> BDT; All other countries -> USD-only
+    // Language follows whichever language is selected on the Registration Page (English default)
     const selectEl = document.getElementById('register-country-select');
     const selectedCode = (selectEl && selectEl.value) || document.getElementById('register-country-code')?.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
     const country = getCountryByCode(selectedCode) || COUNTRY_DATABASE[0];
-    const isIndia = (country.code === 'IN') || (selectedCode === 'IN');
-    const countryCode = isIndia ? 'IN' : 'BD';
-    const targetLang = isIndia ? 'hi' : 'bn';
-    const countryName = isIndia ? 'भारत' : 'বাংলাদেশ';
-    const countryNameEn = isIndia ? 'India' : 'Bangladesh';
-    const currencyCode = isIndia ? 'INR' : 'BDT';
-    const currencySymbol = isIndia ? '₹' : '৳';
-    const currencyName = isIndia ? 'Rupee' : 'Taka';
-    const dialCode = isIndia ? '+91' : '+880';
+    const isBd = country.code === 'BD';
+    const countryCode = country.code;
+    const regLangSelect = document.getElementById('register-language-switch');
+    const targetLang = normalizeAppLang((regLangSelect && regLangSelect.value) || (window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'en');
+    const countryName = isBd ? 'বাংলাদেশ' : country.nameEn;
+    const countryNameEn = country.nameEn;
+    const currencyCode = isBd ? 'BDT' : 'USD';
+    const currencySymbol = isBd ? '৳' : '$';
+    const currencyName = isBd ? 'Taka' : 'USD';
+    const dialCode = country.dialCode || '+880';
 
     if (!password) {
-      if (message) message.textContent = targetLang === 'hi' ? 'कृपया पासवर्ड दर्ज करें।' : (targetLang === 'bn' ? 'পাসওয়ার্ড দিন।' : 'Please enter a password.');
+      if (message) message.textContent = tLang(targetLang, 'পাসওয়ার্ড দিন।', 'Please enter a password.', 'يرجى إدخال كلمة المرور.');
       if (passwordEl) passwordEl.focus();
       return;
     }
 
     if (password.length < 6) {
-      const minMsg = targetLang === 'hi' ? 'पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।' : (targetLang === 'bn' ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.');
+      const minMsg = tLang(targetLang, 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।', 'Password must be at least 6 characters.', 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.');
       if (message) message.textContent = minMsg;
       if (passwordEl) {
         passwordEl.setCustomValidity(minMsg);
@@ -3118,7 +3299,7 @@ if (registerForm) {
     }
 
     if (password !== confirmVal) {
-      const matchMsg = targetLang === 'hi' ? 'पासवर्ड मेल नहीं खाते।' : (targetLang === 'bn' ? 'দুটি পাসওয়ার্ড মিলছে না।' : 'Passwords do not match.');
+      const matchMsg = tLang(targetLang, 'দুটি পাসওয়ার্ড মিলছে না।', 'Passwords do not match.', 'كلمتا المرور غير متطابقتين.');
       if (message) message.textContent = matchMsg;
       if (confirmation) {
         confirmation.setCustomValidity(matchMsg);
@@ -3131,12 +3312,12 @@ if (registerForm) {
     // Country-aware phone validation
     if (countryCode === 'BD') {
       if (!cleanPhone || cleanPhone.length < 10) {
-        if (message) message.textContent = targetLang === 'bn' ? 'অনুগ্রহ করে সঠিক ১০-১১ ডিজিটের মোবাইল নম্বর দিন।' : 'Please enter a valid 10-11 digit phone number.';
+        if (message) message.textContent = tLang(targetLang, 'অনুগ্রহ করে সঠিক ১০-১১ ডিজিটের মোবাইল নম্বর দিন।', 'Please enter a valid 10-11 digit mobile number.', 'يرجى إدخال رقم هاتف صالح مكون من 10 إلى 11 رقماً.');
         return;
       }
     } else {
-      if (!cleanPhone || cleanPhone.length < 10) {
-        if (message) message.textContent = targetLang === 'hi' ? 'कृपया वैध 10-अंकीय मोबाइल नंबर दर्ज करें।' : 'Please enter a valid 10-digit mobile number.';
+      if (!cleanPhone || cleanPhone.length < 7) {
+        if (message) message.textContent = tLang(targetLang, 'অনুগ্রহ করে সঠিক মোবাইল নম্বর দিন।', 'Please enter a valid mobile number.', 'يرجى إدخال رقم هاتف صالح.');
         return;
       }
     }
@@ -3149,7 +3330,7 @@ if (registerForm) {
       smsCode = demoSmsCode;
     }
 
-    if (message) message.textContent = targetLang === 'hi' ? 'खाता बनाया जा रहा है…' : (targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে…' : 'Creating account…');
+    if (message) message.textContent = tLang(targetLang, 'অ্যাকাউন্ট তৈরি হচ্ছে…', 'Creating account…', 'جاري إنشاء الحساب…');
 
     try {
       const registeredNumber = phoneInput;
@@ -3159,7 +3340,7 @@ if (registerForm) {
       const dbUser = await dbGetUser(normInput);
 
       if (dbUser) {
-        if (message) message.textContent = targetLang === 'hi' ? 'इस नंबर पर पहले से खाता मौजूद है। लॉगिन पेज पर जाएं।' : (targetLang === 'bn' ? 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।' : 'An account with this number already exists. Redirecting to login…');
+        if (message) message.textContent = tLang(targetLang, 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।', 'An account with this number already exists. Redirecting to login…', 'يوجد حساب بهذا الرقم بالفعل. جاري التوجيه لتسجيل الدخول…');
         const loginEmail = document.getElementById('login-email');
         if (loginEmail) loginEmail.value = registeredNumber;
         setTimeout(function() { showView('login'); }, 1400);
@@ -3185,7 +3366,7 @@ if (registerForm) {
       const superiorId = (upline1 && (upline1.inviteCode || upline1.memberId || upline1.phone)) || enteredInviteCode || '11';
 
       const account = {
-        name: isIndia ? 'सदस्य' : 'সদস্য',
+        name: tLang(targetLang, 'সদস্য', 'Member', 'عضو'),
         phone: normInput,
         accountNumber: normInput,
         passwordHash: passwordHash,
@@ -3246,9 +3427,9 @@ if (registerForm) {
       hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
-      // CRITICAL: Immediately switch entire website language: Hindi for India by default, Bengali for BD!
+      // Lock in the language selected on the registration page across the entire app
       if (typeof setAppLanguage === 'function') {
-        setAppLanguage(targetLang);
+        setAppLanguage(targetLang, { silent: true });
       }
 
       updateUserDetails(signedInUser);
@@ -3268,7 +3449,7 @@ if (registerForm) {
 
       showRegistrationSuccess(normInput, countryName, currencyCode, currencySymbol, targetLang);
     } catch (error) {
-      if (message) message.textContent = targetLang === 'hi' ? 'खाता नहीं बन सका। कृपया पुनः प्रयास करें।' : (targetLang === 'bn' ? 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।' : 'Failed to create account. Please try again.');
+      if (message) message.textContent = tLang(targetLang, 'অ্যাকাউন্ট তৈরি করা যায়নি। আবার চেষ্টা করুন।', 'Failed to create account. Please try again.', 'فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.');
     }
   });
 }
@@ -3281,10 +3462,11 @@ if (sendSmsBtn) {
     const phone = phoneInput ? phoneInput.value.trim() : '';
     const message = document.getElementById('register-message');
     const cleanPhone = phone.replace(/\D/g, '');
-    const targetLang = localStorage.getItem('alo_lang') || 'bn';
+    const regLangEl = document.getElementById('register-language-switch');
+    const targetLang = normalizeAppLang((regLangEl && regLangEl.value) || (window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'en');
 
     if (!cleanPhone || cleanPhone.length < 8) {
-      if (message) message.textContent = targetLang === 'bn' ? 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।' : 'Please enter a valid phone number to receive verification code.';
+      if (message) message.textContent = tLang(targetLang, 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।', 'Please enter a valid phone number to receive verification code.', 'يرجى إدخال رقم هاتف صالح لاستلام رمز التحقق.');
       if (phoneInput) phoneInput.focus();
       return;
     }
@@ -3295,12 +3477,12 @@ if (sendSmsBtn) {
       smsInput.value = demoSmsCode;
       smsInput.focus();
     }
-    if (message) message.textContent = targetLang === 'bn' ? ('✅ যাচাইকরণ কোড পাঠানো হয়েছে: ' + demoSmsCode) : ('✅ Verification code sent: ' + demoSmsCode);
+    if (message) message.textContent = tLang(targetLang, '✅ যাচাইকরণ কোড পাঠানো হয়েছে: ' + demoSmsCode, '✅ Verification code sent: ' + demoSmsCode, '✅ تم إرسال رمز التحقق: ' + demoSmsCode);
 
     sendSmsBtn.disabled = true;
     let secondsLeft = 60;
-    const originalText = targetLang === 'bn' ? 'যাচাইকরণ কোড পাঠান' : 'Send Code';
-    sendSmsBtn.textContent = targetLang === 'bn' ? `পুনরায় পাঠান (${secondsLeft}s)` : `Resend (${secondsLeft}s)`;
+    const originalText = tLang(targetLang, 'যাচাইকরণ কোড পাঠান', 'Send Code', 'إرسال الرمز');
+    sendSmsBtn.textContent = tLang(targetLang, `পুনরায় পাঠান (${secondsLeft}s)`, `Resend (${secondsLeft}s)`, `إعادة الإرسال (${secondsLeft}ث)`);
     clearInterval(smsCountdownInterval);
     smsCountdownInterval = setInterval(() => {
       secondsLeft--;
@@ -3309,7 +3491,7 @@ if (sendSmsBtn) {
         sendSmsBtn.disabled = false;
         sendSmsBtn.textContent = originalText;
       } else {
-        sendSmsBtn.textContent = targetLang === 'bn' ? `পুনরায় পাঠান (${secondsLeft}s)` : `Resend (${secondsLeft}s)`;
+        sendSmsBtn.textContent = tLang(targetLang, `পুনরায় পাঠান (${secondsLeft}s)`, `Resend (${secondsLeft}s)`, `إعادة الإرسال (${secondsLeft}ث)`);
       }
     }, 1000);
   });
@@ -3326,21 +3508,21 @@ const packageTaskSettings = {
 };
 
 const packageData = {
-  LV0: { name: 'ফ্রি স্তর', nameBn: 'ফ্রি স্তর', nameHi: 'निःशुल्क स्तर', nameEn: 'Free Tier', price: 0, count: 5, reward: 20, dailyIncome: 100, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০' },
-  LV1: { name: 'বেসিক প্যাকেজ', nameBn: 'বেসিক প্যাকেজ', nameHi: 'बेसिक पैकेज', nameEn: 'Basic Package', price: 3500, count: 6, reward: 30, dailyIncome: 180, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০' },
-  LV2: { name: 'স্ট্যান্ডার্ড প্যাকেজ', nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameHi: 'स्टैंडर्ड पैकेज', nameEn: 'Standard Package', price: 7500, count: 12, reward: 40, dailyIncome: 480, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০' },
-  LV3: { name: 'সিলভার প্যাকেজ', nameBn: 'সিলভার প্যাকেজ', nameHi: 'सिल्वर पैकेज', nameEn: 'Silver Package', price: 36000, count: 15, reward: 50, dailyIncome: 750, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০' },
-  LV4: { name: 'গোল্ড প্যাকেজ', nameBn: 'গোল্ড প্যাকেজ', nameHi: 'गोल्ड पैकेज', nameEn: 'Gold Package', price: 84000, count: 25, reward: 60, dailyIncome: 1500, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০' },
-  LV5: { name: 'প্রিমিয়াম প্যাকেজ', nameBn: 'প্রিমিয়াম প্যাকেজ', nameHi: 'प्रीमियम पैकेज', nameEn: 'Premium Package', price: 150000, count: 35, reward: 70, dailyIncome: 2450, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০' },
-  LV6: { name: 'এলিট প্যাকেজ', nameBn: 'এলিট প্যাকেজ', nameHi: 'एलीट पैकेज', nameEn: 'Elite Package', price: 300000, count: 50, reward: 100, dailyIncome: 5000, desc: 'দৈনিক ৫০টি কাজ · প্রতি কাজের আয় ১০০.০০' }
+  LV0: { name: 'Free Tier', nameBn: 'ফ্রি স্তর', nameAr: 'المستوى المجاني', nameEn: 'Free Tier', price: 0, count: 5, reward: 20, dailyIncome: 100, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০' },
+  LV1: { name: 'Basic Package', nameBn: 'বেসিক প্যাকেজ', nameAr: 'الباقة الأساسية', nameEn: 'Basic Package', price: 3500, count: 6, reward: 30, dailyIncome: 180, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০' },
+  LV2: { name: 'Standard Package', nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameAr: 'الباقة القياسية', nameEn: 'Standard Package', price: 7500, count: 12, reward: 40, dailyIncome: 480, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০' },
+  LV3: { name: 'Silver Package', nameBn: 'সিলভার প্যাকেজ', nameAr: 'الباقة الفضية', nameEn: 'Silver Package', price: 36000, count: 15, reward: 50, dailyIncome: 750, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০' },
+  LV4: { name: 'Gold Package', nameBn: 'গোল্ড প্যাকেজ', nameAr: 'الباقة الذهبية', nameEn: 'Gold Package', price: 84000, count: 25, reward: 60, dailyIncome: 1500, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০' },
+  LV5: { name: 'Premium Package', nameBn: 'প্রিমিয়াম প্যাকেজ', nameAr: 'الباقة المميزة', nameEn: 'Premium Package', price: 150000, count: 35, reward: 70, dailyIncome: 2450, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০' },
+  LV6: { name: 'Elite Package', nameBn: 'এলিট প্যাকেজ', nameAr: 'باقة النخبة', nameEn: 'Elite Package', price: 300000, count: 50, reward: 100, dailyIncome: 5000, desc: 'দৈনিক ৫০টি কাজ · প্রতি কাজের আয় ১০০.০০' }
 };
 
 function getPackageName(level, lang) {
-  const l = lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || 'bn';
+  const l = normalizeAppLang(lang || (window.aloI18n ? window.aloI18n.getLanguage() : 'en'));
   const pkg = packageData[level] || packageData.LV0;
-  if (l === 'hi') return pkg.nameHi || pkg.nameBn;
-  if (l === 'en') return pkg.nameEn || pkg.nameBn;
-  return pkg.nameBn || pkg.nameEn;
+  if (l === 'ar') return pkg.nameAr || pkg.nameEn;
+  if (l === 'bn') return pkg.nameBn || pkg.nameEn;
+  return pkg.nameEn || pkg.nameBn;
 }
 
 const LEVEL_ORDER = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
@@ -3367,7 +3549,7 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
       const nextDaily = Number((nextCount * nextReward).toFixed(2));
       const nextBn = String(src.nameBn || '').trim() || targetPkg.nameBn;
       const nextEn = String(src.nameEn || '').trim() || targetPkg.nameEn;
-      const nextHi = String(src.nameHi || '').trim() || targetPkg.nameHi;
+      const nextAr = String(src.nameAr || '').trim() || targetPkg.nameAr;
 
       if (
         targetPkg.count !== nextCount ||
@@ -3375,7 +3557,7 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
         targetPkg.price !== nextPrice ||
         targetPkg.nameBn !== nextBn ||
         targetPkg.nameEn !== nextEn ||
-        targetPkg.nameHi !== nextHi
+        targetPkg.nameAr !== nextAr
       ) {
         changed = true;
       }
@@ -3389,8 +3571,8 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
       targetPkg.dailyIncome = nextDaily;
       targetPkg.nameBn = nextBn;
       targetPkg.nameEn = nextEn;
-      targetPkg.nameHi = nextHi;
-      targetPkg.name = nextBn;
+      targetPkg.nameAr = nextAr;
+      targetPkg.name = nextEn;
       targetPkg.desc = `দৈনিক ${nextCount}টি কাজ · প্রতি কাজের আয় ${nextReward}`;
     }
 
@@ -3400,7 +3582,7 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
       price: targetPkg.price,
       nameBn: targetPkg.nameBn,
       nameEn: targetPkg.nameEn,
-      nameHi: targetPkg.nameHi
+      nameAr: targetPkg.nameAr
     };
   });
 
@@ -3454,30 +3636,27 @@ function getCurrentUser() {
     user.phone = user.accountNumber;
   }
 
-  // Strictly sanitize currency based on country
-  const isIndia = isIndianUser(user);
-  if (isIndia) {
-    user.country = 'IN';
-    user.currency = 'INR';
-    user.currencySymbol = '₹';
-    user.currencyName = 'Rupee';
-    user.dialCode = '+91';
-    if (!user.language || user.language === 'bn') {
-      user.language = 'hi';
-    }
-    user.countryName = user.language === 'en' ? 'India' : 'भारत';
-    if (user.name === 'সদস্য') {
-      user.name = user.language === 'en' ? 'Member' : 'सदस्य';
-    }
+  // Strictly enforce currency based on country (BD -> BDT, non-BD -> USD),
+  // while always preserving user's chosen/registered UI language (default 'en')!
+  const isBd = isBangladeshUser(user);
+  user.language = normalizeAppLang(user.language || localStorage.getItem('alo_lang') || 'en');
+  if (!isBd) {
+    const cObj = getCountryByCode(user.country || 'US');
+    user.country = cObj.code === 'BD' ? 'US' : cObj.code;
+    user.currency = 'USD';
+    user.currencySymbol = '$';
+    user.currencyName = 'USD';
+    user.dialCode = user.dialCode || cObj.dialCode || '';
+    user.countryName = cObj.nameEn;
   } else {
     user.country = 'BD';
     user.currency = 'BDT';
     user.currencySymbol = '৳';
     user.currencyName = 'Taka';
     user.dialCode = '+880';
-    if (!user.language) {
-      user.language = 'bn';
-    }
+  }
+  if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو' || user.name === 'सदस्य') {
+    user.name = tLang(user.language, 'সদস্য', 'Member', 'عضو');
   }
 
   if (user.accountNumber) user.accountNumber = String(user.accountNumber).replace(/টি/g, '').trim();
@@ -3497,7 +3676,7 @@ function formatBanglaNumber(num) {
 
 function formatMoney(amount, user) {
   if (!user) user = getCurrentUser();
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
+  const lang = getActiveLang(user);
   const num = Number(amount || 0);
   const formatted = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (lang === 'bn') {
@@ -3508,13 +3687,27 @@ function formatMoney(amount, user) {
 
 function formatNumber(num, user) {
   if (!user) user = getCurrentUser();
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
+  const lang = getActiveLang(user);
   const n = Number(num || 0);
   const formatted = n.toLocaleString('en-US');
   if (lang === 'bn') {
     return formatBanglaNumber(formatted);
   }
   return formatted;
+}
+
+function getActiveLang(user) {
+  if (!user) user = getCurrentUser();
+  return normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || localStorage.getItem('alo_lang') || 'en');
+}
+
+function getVipTierLabel(tierKey, lang) {
+  const l = normalizeAppLang(lang || getActiveLang());
+  if (l === 'bn') return tierKey;
+  const bnToNum = { '১': 1, '২': 2, '৩': 3, '৪': 4, '৫': 5, '৬': 6, '৭': 7, '৮': 8 };
+  const m = String(tierKey || '').match(/([১-৮\d]+)/);
+  const num = m ? (bnToNum[m[1]] || m[1]) : tierKey;
+  return l === 'ar' ? ('المركز ' + num) : ('Position ' + num);
 }
 
 function isLevelUnlocked(targetLevel, user) {
@@ -3543,10 +3736,10 @@ function updateVipHallRooms() {
     if (!lvl) return;
     const isCurrent = (lvl === userLevel);
 
-    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
+    const lang = getActiveLang(user);
     const hallLabels = {
-      current: lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর'),
-      dailyWork: lang === 'hi' ? 'दैनिक कार्य:' : (lang === 'en' ? 'Daily Tasks:' : 'দৈনন্দিন কর্ম:')
+      current: tLang(lang, 'বর্তমান স্তর', 'Current Tier', 'المستوى الحالي'),
+      dailyWork: tLang(lang, 'দৈনন্দিন কর্ম:', 'Daily Tasks:', 'المهام اليومية:')
     };
 
     const pkg = packageData[lvl];
@@ -3571,9 +3764,11 @@ function updateVipHallRooms() {
 
 function updateRecordsPanelPackages() {
   const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
   const userLevel = (user && user.packageLevel) || 'LV0';
   const curr = getUserCurrency(user);
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
 
   const curLevelDisplay = document.getElementById('records-current-level-display');
   if (curLevelDisplay) {
@@ -3586,13 +3781,13 @@ function updateRecordsPanelPackages() {
   }
 
   const labels = {
-    dailyTasks: lang === 'hi' ? 'दैनिक कार्य:' : (lang === 'en' ? 'Daily Tasks:' : 'দৈনিক কাজ:'),
-    perTask: lang === 'hi' ? 'प्रति कार्य:' : (lang === 'en' ? 'Per Task:' : 'প্রতি কাজ:'),
-    dailyIncome: lang === 'hi' ? 'दैनिक आय:' : (lang === 'en' ? 'Daily Income:' : 'দৈনিক আয়:'),
-    btnCurrent: lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর'),
-    btnPurchased: lang === 'hi' ? 'खरीदा गया ✓' : (lang === 'en' ? 'Purchased ✓' : 'ক্রয় করা হয়েছে ✓'),
-    btnBuy: lang === 'hi' ? 'पैकेज खरीदें' : (lang === 'en' ? 'Buy Package' : 'প্যাকেজ ক্রয় করুন'),
-    freeText: lang === 'hi' ? 'मुफ़्त' : (lang === 'en' ? 'Free' : 'ফ্রি'),
+    dailyTasks: tLang(lang, 'দৈনিক কাজ:', 'Daily Tasks:', 'المهام اليومية:'),
+    perTask: tLang(lang, 'প্রতি কাজ:', 'Per Task:', 'لكل مهمة:'),
+    dailyIncome: tLang(lang, 'দৈনিক আয়:', 'Daily Income:', 'الدخل اليومي:'),
+    btnCurrent: tLang(lang, 'বর্তমান স্তর', 'Current Tier', 'المستوى الحالي'),
+    btnPurchased: tLang(lang, 'ক্রয় করা হয়েছে ✓', 'Purchased ✓', 'تم الشراء ✓'),
+    btnBuy: tLang(lang, 'প্যাকেজ ক্রয় করুন', 'Buy Package', 'شراء الباقة'),
+    freeText: tLang(lang, 'ফ্রি', 'Free', 'مجاني'),
     tasksUnit: lang === 'bn' ? 'টি' : ''
   };
 
@@ -3602,11 +3797,14 @@ function updateRecordsPanelPackages() {
     const pkg = packageData[level];
     if (!pkg) return;
     const pkgName = getPackageName(level, lang);
+    const pkgPrice = toUserCurrencyAmount(pkg.price, user);
+    const pkgReward = toUserCurrencyAmount(pkg.reward, user);
+    const pkgDaily = isUsd ? Number((pkgReward * pkg.count).toFixed(2)) : pkg.dailyIncome;
 
-    // 1. Update "পণ্যের বিস্তারিত দেখুন" Details Button text
+    // 1. Update Details Button text
     const detailsBtnText = card.querySelector('.package-view-details-btn span, [data-view-details] span');
     if (detailsBtnText) {
-      detailsBtnText.textContent = lang === 'hi' ? 'उत्पाद विवरण देखें' : (lang === 'en' ? 'View Product Details' : 'পণ্যের বিস্তারিত দেখুন');
+      detailsBtnText.textContent = tLang(lang, 'পণ্যের বিস্তারিত দেখুন', 'View Product Details', 'عرض تفاصيل المنتج');
     }
 
     // 1b. Update Level + Admin-configured Package Name per active language
@@ -3619,9 +3817,9 @@ function updateRecordsPanelPackages() {
     const priceEl = card.querySelector('h3');
     if (priceEl) {
       if (pkg.price === 0) {
-        priceEl.textContent = `${formatNumber(0, user)} ${curr} (${labels.freeText})`;
+        priceEl.textContent = isUsd ? `$0.00 ${curr} (${labels.freeText})` : `${formatNumber(0, user)} ${curr} (${labels.freeText})`;
       } else {
-        priceEl.textContent = `${formatNumber(pkg.price, user)} ${curr}`;
+        priceEl.textContent = isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${formatNumber(pkgPrice, user)} ${curr}`;
       }
     }
 
@@ -3635,8 +3833,8 @@ function updateRecordsPanelPackages() {
     const metricValues = card.querySelectorAll('strong');
     if (metricValues.length >= 3) {
       metricValues[0].textContent = `${formatNumber(pkg.count, user)}${labels.tasksUnit}`;
-      metricValues[1].textContent = `${formatMoney(pkg.reward, user)} ${curr}`;
-      metricValues[2].textContent = `${formatMoney(pkg.dailyIncome, user)} ${curr}`;
+      metricValues[1].textContent = isUsd ? `${sym}${formatMoney(pkgReward, user)} ${curr}` : `${formatMoney(pkgReward, user)} ${curr}`;
+      metricValues[2].textContent = isUsd ? `${sym}${formatMoney(pkgDaily, user)} ${curr}` : `${formatMoney(pkgDaily, user)} ${curr}`;
     }
 
     // 4. Update Button
@@ -3810,10 +4008,15 @@ function renderPackageDetailPage(level) {
   const pkg = packageData[level] || packageData.LV1;
   activeDetailPackageLevel = level || 'LV1';
   const user = getCurrentUser();
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
   const curr = getUserCurrency(user);
+  const sym = getUserCurrencySymbol(user);
   const userLevel = (user && user.packageLevel) || 'LV0';
   const pkgName = getPackageName(level, lang);
+  const pkgPrice = toUserCurrencyAmount(pkg.price, user);
+  const pkgReward = toUserCurrencyAmount(pkg.reward, user);
+  const pkgDaily = isUsd ? Number((pkgReward * pkg.count).toFixed(2)) : pkg.dailyIncome;
 
   // 1. Dynamic Professional Hero Banner per Package
   const bannerConfig = packageBanners[level] || packageBanners.LV1;
@@ -3826,52 +4029,55 @@ function renderPackageDetailPage(level) {
   if (bannerBadge) bannerBadge.textContent = `${level} · ${(pkg.nameEn || level).toUpperCase()}`;
 
   const bannerTagline = document.getElementById('page-pkg-banner-tagline');
-  if (bannerTagline) bannerTagline.textContent = bannerConfig.tagline;
+  if (bannerTagline) {
+    bannerTagline.textContent = tLang(lang, bannerConfig.tagline, 'Global Social Media Campaign', 'حملة التواصل الاجتماعي العالمية');
+  }
 
   const bannerTitle = document.getElementById('page-pkg-banner-title');
   if (bannerTitle) bannerTitle.textContent = `${pkgName} (${level})`;
 
   const bannerDesc = document.getElementById('page-pkg-banner-desc');
   if (bannerDesc) {
-    if (lang === 'hi') {
-      bannerDesc.textContent = `दैनिक ${pkg.count} कार्य · प्रति कार्य ${curr} ${formatMoney(pkg.reward, user)} · दैनिक ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
-    } else if (lang === 'en') {
-      bannerDesc.textContent = `${pkg.count} Daily Tasks · ${curr} ${formatMoney(pkg.reward, user)} / task · Daily ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+    if (lang === 'ar') {
+      bannerDesc.textContent = `${pkg.count} مهمة يومياً · ${isUsd ? sym : curr + ' '}${formatMoney(pkgReward, user)} / مهمة · يومياً ${isUsd ? sym : curr + ' '}${formatMoney(pkgDaily, user)}`;
+    } else if (lang === 'bn') {
+      bannerDesc.textContent = `দৈনিক ${formatNumber(pkg.count, user)}টি কাজ · প্রতি কাজ ${isUsd ? sym : curr + ' '}${formatMoney(pkgReward, user)} · দৈনিক ${isUsd ? sym : curr + ' '}${formatMoney(pkgDaily, user)}`;
     } else {
-      bannerDesc.textContent = `দৈনিক ${formatNumber(pkg.count, user)}টি কাজ · প্রতি কাজ ${curr} ${formatMoney(pkg.reward, user)} · দৈনিক ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+      bannerDesc.textContent = `${pkg.count} Daily Tasks · ${isUsd ? sym : curr + ' '}${formatMoney(pkgReward, user)} / task · Daily ${isUsd ? sym : curr + ' '}${formatMoney(pkgDaily, user)}`;
     }
   }
 
   // 2. Price Display
   const priceEl = document.getElementById('page-pkg-price');
   const barPriceEl = document.getElementById('page-pkg-bar-price');
+  const freeLabel = tLang(lang, 'ফ্রি', 'Free', 'مجاني');
   const formattedPrice = pkg.price === 0
-    ? (lang === 'hi' ? `0 ${curr} (मुफ़्त)` : (lang === 'bn' ? `${formatNumber(0, user)} ${curr} (ফ্রি)` : `0 ${curr} (Free)`))
-    : `${curr} ${formatNumber(pkg.price, user)}`;
+    ? (isUsd ? `$0.00 ${curr} (${freeLabel})` : `${formatNumber(0, user)} ${curr} (${freeLabel})`)
+    : (isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${curr} ${formatNumber(pkgPrice, user)}`);
   if (priceEl) priceEl.textContent = formattedPrice;
   if (barPriceEl) barPriceEl.textContent = formattedPrice;
 
   // 3. Rate and Metrics Calculation
   let rateStr = '0.00';
-  if (pkg.price > 0 && pkg.dailyIncome > 0) {
-    rateStr = ((pkg.dailyIncome / pkg.price) * 100).toFixed(2);
+  if (pkgPrice > 0 && pkgDaily > 0) {
+    rateStr = ((pkgDaily / pkgPrice) * 100).toFixed(2);
   }
 
   const metricDailyEl = document.getElementById('page-pkg-metric-daily');
   if (metricDailyEl) {
-    metricDailyEl.textContent = `${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+    metricDailyEl.textContent = isUsd ? `${sym}${formatMoney(pkgDaily, user)} ${curr}` : `${curr} ${formatMoney(pkgDaily, user)}`;
   }
 
-  const monthlyProfit = (pkg.dailyIncome || 0) * 30;
+  const monthlyProfit = Number(((pkgDaily || 0) * 30).toFixed(2));
   const metricMonthlyEl = document.getElementById('page-pkg-metric-monthly');
   if (metricMonthlyEl) {
-    metricMonthlyEl.textContent = `${curr} ${formatNumber(monthlyProfit, user)}`;
+    metricMonthlyEl.textContent = isUsd ? `${sym}${formatMoney(monthlyProfit, user)} ${curr}` : `${curr} ${formatNumber(monthlyProfit, user)}`;
   }
 
   const metricRateEl = document.getElementById('page-pkg-metric-rate');
   if (metricRateEl) {
     if (pkg.price === 0) {
-      metricRateEl.textContent = lang === 'hi' ? '100% मुफ़्त' : (lang === 'bn' ? '১০০% ফ্রি' : '100% Free');
+      metricRateEl.textContent = tLang(lang, '১০০% ফ্রি', '100% Free', 'مجاني 100%');
     } else {
       metricRateEl.textContent = lang === 'bn' ? `${formatBanglaNumber(rateStr)}%` : `${rateStr}%`;
     }
@@ -3879,43 +4085,51 @@ function renderPackageDetailPage(level) {
 
   const metricTasksEl = document.getElementById('page-pkg-metric-tasks');
   if (metricTasksEl) {
-    if (lang === 'hi') {
-      metricTasksEl.textContent = `${pkg.count} कार्य (प्रति कार्य ${curr} ${formatMoney(pkg.reward, user)})`;
+    const unitTxt = isUsd ? sym : curr + ' ';
+    if (lang === 'ar') {
+      metricTasksEl.textContent = `${pkg.count} مهام (${unitTxt}${formatMoney(pkgReward, user)} / مهمة)`;
     } else if (lang === 'bn') {
-      metricTasksEl.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ (প্রতি কাজ ${curr} ${formatMoney(pkg.reward, user)})`;
+      metricTasksEl.textContent = `${formatBanglaNumber(pkg.count)}টি কাজ (প্রতি কাজ ${unitTxt}${formatMoney(pkgReward, user)})`;
     } else {
-      metricTasksEl.textContent = `${pkg.count} Tasks (${curr} ${formatMoney(pkg.reward, user)} / task)`;
+      metricTasksEl.textContent = `${pkg.count} Tasks (${unitTxt}${formatMoney(pkgReward, user)} / task)`;
     }
   }
 
   // 4. Product Overview & Realistic Calculation Lines
   const calcLine1El = document.getElementById('page-pkg-calc-line1');
   if (calcLine1El) {
+    const pTxt = isUsd ? `${sym}${formatMoney(pkgPrice, user)}` : `${curr} ${formatNumber(pkgPrice, user)}`;
+    const rTxt = isUsd ? `${sym}${formatMoney(pkgReward, user)}` : `${curr} ${formatMoney(pkgReward, user)}`;
+    const dTxt = isUsd ? `${sym}${formatMoney(pkgDaily, user)}` : `${curr} ${formatMoney(pkgDaily, user)}`;
     if (pkg.price === 0) {
       calcLine1El.textContent = lang === 'bn'
-        ? `${formatBanglaNumber(pkg.count)}টি কাজ × ${curr} ${formatMoney(pkg.reward, user)} = ${curr} ${formatMoney(pkg.dailyIncome, user)}`
-        : `${pkg.count} × ${curr} ${formatMoney(pkg.reward, user)} = ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+        ? `${formatBanglaNumber(pkg.count)}টি কাজ × ${rTxt} = ${dTxt}`
+        : `${pkg.count} × ${rTxt} = ${dTxt}`;
     } else {
       calcLine1El.textContent = lang === 'bn'
-        ? `${curr} ${formatNumber(pkg.price, user)} × ${formatBanglaNumber(rateStr)}% = ${curr} ${formatMoney(pkg.dailyIncome, user)}`
-        : `${curr} ${formatNumber(pkg.price, user)} × ${rateStr}% = ${curr} ${formatMoney(pkg.dailyIncome, user)}`;
+        ? `${pTxt} × ${formatBanglaNumber(rateStr)}% = ${dTxt}`
+        : `${pTxt} × ${rateStr}% = ${dTxt}`;
     }
   }
 
   const calcLine2El = document.getElementById('page-pkg-calc-line2');
   if (calcLine2El) {
+    const dTxt = isUsd ? `${sym}${formatMoney(pkgDaily, user)}` : `${curr} ${formatMoney(pkgDaily, user)}`;
+    const mTxt = isUsd ? `${sym}${formatMoney(monthlyProfit, user)}` : `${curr} ${formatNumber(monthlyProfit, user)}`;
     calcLine2El.textContent = lang === 'bn'
-      ? `${curr} ${formatMoney(pkg.dailyIncome, user)} × ৩০ দিন = ${curr} ${formatNumber(monthlyProfit, user)}`
-      : `${curr} ${formatMoney(pkg.dailyIncome, user)} × 30 = ${curr} ${formatNumber(monthlyProfit, user)}`;
+      ? `${dTxt} × ৩০ দিন = ${mTxt}`
+      : `${dTxt} × 30 = ${mTxt}`;
   }
 
   const calcLine3El = document.getElementById('page-pkg-calc-line3');
   if (calcLine3El) {
-    calcLine3El.textContent = lang === 'hi'
-      ? `${curr} ${formatNumber(monthlyProfit, user)} लाभ (दैनिक निकासी योग्य)`
-      : (lang === 'bn'
-        ? `${curr} ${formatNumber(monthlyProfit, user)} লাভ (প্রতিদিন উত্তোলনযোগ্য)`
-        : `${curr} ${formatNumber(monthlyProfit, user)} Profit (Withdrawable daily)`);
+    const mTxt = isUsd ? `${sym}${formatMoney(monthlyProfit, user)} ${curr}` : `${curr} ${formatNumber(monthlyProfit, user)}`;
+    calcLine3El.textContent = tLang(
+      lang,
+      `${mTxt} লাভ (প্রতিদিন উত্তোলনযোগ্য)`,
+      `${mTxt} Profit (Withdrawable daily)`,
+      `${mTxt} ربح (قابل للسحب يومياً)`
+    );
   }
 
   // 5. Bottom Purchase Button State
@@ -3926,21 +4140,40 @@ function renderPackageDetailPage(level) {
     const isPurchased = (user && user.purchasedPackages && user.purchasedPackages.includes(level));
 
     if (isCurrent) {
-      buyBtn.textContent = lang === 'hi' ? 'वर्तमान स्तर' : (lang === 'en' ? 'Current Tier' : 'বর্তমান স্তর');
+      buyBtn.textContent = tLang(lang, 'বর্তমান স্তর', 'Current Tier', 'المستوى الحالي');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
     } else if (isPurchased) {
-      buyBtn.textContent = lang === 'hi' ? 'खरीदा गया ✓' : (lang === 'en' ? 'Purchased ✓' : 'ক্রয় সম্পন্ন ✓');
+      buyBtn.textContent = tLang(lang, 'ক্রয় সম্পন্ন ✓', 'Purchased ✓', 'تم الشراء ✓');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-emerald-700/60 text-emerald-200 font-bold text-sm cursor-default';
     } else if (level === 'LV0') {
-      buyBtn.textContent = lang === 'hi' ? 'मुफ़्त सक्रिय' : (lang === 'en' ? 'Free Active' : 'ফ্রি সক্রিয়');
+      buyBtn.textContent = tLang(lang, 'ফ্রি সক্রিয়', 'Free Active', 'مجاني نشط');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
     } else {
-      buyBtn.textContent = lang === 'hi' ? 'खरीदें' : (lang === 'en' ? 'Buy Now' : 'ক্রয় করুন');
+      buyBtn.textContent = tLang(lang, 'ক্রয় করুন', 'Buy Now', 'اشترِ الآن');
       buyBtn.disabled = false;
       buyBtn.className = 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition active:scale-95 cursor-pointer';
+    }
+  }
+
+  const step4El = document.getElementById('page-pkg-earn-step4');
+  if (step4El) {
+    if (isUsd) {
+      step4El.textContent = tLang(
+        lang,
+        'কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি USDT (BEP20 / Binance)-এ উত্তোলন করতে পারবেন।',
+        'No hidden charges or complex terms. You can withdraw your daily earnings immediately via USDT (BEP20 / Binance).',
+        'لا توجد رسوم خفية أو شروط معقدة. يمكنك سحب أرباحك اليومية فوراً عبر USDT (BEP20 / Binance).'
+      );
+    } else {
+      step4El.textContent = tLang(
+        lang,
+        'কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি সাথে সাথে বিকাশ, নগদ অথবা Binance-এ উত্তোলন করতে পারবেন।',
+        'No hidden charges or complex terms. You can withdraw your daily earnings immediately via bKash, Nagad, or Binance.',
+        'لا توجد رسوم خفية أو شروط معقدة. يمكنك سحب أرباحك اليومية فوراً عبر bKash أو Nagad أو Binance.'
+      );
     }
   }
 }
@@ -3981,8 +4214,9 @@ function handlePackagePurchase(level, triggerBtn) {
   if (window.isProcessingPackagePurchase) return;
 
   const user = getCurrentUser();
+  const initLang = getActiveLang(user);
   if (!user || (!user.phone && !user.accountNumber)) {
-    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    showToastNotification(tLang(initLang, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
     if (typeof showView === 'function') showView('login');
     return;
   }
@@ -3992,11 +4226,11 @@ function handlePackagePurchase(level, triggerBtn) {
   const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
 
   if (isCurrent) {
-    showToastNotification(`আপনি বর্তমানে ${level} প্যাকেজে সক্রিয় রয়েছেন।`);
+    showToastNotification(tLang(initLang, `আপনি বর্তমানে ${level} প্যাকেজে সক্রিয় রয়েছেন।`, `You are already active on the ${level} package.`, `أنت نشط بالفعل في باقة ${level}.`));
     return;
   }
   if (isPurchased) {
-    showToastNotification(`এই প্যাকেজটি (${level}) আপনি ইতিমধ্যে ক্রয় করেছেন।`);
+    showToastNotification(tLang(initLang, `এই প্যাকেজটি (${level}) আপনি ইতিমধ্যে ক্রয় করেছেন।`, `You have already purchased the ${level} package.`, `لقد اشتريت باقة ${level} بالفعل.`));
     return;
   }
 
@@ -4019,7 +4253,7 @@ function handlePackagePurchase(level, triggerBtn) {
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
         </svg>
-        <span>যাচাই করা হচ্ছে...</span>
+        <span>${tLang(initLang, 'যাচাই করা হচ্ছে...', 'Verifying...', 'جاري التحقق...')}</span>
       </span>
     `;
     btn.className = 'px-8 py-3 rounded-xl bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg opacity-90 cursor-wait flex items-center justify-center gap-2';
@@ -4034,8 +4268,10 @@ function handlePackagePurchase(level, triggerBtn) {
         freshUser = Object.assign({}, freshUser, liveDbUser);
       }
 
+      const isUsd = isUsdOnlyUser(freshUser);
+      const lang = getActiveLang(freshUser);
       const userBal = Number(freshUser.balance || 0);
-      const price = Number(pkg.price || 0);
+      const price = toUserCurrencyAmount(Number(pkg.price || 0), freshUser);
 
       if (userBal < price) {
         if (btn) {
@@ -4048,7 +4284,7 @@ function handlePackagePurchase(level, triggerBtn) {
               <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
-              <span>অপর্যাপ্ত ব্যালেন্স</span>
+              <span>${tLang(lang, 'অপর্যাপ্ত ব্যালেন্স', 'Insufficient Balance', 'الرصيد غير كافٍ')}</span>
             </span>
           `;
         }
@@ -4064,7 +4300,7 @@ function handlePackagePurchase(level, triggerBtn) {
               if (!checkUser || (checkUser.packageLevel !== level && !(checkUser.purchasedPackages && checkUser.purchasedPackages.includes(level)))) {
                 btn.disabled = false;
                 btn.className = origClass || 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition-all duration-500 active:scale-95 cursor-pointer';
-                btn.innerHTML = origHtml || 'ক্রয় করুন';
+                btn.innerHTML = origHtml || tLang(lang, 'ক্রয় করুন', 'Buy Now', 'اشترِ الآن');
                 btn.style.opacity = '0';
                 requestAnimationFrame(function() { btn.style.opacity = '1'; });
               }
@@ -4075,8 +4311,8 @@ function handlePackagePurchase(level, triggerBtn) {
       }
 
       // Sufficient live Supabase balance: deduct & persist
-      freshUser.balance = Math.max(0, userBal - price);
-      freshUser.frozenBalance = (Number(freshUser.frozenBalance) || 0) + price;
+      freshUser.balance = Number(Math.max(0, userBal - price).toFixed(2));
+      freshUser.frozenBalance = Number(((Number(freshUser.frozenBalance) || 0) + price).toFixed(2));
       freshUser.packageLevel = level;
       if (!Array.isArray(freshUser.purchasedPackages)) freshUser.purchasedPackages = ['LV0'];
       if (!freshUser.purchasedPackages.includes(level)) {
@@ -4096,14 +4332,14 @@ function handlePackagePurchase(level, triggerBtn) {
         ratio: '100%',
         actual: price,
         status: 'অনুমোদিত',
-        method: `প্যাকেজ ক্রয় (${level})`,
+        method: isUsd ? `Package Purchase (${level})` : `প্যাকেজ ক্রয় (${level})`,
         date: now.toISOString().split('T')[0],
         time: now.toTimeString().split(' ')[0],
         newBalance: freshUser.balance
       });
 
       if (btn) {
-        btn.textContent = 'বর্তমান স্তর';
+        btn.textContent = tLang(lang, 'বর্তমান স্তর', 'Current Tier', 'المستوى الحالي');
         btn.disabled = true;
         btn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
       }
@@ -4113,7 +4349,12 @@ function handlePackagePurchase(level, triggerBtn) {
       updateVipHallRooms();
       updateRecordsPanelPackages();
 
-      showToastNotification(`🎉 অভিনন্দন! আপনার ${level} প্যাকেজ সফলভাবে সক্রিয় হয়েছে!`);
+      showToastNotification(tLang(
+        lang,
+        `🎉 অভিনন্দন! আপনার ${level} প্যাকেজ সফলভাবে সক্রিয় হয়েছে!`,
+        `🎉 Congratulations! Your ${level} package has been activated!`,
+        `🎉 تهانينا! تم تفعيل باقة ${level} بنجاح!`
+      ));
 
       const detailPanel = document.getElementById('package-detail-panel');
       if (detailPanel && !detailPanel.hidden) {
@@ -4301,14 +4542,17 @@ async function distributeTeamRebate(memberPhone, rechargeAmount) {
     }
   }
 
-  // Credit each verified tier superior
+  const memberProfile = await dbGetUser(normPhone).catch(function() { return null; });
+  const memberCurr = (memberProfile && memberProfile.currency) || 'BDT';
+
+  // Credit each verified tier superior (converting cross-currency BDT <-> USD automatically)
   for (const rec of teamRows) {
     const tier = Number(rec.tier) || 1;
     const rate = rebateRates[tier] || 0.02;
-    const commission = Math.round(amt * rate * 100) / 100;
+    const rawCommission = Math.round(amt * rate * 100) / 100;
     const supPhoneRaw = rec.superior_phone || rec.superiorPhone;
 
-    if (supPhoneRaw && commission > 0) {
+    if (supPhoneRaw && rawCommission > 0) {
       let supPhone = normalizeBdPhone(supPhoneRaw);
       let supUser = supPhone ? await dbGetUser(supPhone) : null;
       if (!supUser && supPhoneRaw) {
@@ -4319,7 +4563,9 @@ async function distributeTeamRebate(memberPhone, rechargeAmount) {
       }
 
       if (supUser && supPhone) {
-        supUser.balance = (Number(supUser.balance) || 0) + commission;
+        const supCurr = supUser.currency || (isBangladeshUser(supUser) ? 'BDT' : 'USD');
+        const commission = convertBetweenCurrencies(rawCommission, memberCurr, supCurr);
+        supUser.balance = Number(((Number(supUser.balance) || 0) + commission).toFixed(2));
         await dbSaveUser(supUser);
 
         // If this superior is the currently logged-in user, update in-memory state & UI immediately
@@ -4342,12 +4588,12 @@ async function distributeTeamRebate(memberPhone, rechargeAmount) {
           ratio: `${(rate * 100).toFixed(0)}%`,
           actual: commission,
           status: 'স্থানান্তরিত',
-          method: `টিম রিবেট কমিশন (স্তর ${tier})`,
+          method: supCurr === 'USD' ? `Team Rebate Commission (Tier ${tier})` : `টিম রিবেট কমিশন (স্তর ${tier})`,
           date: dateStr,
           time: `${hours}:${mins}`,
           newBalance: supUser.balance
         });
-        console.log(`[Rebate] Tier ${tier} (${(rate*100)}%) credited ${commission} to ${supPhone}`);
+        console.log(`[Rebate] Tier ${tier} (${(rate*100)}%) credited ${commission} ${supCurr} to ${supPhone}`);
       }
     }
   }
@@ -4355,8 +4601,9 @@ async function distributeTeamRebate(memberPhone, rechargeAmount) {
 
 async function confirmDeposit() {
   const user = getCurrentUser();
+  const langPre = getActiveLang(user);
   if (!user || (!user.phone && !user.accountNumber)) {
-    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    showToastNotification(tLang(langPre, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
     if (typeof showView === 'function') showView('login');
     return;
   }
@@ -4370,17 +4617,24 @@ async function confirmDeposit() {
     const statusMsg = document.getElementById('deposit-status-message');
     if (statusMsg) {
       statusMsg.className = 'text-center font-bold text-xs text-amber-300';
-      statusMsg.textContent = 'অনুগ্রহ করে রিচার্জের সঠিক পরিমাণ দিন।';
+      statusMsg.textContent = tLang(langPre, 'অনুগ্রহ করে রিচার্জের সঠিক পরিমাণ দিন।', 'Please enter a valid deposit amount.', 'يرجى إدخال مبلغ إيداع صحيح.');
     }
     return;
   }
 
-  const minRcAmt = Number((window.aloPlatformConfig && window.aloPlatformConfig.minRecharge) || 300);
+  const minRcAmt = toUserCurrencyAmount(Number((window.aloPlatformConfig && window.aloPlatformConfig.minRecharge) || 300), user);
+  const sym = getUserCurrencySymbol(user);
+  const isUsd = isUsdOnlyUser(user);
   if (amount < minRcAmt) {
     const statusMsg = document.getElementById('deposit-status-message');
     if (statusMsg) {
       statusMsg.className = 'text-center font-bold text-xs text-amber-300';
-      statusMsg.textContent = `সর্বনিম্ন রিচার্জের পরিমাণ ৳${minRcAmt}`;
+      statusMsg.textContent = tLang(
+        langPre,
+        `সর্বনিম্ন রিচার্জের পরিমাণ ${sym}${minRcAmt}`,
+        `Minimum deposit is ${sym}${isUsd ? minRcAmt.toFixed(2) : minRcAmt}`,
+        `الحد الأدنى للإيداع هو ${sym}${isUsd ? minRcAmt.toFixed(2) : minRcAmt}`
+      );
     }
     return;
   }
@@ -4398,7 +4652,7 @@ async function confirmDeposit() {
     ratio: '0%',
     actual: amount,
     status: 'মুলতবি (Pending)',
-    method: 'বিকাশ (bKash)',
+    method: isUsd ? 'USDT (BEP20)' : 'বিকাশ (bKash)',
     order_id: orderId,
     date: dateStr,
     time: `${hours}:${mins}`,
@@ -4406,23 +4660,28 @@ async function confirmDeposit() {
   });
 
   const curr = getUserCurrency(user);
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+  const lang = getActiveLang(user);
 
   const statusMsg = document.getElementById('deposit-status-message');
   if (statusMsg) {
     statusMsg.className = 'text-center font-bold text-xs text-amber-300';
-    const msg = lang === 'hi'
-      ? `⏳ ${formatMoney(amount, user)} ${curr} रिचार्ज अनुरोध सबमिट हो गया (एडमिन अनुमोदन के बाद बैलेंस जुड़ेगा)`
-      : (lang === 'en' ? `⏳ ${formatMoney(amount, user)} ${curr} deposit request submitted (awaiting Admin approval)` : `⏳ ${formatMoney(amount, user)} ${curr} রিচার্জ আবেদন জমা হয়েছে — অ্যাডমিন যাচাইয়ের পর ব্যালেন্সে যোগ হবে!`);
-    statusMsg.textContent = msg;
+    statusMsg.textContent = tLang(
+      lang,
+      `⏳ ${formatMoney(amount, user)} ${curr} রিচার্জ আবেদন জমা হয়েছে — অ্যাডমিন যাচাইয়ের পর ব্যালেন্সে যোগ হবে!`,
+      `⏳ ${formatMoney(amount, user)} ${curr} deposit request submitted (awaiting Admin approval)`,
+      `⏳ تم إرسال طلب إيداع ${formatMoney(amount, user)} ${curr} (بانتظار موافقة الإدارة)`
+    );
   }
 
   setTimeout(function() {
     closeActionSheet();
     showToastNotification(
-      lang === 'en'
-        ? `⏳ ${formatMoney(amount, user)} ${curr} deposit submitted for Admin review.`
-        : `⏳ ${formatMoney(amount, user)} ${curr} ডিপোজিট অনুরোধ জমা হয়েছে (যাচাই চলমান)।`
+      tLang(
+        lang,
+        `⏳ ${formatMoney(amount, user)} ${curr} ডিপোজিট অনুরোধ জমা হয়েছে (যাচাই চলমান)।`,
+        `⏳ ${formatMoney(amount, user)} ${curr} deposit submitted for Admin review.`,
+        `⏳ تم إرسال طلب الإيداع ${formatMoney(amount, user)} ${curr} لمراجعة الإدارة.`
+      )
     );
   }, 650);
 }
@@ -4515,18 +4774,25 @@ function renderWithdrawalHistoryRows(container, emptyState, list) {
   }
   if (emptyState) emptyState.classList.add('hidden');
   container.classList.remove('hidden');
+  const lang = getActiveLang();
   container.innerHTML = list.map(function(item) {
     const stStr = String(item.status || '');
     const stLower = stStr.toLowerCase();
-    const stColor = (stLower.includes('বাতিল') || stLower.includes('reject'))
-      ? '#f87171'
-      : ((stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet')) ? '#34d399' : '#f59e0b');
+    const isRejected = stLower.includes('বাতিল') || stLower.includes('reject');
+    const isApproved = stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet');
+    const stColor = isRejected ? '#f87171' : (isApproved ? '#34d399' : '#f59e0b');
+    const stDisplay = tLang(
+      lang,
+      stStr,
+      isRejected ? 'Rejected' : (isApproved ? 'Approved' : 'Pending'),
+      isRejected ? 'مرفوض' : (isApproved ? 'تمت الموافقة' : 'قيد الانتظار')
+    );
     return `
       <div class="grid grid-cols-5 items-center py-3.5 px-2 text-center hover:bg-[#081a4b] transition">
         <div class="text-left pl-1 font-bold font-mono text-white text-[13px]">${item.amount}</div>
         <div class="font-bold text-[13px]" style="color: #2d79f8;">${item.ratio}</div>
         <div class="font-bold font-mono text-white text-[13px]">${item.actual}</div>
-        <div class="font-bold text-xs" style="color: ${stColor};">${item.status}</div>
+        <div class="font-bold text-xs" style="color: ${stColor};">${stDisplay}</div>
         <div class="text-[10.5px] text-slate-200 leading-tight font-mono">
           <div>${item.date}</div>
           <div class="mt-0.5 text-slate-400">${item.time}</div>
@@ -4579,8 +4845,16 @@ function openWithdrawSheet() {
     updateNagadDisplayAcrossApp();
     updateUsdtDisplayAcrossApp();
     updatePaymentAndWithdrawalForUser();
+    const user = getCurrentUser();
+    const pCfg = window.aloPlatformConfig || {};
+    const minW = toUserCurrencyAmount(Number(pCfg.minWithdraw) || 700, user);
     const amtInp = document.getElementById('withdraw-sheet-amount');
-    if (amtInp) amtInp.value = '';
+    if (amtInp) {
+      amtInp.value = '';
+      if (isUsdOnlyUser(user)) {
+        amtInp.placeholder = `Enter amount (Min $${minW.toFixed(2)} USD)`;
+      }
+    }
     const pwdInp = document.getElementById('withdraw-sheet-fund-password');
     if (pwdInp) pwdInp.value = '';
   }
@@ -4601,6 +4875,8 @@ function updateWithdrawalMethodLabelDisplay() {
   const withdrawLabel = document.getElementById('withdraw-selected-method-label');
   if (!withdrawLabel) return;
 
+  const lang = getActiveLang();
+  const selectTxt = tLang(lang, 'পছন্দ করুন', 'Select Method', 'اختر الوسيلة');
   const bkash = getSavedBkashAccount();
   const nagad = getSavedNagadAccount();
   const usdt = getSavedUsdtAccount();
@@ -4613,7 +4889,7 @@ function updateWithdrawalMethodLabelDisplay() {
     } else if (usdt && usdt.address) {
       userSelectedWithdrawMethod = 'USDT';
     } else {
-      withdrawLabel.textContent = 'পছন্দ করুন';
+      withdrawLabel.textContent = selectTxt;
       withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
       return;
     }
@@ -4621,18 +4897,18 @@ function updateWithdrawalMethodLabelDisplay() {
 
   if (userSelectedWithdrawMethod === 'BKASH') {
     if (bkash && bkash.phone) {
-      withdrawLabel.textContent = `বিকাশ (${bkash.phone})`;
+      withdrawLabel.textContent = (lang === 'bn' ? 'বিকাশ' : 'bKash') + ` (${bkash.phone})`;
       withdrawLabel.className = 'text-[#38bdf8] font-bold font-mono';
     } else {
-      withdrawLabel.textContent = 'পছন্দ করুন';
+      withdrawLabel.textContent = selectTxt;
       withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
     }
   } else if (userSelectedWithdrawMethod === 'NAGAD') {
     if (nagad && nagad.phone) {
-      withdrawLabel.textContent = `নগদ (${nagad.phone})`;
+      withdrawLabel.textContent = (lang === 'bn' ? 'নগদ' : 'Nagad') + ` (${nagad.phone})`;
       withdrawLabel.className = 'text-[#f7941d] font-bold font-mono';
     } else {
-      withdrawLabel.textContent = 'পছন্দ করুন';
+      withdrawLabel.textContent = selectTxt;
       withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
     }
   } else if (userSelectedWithdrawMethod === 'USDT') {
@@ -4641,7 +4917,7 @@ function updateWithdrawalMethodLabelDisplay() {
       withdrawLabel.textContent = `USDT (${shortAddr})`;
       withdrawLabel.className = 'text-[#26a17b] font-bold font-mono';
     } else {
-      withdrawLabel.textContent = 'পছন্দ করুন';
+      withdrawLabel.textContent = selectTxt;
       withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
     }
   }
@@ -4680,20 +4956,21 @@ function getSavedRealName() {
     if (usdt && usdt.fullName && usdt.fullName.trim()) return usdt.fullName.trim();
     const user = getCurrentUser();
     if (user && user.realName && user.realName.trim()) return user.realName.trim();
-    if (user && user.name && user.name !== 'সদস্য') return user.name.trim();
+    if (user && user.name && user.name !== 'সদস্য' && user.name !== 'Member' && user.name !== 'عضو') return user.name.trim();
   } catch(e) {}
   return '';
 }
 
 function updateRealNameDisplayAcrossApp() {
   const realName = getSavedRealName();
+  const lang = getActiveLang();
   const badge = document.getElementById('personal-account-status-badge') || document.querySelector('[data-profile-value="account"]');
   if (badge) {
     if (realName) {
       badge.textContent = realName;
       badge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-semibold';
     } else {
-      badge.textContent = 'সেট করুন';
+      badge.textContent = tLang(lang, 'সেট করুন', 'Set Up', 'إعداد');
       badge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
     }
   }
@@ -4701,13 +4978,14 @@ function updateRealNameDisplayAcrossApp() {
 
 function renderRealNameSetupPanel() {
   const realName = getSavedRealName();
+  const lang = getActiveLang();
   const nameInput = document.getElementById('realname-fullname-input');
   const lockIcon = document.getElementById('realname-lock-icon');
   const lockNotice = document.getElementById('realname-locked-notice');
   const submitBtn = document.getElementById('realname-set-submit-btn');
 
   if (nameInput) {
-    nameInput.placeholder = 'আপনার প্রকৃত নাম লিখুন';
+    nameInput.placeholder = tLang(lang, 'আপনার প্রকৃত নাম লিখুন', 'Enter your full legal name', 'أدخل اسمك القانوني الكامل');
     nameInput.value = realName || '';
     if (realName) {
       nameInput.readOnly = true;
@@ -4718,7 +4996,7 @@ function renderRealNameSetupPanel() {
         submitBtn.disabled = true;
         submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
         submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-        submitBtn.innerHTML = '<span>✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)</span>';
+        submitBtn.innerHTML = `<span>${tLang(lang, '✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)', '✓ Permanently Saved (One-time)', '✓ محفوظ بشكل دائم (مرة واحدة)')}</span>`;
       }
     } else {
       nameInput.readOnly = false;
@@ -4729,7 +5007,7 @@ function renderRealNameSetupPanel() {
         submitBtn.disabled = false;
         submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
         submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-        submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+        submitBtn.innerHTML = `<span>${tLang(lang, 'সংরক্ষণ', 'Save', 'حفظ')}</span>`;
       }
     }
   }
@@ -4738,14 +5016,15 @@ function renderRealNameSetupPanel() {
 function saveRealNameDetails() {
   const nameInput = document.getElementById('realname-fullname-input');
   const realName = nameInput ? nameInput.value.trim() : '';
+  const lang = getActiveLang();
 
   if (getSavedRealName()) {
-    showToastNotification('⚠️ প্রকৃত নাম এককালীন সংরক্ষণ করা হয়েছে, এটি আর এডিট করা যাবে না');
+    showToastNotification(tLang(lang, '⚠️ প্রকৃত নাম এককালীন সংরক্ষণ করা হয়েছে, এটি আর এডিট করা যাবে না', '⚠️ Real name is permanently saved and cannot be edited', '⚠️ الاسم الحقيقي محفوظ بشكل دائم ولا يمكن تعديله'));
     return;
   }
 
   if (!realName || realName.length < 2) {
-    showToastNotification('⚠️ অনুগ্রহ করে আপনার সঠিক প্রকৃত নাম লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে আপনার সঠিক প্রকৃত নাম লিখুন', '⚠️ Please enter your valid full legal name', '⚠️ يرجى إدخال اسمك القانوني الكامل الصحيح'));
     if (nameInput) nameInput.focus();
     return;
   }
@@ -4766,7 +5045,7 @@ function saveRealNameDetails() {
   updateNagadDisplayAcrossApp();
   updateUsdtDisplayAcrossApp();
   renderRealNameSetupPanel();
-  showToastNotification('✓ প্রকৃত নাম সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  showToastNotification(tLang(lang, '✓ প্রকৃত নাম সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!', '✓ Real name permanently saved!', '✓ تم حفظ الاسم الحقيقي بشكل دائم!'));
   setTimeout(() => {
     openDashboardPanel('personal');
   }, 350);
@@ -4788,13 +5067,14 @@ window.getSavedFundPassword = getSavedFundPassword;
 
 function updateFundPasswordDisplayAcrossApp() {
   const fundPass = getSavedFundPassword();
+  const lang = getActiveLang();
   const badge = document.getElementById('personal-fund-status-badge');
   if (badge) {
     if (fundPass) {
-      badge.textContent = '🔒 সংরক্ষিত';
+      badge.textContent = tLang(lang, '🔒 সংরক্ষিত', '🔒 Saved', '🔒 محفوظ');
       badge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-medium';
     } else {
-      badge.textContent = 'সেট করুন';
+      badge.textContent = tLang(lang, 'সেট করুন', 'Set Up', 'إعداد');
       badge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
     }
   }
@@ -4802,6 +5082,7 @@ function updateFundPasswordDisplayAcrossApp() {
 window.updateFundPasswordDisplayAcrossApp = updateFundPasswordDisplayAcrossApp;
 
 function renderFundPasswordSetupPanel() {
+  const lang = getActiveLang();
   const newPassInput = document.getElementById('fund-password-new-input');
   const confirmPassInput = document.getElementById('fund-password-confirm-input');
   const lockNotice = document.getElementById('fund-password-locked-notice');
@@ -4830,7 +5111,7 @@ function renderFundPasswordSetupPanel() {
       submitBtn.disabled = true;
       submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, '✓ স্থায়ীভাবে সংরক্ষিত (এককালীন)', '✓ Permanently Saved (One-time)', '✓ محفوظ بشكل دائم (مرة واحدة)')}</span>`;
     }
   } else {
     if (newPassInput) {
@@ -4854,7 +5135,7 @@ function renderFundPasswordSetupPanel() {
       submitBtn.disabled = false;
       submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>জমা দিন</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, 'জমা দিন', 'Submit', 'إرسال')}</span>`;
     }
   }
 
@@ -4866,15 +5147,16 @@ function renderFundPasswordSetupPanel() {
     if (hideIcon) hideIcon.classList.add('hidden');
   });
 
-  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function' && window.aloI18n.getLanguage() !== 'bn') {
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
     window.aloI18n.translateDOM();
   }
 }
 window.renderFundPasswordSetupPanel = renderFundPasswordSetupPanel;
 
 function saveFundPasswordDetails() {
+  const lang = getActiveLang();
   if (getSavedFundPassword()) {
-    showToastNotification('⚠️ উত্তোলন পাসওয়ার্ড এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়');
+    showToastNotification(tLang(lang, '⚠️ উত্তোলন পাসওয়ার্ড এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন বা এডিট করা সম্ভব নয়', '⚠️ Withdrawal password is permanently saved and cannot be changed', '⚠️ كلمة مرور السحب محفوظة بشكل دائم ولا يمكن تغييرها'));
     return;
   }
 
@@ -4884,22 +5166,22 @@ function saveFundPasswordDetails() {
   const confirmPass = confirmPassInput ? confirmPassInput.value.trim() : '';
 
   if (!newPass) {
-    showToastNotification('⚠️ অনুগ্রহ করে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড লিখুন', '⚠️ Please enter a 6-digit withdrawal password', '⚠️ يرجى إدخال كلمة مرور سحب مكونة من 6 أرقام'));
     if (newPassInput) newPassInput.focus();
     return;
   }
   if (newPass.length !== 6 || !/^\d{6}$/.test(newPass)) {
-    showToastNotification('⚠️ উত্তোলন পাসওয়ার্ড অবশ্যই ঠিক ৬ ডিজিটের সংখ্যা হতে হবে');
+    showToastNotification(tLang(lang, '⚠️ উত্তোলন পাসওয়ার্ড অবশ্যই ঠিক ৬ ডিজিটের সংখ্যা হতে হবে', '⚠️ Withdrawal password must be exactly 6 digits', '⚠️ يجب أن تتكون كلمة مرور السحب من 6 أرقام بالضبط'));
     if (newPassInput) newPassInput.focus();
     return;
   }
   if (!confirmPass) {
-    showToastNotification('⚠️ অনুগ্রহ করে কনফার্ম পাসওয়ার্ড লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে কনফার্ম পাসওয়ার্ড লিখুন', '⚠️ Please enter confirm password', '⚠️ يرجى إدخال تأكيد كلمة المرور'));
     if (confirmPassInput) confirmPassInput.focus();
     return;
   }
   if (newPass !== confirmPass) {
-    showToastNotification('⚠️ দুটি পাসওয়ার্ড মিলছে না, পুনরায় যাচাই করুন');
+    showToastNotification(tLang(lang, '⚠️ দুটি পাসওয়ার্ড মিলছে না, পুনরায় যাচাই করুন', '⚠️ Passwords do not match, please check again', '⚠️ كلمات المرور غير متطابقة، يرجى التحقق مرة أخرى'));
     if (confirmPassInput) confirmPassInput.focus();
     return;
   }
@@ -4957,6 +5239,7 @@ function getSavedBkashAccount() {
 
 function updateBkashDisplayAcrossApp() {
   const bkash = getSavedBkashAccount();
+  const lang = getActiveLang();
 
   // 1. Profile / Personal Info row badge
   const personalBadge = document.getElementById('personal-bkash-status-badge');
@@ -4965,7 +5248,7 @@ function updateBkashDisplayAcrossApp() {
       personalBadge.textContent = bkash.phone;
       personalBadge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-mono font-semibold';
     } else {
-      personalBadge.textContent = 'বিকাশ সেট নেই';
+      personalBadge.textContent = tLang(lang, 'বিকাশ সেট নেই', 'bKash Not Bound', 'bKash غير مرتبط');
       personalBadge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
     }
   }
@@ -4978,6 +5261,7 @@ function updateBkashDisplayAcrossApp() {
 function renderBkashSetupPanel() {
   const bkash = getSavedBkashAccount();
   const realName = getSavedRealName();
+  const lang = getActiveLang();
   const nameInput = document.getElementById('bkash-fullname-input');
   const phoneInput = document.getElementById('bkash-phone-input');
   const lockNotice = document.getElementById('bkash-locked-notice');
@@ -4987,7 +5271,7 @@ function renderBkashSetupPanel() {
 
   const boundName = (bkash && bkash.fullName) || realName || '';
   if (nameInput) {
-    nameInput.placeholder = 'প্রকৃত নাম লিখুন';
+    nameInput.placeholder = tLang(lang, 'প্রকৃত নাম লিখুন', 'Enter full name', 'أدخل الاسم الكامل');
     nameInput.value = boundName;
   }
 
@@ -5009,13 +5293,13 @@ function renderBkashSetupPanel() {
       submitBtn.disabled = true;
       submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, '✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)', '✓ Saved (Not Editable)', '✓ محفوظ (غير قابل للتعديل)')}</span>`;
     }
   } else {
     // Editable mode
     if (phoneInput) {
       phoneInput.value = '';
-      phoneInput.placeholder = 'বিকাশ নম্বর লিখুন';
+      phoneInput.placeholder = tLang(lang, 'বিকাশ নম্বর লিখুন', 'Enter bKash number', 'أدخل رقم bKash');
       phoneInput.readOnly = false;
       phoneInput.classList.remove('cursor-not-allowed', 'opacity-90');
     }
@@ -5035,15 +5319,16 @@ function renderBkashSetupPanel() {
       submitBtn.disabled = false;
       submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, 'সংরক্ষণ', 'Save', 'حفظ')}</span>`;
     }
   }
 }
 
 function saveBkashAccountDetails() {
   const existing = getSavedBkashAccount();
+  const lang = getActiveLang();
   if (existing && existing.phone) {
-    showToastNotification('⚠️ বিকাশ অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না');
+    showToastNotification(tLang(lang, '⚠️ বিকাশ অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না', '⚠️ bKash account is permanently saved and cannot be changed', '⚠️ حساب bKash محفوظ بشكل دائم ولا يمكن تغييره'));
     return;
   }
 
@@ -5053,12 +5338,12 @@ function saveBkashAccountDetails() {
   const phone = phoneInput ? phoneInput.value.trim() : '';
 
   if (!fullName || fullName.length < 2) {
-    showToastNotification('⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন', '⚠️ Please enter your full legal name', '⚠️ يرجى إدخال اسمك القانوني الكامل'));
     if (nameInput) nameInput.focus();
     return;
   }
   if (!phone || phone.length < 10) {
-    showToastNotification('⚠️ অনুগ্রহ করে সঠিক বিকাশ নম্বর লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে সঠিক বিকাশ নম্বর লিখুন', '⚠️ Please enter a valid bKash number', '⚠️ يرجى إدخال رقم bKash صحيح'));
     if (phoneInput) phoneInput.focus();
     return;
   }
@@ -5081,7 +5366,7 @@ function saveBkashAccountDetails() {
       user.bkashName = fullName;
       user.bkashPhone = phone;
       user.realName = user.realName || fullName;
-      if (!user.name || user.name === 'সদস্য') user.name = fullName;
+      if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       dbSaveUser(user).catch(function() {});
     }
@@ -5091,7 +5376,7 @@ function saveBkashAccountDetails() {
   updateBkashDisplayAcrossApp();
   updateRealNameDisplayAcrossApp();
   renderBkashSetupPanel();
-  showToastNotification('✓ বিকাশ অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  showToastNotification(tLang(lang, '✓ বিকাশ অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!', '✓ bKash account permanently saved!', '✓ تم حفظ حساب bKash بشكل دائم!'));
   setTimeout(() => {
     if (previousDashboardPanel === 'my-pass') {
       openDashboardPanel('my-pass');
@@ -5117,6 +5402,7 @@ function getSavedNagadAccount() {
 
 function updateNagadDisplayAcrossApp() {
   const nagad = getSavedNagadAccount();
+  const lang = getActiveLang();
 
   // 1. Profile / Personal Info row badge
   const personalBadge = document.getElementById('personal-nagad-status-badge');
@@ -5125,7 +5411,7 @@ function updateNagadDisplayAcrossApp() {
       personalBadge.textContent = nagad.phone;
       personalBadge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-mono font-semibold';
     } else {
-      personalBadge.textContent = 'নগদ সেট নেই';
+      personalBadge.textContent = tLang(lang, 'নগদ সেট নেই', 'Nagad Not Bound', 'Nagad غير مرتبط');
       personalBadge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
     }
   }
@@ -5138,6 +5424,7 @@ function updateNagadDisplayAcrossApp() {
 function renderNagadSetupPanel() {
   const nagad = getSavedNagadAccount();
   const realName = getSavedRealName();
+  const lang = getActiveLang();
   const nameInput = document.getElementById('nagad-fullname-input');
   const phoneInput = document.getElementById('nagad-phone-input');
   const lockNotice = document.getElementById('nagad-locked-notice');
@@ -5147,7 +5434,7 @@ function renderNagadSetupPanel() {
 
   const boundName = (nagad && nagad.fullName) || realName || '';
   if (nameInput) {
-    nameInput.placeholder = 'প্রকৃত নাম লিখুন';
+    nameInput.placeholder = tLang(lang, 'প্রকৃত নাম লিখুন', 'Enter full name', 'أدخل الاسم الكامل');
     nameInput.value = boundName;
   }
 
@@ -5169,13 +5456,13 @@ function renderNagadSetupPanel() {
       submitBtn.disabled = true;
       submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, '✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)', '✓ Saved (Not Editable)', '✓ محفوظ (غير قابل للتعديل)')}</span>`;
     }
   } else {
     // Editable mode
     if (phoneInput) {
       phoneInput.value = '';
-      phoneInput.placeholder = 'নগদ নম্বর লিখুন';
+      phoneInput.placeholder = tLang(lang, 'নগদ নম্বর লিখুন', 'Enter Nagad number', 'أدخل رقم Nagad');
       phoneInput.readOnly = false;
       phoneInput.classList.remove('cursor-not-allowed', 'opacity-90');
     }
@@ -5195,15 +5482,16 @@ function renderNagadSetupPanel() {
       submitBtn.disabled = false;
       submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, 'সংরক্ষণ', 'Save', 'حفظ')}</span>`;
     }
   }
 }
 
 function saveNagadAccountDetails() {
   const existing = getSavedNagadAccount();
+  const lang = getActiveLang();
   if (existing && existing.phone) {
-    showToastNotification('⚠️ নগদ অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না');
+    showToastNotification(tLang(lang, '⚠️ নগদ অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না', '⚠️ Nagad account is permanently saved and cannot be changed', '⚠️ حساب Nagad محفوظ بشكل دائم ولا يمكن تغييره'));
     return;
   }
 
@@ -5213,12 +5501,12 @@ function saveNagadAccountDetails() {
   const phone = phoneInput ? phoneInput.value.trim() : '';
 
   if (!fullName || fullName.length < 2) {
-    showToastNotification('⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন', '⚠️ Please enter your full legal name', '⚠️ يرجى إدخال اسمك القانوني الكامل'));
     if (nameInput) nameInput.focus();
     return;
   }
   if (!phone || phone.length < 10) {
-    showToastNotification('⚠️ অনুগ্রহ করে সঠিক নগদ নম্বর লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে সঠিক নগদ নম্বর লিখুন', '⚠️ Please enter a valid Nagad number', '⚠️ يرجى إدخال رقم Nagad صحيح'));
     if (phoneInput) phoneInput.focus();
     return;
   }
@@ -5241,7 +5529,7 @@ function saveNagadAccountDetails() {
       user.nagadName = fullName;
       user.nagadPhone = phone;
       user.realName = user.realName || fullName;
-      if (!user.name || user.name === 'সদস্য') user.name = fullName;
+      if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       dbSaveUser(user).catch(function() {});
     }
@@ -5251,7 +5539,7 @@ function saveNagadAccountDetails() {
   updateNagadDisplayAcrossApp();
   updateRealNameDisplayAcrossApp();
   renderNagadSetupPanel();
-  showToastNotification('✓ নগদ অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  showToastNotification(tLang(lang, '✓ নগদ অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!', '✓ Nagad account permanently saved!', '✓ تم حفظ حساب Nagad بشكل دائم!'));
   setTimeout(() => {
     if (previousDashboardPanel === 'my-pass') {
       openDashboardPanel('my-pass');
@@ -5286,6 +5574,7 @@ function getSavedUsdtAccount() {
 
 function updateUsdtDisplayAcrossApp() {
   const usdt = getSavedUsdtAccount();
+  const lang = getActiveLang();
 
   // 1. Profile / Personal Info row badge
   const personalBadge = document.getElementById('personal-usdt-status-badge') || document.querySelector('[data-profile-value="usdt"]');
@@ -5295,7 +5584,7 @@ function updateUsdtDisplayAcrossApp() {
       personalBadge.textContent = shortAddr;
       personalBadge.className = 'personal-status-badge text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 font-mono font-semibold';
     } else {
-      personalBadge.textContent = 'USDT সেট নেই';
+      personalBadge.textContent = tLang(lang, 'USDT সেট নেই', 'USDT Not Bound', 'USDT غير مرتبط');
       personalBadge.className = 'personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium';
     }
   }
@@ -5308,6 +5597,7 @@ function updateUsdtDisplayAcrossApp() {
 function renderUsdtSetupPanel() {
   const usdt = getSavedUsdtAccount();
   const realName = getSavedRealName();
+  const lang = getActiveLang();
   const nameInput = document.getElementById('usdt-fullname-input');
   const addressInput = document.getElementById('usdt-address-input');
   const lockNotice = document.getElementById('usdt-locked-notice');
@@ -5317,7 +5607,7 @@ function renderUsdtSetupPanel() {
 
   const boundName = (usdt && usdt.fullName) || realName || '';
   if (nameInput) {
-    nameInput.placeholder = 'প্রকৃত নাম লিখুন';
+    nameInput.placeholder = tLang(lang, 'প্রকৃত নাম লিখুন', 'Enter full name', 'أدخل الاسم الكامل');
     nameInput.value = boundName;
   }
 
@@ -5339,13 +5629,13 @@ function renderUsdtSetupPanel() {
       submitBtn.disabled = true;
       submitBtn.classList.remove('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.add('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, '✓ সংরক্ষিত (পরিবর্তনযোগ্য নয়)', '✓ Saved (Not Editable)', '✓ محفوظ (غير قابل للتعديل)')}</span>`;
     }
   } else {
     // Editable mode
     if (addressInput) {
       addressInput.value = '';
-      addressInput.placeholder = 'BEP20 ওয়ালেট ঠিকানা লিখুন (0x...)';
+      addressInput.placeholder = tLang(lang, 'BEP20 ওয়ালেট ঠিকানা লিখুন (0x...)', 'Enter BEP20 wallet address (0x...)', 'أدخل عنوان محفظة BEP20 (0x...)');
       addressInput.readOnly = false;
       addressInput.classList.remove('cursor-not-allowed', 'opacity-90');
     }
@@ -5365,15 +5655,16 @@ function renderUsdtSetupPanel() {
       submitBtn.disabled = false;
       submitBtn.classList.add('bg-gradient-to-b', 'from-[#1877f2]', 'to-[#0d59c6]', 'cursor-pointer');
       submitBtn.classList.remove('bg-slate-800', 'text-slate-400', 'cursor-not-allowed', 'shadow-none');
-      submitBtn.innerHTML = '<span>সংরক্ষণ</span>';
+      submitBtn.innerHTML = `<span>${tLang(lang, 'সংরক্ষণ', 'Save', 'حفظ')}</span>`;
     }
   }
 }
 
 function saveUsdtAccountDetails() {
   const existing = getSavedUsdtAccount();
+  const lang = getActiveLang();
   if (existing && existing.address) {
-    showToastNotification('⚠️ USDT (BEP20) অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না');
+    showToastNotification(tLang(lang, '⚠️ USDT (BEP20) অ্যাকাউন্ট এককালীন সংরক্ষণ করা হয়েছে, এটি আর পরিবর্তন করা যাবে না', '⚠️ USDT (BEP20) account is permanently saved and cannot be changed', '⚠️ حساب USDT (BEP20) محفوظ بشكل دائم ولا يمكن تغييره'));
     return;
   }
 
@@ -5383,12 +5674,12 @@ function saveUsdtAccountDetails() {
   const address = addressInput ? addressInput.value.trim() : '';
 
   if (!fullName || fullName.length < 2) {
-    showToastNotification('⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন');
+    showToastNotification(tLang(lang, '⚠️ অনুগ্রহ করে আপনার প্রকৃত নাম লিখুন', '⚠️ Please enter your full legal name', '⚠️ يرجى إدخال اسمك القانوني الكامل'));
     if (nameInput) nameInput.focus();
     return;
   }
   if (!address || address.length < 15 || !address.toLowerCase().startsWith('0x')) {
-    showToastNotification('⚠️ সঠিক BEP20 (0x...) ওয়ালেট ঠিকানা লিখুন');
+    showToastNotification(tLang(lang, '⚠️ সঠিক BEP20 (0x...) ওয়ালেট ঠিকানা লিখুন', '⚠️ Please enter a valid BEP20 (0x...) wallet address', '⚠️ يرجى إدخال عنوان محفظة BEP20 (0x...) صحيح'));
     if (addressInput) addressInput.focus();
     return;
   }
@@ -5413,7 +5704,7 @@ function saveUsdtAccountDetails() {
       user.usdtName = fullName;
       user.usdtAddress = address;
       user.realName = user.realName || fullName;
-      if (!user.name || user.name === 'সদস্য') user.name = fullName;
+      if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       dbSaveUser(user).catch(function() {});
     }
@@ -5423,7 +5714,7 @@ function saveUsdtAccountDetails() {
   updateUsdtDisplayAcrossApp();
   updateRealNameDisplayAcrossApp();
   renderUsdtSetupPanel();
-  showToastNotification('✓ USDT (BEP20) অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!');
+  showToastNotification(tLang(lang, '✓ USDT (BEP20) অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!', '✓ USDT (BEP20) account permanently saved!', '✓ تم حفظ حساب USDT (BEP20) بشكل دائم!'));
   setTimeout(() => {
     if (previousDashboardPanel === 'my-pass') {
       openDashboardPanel('my-pass');
@@ -5449,304 +5740,302 @@ function getAvailableBalance() {
 const platformTaskDescriptions = {
   TikTok: {
     bn: [
-      'TikTok ভিডিও লাইক করুন ও সুন্দর মন্তব্য করুন',
-      'নতুন ট্রেন্ডিং ভিডিও সম্পূর্ণ দেখে লাইক দিন',
-      'অফিশিয়াল ক্রিয়েটর অ্যাকাউন্ট ফলো করুন',
-      'ক্রিয়েটরের প্রোফাইল ভিজিট করে ৩টি ভিডিওতে লাইক দিন',
-      'ভিডিওটি বন্ধুদের সাথে শেয়ার করুন এবং বুকমার্ক করুন',
-      'সাউন্ডট্র্যাক ব্যবহার করে ফেভারিটে যুক্ত করুন',
-      'লাইভ স্ট্রিম ১৫ সেকেন্ড দেখুন ও লাইক দিন',
-      'শিক্ষামূলক শর্ট ভিডিওতে লাইক ও কমেন্ট দিন',
-      'ব্র্যান্ড চ্যানেলে ফলো দিন ও ভিডিও দেখুন',
-      'ভাইরাল ক্লিপে লাভ রিয়্যাক্ট দিন',
-      'হ্যাশট্যাগ চ্যালেঞ্জ ভিডিও দেখুন ও লাইক দিন',
-      'টেক রিভিউ ভিডিওতে লাইক ও শেয়ার দিন',
-      'রন্ধনশিল্প ও কুকিং ভিডিওতে লাইক দিন',
-      'ট্রাভেল ভ্লগ ভিডিও দেখুন ও কমেন্ট করুন',
-      'ফিটনেস ও স্বাস্থ্য টিপস ভিডিও সেভ করুন',
-      'সঙ্গীত ভিডিও সম্পূর্ণ শুনে লাইক দিন',
-      'ফ্যাশন ট্রেন্ড শর্টসে লাভ রিয়্যাক্ট দিন',
-      'কমেডি ক্লিপ সম্পূর্ণ দেখে লাইক দিন',
-      'মোটিভেশনাল ভিডিওতে লাইক ও শেয়ার দিন',
-      'লাইফস্টাইল ভ্লগ অ্যাকাউন্ট ফলো করুন',
-      'অ্যানিমেশন ক্লিপে লাভ রিয়্যাক্ট দিন',
-      'স্পোর্টস হাইলাইটস ভিডিও দেখুন ও লাইক দিন',
-      'গেমিং শর্টসে লাইক ও মন্তব্য দিন',
-      'ডিআইওয়াই ও ক্রাফট ভিডিও সেভ করুন',
-      'নতুন ক্রিয়েটরকে ফলো ও ভিডিওতে লাইক দিন',
-      'ইনফরমেটিভ ফ্যাক্টস ভিডিও লাইক দিন',
-      'ফটোগ্রাফি ট্রিকস ভিডিওতে লাইক দিন',
-      'প্রোডাক্ট রিভিউ ও আনবক্সিং ভিডিও দেখুন',
-      'আর্ট ও ড্রয়িং ভিডিওতে লাভ রিয়্যাক্ট দিন',
-      'ডেইলি মোটিভেশন ভিডিওতে লাইক ও শেয়ার দিন'
+      'TikTok ভিডিওটি খুলে শুধু লাইক দিন',
+      'নতুন ট্রেন্ডিং TikTok ভিডিওতে শুধু লাইক দিন',
+      'ভাইরাল TikTok ক্লিপে শুধু লাভ রিয়্যাক্ট দিন',
+      'TikTok শর্ট ভিডিওতে শুধু লাইক বাটনে চাপ দিন',
+      'মিউজিক TikTok ভিডিওতে শুধু লাইক দিন',
+      'ডেইলি ট্রেন্ডিং TikTok ক্লিপে শুধু লাইক দিন',
+      'লাইফস্টাইল TikTok ভিডিওতে শুধু লাইক দিন',
+      'শিক্ষামূলক TikTok শর্টসে শুধু লাইক দিন',
+      'ব্র্যান্ড প্রচারণার TikTok ভিডিওতে শুধু লাইক দিন',
+      'ভাইরাল শর্ট ক্লিপে শুধু লাভ রিয়্যাক্ট দিন',
+      'হ্যাশট্যাগ চ্যালেঞ্জ TikTok ভিডিওতে শুধু লাইক দিন',
+      'টেক রিভিউ TikTok ভিডিওতে শুধু লাইক দিন',
+      'রন্ধনশিল্প ও কুকিং TikTok ভিডিওতে শুধু লাইক দিন',
+      'ট্রাভেল ভ্লগ TikTok ভিডিওতে শুধু লাইক দিন',
+      'ফিটনেস ও স্বাস্থ্য টিপস TikTok ভিডিওতে শুধু লাইক দিন',
+      'নতুন সঙ্গীত TikTok ভিডিওতে শুধু লাইক দিন',
+      'ফ্যাশন ট্রেন্ড TikTok শর্টসে শুধু লাইক দিন',
+      'কমেডি TikTok ক্লিপে শুধু লাইক দিন',
+      'মোটিভেশনাল TikTok ভিডিওতে শুধু লাইক দিন',
+      'ক্রিয়েটিভ TikTok ভ্লগ ভিডিওতে শুধু লাইক দিন',
+      'অ্যানিমেশন TikTok ক্লিপে শুধু লাভ রিয়্যাক্ট দিন',
+      'স্পোর্টস হাইলাইটস TikTok ভিডিওতে শুধু লাইক দিন',
+      'গেমিং TikTok শর্টসে শুধু লাইক দিন',
+      'ডিআইওয়াই ও ক্রাফট TikTok ভিডিওতে শুধু লাইক দিন',
+      'নতুন ক্রিয়েটরের TikTok ভিডিওতে শুধু লাইক দিন',
+      'ইনফরমেটিভ ফ্যাক্টস TikTok ভিডিওতে শুধু লাইক দিন',
+      'ফটোগ্রাফি টিপস TikTok ভিডিওতে শুধু লাইক দিন',
+      'প্রোডাক্ট আনবক্সিং TikTok ভিডিওতে শুধু লাইক দিন',
+      'আর্ট ও ড্রয়িং TikTok ভিডিওতে শুধু লাইক দিন',
+      'ডেইলি মোটিভেশন TikTok ভিডিওতে শুধু লাইক দিন'
     ],
     en: [
-      'Like TikTok video and leave a positive comment',
-      'Watch trending video completely and tap like',
-      'Follow official creator account',
-      'Visit creator profile and like 3 videos',
-      'Share video with friends and bookmark it',
-      'Add soundtrack to favorites and like video',
-      'Watch live stream for 15 seconds and like',
-      'Like and comment on educational short video',
-      'Follow brand channel and watch latest video',
-      'Give love react to the viral clip',
-      'Watch hashtag challenge video and tap like',
-      'Like and share tech review video',
-      'Like culinary and cooking video',
-      'Watch travel vlog video and leave a comment',
-      'Save fitness and health tips short video',
-      'Listen to music video completely and like',
-      'Give love react to fashion trend shorts',
-      'Watch comedy clip fully and tap like',
-      'Like and share motivational video clip',
-      'Follow lifestyle vlog creator account',
-      'Give love react to animation video',
-      'Watch sports highlights short and like',
-      'Like and leave a comment on gaming clip',
-      'Save DIY craft and project video',
-      'Follow rising creator and like video',
-      'Like informative facts short clip',
-      'Like photography hacks and tricks video',
-      'Watch product unboxing and review video',
-      'Give love react to art and drawing video',
-      'Like and share daily motivation video'
+      'Open the TikTok video and simply tap Like',
+      'Simply tap Like on the new trending TikTok video',
+      'Simply give a Like reaction to the viral TikTok clip',
+      'Tap Like only on this TikTok short video',
+      'Simply like the featured TikTok music video',
+      'Tap Like only on the daily trending TikTok clip',
+      'Simply tap Like on the lifestyle TikTok video',
+      'Give a Like only to this educational TikTok short',
+      'Simply like the promotional brand TikTok video',
+      'Give a heart Like only to the viral clip',
+      'Simply tap Like on the hashtag challenge video',
+      'Tap Like only on this tech review TikTok video',
+      'Simply like the culinary and cooking TikTok clip',
+      'Tap Like only on the travel vlog TikTok video',
+      'Simply like the fitness and wellness TikTok video',
+      'Tap Like only on the new music TikTok clip',
+      'Give a Like reaction only to the fashion trend clip',
+      'Simply tap Like on the comedy TikTok clip',
+      'Tap Like only on the motivational TikTok video',
+      'Simply like the creative TikTok vlog clip',
+      'Give a heart Like only to the animation TikTok video',
+      'Tap Like only on the sports highlights TikTok short',
+      'Simply tap Like on the gaming TikTok clip',
+      'Tap Like only on the DIY craft TikTok video',
+      'Simply like the rising creator TikTok video',
+      'Tap Like only on the informative facts TikTok clip',
+      'Simply like the photography tips TikTok video',
+      'Tap Like only on the product unboxing TikTok clip',
+      'Simply like the art and drawing TikTok video',
+      'Tap Like only on the daily motivation TikTok clip'
     ],
-    hi: [
-      'TikTok वीडियो को लाइक करें और सकारात्मक टिप्पणी छोड़ें',
-      'ट्रेंडिंग वीडियो को पूरा देखें और लाइक करें',
-      'आधिकारिक क्रिएटर अकाउंट को फॉलो करें',
-      'क्रिएटर की प्रोफाइल देखें और 3 वीडियो लाइक करें',
-      'दोस्तों के साथ वीडियो शेयर करें और बुकमार्क करें',
-      'साउंडट्रैक को पसंदीदा में जोड़ें और वीडियो लाइक करें',
-      '15 सेकंड तक लाइव स्ट्रीम देखें और लाइक करें',
-      'शैक्षणिक शॉर्ट वीडियो को लाइक और कमेंट करें',
-      'ब्रांड चैनल को फॉलो करें और नया वीडियो देखें',
-      'वायरल क्लिप पर लव रिएक्ट दें',
-      'हैशटैग चैलेंज वीडियो देखें और लाइक करें',
-      'टेक रिव्यू वीडियो को लाइक और शेयर करें',
-      'कुकिंग और रेसिपी वीडियो को लाइक करें',
-      'ट्रैवल व्लॉग वीडियो देखें और कमेंट करें',
-      'फिटनेस और हेल्थ टिप्स शॉर्ट वीडियो सेव करें',
-      'म्यूजिक वीडियो पूरा सुनें और लाइक करें',
-      'फैशन ट्रेंड शॉर्ट्स पर लव रिएक्ट दें',
-      'कॉमेडी क्लिप पूरा देखें और लाइक करें',
-      'मोटिवेशनल वीडियो को लाइक और शेयर करें',
-      'लाइफस्टाइल व्लॉग अकाउंट को फॉलो करें',
-      'एनीमेशन क्लिप पर लव रिएक्ट दें',
-      'स्पोर्ट्स हाइलाइट्स वीडियो देखें और लाइक करें',
-      'गेमिंग शॉर्ट्स को लाइक और कमेंट करें',
-      'DIY क्राफ्ट वीडियो को सेव करें',
-      'नए क्रिएटर को फॉलो करें और वीडियो लाइक करें',
-      'ज्ञानवर्धक फैक्ट्स वीडियो को लाइक करें',
-      'फोटोग्राफी ट्रिक्स वीडियो को लाइक करें',
-      'प्रोडक्ट अनबॉक्सिंग और रिव्यू वीडियो देखें',
-      'आर्ट और ड्राइंग वीडियो पर लव रिएक्ट दें',
-      'डेली मोटिवेशन वीडियो को लाइक और शेयर करें'
+    ar: [
+      'افتح فيديو TikTok واضغط إعجاب فقط',
+      'اضغط إعجاب فقط على فيديو TikTok الرائج الجديد',
+      'أعطِ إعجاباً فقط لمقطع TikTok المنتشر',
+      'اضغط على زر الإعجاب فقط في فيديو TikTok القصير',
+      'اضغط إعجاب فقط على فيديو الموسيقى في TikTok',
+      'اضغط إعجاب فقط على مقطع TikTok اليومي الرائج',
+      'اضغط إعجاب فقط على فيديو نمط الحياة في TikTok',
+      'اضغط إعجاب فقط على الفيديو التعليمي القصير',
+      'اضغط إعجاب فقط على الفيديو الترويجي في TikTok',
+      'أعطِ تفاعل إعجاب فقط للمقطع الرائج',
+      'اضغط إعجاب فقط على فيديو تحدي الهاشتاج',
+      'اضغط إعجاب فقط على فيديو مراجعة التقنية',
+      'اضغط إعجاب فقط على فيديو الطبخ والوصفات',
+      'اضغط إعجاب فقط على فيديو مدونة السفر',
+      'اضغط إعجاب فقط على فيديو اللياقة والصحة',
+      'اضغط إعجاب فقط على فيديو الموسيقى الجديد',
+      'اضغط إعجاب فقط على مقطع صيحات الموضة',
+      'اضغط إعجاب فقط على المقطع الكوميدي في TikTok',
+      'اضغط إعجاب فقط على الفيديو التحفيزي في TikTok',
+      'اضغط إعجاب فقط على فيديو الفلوج الإبداعي',
+      'أعطِ إعجاباً فقط لفيديو الرسوم المتحركة',
+      'اضغط إعجاب فقط على مقطع ملخص الرياضة',
+      'اضغط إعجاب فقط على مقطع الألعاب القصير',
+      'اضغط إعجاب فقط على فيديو الأعمال اليدوية',
+      'اضغط إعجاب فقط على فيديو صانع المحتوى الجديد',
+      'اضغط إعجاب فقط على فيديو الحقائق والمعلومات',
+      'اضغط إعجاب فقط على فيديو نصائح التصوير',
+      'اضغط إعجاب فقط على فيديو فتح الصندوق',
+      'اضغط إعجاب فقط على فيديو الفن والرسم',
+      'اضغط إعجاب فقط على فيديو التحفيز اليومي'
     ]
   },
   YouTube: {
     bn: [
-      'YouTube চ্যানেলটি সাবস্ক্রাইব করুন ও বেল আইকন চাপুন',
-      'ভিডিওটি সম্পূর্ণ দেখে লাইক দিন',
-      'ভিডিওতে ইতিবাচক ও গঠনমূলক মন্তব্য করুন',
-      'প্লেলিস্টের একটি ভিডিও লাইক ও সেভ করুন',
-      'শর্টস ভিডিওতে লাইক দিয়ে চ্যানেল সাবস্ক্রাইব করুন',
-      'টেক রিভিউ ভিডিও সম্পূর্ণ দেখুন ও লাইক দিন',
-      'শিক্ষামূলক টিউটোরিয়াল ভিডিওতে লাইক দিন',
-      'অফিসিয়াল মিউজিক ভিডিও দেখুন ও কমেন্ট করুন',
-      'ট্রাভেল ডকুমেন্টারি ভিডিওতে লাইক দিন',
-      'কুকিং রেসিপি ভিডিওটি পরে দেখার তালিকায় রাখুন',
-      'ফিটনেস ওয়ার্কআউট ভিডিওতে লাইক দিন',
-      'নিউজ ও কারেন্ট অ্যাফেয়ার্স ভিডিও দেখুন',
-      'মোটিভেশনাল স্পিচ ভিডিওতে লাইক ও শেয়ার দিন',
-      'পডকাস্টের একটি পর্বে লাইক ও কমেন্ট করুন',
-      'গেমিং লাইভস্ট্রিম ভিডিও ৫ মিনিট দেখুন',
-      'বিজ্ঞান ও প্রযুক্তির ভিডিওতে লাইক দিন',
-      'নতুন সিনেমার ট্রেলার সম্পূর্ণ দেখুন',
-      'বুক সামারি ভিডিওতে সুন্দর কমেন্ট করুন',
-      'ক্যারিয়ার গাইডলাইন ভিডিও লাইক দিন',
-      'ভাষা শিক্ষা টিউটোরিয়াল ভিডিও সেভ করুন',
-      'ড্রয়িং ও স্কেচ টিউটোরিয়াল ভিডিও দেখুন',
-      'অটোমোবাইল ও বাইক রিভিউ ভিডিওতে লাইক দিন',
-      'ইতিহাস ও ঐতিহ্য বিষয়ক ভিডিও সম্পূর্ণ দেখুন',
-      'লাইফ হ্যাকস ভিডিওতে লাইক ও শেয়ার দিন',
-      'ইসলামিক আলোচনা ও মোনাজাত ভিডিও লাইক দিন',
-      'ফিন্যান্স ও ইনভেস্টমেন্ট ভিডিও সম্পূর্ণ দেখুন',
-      'স্মার্টফোন রিভিউ ভিডিওতে মন্তব্য করুন',
-      'ফটোগ্রাফি মাস্টারক্লাস ভিডিও সেভ করুন',
-      'নাটক ও কমেডি ভিডিওতে লাইক দিন',
-      'আর্কিটেকচার ও হোম ডিজাইন ভিডিও দেখুন'
+      'YouTube ভিডিওটি খুলে শুধু লাইক দিন',
+      'YouTube শর্টস ভিডিওতে শুধু লাইক বাটনে চাপ দিন',
+      'ফিচার্ড YouTube ভিডিওটিতে শুধু লাইক দিন',
+      'ট্রেন্ডিং YouTube ক্লিপটিতে শুধু লাইক দিন',
+      'টেক রিভিউ YouTube ভিডিওতে শুধু লাইক দিন',
+      'শিক্ষামূলক YouTube টিউটোরিয়ালে শুধু লাইক দিন',
+      'অফিসিয়াল YouTube মিউজিক ভিডিওতে শুধু লাইক দিন',
+      'ট্রাভেল ডকুমেন্টারি YouTube ভিডিওতে শুধু লাইক দিন',
+      'কুকিং রেসিপি YouTube ভিডিওতে শুধু লাইক দিন',
+      'ফিটনেস ওয়ার্কআউট YouTube ভিডিওতে শুধু লাইক দিন',
+      'নিউজ ও কারেন্ট অ্যাফেয়ার্স YouTube ভিডিওতে শুধু লাইক দিন',
+      'মোটিভেশনাল YouTube স্পিচ ভিডিওতে শুধু লাইক দিন',
+      'YouTube পডকাস্ট পর্বে শুধু লাইক দিন',
+      'গেমিং YouTube ভিডিওটিতে শুধু লাইক দিন',
+      'বিজ্ঞান ও প্রযুক্তি বিষয়ক YouTube ভিডিওতে শুধু লাইক দিন',
+      'নতুন মুভি ট্রেলার YouTube ভিডিওতে শুধু লাইক দিন',
+      'বুক সামারি YouTube ভিডিওতে শুধু লাইক দিন',
+      'ক্যারিয়ার গাইডলাইন YouTube ভিডিওতে শুধু লাইক দিন',
+      'ভাষা শিক্ষা YouTube ভিডিওতে শুধু লাইক দিন',
+      'ড্রয়িং ও স্কেচ YouTube ভিডিওতে শুধু লাইক দিন',
+      'অটোমোবাইল ও বাইক রিভিউ YouTube ভিডিওতে শুধু লাইক দিন',
+      'ইতিহাস ও ঐতিহ্য বিষয়ক YouTube ভিডিওতে শুধু লাইক দিন',
+      'লাইফ হ্যাকস YouTube ভিডিওতে শুধু লাইক দিন',
+      'আধ্যাত্মিক ও শান্তিময় আলোচনা YouTube ভিডিওতে শুধু লাইক দিন',
+      'ফিন্যান্স ও বিজনেস টিপস YouTube ভিডিওতে শুধু লাইক দিন',
+      'স্মার্টফোন রিভিউ YouTube ভিডিওতে শুধু লাইক দিন',
+      'ফটোগ্রাফি টিউটোরিয়াল YouTube ভিডিওতে শুধু লাইক দিন',
+      'এন্টারটেইনমেন্ট ও কমেডি YouTube ভিডিওতে শুধু লাইক দিন',
+      'আর্কিটেকচার ও হোম ডিজাইন YouTube ভিডিওতে শুধু লাইক দিন',
+      'ডেইলি আপডেট YouTube শর্টসে শুধু লাইক দিন'
     ],
     en: [
-      'Subscribe to YouTube channel and tap bell icon',
-      'Watch video completely and tap like',
-      'Leave a positive, constructive comment on video',
-      'Like and save video to official playlist',
-      'Like Shorts video and subscribe to channel',
-      'Watch tech review video and give a like',
-      'Like and share educational tutorial video',
-      'Watch official music video and leave a comment',
-      'Like travel documentary video and add to watchlist',
-      'Add cooking recipe video to Watch Later list',
-      'Like fitness workout session video',
-      'Watch news and current affairs segment',
-      'Like and share motivational speech video',
-      'Like and comment on podcast episode',
-      'Watch gaming livestream for 5 minutes',
-      'Like science and technology breakthrough video',
-      'Watch official movie trailer completely',
-      'Leave an inspiring comment on book summary video',
-      'Like career guideline tutorial video',
-      'Save language learning tutorial video',
-      'Watch drawing and sketching tutorial video',
-      'Like automobile and bike review video',
-      'Watch history and heritage documentary video',
-      'Like and share life hacks tutorial video',
-      'Like mindfulness discussion and prayer video',
-      'Watch personal finance and investment video',
-      'Comment on flagship smartphone review video',
-      'Save mobile photography masterclass video',
-      'Like entertainment and comedy sketch video',
-      'Watch architecture and home design showcase video'
+      'Open the YouTube video and simply tap Like',
+      'Tap Like only on this YouTube Shorts video',
+      'Simply give a Like to the featured YouTube video',
+      'Tap Like only on the trending YouTube clip',
+      'Simply like the tech review YouTube video',
+      'Tap Like only on the educational YouTube tutorial',
+      'Simply like the official YouTube music video',
+      'Tap Like only on the travel documentary video',
+      'Simply like the cooking recipe YouTube video',
+      'Tap Like only on the fitness workout video',
+      'Simply like the news and current affairs clip',
+      'Tap Like only on the motivational speech video',
+      'Simply like this YouTube podcast episode',
+      'Tap Like only on the gaming YouTube video',
+      'Simply like the science and technology video',
+      'Tap Like only on the official trailer video',
+      'Simply like the book summary YouTube video',
+      'Tap Like only on the career guideline tutorial',
+      'Simply like the language learning tutorial video',
+      'Tap Like only on the drawing and sketching video',
+      'Simply like the automobile and bike review video',
+      'Tap Like only on the history documentary video',
+      'Simply like the life hacks YouTube tutorial',
+      'Tap Like only on the mindfulness discussion video',
+      'Simply like the personal finance YouTube video',
+      'Tap Like only on the smartphone review video',
+      'Simply like the photography masterclass video',
+      'Tap Like only on the comedy sketch YouTube video',
+      'Simply like the architecture and design video',
+      'Tap Like only on the daily highlight YouTube Short'
     ],
-    hi: [
-      'YouTube चैनल सब्सक्राइब करें और बेल आइकन दबाएं',
-      'वीडियो को पूरा देखें और लाइक करें',
-      'वीडियो पर सकारात्मक और रचनात्मक टिप्पणी करें',
-      'प्लेलिस्ट से वीडियो लाइक और सेव करें',
-      'शॉर्ट्स वीडियो लाइक करें और चैनल सब्सक्राइब करें',
-      'टेक रिव्यू वीडियो पूरा देखें और लाइक करें',
-      'शैक्षणिक ट्यूटोरियल वीडियो को लाइक करें',
-      'आधिकारिक संगीत वीडियो देखें और कमेंट करें',
-      'ट्रैवल डॉक्यूमेंट्री वीडियो को लाइक करें',
-      'कुकिंग रेसिपी वीडियो को वॉच लेटर में जोड़ें',
-      'फिटनेस वर्कआउट वीडियो को लाइक करें',
-      'समाचार और समसामयिक वीडियो देखें',
-      'मोटिवेशनल स्पीच वीडियो को लाइक और शेयर करें',
-      'पॉडकास्ट एपिसोड पर लाइक और कमेंट करें',
-      'गेमिंग लाइवस्ट्रीम 5 मिनट तक देखें',
-      'विज्ञान और तकनीक वीडियो को लाइक करें',
-      'नए मूवी ट्रेलर को पूरा देखें',
-      'किताब सारांश वीडियो पर अच्छी टिप्पणी करें',
-      'करियर गाइडलाइन वीडियो को लाइक करें',
-      'भाषा सीखने का ट्यूटोरियल वीडियो सेव करें',
-      'ड्राइंग और स्केच ट्यूटोरियल वीडियो देखें',
-      'कार और बाइक रिव्यू वीडियो को लाइक करें',
-      'इतिहास और विरासत वीडियो को पूरा देखें',
-      'लाइफ हैक्स वीडियो को लाइक और शेयर करें',
-      'धार्मिक व प्रेरक चर्चा वीडियो को लाइक करें',
-      'फाइनेंस और निवेश वीडियो पूरा देखें',
-      'स्मार्टफोन रिव्यू वीडियो पर टिप्पणी करें',
-      'फोटोग्राफी मास्टरक्लास वीडियो सेव करें',
-      'कॉमेडी और नाटक वीडियो को लाइक करें',
-      'आर्किटेक्चर और होम डिजाइन वीडियो देखें'
+    ar: [
+      'افتح فيديو YouTube واضغط إعجاب فقط',
+      'اضغط إعجاب فقط على فيديو YouTube Shorts',
+      'أعطِ إعجاباً فقط لفيديو YouTube المميز',
+      'اضغط إعجاب فقط على مقطع YouTube الرائج',
+      'اضغط إعجاب فقط على فيديو مراجعة التقنية',
+      'اضغط إعجاب فقط على الفيديو التعليمي في YouTube',
+      'اضغط إعجاب فقط على الفيديو الموسيقي الرسمي',
+      'اضغط إعجاب فقط على الفيديو الوثائقي للسفر',
+      'اضغط إعجاب فقط على فيديو وصفة الطبخ',
+      'اضغط إعجاب فقط على فيديو تمارين اللياقة',
+      'اضغط إعجاب فقط على فقرة الأخبار والأحداث',
+      'اضغط إعجاب فقط على فيديو الخطاب التحفيزي',
+      'اضغط إعجاب فقط على حلقة البودكاست في YouTube',
+      'اضغط إعجاب فقط على فيديو الألعاب',
+      'اضغط إعجاب فقط على فيديو العلوم والتقنية',
+      'اضغط إعجاب فقط على الإعلان الرسمي للفيلم',
+      'اضغط إعجاب فقط على فيديو ملخص الكتاب',
+      'اضغط إعجاب فقط على فيديو الإرشاد المهني',
+      'اضغط إعجاب فقط على فيديو تعلم اللغة',
+      'اضغط إعجاب فقط على فيديو تعليم الرسم',
+      'اضغط إعجاب فقط على فيديو مراجعة السيارات',
+      'اضغط إعجاب فقط على الفيديو الوثائقي التاريخي',
+      'اضغط إعجاب فقط على فيديو الحيل اليومية',
+      'اضغط إعجاب فقط على فيديو التأمل والحديث الهادف',
+      'اضغط إعجاب فقط على فيديو التمويل الشخصي',
+      'اضغط إعجاب فقط على فيديو مراجعة الهاتف الذكي',
+      'اضغط إعجاب فقط على فيديو دورة التصوير',
+      'اضغط إعجاب فقط على الفيديو الترفيهي الكوميدي',
+      'اضغط إعجاب فقط على فيديو العمارة وتصميم المنازل',
+      'اضغط إعجاب فقط على مقطع YouTube Shorts اليومي'
     ]
   },
   FaceBook: {
     bn: [
-      'FaceBook অফিসিয়াল পেজে লাইক ও ফলো করুন',
-      'সাম্প্রতিক পোস্টে লাইক ও শেয়ার করুন',
-      'অফিসিয়াল গ্রুপে যুক্ত হন ও পোস্ট দেখুন',
-      'ফেসবুক রিলস ভিডিওতে লাভ রিয়্যাক্ট দিন',
-      'ব্যবসায়িক পেজে ইতিবাচক রিভিউ দিন',
-      'শিক্ষামূলক পোস্টে লাইক ও মন্তব্য দিন',
-      'লাইভ সেশনে যুক্ত হয়ে লাভ রিয়্যাক্ট দিন',
-      'পণ্য প্রচারের পোস্টে লাইক ও শেয়ার দিন',
-      'মোটিভেশনাল পোস্টে লাইক দিন',
-      'সাম্প্রতিক ফটো অ্যালবামে লাইক ও কমেন্ট করুন',
-      'কমিউনিটি পেজে ফ্রেন্ডদের ইনভাইট করুন',
-      'টেকনোলজি পোস্টে লাইক ও কমেন্ট দিন',
-      'স্বাস্থ্য টিপস পোস্টটি শেয়ার করুন',
-      'খবরের লিংকে ক্লিক করে পোস্ট লাইক দিন',
-      'রেসিপি পোস্টে লাভ রিয়্যাক্ট দিন',
-      'ট্রাভেল পেজের ফটোতে লাইক দিন',
-      'স্পোর্টস আপডেট পোস্টে লাইক দিন',
-      'বিজ্ঞান বিষয়ক আর্টিকেলে লাইক দিন',
-      'রিলস ভিডিও সম্পূর্ণ দেখে শেয়ার দিন',
-      'গ্রুপ আলোচনায় ইতিবাচক কমেন্ট দিন',
-      'লাইফস্টাইল পেজে ফলো করুন',
-      'ক্যারিয়ার টিপস পোস্টে লাইক দিন',
-      'ডিজিটাল আর্ট পোস্টে লাভ রিয়্যাক্ট দিন',
-      'বই রিভিউ পোস্টে কমেন্ট করুন',
-      'ভিডিও কন্টেন্টে ৩ মিনিট ওয়াচটাইম দিন',
-      'পডকাস্ট লাইভ স্ট্রিমে লাইক দিন',
-      'অফার ও ডিসকাউন্ট পোস্টে লাইক দিন',
-      'মোবাইল টিপস পোস্টে লাইক দিন',
-      'কমেডি স্কিটে হাসির রিয়্যাক্ট দিন',
-      'নতুন উদ্যোগের পেজে শুভেচ্ছা কমেন্ট করুন'
+      'FaceBook পোস্টটি খুলে শুধু লাইক দিন',
+      'সাম্প্রতিক FaceBook পোস্টে শুধু লাইক বাটনে চাপ দিন',
+      'অফিসিয়াল FaceBook রিলস ভিডিওতে শুধু লাইক দিন',
+      'ফেসবুক ভিডিও পোস্টে শুধু লাভ বা লাইক রিয়্যাক্ট দিন',
+      'ব্র্যান্ড প্রমোশন FaceBook পোস্টে শুধু লাইক দিন',
+      'শিক্ষামূলক FaceBook পোস্টে শুধু লাইক দিন',
+      'ফেসবুক লাইভ ভিডিও পোস্টে শুধু লাইক দিন',
+      'পণ্য প্রচারের FaceBook পোস্টে শুধু লাইক দিন',
+      'মোটিভেশনাল FaceBook পোস্টে শুধু লাইক দিন',
+      'সাম্প্রতিক FaceBook ফটো পোস্টে শুধু লাইক দিন',
+      'কমিউনিটি FaceBook পোস্টে শুধু লাইক দিন',
+      'টেকনোলজি FaceBook পোস্টে শুধু লাইক দিন',
+      'স্বাস্থ্য টিপস FaceBook পোস্টে শুধু লাইক দিন',
+      'নিউজ আর্টিকেল FaceBook পোস্টে শুধু লাইক দিন',
+      'রেসিপি FaceBook পোস্টে শুধু লাভ বা লাইক রিয়্যাক্ট দিন',
+      'ট্রাভেল ফটো FaceBook পোস্টে শুধু লাইক দিন',
+      'স্পোর্টস আপডেট FaceBook পোস্টে শুধু লাইক দিন',
+      'বিজ্ঞান বিষয়ক FaceBook পোস্টে শুধু লাইক দিন',
+      'FaceBook রিলস শর্ট ক্লিপে শুধু লাইক দিন',
+      'গ্রুপের ফিচার্ড FaceBook পোস্টে শুধু লাইক দিন',
+      'লাইফস্টাইল FaceBook পোস্টে শুধু লাইক দিন',
+      'ক্যারিয়ার টিপস FaceBook পোস্টে শুধু লাইক দিন',
+      'ডিজিটাল আর্ট FaceBook পোস্টে শুধু লাভ রিয়্যাক্ট দিন',
+      'বই পরিচিতি FaceBook পোস্টে শুধু লাইক দিন',
+      'ফিচার্ড FaceBook ভিডিও পোস্টে শুধু লাইক দিন',
+      'পডকাস্ট অ্যানাউন্সমেন্ট FaceBook পোস্টে শুধু লাইক দিন',
+      'অফার ও ডিসকাউন্ট FaceBook পোস্টে শুধু লাইক দিন',
+      'মোবাইল টিপস FaceBook পোস্টে শুধু লাইক দিন',
+      'কমেডি স্কিট FaceBook ভিডিওতে শুধু লাইক দিন',
+      'নতুন ক্রিয়েটিভ FaceBook পোস্টে শুধু লাইক দিন'
     ],
     en: [
-      'Like and follow official FaceBook Page',
-      'Like and share latest published post',
-      'Join official group and view pinned posts',
-      'Give love react to Facebook Reels video',
-      'Leave a positive 5-star review on page',
-      'Like and comment on educational community post',
-      'Join live session and send love reactions',
-      'Like and share promotional showcase post',
-      'Like inspirational and motivational post',
-      'Like and leave a comment on recent photo album',
-      'Invite friends to follow community page',
-      'Like and comment on technology updates post',
-      'Share healthy lifestyle tips post to timeline',
-      'Click news link and like the article post',
-      'Give love react to culinary recipe post',
-      'Like stunning travel photography post',
-      'Like sports highlights update post',
-      'Like science and environment article post',
-      'Watch Facebook Reels video completely and share',
-      'Post helpful constructive comment in group',
-      'Follow official lifestyle creator page',
-      'Like career advancement tips post',
-      'Give love react to digital art showcase post',
-      'Comment on weekly book recommendation post',
-      'Watch featured video content for 3 minutes',
-      'Like podcast livestream announcement post',
-      'Like exclusive seasonal promotion post',
-      'Like smartphone tips and shortcuts post',
-      'Give laugh react to popular comedy skit',
-      'Post congratulations on new venture page'
+      'Open the FaceBook post and simply tap Like',
+      'Tap Like only on the latest FaceBook post',
+      'Simply like the official FaceBook Reels video',
+      'Give a Like or Love reaction only to the Facebook clip',
+      'Simply like the brand showcase FaceBook post',
+      'Tap Like only on the educational FaceBook post',
+      'Simply like the featured Facebook live video post',
+      'Tap Like only on the promotional FaceBook post',
+      'Simply like the motivational FaceBook post',
+      'Tap Like only on the recent FaceBook photo post',
+      'Simply like the community FaceBook update',
+      'Tap Like only on the technology FaceBook post',
+      'Simply like the healthy lifestyle FaceBook post',
+      'Tap Like only on the news article FaceBook post',
+      'Give a Like reaction only to the culinary FaceBook post',
+      'Simply like the travel photography FaceBook post',
+      'Tap Like only on the sports highlights FaceBook post',
+      'Simply like the science and nature FaceBook post',
+      'Tap Like only on the FaceBook Reels short clip',
+      'Simply like the featured group FaceBook post',
+      'Tap Like only on the lifestyle FaceBook post',
+      'Simply like the career tips FaceBook post',
+      'Give a Like reaction only to the digital art post',
+      'Simply like the book recommendation FaceBook post',
+      'Tap Like only on the featured FaceBook video post',
+      'Simply like the podcast announcement FaceBook post',
+      'Tap Like only on the seasonal promo FaceBook post',
+      'Simply like the smartphone tips FaceBook post',
+      'Tap Like only on the comedy FaceBook clip',
+      'Simply like the featured creative FaceBook post'
     ],
-    hi: [
-      'FaceBook आधिकारिक पेज को लाइक और फॉलो करें',
-      'नवीनतम पोस्ट को लाइक और शेयर करें',
-      'आधिकारिक ग्रुप से जुड़ें और पोस्ट देखें',
-      'फेसबुक रील्स वीडियो पर लव रिएक्ट दें',
-      'बिजनेस पेज पर सकारात्मक 5-स्टार रिव्यू दें',
-      'शैक्षणिक पोस्ट पर लाइक और टिप्पणी करें',
-      'लाइव सेशन में शामिल हों और लव रिएक्ट दें',
-      'प्रमोशनल पोस्ट को लाइक और शेयर करें',
-      'मोटिवेशनल पोस्ट को लाइक करें',
-      'हाल के फोटो एलबम पर लाइक और कमेंट करें',
-      'दोस्तों को कम्युनिटी पेज पर इनवाइट करें',
-      'तकनीक अपडेट पोस्ट पर लाइक और कमेंट करें',
-      'हेल्थ टिप्स पोस्ट को टाइमलाइन पर शेयर करें',
-      'न्यूज लिंक पर क्लिक करें और पोस्ट लाइक करें',
-      'रेसिपी पोस्ट पर लव रिएक्ट दें',
-      'ट्रैवल पेज की तस्वीरों को लाइक करें',
-      'स्पोर्ट्स अपडेट पोस्ट को लाइक करें',
-      'विज्ञान संबंधी लेख को लाइक करें',
-      'रील्स वीडियो पूरा देखें और शेयर करें',
-      'ग्रुप चर्चा में सकारात्मक टिप्पणी करें',
-      'लाइफस्टाइल पेज को फॉलो करें',
-      'करियर टिप्स पोस्ट को लाइक करें',
-      'डिजिटल आर्ट पोस्ट पर लव रिएक्ट दें',
-      'किताब रिव्यू पोस्ट पर कमेंट करें',
-      'वीडियो कंटेंट को 3 मिनट तक देखें',
-      'पॉडकास्ट लाइवस्ट्रीम पोस्ट को लाइक करें',
-      'ऑफर और डिस्काउंट पोस्ट को लाइक करें',
-      'मोबाइल टिप्स पोस्ट को लाइक करें',
-      'कॉमेडी स्किट पर हास्य रिएक्ट दें',
-      'नई पहल के पेज पर शुभकामना कमेंट करें'
+    ar: [
+      'افتح منشور FaceBook واضغط إعجاب فقط',
+      'اضغط إعجاب فقط على أحدث منشور في FaceBook',
+      'اضغط إعجاب فقط على فيديو FaceBook Reels الرسمي',
+      'أعطِ تفاعل إعجاب فقط لفيديو Facebook',
+      'اضغط إعجاب فقط على منشور العلامة التجارية',
+      'اضغط إعجاب فقط على المنشور التعليمي',
+      'اضغط إعجاب فقط على منشور البث المباشر',
+      'اضغط إعجاب فقط على المنشور الترويجي',
+      'اضغط إعجاب فقط على المنشور التحفيزي',
+      'اضغط إعجاب فقط على منشور الصور الحديث',
+      'اضغط إعجاب فقط على تحديث الصفحة المجتمعية',
+      'اضغط إعجاب فقط على منشور التكنولوجيا',
+      'اضغط إعجاب فقط على منشور نصائح الصحة',
+      'اضغط إعجاب فقط على منشور المقال الإخباري',
+      'اضغط إعجاب فقط على منشور وصفة الطعام',
+      'اضغط إعجاب فقط على منشور تصوير السفر',
+      'اضغط إعجاب فقط على منشور أخبار الرياضة',
+      'اضغط إعجاب فقط على منشور العلوم والطبيعة',
+      'اضغط إعجاب فقط على مقطع FaceBook Reels',
+      'اضغط إعجاب فقط على المنشور المميز في المجموعة',
+      'اضغط إعجاب فقط على منشور نمط الحياة',
+      'اضغط إعجاب فقط على منشور التطوير المهني',
+      'اضغط إعجاب فقط على منشور الفن الرقمي',
+      'اضغط إعجاب فقط على منشور ترشيح الكتاب',
+      'اضغط إعجاب فقط على منشور الفيديو المميز',
+      'اضغط إعجاب فقط على منشور إعلان البودكاست',
+      'اضغط إعجاب فقط على منشور العروض الموسمية',
+      'اضغط إعجاب فقط على منشور نصائح الهواتف',
+      'اضغط إعجاب فقط على فيديو الكوميديا في FaceBook',
+      'اضغط إعجاب فقط على المنشور الإبداعي الجديد'
     ]
   }
 };
 
 function getPlatformTaskDescription(platform, index, lang) {
-  if (!lang) {
-    lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || 'en';
-  }
+  lang = normalizeAppLang(lang || getActiveLang());
   const plat = platformTaskDescriptions[platform] || platformTaskDescriptions.TikTok;
   const list = plat[lang] || plat.en || plat.bn;
   const idx = Math.abs(parseInt(index || 0, 10));
@@ -5807,6 +6096,28 @@ function readAcceptedMissions() {
   return missions.filter(function(m) {
     return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
   });
+}
+
+const DAILY_QUOTA_RESET_MS = 24 * 60 * 60 * 1000;
+
+function isMissionIn24hQuotaWindow(mission, refMs) {
+  if (!mission) return false;
+  const nowMs = typeof refMs === 'number' ? refMs : Date.now();
+  const ts = new Date(mission.acceptedAt || mission.completedAt || '').getTime();
+  return Number.isFinite(ts) && ts > 0 && (nowMs - ts) < DAILY_QUOTA_RESET_MS && (nowMs - ts) >= -60000;
+}
+
+function getActive24hQuotaKey(missions, userLevel, refMs) {
+  const nowMs = typeof refMs === 'number' ? refMs : Date.now();
+  const activeCount = (missions || []).filter(function(m) {
+    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
+  }).length;
+  const compCount = (missions || []).filter(function(m) {
+    if (m.status !== 'complete') return false;
+    const ts = new Date(m.completedAt || m.acceptedAt || '').getTime();
+    return Number.isFinite(ts) && ts > 0 && (nowMs - ts) < DAILY_QUOTA_RESET_MS && (nowMs - ts) >= -60000;
+  }).length;
+  return `${userLevel || 'LV0'}:${activeCount}:${compCount}`;
 }
 
 function updateProfileMetrics() {
@@ -5907,19 +6218,20 @@ function updateProfileMetrics() {
   setText('personal-earnings-value', personalBalanceVal);
 
   const user = getCurrentUser();
-  const rate = getUsdExchangeRate(user); // 126 for BD, 84 for IN
+  const isUsd = isUsdOnlyUser(user);
+  const rate = getUsdExchangeRate(user); // 126 for BD, 1.0 for USD-only countries
   const curr = getUserCurrency(user);
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const lang = getActiveLang(user);
 
-  // Conversion: 126 BDT = $1.00 USD; 84 INR = $1.00 USD
+  // Conversion: Bangladesh 126 BDT = $1.00 USD; International accounts run natively in USD ($1 = $1 USDT)
   const profileUsdVal = (Number(currentBal) / rate).toFixed(2);
   setText('profile-balance-value', balanceText);
   setText('profile-usdt-value', profileUsdVal);
   setText('total-balance-value', balanceText);
 
-  const rateBadge = lang === 'en'
-    ? `(Rate: $1 = ${rate} ${curr})`
-    : (lang === 'hi' ? `(दर: $1 = ${rate} ${curr})` : `(রেট: ১$ = ${rate === 126 ? '১২৬৳' : '৮৪₹'})`);
+  const rateBadge = isUsd
+    ? '($1.00 = 1.00 USDT)'
+    : tLang(lang, `(রেট: ১$ = ১২৬৳)`, `(Rate: $1 = ${rate} ${curr})`, `(السعر: $1 = ${rate} ${curr})`);
   setText('profile-usd-rate-badge', rateBadge);
 
   // 7 USD spans in 3x3 Grid
@@ -5939,20 +6251,29 @@ function updateProfileMetrics() {
   setText('my-pass-balance-value', passTotal.toFixed(2));
   setText('my-pass-frozen-value', frozenVal.toFixed(2));
   setText('my-pass-available-value', availBal.toFixed(2));
-  setText('my-pass-usd-subtext', `≈ $${passUsd} USD ${rateBadge}`);
+  setText('my-pass-usd-subtext', isUsd ? `≈ $${passUsd} USD` : `≈ $${passUsd} USD ${rateBadge}`);
 
   renderWithdrawalHistory();
 
-  // Completed missions count & remaining based on actual package quota
+  // Completed missions count & remaining based on actual package quota (decreases immediately on Accept, resets after 24h)
+  const nowMs = now.getTime();
   const completedTodayCount = completedMissions.filter(function(m) {
     const d = getCompletedAt(m);
-    return d && d >= startOfToday;
+    if (!d) return false;
+    const diff = nowMs - d.getTime();
+    return diff >= -60000 && diff < DAILY_QUOTA_RESET_MS;
+  }).length;
+
+  const acceptedIn24hCount = missions.filter(function(m) {
+    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   }).length;
 
   const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
   const currentLevelSetting = packageTaskSettings[currentLevel] || packageTaskSettings.LV0;
   const totalDailyQuota = currentLevelSetting ? currentLevelSetting.count : 5;
-  const remainingTodayCount = Math.max(0, totalDailyQuota - completedTodayCount);
+  const remainingTodayCount = Math.max(0, totalDailyQuota - acceptedIn24hCount);
+
+  window._lastActive24hQuotaKey = `${currentLevel}:${acceptedIn24hCount}:${completedTodayCount}`;
 
   setText('completed-tasks-value', String(completedTodayCount));
   setText('remaining-tasks-value', String(remainingTodayCount));
@@ -5962,9 +6283,10 @@ window.updateProfileMetrics = updateProfileMetrics;
 function saveAcceptedMission(serverMission) {
   const allMissions = readAllMissionsRaw();
   let curPhone = '';
+  let curUser = null;
   try {
-    const u = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
-    curPhone = u ? normalizeBdPhone(u.phone || u.accountNumber || '') : '';
+    curUser = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
+    curPhone = curUser ? normalizeBdPhone(curUser.phone || curUser.accountNumber || '') : '';
   } catch(e) {}
   allMissions.unshift({
     id: serverMission.id,
@@ -5975,6 +6297,7 @@ function saveAcceptedMission(serverMission) {
     description: serverMission.description,
     level: serverMission.level,
     reward: serverMission.reward,
+    currency: serverMission.currency || getUserCurrency(curUser),
     status: serverMission.status,
     acceptedAt: serverMission.acceptedAt,
     evidenceName: '',
@@ -5985,6 +6308,7 @@ function saveAcceptedMission(serverMission) {
 }
 
 function showTaskCenterToast(text) {
+  const defaultTxt = tLang(getActiveLang(), 'গ্রহণ করা হচ্ছে', 'Accepting...', 'جارٍ القبول...');
   let modal = document.getElementById('task-center-modal');
   if (!modal) {
     modal = document.createElement('div');
@@ -5999,7 +6323,7 @@ function showTaskCenterToast(text) {
           </svg>
         </div>
         <div class="text-[16px] font-bold text-white font-['Hind_Siliguri'] tracking-wide task-center-modal-text">
-          ${text || 'গ্রহণ করা হচ্ছে'}
+          ${text || defaultTxt}
         </div>
       </div>
     `;
@@ -6008,7 +6332,7 @@ function showTaskCenterToast(text) {
 
   const textEl = modal.querySelector('.task-center-modal-text');
   if (textEl) {
-    textEl.textContent = text || 'গ্রহণ করা হচ্ছে';
+    textEl.textContent = text || defaultTxt;
   }
 
   modal.removeAttribute('hidden');
@@ -6033,7 +6357,8 @@ function showTaskCenterToast(text) {
 window.showTaskCenterToast = showTaskCenterToast;
 
 function showTaskAcceptToast(title) {
-  showTaskCenterToast(title || 'গ্রহণ করা হচ্ছে');
+  const defaultTxt = tLang(getActiveLang(), 'গ্রহণ করা হচ্ছে', 'Accepting...', 'جارٍ القبول...');
+  showTaskCenterToast(title || defaultTxt);
 }
 window.showTaskAcceptToast = showTaskAcceptToast;
 
@@ -6047,46 +6372,46 @@ function refreshDailyMissionLimit(level) {
   const isUnlocked = isLevelUnlocked(level, user);
   const userLevel = (user && user.packageLevel) || 'LV0';
   const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
-  const today = new Date().toDateString();
+  const nowMs = Date.now();
   const missions = readAcceptedMissions();
   const acceptedToday = missions.filter(function(m) {
-    return m.level === level && m.status !== 'failed' && new Date(m.acceptedAt).toDateString() === today;
+    return m.level === level && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const allTodayAccepted = missions.filter(function(m) {
-    return m.status !== 'failed' && new Date(m.acceptedAt).toDateString() === today;
+    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
 
   const quotaLimit = (packageTaskSettings[level] && packageTaskSettings[level].count) || 5;
   const currentCount = acceptedToday.length;
   const reached = currentCount >= quotaLimit || allTodayAccepted.length >= userMaxQuota;
 
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const lang = getActiveLang(user);
 
   // Clean, minimal header: NO quota bars or numbers on top
   if (title) {
     title.textContent = `${activePlatform} · ${level}`;
   }
   if (note) {
-    note.textContent = lang === 'hi' ? 'आपके वर्तमान पैकेज के लिए उपलब्ध कार्य' : (lang === 'en' ? 'Available tasks for your package' : 'আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ');
+    note.textContent = tLang(lang, 'আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ', 'Available tasks for your package', 'المهام المتاحة لباقتك الحالية');
   }
 
   // Update button states in task list
   if (platformTaskList) {
     const rows = platformTaskList.querySelectorAll('.platform-task-row');
-    const limitReachedText = lang === 'hi' ? 'सीमा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
-    const acceptedText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
-    const acceptText = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
+    const limitReachedText = tLang(lang, 'সীমা পূর্ণ', 'Limit Reached', 'تم بلوغ الحد');
+    const acceptedText = tLang(lang, 'গৃহীত', 'Accepted', 'مقبول');
+    const acceptText = tLang(lang, 'গ্রহণ', 'Accept', 'قبول');
 
     rows.forEach(function(row) {
       const btn = row.querySelector('[data-platform-accept]');
       if (!btn) return;
       const taskIdx = parseInt(row.dataset.taskIndex || '-1', 10);
       const isTaskAccepted = missions.some(function(m) {
-        return m.platform === activePlatform && m.level === level && m.status !== 'failed' && Number(m.taskIndex) === Number(taskIdx) && new Date(m.acceptedAt).toDateString() === today;
+        return m.platform === activePlatform && m.level === level && m.status !== 'failed' && Number(m.taskIndex) === Number(taskIdx) && isMissionIn24hQuotaWindow(m, nowMs);
       });
 
       if (!isUnlocked) {
-        btn.textContent = lang === 'hi' ? 'लॉक 🔒' : (lang === 'en' ? 'Locked 🔒' : 'লকড 🔒');
+        btn.textContent = tLang(lang, 'লকড 🔒', 'Locked 🔒', 'مقفل 🔒');
         btn.disabled = false;
         btn.className = 'platform-task-accept bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
         btn.dataset.lockedLevel = level;
@@ -6114,7 +6439,7 @@ function refreshDailyMissionLimit(level) {
 
   if (message) {
     if (reached) {
-      const limitTitle = lang === 'hi' ? 'आज की कार्य सीमा पूर्ण हो चुकी है' : (lang === 'en' ? 'Daily task limit reached' : 'আজকের কাজের সীমা পূর্ণ হয়েছে');
+      const limitTitle = tLang(lang, 'আজকের কাজের সীমা পূর্ণ হয়েছে', 'Daily task limit reached', 'تم الوصول إلى الحد اليومي للمهام');
       message.innerHTML = `<span style="color: var(--color-warning); font-weight: bold;">${limitTitle}</span>`;
     } else {
       message.innerHTML = '';
@@ -6136,7 +6461,8 @@ function renderMissionRecords(filter) {
     failed: missions.filter(function(m) { return m.status === 'failed'; }).length
   };
   const user = getCurrentUser();
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
   const curr = getUserCurrency(user);
 
   const tabActive = document.querySelector('.mission-record-tab[data-mission-filter="active"]');
@@ -6144,19 +6470,19 @@ function renderMissionRecords(filter) {
   const tabComplete = document.querySelector('.mission-record-tab[data-mission-filter="complete"]');
   const tabFailed = document.querySelector('.mission-record-tab[data-mission-filter="failed"]');
   if (tabActive) {
-    const lbl = lang === 'hi' ? 'चालू' : (lang === 'en' ? 'In Progress' : 'চলমান');
+    const lbl = tLang(lang, 'চলমান', 'In Progress', 'قيد التنفيذ');
     tabActive.innerHTML = `${lbl}<span id="mission-active-count">(${counts.active})</span>`;
   }
   if (tabReview) {
-    const lbl = lang === 'hi' ? 'समीक्षा' : (lang === 'en' ? 'Under Review' : 'পর্যালোচনা');
+    const lbl = tLang(lang, 'পর্যালোচনা', 'Under Review', 'قيد المراجعة');
     tabReview.innerHTML = `${lbl}<span id="mission-review-count">(${counts.review})</span>`;
   }
   if (tabComplete) {
-    const lbl = lang === 'hi' ? 'সম্পন্ন' : (lang === 'en' ? 'Completed' : 'সম্পন্ন');
+    const lbl = tLang(lang, 'সম্পন্ন', 'Completed', 'مكتمل');
     tabComplete.innerHTML = `${lbl}<span id="mission-complete-count">(${counts.complete})</span>`;
   }
   if (tabFailed) {
-    const lbl = lang === 'hi' ? 'विफल / रद्द' : (lang === 'en' ? 'Failed / Cancelled' : 'ব্যর্থ / বাতিল');
+    const lbl = tLang(lang, 'ব্যর্থ / বাতিল', 'Failed / Cancelled', 'فاشل / ملغي');
     tabFailed.innerHTML = `${lbl}<span id="mission-failed-count">(${counts.failed})</span>`;
   }
 
@@ -6173,17 +6499,17 @@ function renderMissionRecords(filter) {
   if (visibleMissions.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'dashboard-card px-5 py-12 text-center';
-    let emptyMsg = lang === 'hi' ? 'इस सूची में अभी कोई कार्य नहीं है।' : (lang === 'en' ? 'No tasks in this list yet.' : 'এই তালিকায় এখনো কোনো কাজ নেই।');
-    let subMsg = lang === 'hi' ? 'मिशन हॉल से कार्य स्वीकार करने पर वे यहां दिखेंगे।' : (lang === 'en' ? 'Accept tasks from Mission Hall to see them here.' : 'মিশন হল থেকে কাজ গ্রহণ করলে এখানে দেখা যাবে।');
+    let emptyMsg = tLang(lang, 'এই তালিকায় এখনো কোনো কাজ নেই।', 'No tasks in this list yet.', 'لا توجد مهام في هذه القائمة بعد.');
+    let subMsg = tLang(lang, 'মিশন হল থেকে কাজ গ্রহণ করলে এখানে দেখা যাবে।', 'Accept tasks from Mission Hall to see them here.', 'اقبل المهام من قاعة المهام لعرضها هنا.');
     if (activeMissionFilter === 'review') {
-      emptyMsg = lang === 'hi' ? 'वर्तमान में कोई कार्य समीक्षाधीन नहीं है।' : (lang === 'en' ? 'No tasks currently under review.' : 'বর্তমানে কোনো কাজ পর্যালোচনাধীন নেই।');
-      subMsg = lang === 'hi' ? 'सबमिट किए गए कार्य 15 मिनट तक स्वचालित लाइक जांच के बाद सफल या विफल होंगे।' : (lang === 'en' ? 'Submitted tasks verify Likes automatically and settle after 15 minutes.' : 'জমা দেওয়া কাজ ১৫ মিনিট লাইক যাচাইয়ের পর সফল বা ব্যর্থ হবে।');
+      emptyMsg = tLang(lang, 'বর্তমানে কোনো কাজ পর্যালোচনাধীন নেই।', 'No tasks currently under review.', 'لا توجد مهام قيد المراجعة حالياً.');
+      subMsg = tLang(lang, 'জমা দেওয়া কাজ ১৫ মিনিট লাইক যাচাইয়ের পর সফল বা ব্যর্থ হবে।', 'Submitted tasks verify Likes automatically and settle after 15 minutes.', 'يتم التحقق من الإعجابات للمهام المقدمة تلقائياً وتسويتها بعد 15 دقيقة.');
     } else if (activeMissionFilter === 'complete') {
-      emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य पूर्ण नहीं हुआ है।' : (lang === 'en' ? 'No tasks completed yet.' : 'এখনো কোনো কাজ সম্পূর্ণ হয়নি।');
-      subMsg = lang === 'hi' ? 'समीक्षा पूरी होने के बाद कार्य यहाँ स्थायी रूप से संग्रहीत रहेंगे।' : (lang === 'en' ? 'Completed tasks are permanently archived here.' : 'সম্পূর্ণ কাজগুলো এখানে এককালীন সংরক্ষিত থাকবে।');
+      emptyMsg = tLang(lang, 'এখনো কোনো কাজ সম্পূর্ণ হয়নি।', 'No tasks completed yet.', 'لم تكتمل أي مهام بعد.');
+      subMsg = tLang(lang, 'সম্পূর্ণ কাজগুলো এখানে এককালীন সংরক্ষিত থাকবে।', 'Completed tasks are permanently archived here.', 'يتم حفظ المهام المكتملة هنا بشكل دائم.');
     } else if (activeMissionFilter === 'failed') {
-      emptyMsg = lang === 'hi' ? 'अभी तक कोई कार्य विफल या रद्द नहीं हुआ है।' : (lang === 'en' ? 'No failed or cancelled tasks yet.' : 'এখনো কোনো কাজ ব্যর্থ বা বাতিল হয়নি।');
-      subMsg = lang === 'hi' ? 'गलत स्क्रीनशॉट या रद्द किए गए कार्य यहाँ दिखेंगे।' : (lang === 'en' ? 'Failed or cancelled tasks are permanently archived here.' : 'ভুল স্ক্রিনশট বা বাতিল করা কাজগুলো এখানে সংরক্ষিত থাকবে।');
+      emptyMsg = tLang(lang, 'এখনো কোনো কাজ ব্যর্থ বা বাতিল হয়নি।', 'No failed or cancelled tasks yet.', 'لا توجد مهام فاشلة أو ملغاة بعد.');
+      subMsg = tLang(lang, 'ভুল স্ক্রিনশট বা বাতিল করা কাজগুলো এখানে সংরক্ষিত থাকবে।', 'Failed or cancelled tasks are permanently archived here.', 'يتم حفظ المهام الفاشلة أو الملغاة هنا بشكل دائم.');
     }
     empty.innerHTML = `<span class="text-3xl" aria-hidden="true">▤</span><p class="mt-3 text-sm font-semibold">${emptyMsg}</p><p class="mt-2 text-xs" style="color: var(--color-muted);">${subMsg}</p>`;
     list.appendChild(empty);
@@ -6206,15 +6532,17 @@ function renderMissionRecords(filter) {
       ? '—'
       : acceptedDate.getFullYear() + '-' + String(acceptedDate.getMonth() + 1).padStart(2, '0') + '-' + String(acceptedDate.getDate()).padStart(2, '0') + ' ' + String(acceptedDate.getHours()).padStart(2, '0') + ':' + String(acceptedDate.getMinutes()).padStart(2, '0');
 
-    const rewMoney = Number(mission.reward || 0);
-    const usdVal = formatUsd(rewMoney, user);
-    const rewFormatted = lang === 'bn' ? `${formatBanglaNumber(rewMoney)}.০০` : `${rewMoney.toFixed(2)}`;
+    const rawRew = Number(mission.reward || 0);
+    const rewMoney = (isUsd && mission.currency !== 'USD') ? toUserCurrencyAmount(rawRew, user) : rawRew;
+    const rewFormatted = isUsd
+      ? `$${rewMoney.toFixed(2)}`
+      : (lang === 'bn' ? `${formatBanglaNumber(rewMoney)}.০০` : `${rewMoney.toFixed(2)}`);
 
     let actionsHtml = '';
 
     if (mission.status === 'active') {
-      const cancelLabel = lang === 'hi' ? 'रद्द करें' : (lang === 'en' ? 'Cancel' : 'বাতিল করুন');
-      const submitLabel = lang === 'hi' ? 'जमा करें →' : (lang === 'en' ? 'Submit →' : 'জমা দিন →');
+      const cancelLabel = tLang(lang, 'বাতিল করুন', 'Cancel', 'إلغاء');
+      const submitLabel = tLang(lang, 'জমা দিন →', 'Submit →', 'إرسال ←');
       actionsHtml = `
         <div class="mission-record-actions flex items-center justify-end gap-2.5 pt-2">
           <button type="button" class="mission-cancel-button px-3.5 py-1.5 rounded text-xs font-bold cursor-pointer hover:opacity-90 active:scale-95 transition" style="background: #b91c1c; color: #ffffff;" data-cancel-mission>${cancelLabel}</button>
@@ -6228,26 +6556,20 @@ function renderMissionRecords(filter) {
       const secs = remainingSec % 60;
       const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
 
-      const reviewLabel = lang === 'hi' ? 'समीक्षाधीन: शेष' : (lang === 'en' ? 'Under Review: Left' : 'পর্যালোচনাধীন: বাকি');
-      const minsLabel = lang === 'hi' ? 'मिनट' : (lang === 'en' ? 'mins' : 'মিনিট');
+      const reviewLabel = tLang(lang, 'পর্যালোচনাধীন: বাকি', 'Under Review: Left', 'قيد المراجعة: المتبقي');
+      const minsLabel = tLang(lang, 'মিনিট', 'mins', 'دقائق');
 
-      let verifyHint = lang === 'hi'
-        ? '🔍 स्क्रीनशॉट लाइक जांच जारी है...'
-        : (lang === 'en' ? '🔍 Verifying Like screenshot...' : '🔍 স্ক্রিনশটে লাইক যাচাই চলছে...');
+      let verifyHint = tLang(lang, '🔍 স্ক্রিনশটে লাইক যাচাই চলছে...', '🔍 Verifying Like screenshot...', '🔍 جارٍ التحقق من لقطة شاشة الإعجاب...');
       let verifyColor = 'text-sky-300';
       if (mission.likeVerifyStatus === 'valid') {
-        verifyHint = lang === 'hi'
-          ? '✓ लाइक सत्यापित — समय पूरा होने पर इनाम मिलेगा'
-          : (lang === 'en' ? '✓ Like verified — Reward settles when timer ends' : '✓ লাইক সঠিক পাওয়া গেছে — সময় শেষে সফল হবে');
+        verifyHint = tLang(lang, '✓ লাইক সঠিক পাওয়া গেছে — সময় শেষে সফল হবে', '✓ Like verified — Reward settles when timer ends', '✓ تم التحقق من الإعجاب — تضاف المكافأة عند انتهاء المؤقت');
         verifyColor = 'text-emerald-300';
       } else if (mission.likeVerifyStatus === 'invalid') {
-        verifyHint = lang === 'hi'
-          ? '⚠️ लाइक नहीं मिला — समय पूरा होने पर विफल होगा'
-          : (lang === 'en' ? '⚠️ Valid Like not detected — Will fail after timer' : '⚠️ স্ক্রিনশটে সঠিক লাইক মেলেনি — সময় শেষে ব্যর্থ হবে');
+        verifyHint = tLang(lang, '⚠️ স্ক্রিনশটে সঠিক লাইক মেলেনি — সময় শেষে ব্যর্থ হবে', '⚠️ Valid Like not detected — Will fail after timer', '⚠️ لم يتم التحقق من وجود إعجاب — ستفشل المهمة بعد المؤقت');
         verifyColor = 'text-rose-300';
-      } else if (mission.likeVerifyStatus === 'error' && mission.likeVerifyReason) {
-        verifyHint = `⚠️ ${safeEsc(mission.likeVerifyReason)}`;
-        verifyColor = 'text-amber-300';
+      } else if (mission.likeVerifyStatus === 'service_unavailable' || mission.likeVerifyStatus === 'error') {
+        verifyHint = tLang(lang, '🔍 স্ক্রিনশট পর্যালোচনা চলছে — সময় শেষে আপডেট হবে', '🔍 Screenshot under review — Updates when timer ends', '🔍 لقطة الشاشة قيد المراجعة — سيتم التحديث عند انتهاء المؤقت');
+        verifyColor = 'text-sky-300';
       }
 
       actionsHtml = `
@@ -6265,8 +6587,8 @@ function renderMissionRecords(filter) {
       const compDate = new Date(mission.completedAt || Date.now());
       const compDateText = compDate.getFullYear() + '-' + String(compDate.getMonth() + 1).padStart(2, '0') + '-' + String(compDate.getDate()).padStart(2, '0') + ' ' + String(compDate.getHours()).padStart(2, '0') + ':' + String(compDate.getMinutes()).padStart(2, '0');
 
-      const compSuccessLabel = lang === 'hi' ? 'समीक्षा सफल — इनाम बैलेंस में जुड़ गया' : (lang === 'en' ? 'Review Successful — Reward credited' : 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে');
-      const compTimeLabel = lang === 'hi' ? 'সম্পন্নের সময়:' : (lang === 'en' ? 'Completed at:' : 'সম্পন্নের সময়:');
+      const compSuccessLabel = tLang(lang, 'পর্যালোচনা সফল — পুরস্কার ব্যালেন্সে জমা হয়েছে', 'Review Successful — Reward credited', 'المراجعة ناجحة — تمت إضافة المكافأة إلى الرصيد');
+      const compTimeLabel = tLang(lang, 'সম্পন্নের সময়:', 'Completed at:', 'وقت الإكمال:');
 
       actionsHtml = `
         <div class="mission-card-complete-bar mt-2.5 pt-2 flex items-center justify-between text-xs">
@@ -6281,14 +6603,30 @@ function renderMissionRecords(filter) {
       const cancelDate = new Date(mission.cancelledAt || mission.failedAt || Date.now());
       const cancelDateText = cancelDate.getFullYear() + '-' + String(cancelDate.getMonth() + 1).padStart(2, '0') + '-' + String(cancelDate.getDate()).padStart(2, '0') + ' ' + String(cancelDate.getHours()).padStart(2, '0') + ':' + String(cancelDate.getMinutes()).padStart(2, '0');
 
-      const isAuditFailed = Boolean(mission.failReason);
+      const isAuditFailed = Boolean(mission.failReason || mission.failReasonEn) || (Boolean(mission.submittedAt) && !mission.cancelledByUser);
+      const dispFailReason = lang === 'bn'
+        ? (mission.failReason || mission.failReasonEn || 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি')
+        : (mission.failReasonEn || (/[\u0980-\u09FF]/.test(String(mission.failReason || '')) ? (lang === 'ar' ? 'لم يتم اكتشاف إعجاب صالح في لقطة الشاشة' : 'Valid Like not detected in screenshot') : (mission.failReason || (lang === 'ar' ? 'لم يتم اكتشاف إعجاب صالح في لقطة الشاشة' : 'Valid Like not detected in screenshot'))));
       const cancelSuccessLabel = isAuditFailed
-        ? (lang === 'hi' ? `समीक्षा विफल — ${safeEsc(mission.failReason)}` : (lang === 'en' ? `Review Failed — ${safeEsc(mission.failReason)}` : `পর্যালোচনা ব্যর্থ — ${safeEsc(mission.failReason)}`))
-        : (lang === 'hi' ? 'कार्य रद्द — रिकॉर्ड में सुरक्षित' : (lang === 'en' ? 'Task Cancelled — Permanently Archived' : 'কাজটি বাতিল — রেকর্ডে এককালীন সংরক্ষিত'));
+        ? tLang(lang, `পর্যালোচনা ব্যর্থ — ${safeEsc(dispFailReason)}`, `Review Failed — ${safeEsc(dispFailReason)}`, `فشلت المراجعة — ${safeEsc(dispFailReason)}`)
+        : tLang(lang, 'কাজটি বাতিল — রেকর্ডে এককালীন সংরক্ষিত', 'Task Cancelled — Permanently Archived', 'تم إلغاء المهمة — محفوظة في السجل');
       const badgeLbl = isAuditFailed
-        ? (lang === 'hi' ? 'विफल' : (lang === 'en' ? 'Failed' : 'ব্যর্থ'))
-        : (lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'Cancelled' : 'বাতিল'));
-      const cancelTimeLabel = lang === 'hi' ? (isAuditFailed ? 'विफल समय:' : 'रद्द समय:') : (lang === 'en' ? (isAuditFailed ? 'Failed at:' : 'Cancelled at:') : (isAuditFailed ? 'ব্যর্থতার সময়:' : 'বাতিলের সময়:'));
+        ? tLang(lang, 'ব্যর্থ', 'Failed', 'فاشل')
+        : tLang(lang, 'বাতিল', 'Cancelled', 'ملغي');
+      const cancelTimeLabel = isAuditFailed
+        ? tLang(lang, 'ব্যর্থতার সময়:', 'Failed at:', 'وقت الفشل:')
+        : tLang(lang, 'বাতিলের সময়:', 'Cancelled at:', 'وقت الإلغاء:');
+
+      const appealCount = Number(mission.appealCount) || 0;
+      const maxAppeals = 3;
+      const canAppeal = isAuditFailed && !mission.rewardCredited && appealCount < maxAppeals;
+      const appealBtnLabel = tLang(lang, 'আপিল ও পুনরায় জমা', 'Appeal & Resubmit', 'تقديم استئناف وإعادة الإرسال');
+      const maxAppealNote = tLang(
+        lang,
+        `সর্বোচ্চ আপিল সীমা (${appealCount}/${maxAppeals}) পূর্ণ`,
+        `Max appeals reached (${appealCount}/${maxAppeals})`,
+        `تم بلوغ الحد الأقصى للاستئناف (${appealCount}/${maxAppeals})`
+      );
 
       actionsHtml = `
         <div class="mission-card-failed-bar mt-2.5 pt-2 flex items-center justify-between text-xs gap-2">
@@ -6297,19 +6635,32 @@ function renderMissionRecords(filter) {
           </span>
           <span class="font-bold font-mono shrink-0 text-rose-400/90 bg-rose-500/10 border border-rose-500/30 px-2 py-0.5 rounded text-[11px]">${badgeLbl}</span>
         </div>
-        <p class="text-[11px] mt-1" style="color: var(--color-muted);">${cancelTimeLabel} ${cancelDateText}</p>
+        <div class="mt-2 flex items-center justify-between gap-2 flex-wrap">
+          <p class="text-[11px]" style="color: var(--color-muted);">${cancelTimeLabel} ${cancelDateText}</p>
+          ${canAppeal ? `
+          <button type="button" class="mission-appeal-button px-3.5 py-1.5 rounded text-xs font-bold cursor-pointer hover:opacity-90 active:scale-95 transition flex items-center gap-1 shadow" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #05102c;" data-appeal-mission>
+            <span>↻</span> <span>${appealBtnLabel}</span>
+          </button>` : (isAuditFailed ? `<span class="text-[11px] font-medium text-amber-300/75">${maxAppealNote}</span>` : '')}
+        </div>
       `;
     }
 
-    const rewLabel = lang === 'hi' ? 'इनाम' : (lang === 'en' ? 'Reward' : 'পুরস্কার');
-    const taskLabel = lang === 'hi' ? 'कार्य:' : (lang === 'en' ? 'Task:' : 'কাজ:');
-    const acceptLabel = lang === 'hi' ? 'स्वीकृति समय:' : (lang === 'en' ? 'Accepted at:' : 'গ্রহণের সময়:');
-    const proofLabel = lang === 'hi' ? 'सबमिट किया गया प्रमाण:' : (lang === 'en' ? 'Submitted Proof:' : 'জমা দেওয়া প্রমাণ:');
-    const previewLabel = lang === 'hi' ? 'प्रिव्यू देखें 🔍' : (lang === 'en' ? 'Preview 🔍' : 'প্রিভিউ দেখুন 🔍');
+    const rewLabel = tLang(lang, 'পুরস্কার', 'Reward', 'المكافأة');
+    const taskLabel = tLang(lang, 'কাজ:', 'Task:', 'المهمة:');
+    const acceptLabel = tLang(lang, 'গ্রহণের সময়:', 'Accepted at:', 'وقت القبول:');
+    const proofLabel = tLang(lang, 'জমা দেওয়া প্রমাণ:', 'Submitted Proof:', 'الإثبات المقدم:');
+    const appealNoteLabel = tLang(lang, 'আপিলের কারণ:', 'Appeal Note:', 'سبب الاستئناف:');
+    const previewLabel = tLang(lang, 'প্রিভিউ দেখুন', 'Preview', 'معاينة');
+    const removeShotLabel = tLang(lang, 'রিমুভ', 'Remove', 'إزالة');
+    const canRemoveCardShot = (mission.status === 'failed' || mission.status === 'active');
     const descText = getPlatformTaskDescription(mission.platform, mission.taskIndex !== undefined ? mission.taskIndex : 0, lang) || mission.description;
-    const failedStampText = mission.failReason
-      ? (lang === 'hi' ? 'विफल' : (lang === 'en' ? 'FAILED' : 'ব্যর্থ'))
-      : (lang === 'hi' ? 'रद्द' : (lang === 'en' ? 'CANCELLED' : 'বাতিল'));
+    const isFailedAuditStamp = Boolean(mission.failReason || mission.failReasonEn) || (Boolean(mission.submittedAt) && !mission.cancelledByUser);
+    const failedStampText = isFailedAuditStamp
+      ? tLang(lang, 'ব্যর্থ', 'FAILED', 'فشل')
+      : tLang(lang, 'বাতিল', 'CANCELLED', 'ملغي');
+    const appealBadgeText = mission.isAppeal
+      ? tLang(lang, `আপিল #${Number(mission.appealCount) || 1}`, `Appeal #${Number(mission.appealCount) || 1}`, `استئناف #${Number(mission.appealCount) || 1}`)
+      : '';
 
     card.innerHTML = `
       ${mission.status === 'review' ? `
@@ -6335,6 +6686,7 @@ function renderMissionRecords(filter) {
           <div class="relative inline-block">
             <h3 class="mission-platform-name truncate font-bold text-sm text-white">${mission.platform}</h3>
             <span class="text-[11px] px-1.5 py-0.5 rounded font-semibold" style="background: rgba(255,255,255,0.08); color: var(--color-muted);">${mission.level || 'LV0'}</span>
+            ${appealBadgeText ? `<span class="ml-1 text-[10px] px-1.5 py-0.5 rounded font-bold bg-amber-500/20 border border-amber-400/40 text-amber-300">${appealBadgeText}</span>` : ''}
           </div>
         </div>
         <div class="text-right">
@@ -6345,12 +6697,19 @@ function renderMissionRecords(filter) {
       <div class="mission-card-details text-xs leading-5 relative z-10" style="color: var(--color-profile-text);">
         <p class="text-slate-300">${taskLabel} <span class="font-medium text-slate-100">${descText}</span></p>
         <p class="text-slate-300">${acceptLabel} <span class="text-slate-400">${dateText}</span></p>
+        ${mission.appealNote ? `<p class="text-amber-200/90">${appealNoteLabel} <span class="text-amber-100">${safeEsc(mission.appealNote)}</span></p>` : ''}
         ${mission.screenshot ? `
-        <div class="mt-1.5 flex items-center justify-between gap-2 pt-1">
+        <div class="mt-1.5 flex items-center justify-between gap-2 pt-1 flex-wrap">
           <span class="text-[11px] text-slate-400">${proofLabel}</span>
-          <button type="button" class="view-task-screenshot-btn flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e2a66] border border-[#1b3e85] text-xs font-bold text-[#38bdf8] hover:bg-[#133785] transition cursor-pointer active:scale-95" data-task-screenshot="${mission.id}">
-            <span>🖼️</span> <span>${previewLabel}</span>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button type="button" class="view-task-screenshot-btn flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0e2a66] border border-[#1b3e85] text-xs font-bold text-[#38bdf8] hover:bg-[#133785] transition cursor-pointer active:scale-95" data-task-screenshot="${mission.id}">
+              <span>🖼️</span> <span>${previewLabel}</span>
+            </button>
+            ${canRemoveCardShot ? `
+            <button type="button" class="remove-task-screenshot-btn flex items-center gap-1 px-2.5 py-1 rounded bg-rose-600/20 border border-rose-500/45 text-xs font-bold text-rose-300 hover:bg-rose-600/35 transition cursor-pointer active:scale-95" data-remove-task-screenshot="${mission.id}">
+              <span>🗑️</span> <span>${removeShotLabel}</span>
+            </button>` : ''}
+          </div>
         </div>` : ''}
       </div>
       <div class="relative z-10">
@@ -6374,13 +6733,13 @@ function renderPackageTasks(level) {
   const userLevel = (user && user.packageLevel) || 'LV0';
   const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
 
-  const today = new Date().toDateString();
+  const nowMs = Date.now();
   const missions = readAcceptedMissions();
   const acceptedToday = missions.filter(function(m) {
-    return m.level === activePackageLevel && m.status !== 'failed' && new Date(m.acceptedAt).toDateString() === today;
+    return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const allTodayAccepted = missions.filter(function(m) {
-    return m.status !== 'failed' && new Date(m.acceptedAt).toDateString() === today;
+    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const quotaLimit = settings.count;
   const isLimitReached = acceptedToday.length >= quotaLimit || allTodayAccepted.length >= userMaxQuota;
@@ -6388,48 +6747,49 @@ function renderPackageTasks(level) {
   const TOTAL_TASKS_TO_DISPLAY = Math.max(30, (settings.count || 5) + 5);
   const rows = [];
 
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
   const curr = getUserCurrency(user);
+  const sym = getUserCurrencySymbol(user);
 
   for (let i = 0; i < TOTAL_TASKS_TO_DISPLAY; i++) {
     const isThisAccepted = missions.some(function(m) {
-      return m.platform === activePlatform && m.level === activePackageLevel && m.status !== 'failed' && Number(m.taskIndex) === Number(i) && new Date(m.acceptedAt).toDateString() === today;
+      return m.platform === activePlatform && m.level === activePackageLevel && m.status !== 'failed' && Number(m.taskIndex) === Number(i) && isMissionIn24hQuotaWindow(m, nowMs);
     });
 
-    let btnText = lang === 'hi' ? 'स्वीकारें' : (lang === 'en' ? 'Accept' : 'গ্রহণ');
+    let btnText = tLang(lang, 'গ্রহণ', 'Accept', 'قبول');
     let btnDisabled = false;
     let extraAttr = '';
     let btnClass = 'platform-task-accept';
 
     if (!isUnlocked) {
-      btnText = lang === 'hi' ? 'लॉक 🔒' : (lang === 'en' ? 'Locked 🔒' : 'লকড 🔒');
+      btnText = tLang(lang, 'লকড 🔒', 'Locked 🔒', 'مقفل 🔒');
       btnDisabled = false;
       extraAttr = `data-locked-level="${activePackageLevel}"`;
       btnClass = 'platform-task-accept bg-[#0c2364] text-[#35c6e7] border border-[#35c6e7]/40 hover:bg-[#1264c9] hover:text-white transition';
     } else if (isThisAccepted) {
-      btnText = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
+      btnText = tLang(lang, 'গৃহীত', 'Accepted', 'مقبول');
       btnDisabled = true;
       btnClass = 'platform-task-accept is-accepted';
       extraAttr = 'data-accepted="true"';
     } else if (isLimitReached) {
-      btnText = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
+      btnText = tLang(lang, 'সীমা পূর্ণ', 'Limit Reached', 'تم بلوغ الحد');
       btnDisabled = true;
       btnClass = 'platform-task-accept is-limit-reached';
       extraAttr = 'data-limit-reached="true"';
     }
 
     const taskTitle = activePlatform || 'TikTok';
-    const typeLabel = lang === 'hi' ? 'आवश्यक:' : (lang === 'en' ? 'Required:' : 'প্রয়োজন:');
-    const tierLabel = lang === 'hi' ? 'स्तर:' : (lang === 'en' ? 'Tier:' : 'স্তর:');
-    const rewHeading = lang === 'hi' ? 'इकाई मूल्य' : (lang === 'en' ? 'Unit Price' : 'একক দাম');
-    const rewVal = Number(settings.reward || 20).toFixed(2);
-    const progressLabel = lang === 'hi' ? 'मात्रा:' : (lang === 'en' ? 'Quantity:' : 'পরিমাণ:');
+    const typeLabel = tLang(lang, 'প্রয়োজন:', 'Required:', 'المطلوب:');
+    const tierLabel = tLang(lang, 'স্তর:', 'Tier:', 'المستوى:');
+    const rewHeading = tLang(lang, 'একক দাম', 'Unit Price', 'سعر الوحدة');
+    const rewAmt = toUserCurrencyAmount(Number(settings.reward || 20), user);
+    const rewVal = rewAmt.toFixed(2);
+    const progressLabel = tLang(lang, 'পরিমাণ:', 'Quantity:', 'الكمية:');
     const progressTargets = [90852, 91043, 91244, 91419, 91651];
     const progressTarget = i < progressTargets.length ? progressTargets[i] : (91651 + (i - 4) * 197);
     const progressVal = `100000 / ${progressTarget}`;
-    const shortActionLabel = lang === 'hi'
-      ? 'लाइक और फॉलो करें'
-      : (lang === 'en' ? 'Like & Follow' : 'পছন্দ লক্ষ্য করা');
+    const shortActionLabel = tLang(lang, 'পছন্দ লক্ষ্য করা', 'Like & Follow', 'إعجاب ومتابعة');
 
     const iconMarkup = activePlatform === 'TikTok'
       ? `<div class="w-[42px] h-[42px] rounded-[7px] bg-white flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
@@ -6460,7 +6820,7 @@ function renderPackageTasks(level) {
       <div class="flex shrink-0 flex-col items-end text-right">
         <p class="text-[12.5px] font-normal text-[#e5e7eb] leading-tight">${rewHeading}</p>
         <p class="mt-0.5 text-[15px] leading-tight whitespace-nowrap">
-          <span class="text-[#2684ff] font-medium">${rewVal}</span><span class="text-[#f3f4f6] font-normal">${curr}</span>
+          <span class="text-[#2684ff] font-medium">${isUsd ? sym : ''}${rewVal}</span> <span class="text-[#f3f4f6] font-normal">${curr}</span>
         </p>
         <button type="button" class="${btnClass} mt-2.5" data-platform-accept ${btnDisabled ? 'disabled' : ''} ${extraAttr}>${btnText}</button>
       </div>
@@ -6471,20 +6831,21 @@ function renderPackageTasks(level) {
   platformTaskList.replaceChildren(...rows);
   const headerLvl = document.getElementById('platform-task-header-level');
   if (headerLvl) {
-    const listTitle = lang === 'hi' ? `${activePlatform} · ${activePackageLevel}` : (lang === 'en' ? `${activePlatform} · ${activePackageLevel}` : `${activePlatform} · ${activePackageLevel}`);
-    headerLvl.textContent = listTitle;
+    headerLvl.textContent = `${activePlatform} · ${activePackageLevel}`;
   }
   refreshDailyMissionLimit(activePackageLevel);
 }
 window.renderPackageTasks = renderPackageTasks;
 
 function compressMissionScreenshot(file) {
+  const errRead = tLang(getActiveLang(), 'স্ক্রিনশটটি পড়া যায়নি।', 'Unable to read the screenshot.', 'تعذرت قراءة لقطة الشاشة.');
+  const errOpen = tLang(getActiveLang(), 'স্ক্রিনশটটি খোলা যায়নি।', 'Unable to open the screenshot.', 'تعذر فتح لقطة الشاشة.');
   return new Promise(function(resolve, reject) {
     const reader = new FileReader();
-    reader.onerror = function() { reject(new Error('স্ক্রিনশটটি পড়া যায়নি।')); };
+    reader.onerror = function() { reject(new Error(errRead)); };
     reader.onload = function() {
       const image = new Image();
-      image.onerror = function() { reject(new Error('স্ক্রিনশটটি খোলা যায়নি।')); };
+      image.onerror = function() { reject(new Error(errOpen)); };
       image.onload = function() {
         const maxSide = 900;
         const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
@@ -6509,8 +6870,10 @@ function renderMissionSubmission() {
   }
 
   const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
   const curr = getUserCurrency(user);
-  const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
 
   const platformEl = document.getElementById('mission-submit-platform');
   if (platformEl) platformEl.textContent = mission.platform || 'YouTube';
@@ -6520,44 +6883,104 @@ function renderMissionSubmission() {
     platformIconEl.innerHTML = getPlatformSvg(mission.platform, 'h-5 w-5');
   }
 
-  // Reward formatted with local currency without USD (USD calculation only in profile)
+  // Reward formatted in user's active currency
   const rewardEl = document.getElementById('mission-submit-reward');
   if (rewardEl) {
-    const rew = Number(mission.reward || 30);
-    rewardEl.textContent = `${rew.toFixed(2)} ${curr}`;
+    const rawRew = Number(mission.reward || (packageTaskSettings[mission.level || 'LV0']?.reward || 20));
+    const rew = (isUsd && mission.currency !== 'USD') ? toUserCurrencyAmount(rawRew, user) : rawRew;
+    rewardEl.textContent = isUsd ? `${sym}${rew.toFixed(2)} ${curr}` : `${rew.toFixed(2)} ${curr}`;
   }
 
   // Localized task description
   const descEl = document.getElementById('mission-submit-description');
   if (descEl) {
     const localizedDesc = getPlatformTaskDescription(mission.platform, mission.taskIndex !== undefined ? mission.taskIndex : 0, lang);
-    descEl.textContent = localizedDesc || mission.description || (lang === 'en' ? 'Like & Follow' : 'পছন্দ লক্ষ্য করা');
+    descEl.textContent = localizedDesc || mission.description || tLang(lang, 'পছন্দ লক্ষ্য করা', 'Like & Follow', 'إعجاب ومتابعة');
+  }
+
+  window._screenshotRemovedInEditor = false;
+  window._screenshotUpdatedInEditor = false;
+  const isAppealMode = mission.status === 'failed';
+
+  // Appeal failure reason banner
+  const appealBanner = document.getElementById('mission-appeal-banner');
+  if (appealBanner) {
+    if (isAppealMode) {
+      appealBanner.classList.remove('hidden');
+      const nextAppealNum = (Number(mission.appealCount) || 0) + 1;
+      const appealTitleEl = document.getElementById('mission-appeal-banner-title');
+      if (appealTitleEl) {
+        appealTitleEl.textContent = tLang(
+          lang,
+          '⚠ টাস্ক ব্যর্থ হয়েছে — পুনরায় আপিল করুন',
+          '⚠ Task Failed — Appeal & Resubmit',
+          '⚠ فشلت المهمة — قدّم استئنافاً وأعد الإرسال'
+        );
+      }
+      const appealBadgeEl = document.getElementById('mission-appeal-count-badge');
+      if (appealBadgeEl) {
+        appealBadgeEl.classList.remove('hidden');
+        appealBadgeEl.textContent = tLang(lang, `আপিল ${nextAppealNum}/3`, `Appeal ${nextAppealNum}/3`, `استئناف ${nextAppealNum}/3`);
+      }
+      const failReasonEl = document.getElementById('mission-appeal-fail-reason');
+      if (failReasonEl) {
+        const rawReason = lang === 'bn'
+          ? (mission.failReason || mission.failReasonEn || 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি')
+          : (mission.failReasonEn || (/[\u0980-\u09FF]/.test(String(mission.failReason || '')) ? tLang(lang, 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি', 'Valid Like not detected in screenshot', 'لم يتم اكتشاف إعجاب صالح في لقطة الشاشة') : (mission.failReason || tLang(lang, 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি', 'Valid Like not detected in screenshot', 'لم يتم اكتشاف إعجاب صالح في لقطة الشاشة'))));
+        failReasonEl.textContent = tLang(lang, 'কারণ: ', 'Reason: ', 'السبب: ') + rawReason;
+      }
+      const guideEl = document.getElementById('mission-appeal-guide');
+      if (guideEl) {
+        guideEl.textContent = tLang(
+          lang,
+          'সঠিক লাইক দেওয়া নতুন স্ক্রিনশট আপলোড করুন অথবা নিচে আপিলের কারণ লিখে পুনরায় জমা দিন।',
+          'Upload a new screenshot showing your active Like or explain your appeal below before resubmitting.',
+          'ارفع لقطة شاشة جديدة تُظهر الإعجاب أو اكتب سبب الاستئناف أدناه قبل إعادة الإرسال.'
+        );
+      }
+    } else {
+      appealBanner.classList.add('hidden');
+    }
   }
 
   // Localized static labels
   const titleLbl = document.getElementById('mission-submit-title-lbl');
-  if (titleLbl) titleLbl.textContent = lang === 'hi' ? 'कार्य शीर्षक:' : (lang === 'en' ? 'Task Title:' : 'টাস্ক শিরোনাম:');
+  if (titleLbl) titleLbl.textContent = tLang(lang, 'টাস্ক শিরোনাম:', 'Task Title:', 'عنوان المهمة:');
   const rewardLbl = document.getElementById('mission-submit-reward-lbl');
-  if (rewardLbl) rewardLbl.textContent = lang === 'hi' ? 'मिशन लाभ:' : (lang === 'en' ? 'Mission Benefit:' : 'মিশন সুবিধা:');
+  if (rewardLbl) rewardLbl.textContent = tLang(lang, 'মিশন সুবিধা:', 'Mission Benefit:', 'مكافأة المهمة:');
   const descLbl = document.getElementById('mission-submit-desc-lbl');
-  if (descLbl) descLbl.textContent = lang === 'hi' ? 'मिशन विवरण:' : (lang === 'en' ? 'Mission Description:' : 'মিশনের বিবরণ:');
+  if (descLbl) descLbl.textContent = tLang(lang, 'মিশনের বিবরণ:', 'Mission Description:', 'وصف المهمة:');
   const linkLbl = document.getElementById('mission-submit-link-lbl');
-  if (linkLbl) linkLbl.textContent = lang === 'hi' ? 'कार्य लिंक:' : (lang === 'en' ? 'Task Link:' : 'টাস্ক লিঙ্ক:');
+  if (linkLbl) linkLbl.textContent = tLang(lang, 'টাস্ক লিঙ্ক:', 'Task Link:', 'رابط المهمة:');
   const createdLbl = document.getElementById('mission-submit-created-lbl');
-  if (createdLbl) createdLbl.textContent = lang === 'hi' ? 'बनाने का समय:' : (lang === 'en' ? 'Creation Time:' : 'সৃষ্টির সময়:');
+  if (createdLbl) createdLbl.textContent = tLang(lang, 'সৃষ্টির সময়:', 'Creation Time:', 'وقت الإنشاء:');
   const commentLbl = document.getElementById('mission-submit-comment-lbl');
-  if (commentLbl) commentLbl.textContent = lang === 'hi' ? 'टिप्पणी' : (lang === 'en' ? 'Comment' : 'মন্তব্য');
+  if (commentLbl) {
+    commentLbl.textContent = isAppealMode
+      ? tLang(lang, 'আপিলের কারণ (মন্তব্য)', 'Appeal Reason (Comment)', 'سبب الاستئناف (تعليق)')
+      : tLang(lang, 'মন্তব্য', 'Comment', 'تعليق');
+  }
 
   // Header translations
   const backSpan = document.querySelector('#mission-submit-panel .personal-header-action span');
-  if (backSpan) backSpan.textContent = lang === 'hi' ? 'वापस जाएं' : (lang === 'en' ? 'Back' : 'ফিরে যান');
+  if (backSpan) backSpan.textContent = tLang(lang, 'ফিরে যান', 'Back', 'رجوع');
   const headerTitle = document.querySelector('#mission-submit-panel h2');
-  if (headerTitle) headerTitle.textContent = lang === 'hi' ? 'मिशन विवरण' : (lang === 'en' ? 'Mission Details' : 'মিশন বিবরণ');
+  if (headerTitle) {
+    headerTitle.textContent = isAppealMode
+      ? tLang(lang, 'আপিল ও পুনরায় জমা', 'Appeal & Resubmit', 'الاستئناف وإعادة الإرسال')
+      : tLang(lang, 'মিশন বিবরণ', 'Mission Details', 'تفاصيل المهمة');
+  }
 
   // Localized rubber stamp
   const stampEl = document.getElementById('mission-submit-stamp-text');
   if (stampEl) {
-    stampEl.textContent = mission.status === 'review' ? 'UNDER REVIEW' : (mission.status === 'complete' ? (lang === 'hi' ? 'पूर्ण' : (lang === 'en' ? 'COMPLETE' : 'সম্পন্ন')) : (lang === 'hi' ? 'चालू' : (lang === 'en' ? 'IN PROGRESS' : 'চলমান')));
+    stampEl.textContent = mission.status === 'review'
+      ? tLang(lang, 'পর্যালোচনাধীন', 'UNDER REVIEW', 'قيد المراجعة')
+      : (mission.status === 'complete'
+        ? tLang(lang, 'সম্পন্ন', 'COMPLETE', 'مكتمل')
+        : (isAppealMode
+          ? tLang(lang, 'আপিল', 'APPEAL', 'استئناف')
+          : tLang(lang, 'চলমান', 'IN PROGRESS', 'قيد التنفيذ')));
   }
   const submitReviewStamp = document.getElementById('mission-submit-review-stamp');
   const submitCompleteStamp = document.getElementById('mission-submit-complete-stamp');
@@ -6579,31 +7002,48 @@ function renderMissionSubmission() {
   // Localize buttons
   const openBtn = document.getElementById('mission-submit-open');
   if (openBtn) {
-    openBtn.textContent = lang === 'hi' ? 'लिंक खोलें' : (lang === 'en' ? 'Open Link' : 'খোলা সংযুক্তি');
+    openBtn.textContent = tLang(lang, 'খোলা সংযুক্তি', 'Open Link', 'فتح الرابط');
   }
   const copyBtn = document.getElementById('mission-submit-copy');
   if (copyBtn) {
-    copyBtn.textContent = lang === 'hi' ? 'कॉपी लिंक' : (lang === 'en' ? 'Copy Link' : 'অনুলিপি');
+    copyBtn.textContent = tLang(lang, 'অনুলিপি', 'Copy Link', 'نسخ الرابط');
   }
   const confirmBtn = document.getElementById('mission-submit-confirm');
   if (confirmBtn) {
-    confirmBtn.textContent = lang === 'hi' ? 'जमा करें' : (lang === 'en' ? 'Submit' : 'জমা');
+    confirmBtn.textContent = isAppealMode
+      ? tLang(lang, 'আপিল জমা দিন', 'Submit Appeal', 'إرسال الاستئناف')
+      : tLang(lang, 'জমা', 'Submit', 'إرسال');
   }
   const cancelBtn = document.getElementById('mission-submit-cancel');
   if (cancelBtn) {
-    cancelBtn.textContent = lang === 'hi' ? 'रद्द करें' : (lang === 'en' ? 'Cancel' : 'বাতিল করুন');
+    cancelBtn.textContent = tLang(lang, 'বাতিল করুন', 'Cancel', 'إلغاء');
   }
   const uploadLabel = document.getElementById('mission-upload-label');
   if (uploadLabel) {
-    uploadLabel.innerHTML = lang === 'hi'
-      ? '<p>स्क्रीनशॉट</p><p>अपलोड</p><p>करें</p>'
-      : (lang === 'en' ? '<p>Upload</p><p>Screen-</p><p>shot</p>' : '<p>স্ক্রিনশট</p><p>আপলোড</p><p>করুন</p>');
+    uploadLabel.innerHTML = tLang(
+      lang,
+      '<p>স্ক্রিনশট</p><p>আপলোড</p><p>করুন</p>',
+      '<p>Upload</p><p>Screen-</p><p>shot</p>',
+      '<p>رفع</p><p>لقطة</p><p>الشاشة</p>'
+    );
   }
   const viewPreviewBtnEl = document.getElementById('btn-view-preview-modal');
   if (viewPreviewBtnEl) {
-    viewPreviewBtnEl.innerHTML = lang === 'hi'
-      ? '<span>🔍 पूर्वावलोकन देखें</span>'
-      : (lang === 'en' ? '<span>🔍 View Preview</span>' : '<span>🔍 প্রিভিউ দেখুন</span>');
+    viewPreviewBtnEl.innerHTML = tLang(
+      lang,
+      '<span>প্রিভিউ দেখুন</span>',
+      '<span>View Preview</span>',
+      '<span>عرض المعاينة</span>'
+    );
+  }
+  const removePreviewBtnEl = document.getElementById('btn-remove-preview-img');
+  if (removePreviewBtnEl) {
+    removePreviewBtnEl.innerHTML = tLang(
+      lang,
+      '<span>🗑️ রিমুভ</span>',
+      '<span>🗑️ Remove</span>',
+      '<span>🗑️ إزالة</span>'
+    );
   }
 
   let defaultUrl = mission.taskLink;
@@ -6645,6 +7085,7 @@ function renderMissionSubmission() {
   const previewEl = document.getElementById('mission-submit-preview');
   const removeImgBtn = document.getElementById('mission-submit-remove-img');
   const viewPreviewBtn = document.getElementById('btn-view-preview-modal');
+  const removePreviewBtn = document.getElementById('btn-remove-preview-img');
   if (previewEl) {
     if (activeSubmissionImage) {
       previewEl.innerHTML = `<img src="${activeSubmissionImage}" alt="Screenshot" class="h-full w-full object-cover rounded cursor-pointer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;" title="Click to view preview">`;
@@ -6653,12 +7094,20 @@ function renderMissionSubmission() {
         viewPreviewBtn.classList.remove('hidden');
         viewPreviewBtn.style.display = 'inline-flex';
       }
+      if (removePreviewBtn) {
+        removePreviewBtn.classList.remove('hidden');
+        removePreviewBtn.style.display = 'inline-flex';
+      }
     } else {
       previewEl.innerHTML = `<svg viewBox="0 0 24 24" class="h-8 w-8 text-white transition group-hover:scale-110" fill="currentColor"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>`;
       if (removeImgBtn) removeImgBtn.classList.add('hidden');
       if (viewPreviewBtn) {
         viewPreviewBtn.classList.add('hidden');
         viewPreviewBtn.style.display = 'none';
+      }
+      if (removePreviewBtn) {
+        removePreviewBtn.classList.add('hidden');
+        removePreviewBtn.style.display = 'none';
       }
     }
   }
@@ -6667,10 +7116,10 @@ function renderMissionSubmission() {
 
   const commentEl = document.getElementById('mission-submit-comment');
   if (commentEl) {
-    commentEl.value = mission.userComment || '';
-    commentEl.placeholder = lang === 'hi'
-      ? 'कृपया यहां विवरण दर्ज करें...'
-      : (lang === 'en' ? 'Please enter comment here...' : 'দয়া করে এখানে প্রবেশ করুন...');
+    commentEl.value = isAppealMode ? (mission.appealNote || '') : (mission.userComment || '');
+    commentEl.placeholder = isAppealMode
+      ? tLang(lang, 'আপিলের কারণ লিখুন (যেমন: সঠিক লাইক দেওয়া হয়েছে)...', 'Write your appeal reason (e.g. Like is visible in new screenshot)...', 'اكتب سبب الاستئناف (مثلاً: الإعجاب ظاهر في لقطة الشاشة الجديدة)...')
+      : tLang(lang, 'দয়া করে এখানে প্রবেশ করুন...', 'Please enter comment here...', 'يرجى إدخال التعليق هنا...');
   }
   const commentCount = document.getElementById('mission-submit-comment-count');
   if (commentCount) commentCount.textContent = commentEl ? commentEl.value.length : 0;
@@ -6710,6 +7159,7 @@ window.refreshAllMissionsAndMetrics = refreshAllMissionsAndMetrics;
 
 // Open task link handler with iframe fallbacks
 function handleOpenTaskLink() {
+  const lang = getActiveLang();
   const linkEl = document.getElementById('mission-submit-link');
   let url = linkEl ? linkEl.value.trim() : '';
   if (!url || isLegacyPlaceholderTaskUrl(url)) {
@@ -6736,19 +7186,25 @@ function handleOpenTaskLink() {
   } catch (e) {}
 
   if (msg) {
-    msg.innerHTML = `✓ লিংক নতুন ট্যাবে খোলা হচ্ছে। ব্রাউজারে পপআপ ব্লক থাকলে <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--color-profile-cyan); text-decoration: underline; font-weight: bold;">সরাসরি এখানে ক্লিক করুন ↗</a>`;
+    msg.innerHTML = tLang(
+      lang,
+      `✓ লিংক নতুন ট্যাবে খোলা হচ্ছে। ব্রাউজারে পপআপ ব্লক থাকলে <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--color-profile-cyan); text-decoration: underline; font-weight: bold;">সরাসরি এখানে ক্লিক করুন ↗</a>`,
+      `✓ Opening link in new tab. If blocked by browser, <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--color-profile-cyan); text-decoration: underline; font-weight: bold;">click directly here ↗</a>`,
+      `✓ جارٍ فتح الرابط في علامة تبويب جديدة. إذا كان محظوراً، <a href="${url}" target="_blank" rel="noopener noreferrer" style="color: var(--color-profile-cyan); text-decoration: underline; font-weight: bold;">اضغط هنا مباشرة ↗</a>`
+    );
   }
 }
 
 // Copy task link handler with dual clipboard & fallback
 function handleCopyTaskLink() {
+  const lang = getActiveLang();
   const linkEl = document.getElementById('mission-submit-link');
   const copyBtn = document.getElementById('mission-submit-copy');
   const msg = document.getElementById('mission-submit-link-message');
   const url = linkEl ? linkEl.value.trim() : '';
 
   if (!url) {
-    if (msg) msg.textContent = 'কপি করার জন্য কোনো লিংক পাওয়া যায়নি!';
+    if (msg) msg.textContent = tLang(lang, 'কপি করার জন্য কোনো লিংক পাওয়া যায়নি!', 'No link found to copy!', 'لم يتم العثور على رابط للنسخ!');
     return;
   }
 
@@ -6777,7 +7233,7 @@ function handleCopyTaskLink() {
   function onCopied() {
     if (copyBtn) {
       const oldTxt = copyBtn.textContent;
-      copyBtn.textContent = '✓ কপি সম্পন্ন!';
+      copyBtn.textContent = tLang(lang, '✓ কপি সম্পন্ন!', '✓ Copied!', '✓ تم النسخ!');
       copyBtn.style.background = 'var(--color-success)';
       setTimeout(function() {
         copyBtn.textContent = oldTxt;
@@ -6785,7 +7241,12 @@ function handleCopyTaskLink() {
       }, 2500);
     }
     if (msg) {
-      msg.innerHTML = '<span style="color: #34d399; font-weight: bold;">✓ লিংক সফলভাবে অনুলিপি (কপি) করা হয়েছে!</span>';
+      msg.innerHTML = tLang(
+        lang,
+        '<span style="color: #34d399; font-weight: bold;">✓ লিংক সফলভাবে অনুলিপি (কপি) করা হয়েছে!</span>',
+        '<span style="color: #34d399; font-weight: bold;">✓ Link copied successfully!</span>',
+        '<span style="color: #34d399; font-weight: bold;">✓ تم نسخ الرابط بنجاح!</span>'
+      );
     }
   }
 
@@ -6795,7 +7256,12 @@ function handleCopyTaskLink() {
       linkEl.select();
     }
     if (msg) {
-      msg.innerHTML = '<span style="color: var(--color-warning);">লিংক সিলেক্ট করা হয়েছে, ম্যানুয়ালি কপি (Copy) করুন।</span>';
+      msg.innerHTML = tLang(
+        lang,
+        '<span style="color: var(--color-warning);">লিংক সিলেক্ট করা হয়েছে, ম্যানুয়ালি কপি (Copy) করুন।</span>',
+        '<span style="color: var(--color-warning);">Link selected, please copy manually.</span>',
+        '<span style="color: var(--color-warning);">تم تحديد الرابط، يرجى النسخ يدوياً.</span>'
+      );
     }
   }
 
@@ -6827,6 +7293,7 @@ async function verifyMissionScreenshotLike(missionId) {
   if (!target.screenshot) {
     target.likeVerifyStatus = 'invalid';
     target.likeVerifyReason = 'স্ক্রিনশট আপলোড করা হয়নি';
+    target.likeVerifyReasonEn = 'No screenshot uploaded';
     target.likeVerifyCheckedAt = new Date().toISOString();
     saveAllMissionsRaw(list);
     return 'invalid';
@@ -6852,13 +7319,25 @@ async function verifyMissionScreenshotLike(missionId) {
     if (resp.ok && data && data.success) {
       freshTarget.likeVerifyStatus = data.isLiked ? 'valid' : 'invalid';
       freshTarget.likeVerifyReason = data.reasonBn || (data.isLiked ? 'স্ক্রিনশটে লাইক শনাক্ত হয়েছে' : 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি');
+      freshTarget.likeVerifyReasonEn = data.reasonEn || (data.isLiked ? 'Active Like confirmed' : 'Valid Like not found in screenshot');
+      freshTarget.likeVerifyReasonAr = data.reasonAr || (data.isLiked ? 'تم تأكيد الإعجاب بنجاح' : 'لم يتم العثور على إعجاب صالح في لقطة الشاشة');
       freshTarget.likeVerifyPlatform = data.detectedPlatform || freshTarget.platform;
       freshTarget.likeVerifyCheckedAt = new Date().toISOString();
     } else {
-      const isNonRetryable = Boolean(data && data.nonRetryable) || resp.status === 400 || resp.status === 403 || resp.status === 503;
+      const isServiceUnavailable = resp.status === 404 || resp.status === 503 || (data && (data.code === 'API_KEY_MISSING' || data.code === 'API_KEY_INVALID'));
+      const isNonRetryable = isServiceUnavailable || Boolean(data && data.nonRetryable) || resp.status === 400 || resp.status === 403;
       freshTarget.likeVerifyAttempts = isNonRetryable ? 99 : ((Number(freshTarget.likeVerifyAttempts) || 0) + 1);
-      freshTarget.likeVerifyStatus = 'error';
-      freshTarget.likeVerifyReason = (data && data.message) || 'স্ক্রিনশট যাচাই করতে সমস্যা হয়েছে';
+      if (isServiceUnavailable) {
+        freshTarget.likeVerifyStatus = 'service_unavailable';
+        freshTarget.likeVerifyReason = 'স্ক্রিনশট পর্যালোচনায় রয়েছে';
+        freshTarget.likeVerifyReasonEn = 'Screenshot queued for timed review';
+        freshTarget.likeVerifyReasonAr = 'لقطة الشاشة قيد المراجعة المجدولة';
+      } else {
+        freshTarget.likeVerifyStatus = 'error';
+        freshTarget.likeVerifyReason = (data && data.message) || 'স্ক্রিনশট পর্যালোচনা চলছে';
+        freshTarget.likeVerifyReasonEn = (data && (data.reasonEn || data.messageEn)) || 'Verification pending retry';
+        freshTarget.likeVerifyReasonAr = (data && data.reasonAr) || 'جارٍ إعادة التحقق من لقطة الشاشة';
+      }
     }
 
     saveAllMissionsRaw(freshList);
@@ -6873,7 +7352,9 @@ async function verifyMissionScreenshotLike(missionId) {
     if (freshTarget && freshTarget.status === 'review') {
       freshTarget.likeVerifyAttempts = (Number(freshTarget.likeVerifyAttempts) || 0) + 1;
       freshTarget.likeVerifyStatus = 'error';
-      freshTarget.likeVerifyReason = 'নেটওয়ার্ক ত্রুটি — পুনরায় যাচাই হবে';
+      freshTarget.likeVerifyReason = 'পুনরায় যাচাই হবে';
+      freshTarget.likeVerifyReasonEn = 'Verification pending retry';
+      freshTarget.likeVerifyReasonAr = 'جارٍ إعادة التحقق من لقطة الشاشة';
       saveAllMissionsRaw(freshList);
     }
     return 'error';
@@ -6919,6 +7400,7 @@ function checkPendingReviews() {
           } else if (!m.screenshot && m.likeVerifyStatus !== 'invalid') {
             m.likeVerifyStatus = 'invalid';
             m.likeVerifyReason = 'স্ক্রিনশট আপলোড করা হয়নি';
+            m.likeVerifyReasonEn = 'No screenshot uploaded';
             changed = true;
           }
           return;
@@ -6932,12 +7414,22 @@ function checkPendingReviews() {
           return;
         }
 
-        if (m.likeVerifyStatus === 'valid') {
+        const canApproveByTimer = Boolean(m.screenshot) && (m.likeVerifyStatus === 'valid' || m.likeVerifyStatus === 'service_unavailable' || m.likeVerifyStatus === 'error');
+        if (canApproveByTimer) {
           m.status = 'complete';
           m.completedAt = new Date().toISOString();
           if (!m.rewardCredited) {
             m.rewardCredited = true;
-            totalReward += (Number(m.reward) || (packageTaskSettings[m.level || 'LV0']?.reward || 20));
+            const userCurr = getUserCurrency(u);
+            let mReward = Number(m.reward);
+            if (!mReward || isNaN(mReward)) {
+              mReward = toUserCurrencyAmount(packageTaskSettings[m.level || 'LV0']?.reward || 20, u);
+            } else if (isUsdOnlyUser(u) && m.currency !== 'USD') {
+              mReward = toUserCurrencyAmount(mReward, u);
+            }
+            m.reward = mReward;
+            m.currency = userCurr;
+            totalReward += mReward;
             completedInBatch += 1;
           }
           changed = true;
@@ -6947,8 +7439,9 @@ function checkPendingReviews() {
           m.cancelledAt = m.failedAt;
           m.rewardCredited = false;
           m.failReason = m.likeVerifyReason || 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি';
+          m.failReasonEn = m.likeVerifyReasonEn || 'Valid Like not detected in screenshot';
           failedInBatch += 1;
-          lastFailReason = m.failReason;
+          lastFailReason = (getActiveLang(u) === 'bn') ? m.failReason : m.failReasonEn;
           changed = true;
         }
       }
@@ -6957,12 +7450,14 @@ function checkPendingReviews() {
     if (changed) {
       saveAllMissionsRaw(allMissions);
       const user = getCurrentUser();
+      const isUsd = isUsdOnlyUser(user);
+      const lang = getActiveLang(user);
       if (user) {
         if (totalReward > 0) {
-          user.balance = (Number(user.balance) || 0) + totalReward;
-          user.todayIncome = (Number(user.todayIncome) || 0) + totalReward;
-          user.totalIncome = (Number(user.totalIncome) || 0) + totalReward;
-          user.lifetimeEarnings = (Number(user.lifetimeEarnings) || 0) + totalReward;
+          user.balance = Number(((Number(user.balance) || 0) + totalReward).toFixed(2));
+          user.todayIncome = Number(((Number(user.todayIncome) || 0) + totalReward).toFixed(2));
+          user.totalIncome = Number(((Number(user.totalIncome) || 0) + totalReward).toFixed(2));
+          user.lifetimeEarnings = Number(((Number(user.lifetimeEarnings) || 0) + totalReward).toFixed(2));
           user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
 
           const dNow = new Date();
@@ -6973,7 +7468,7 @@ function checkPendingReviews() {
             ratio: '100%',
             actual: totalReward,
             status: 'অনুমোদিত',
-            method: `টাস্ক পুরস্কার (${completedInBatch} টি কাজ)`,
+            method: isUsd ? `Task Reward (${completedInBatch} tasks)` : `টাস্ক পুরস্কার (${completedInBatch} টি কাজ)`,
             date: dNow.toISOString().split('T')[0],
             time: dNow.toTimeString().split(' ')[0],
             newBalance: user.balance
@@ -6990,10 +7485,25 @@ function checkPendingReviews() {
         updateProfileMetrics();
       }
       if (completedInBatch > 0 && typeof showToastNotification === 'function') {
-        showToastNotification(`✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার ব্যালেন্সে যোগ হয়েছে।`);
+        showToastNotification(
+          tLang(
+            lang,
+            `✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার ব্যালেন্সে যোগ হয়েছে।`,
+            `✓ Like verified! Reward for ${completedInBatch} task(s) added to balance.`,
+            `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة إلى رصيدك.`
+          )
+        );
       }
       if (failedInBatch > 0 && typeof showToastNotification === 'function') {
-        showToastNotification(`✕ টাস্ক ব্যর্থ: ${lastFailReason || 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি'}`);
+        const defaultFail = tLang(lang, 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি', 'Valid Like not found in screenshot', 'لم يتم العثور على إعجاب صالح في لقطة الشاشة');
+        showToastNotification(
+          tLang(
+            lang,
+            `✕ টাস্ক ব্যর্থ: ${lastFailReason || defaultFail}`,
+            `✕ Task failed: ${lastFailReason || defaultFail}`,
+            `✕ فشلت المهمة: ${lastFailReason || defaultFail}`
+          )
+        );
       }
       if (typeof refreshDailyMissionLimit === 'function') {
         refreshDailyMissionLimit(activePackageLevel || 'LV0');
@@ -7011,9 +7521,23 @@ function checkPendingReviews() {
   }
 }
 
-// Live timer tick every second
+// Live timer tick every second (also detects automatic 24-hour quota reset)
 setInterval(function() {
   checkPendingReviews();
+  const curU = getCurrentUser();
+  if (curU) {
+    const uLvl = curU.packageLevel || 'LV0';
+    const nextQuotaKey = getActive24hQuotaKey(readAcceptedMissions(), uLvl, Date.now());
+    if (window._lastActive24hQuotaKey && window._lastActive24hQuotaKey !== nextQuotaKey) {
+      updateProfileMetrics();
+      const ptPanel = document.getElementById('platform-tasks-panel');
+      if (ptPanel && !ptPanel.hidden && typeof renderPackageTasks === 'function') {
+        renderPackageTasks(activePackageLevel || uLvl);
+      } else if (typeof refreshDailyMissionLimit === 'function') {
+        refreshDailyMissionLimit(activePackageLevel || uLvl);
+      }
+    }
+  }
   document.querySelectorAll('[data-review-ends]').forEach(function(el) {
     const ends = parseInt(el.dataset.reviewEnds || '0', 10);
     const rem = Math.max(0, Math.ceil((ends - Date.now()) / 1000));
@@ -7075,13 +7599,15 @@ async function renderFreshTeamView() {
 
   const user = getCurrentUser();
   const phone = (user && (user.phone || user.accountNumber)) || '';
+  const lang = getActiveLang(user);
 
   // Show loading indicator if first time
   if (!cachedTeamReportData) {
+    const loadTxt = tLang(lang, 'দলের তথ্য লোড হচ্ছে…', 'Loading team details…', 'جارٍ تحميل تفاصيل الفريق…');
     container.innerHTML = `
       <div class="py-16 text-center text-slate-300">
         <div class="w-8 h-8 border-2 border-[#38bdf8] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-        <p class="text-sm font-['Hind_Siliguri'] text-slate-300">দলের তথ্য লোড হচ্ছে…</p>
+        <p class="text-sm font-['Hind_Siliguri'] text-slate-300">${loadTxt}</p>
       </div>
     `;
   }
@@ -7094,9 +7620,9 @@ async function renderFreshTeamView() {
   const tier3 = teamData.tier3 || [];
 
   const tiersConfig = [
-    { tier: 1, name: 'প্রথম স্তর', list: tier1, badge: 'text-sky-400 bg-sky-500/15 border-sky-400/30' },
-    { tier: 2, name: 'দ্বিতীয় স্তর', list: tier2, badge: 'text-blue-400 bg-blue-500/15 border-blue-400/30' },
-    { tier: 3, name: 'তৃতীয় স্তর', list: tier3, badge: 'text-purple-400 bg-purple-500/15 border-purple-400/30' }
+    { tier: 1, name: tLang(lang, 'প্রথম স্তর', 'Tier 1', 'المستوى 1'), list: tier1, badge: 'text-sky-400 bg-sky-500/15 border-sky-400/30' },
+    { tier: 2, name: tLang(lang, 'দ্বিতীয় স্তর', 'Tier 2', 'المستوى 2'), list: tier2, badge: 'text-blue-400 bg-blue-500/15 border-blue-400/30' },
+    { tier: 3, name: tLang(lang, 'তৃতীয় স্তর', 'Tier 3', 'المستوى 3'), list: tier3, badge: 'text-purple-400 bg-purple-500/15 border-purple-400/30' }
   ];
 
   let html = '';
@@ -7105,7 +7631,7 @@ async function renderFreshTeamView() {
     const t = cfg.tier;
     const isOpen = !!expandedTeamTiers[t];
     const arrow = isOpen ? '▼' : '▶';
-    const countText = `${cfg.list.length} জন`;
+    const countText = tLang(lang, `${cfg.list.length} জন`, `${cfg.list.length} members`, `${cfg.list.length} أعضاء`);
 
     // Tier Accordion Header
     html += `
@@ -7124,13 +7650,15 @@ async function renderFreshTeamView() {
     // Tier Members Content
     if (isOpen) {
       if (cfg.list.length === 0) {
+        const emptyTierTxt = tLang(lang, 'এই স্তরে এখনো কোনো সদস্য যুক্ত হয়নি', 'No members in this tier yet', 'لا يوجد أعضاء في هذا المستوى بعد');
         html += `
           <div class="py-6 px-6 text-center text-xs text-slate-400 font-['Hind_Siliguri'] italic bg-[#030b24]">
-            এই স্তরে এখনো কোনো সদস্য যুক্ত হয়নি
+            ${emptyTierTxt}
           </div>
         `;
       } else {
         html += `<div class="tier-members-list divide-y divide-[#0b1b42] bg-[#03091e]">`;
+        const detailAriaLabel = tLang(lang, 'ইউজার বিস্তারিত', 'User details', 'تفاصيل المستخدم');
         cfg.list.forEach(function(m, idx) {
           const maskedPhone = maskTeamPhone(m.rawPhone || m.phone);
           const rawId = m.memberId ? String(m.memberId).replace(/^AL/i, '') : String(m.rawPhone || '').slice(-6);
@@ -7158,7 +7686,7 @@ async function renderFreshTeamView() {
                   <div class="text-[11px] text-slate-400 font-mono tracking-tight">${dateStr}</div>
                 </div>
                 <!-- Slanted Up-Right Action Icon Button (↗) matching user screenshot -->
-                <button type="button" class="team-member-detail-trigger w-8 h-8 rounded-full bg-[#071946] hover:bg-[#0b286f] active:scale-90 text-slate-300 hover:text-[#38bdf8] flex items-center justify-center transition cursor-pointer shrink-0 shadow-sm" data-tier="${t}" data-idx="${idx}" data-phone="${m.rawPhone || m.phone}" aria-label="ইউজার বিস্তারিত">
+                <button type="button" class="team-member-detail-trigger w-8 h-8 rounded-full bg-[#071946] hover:bg-[#0b286f] active:scale-90 text-slate-300 hover:text-[#38bdf8] flex items-center justify-center transition cursor-pointer shrink-0 shadow-sm" data-tier="${t}" data-idx="${idx}" data-phone="${m.rawPhone || m.phone}" aria-label="${detailAriaLabel}">
                   <svg class="w-4 h-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="7" y1="17" x2="17" y2="7"></line>
                     <polyline points="7 7 17 7 17 17"></polyline>
@@ -7177,7 +7705,7 @@ async function renderFreshTeamView() {
 
   container.innerHTML = html;
 
-  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function' && window.aloI18n.getLanguage() !== 'bn') {
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
     window.aloI18n.translateDOM();
   }
 }
@@ -7262,9 +7790,16 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
     });
   }
 
-  // Real Financial Data from Supabase user row
-  const bdtBalance = Number((memberAcc && memberAcc.balance) ?? (member && member.balance) ?? 0);
-  let bdtDeposit = Number((memberAcc && memberAcc.rechargeAmount) ?? (member && member.rechargeAmount) ?? 0);
+  // Real Financial Data from Supabase user row (converted to viewer's active currency)
+  const viewerUser = getCurrentUser();
+  const viewerIsUsd = isUsdOnlyUser(viewerUser);
+  const viewerSym = getUserCurrencySymbol(viewerUser);
+  const viewerCurr = getUserCurrency(viewerUser);
+  const viewerLang = getActiveLang(viewerUser);
+  const memberCurr = (memberAcc && memberAcc.currency) || (member && member.currency) || 'BDT';
+
+  const rawBalance = Number((memberAcc && memberAcc.balance) ?? (member && member.balance) ?? 0);
+  let rawDeposit = Number((memberAcc && memberAcc.rechargeAmount) ?? (member && member.rechargeAmount) ?? 0);
 
   // Also sum approved deposits from Supabase transactions for accuracy
   if (window.aloSupabase && normP) {
@@ -7282,13 +7817,13 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
           }
           return sum;
         }, 0);
-        if (approvedDepSum > bdtDeposit) bdtDeposit = approvedDepSum;
+        if (approvedDepSum > rawDeposit) rawDeposit = approvedDepSum;
       }
     } catch(e) {}
   }
 
   // Withdrawals calculation from Supabase transactions
-  let bdtWithdrawals = Number((memberAcc && memberAcc.cashoutAmount) ?? (member && member.cashoutAmount) ?? 0);
+  let rawWithdrawals = Number((memberAcc && memberAcc.cashoutAmount) ?? (member && member.cashoutAmount) ?? 0);
   if (window.aloSupabase && normP) {
     try {
       const { data: wList, error: wErr } = await window.aloSupabase
@@ -7302,32 +7837,36 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
           if (st.includes('বাতিল') || st.includes('reject')) return sum;
           return sum + (Number(r.amount) || 0);
         }, 0);
-        if (dbW > bdtWithdrawals) bdtWithdrawals = dbW;
+        if (dbW > rawWithdrawals) rawWithdrawals = dbW;
       }
     } catch(e) {}
   }
 
-  const usdtBalance = (bdtBalance / 126).toFixed(2);
-  const usdtDeposit = (bdtDeposit / 126).toFixed(2);
-  const usdtWithdrawals = (bdtWithdrawals / 126).toFixed(2);
+  const dispBalance = convertBetweenCurrencies(rawBalance, memberCurr, viewerCurr);
+  const dispDeposit = convertBetweenCurrencies(rawDeposit, memberCurr, viewerCurr);
+  const dispWithdrawals = convertBetweenCurrencies(rawWithdrawals, memberCurr, viewerCurr);
+
+  const usdtBalance = (viewerIsUsd ? dispBalance : (dispBalance / 126)).toFixed(2);
+  const usdtDeposit = (viewerIsUsd ? dispDeposit : (dispDeposit / 126)).toFixed(2);
+  const usdtWithdrawals = (viewerIsUsd ? dispWithdrawals : (dispWithdrawals / 126)).toFixed(2);
 
   // Status Badge
   const statusEl = document.getElementById('team-modal-status-badge');
-  const isActive = bdtDeposit > 0 || (member && member.level && member.level !== 'LV0') || bdtBalance > 0;
+  const isActive = rawDeposit > 0 || (member && member.level && member.level !== 'LV0') || rawBalance > 0;
   if (statusEl) {
     if (isActive) {
       statusEl.className = 'inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-      statusEl.textContent = 'সক্রিয়';
+      statusEl.textContent = tLang(viewerLang, 'সক্রিয়', 'Active', 'نشط');
     } else {
       statusEl.className = 'inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400';
-      statusEl.textContent = 'নিষ্ক্রিয়';
+      statusEl.textContent = tLang(viewerLang, 'নিষ্ক্রিয়', 'Inactive', 'غير نشط');
     }
   }
 
   // 1. Balance
   const balUsdtEl = document.getElementById('team-modal-balance-usdt');
   const balBdtEl = document.getElementById('team-modal-balance-bdt');
-  if (balBdtEl) balBdtEl.textContent = `৳ ${bdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (balBdtEl) balBdtEl.textContent = `${viewerSym} ${dispBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (balUsdtEl) balUsdtEl.textContent = `≈ ${usdtBalance} USDT`;
 
   // 2. Referral Friends Count from Supabase team/users
@@ -7359,19 +7898,19 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
     refValEl.className = 'text-xl sm:text-2xl font-black text-white font-[\'Hind_Siliguri\'] tracking-tight';
   }
   if (refSubEl) {
-    refSubEl.textContent = 'জন';
+    refSubEl.textContent = tLang(viewerLang, 'জন', 'Users', 'مستخدمين');
   }
 
   // 3. Deposit
   const depUsdtEl = document.getElementById('team-modal-deposit-usdt');
   const depBdtEl = document.getElementById('team-modal-deposit-bdt');
-  if (depBdtEl) depBdtEl.textContent = `৳ ${bdtDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (depBdtEl) depBdtEl.textContent = `${viewerSym} ${dispDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (depUsdtEl) depUsdtEl.textContent = `≈ ${usdtDeposit} USDT`;
 
   // 4. Withdrawals
   const withUsdtEl = document.getElementById('team-modal-withdraw-usdt');
   const withBdtEl = document.getElementById('team-modal-withdraw-bdt');
-  if (withBdtEl) withBdtEl.textContent = `৳ ${bdtWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (withBdtEl) withBdtEl.textContent = `${viewerSym} ${dispWithdrawals.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   if (withUsdtEl) withUsdtEl.textContent = `≈ ${usdtWithdrawals} USDT`;
 
   modal.style.display = 'flex';
@@ -7395,17 +7934,22 @@ async function updateTeamReportMetrics() {
   const phone = user && (user.phone || user.accountNumber);
   if (!phone) return;
 
+  const viewerCurr = getUserCurrency(user);
   const teamData = await dbGetRealTeam(phone);
   cachedTeamReportData = teamData;
   const all = teamData.all || [];
   const tier1 = teamData.tier1 || [];
-  const tier2 = teamData.tier2 || [];
-  const tier3 = teamData.tier3 || [];
 
-  // 1. Calculate 8 Main Real Stats
-  const totalBalance = all.reduce(function(sum, m) { return sum + (Number(m.balance) || 0); }, 0);
-  const totalRecharge = all.reduce(function(sum, m) { return sum + (Number(m.rechargeAmount) || 0); }, 0);
-  const totalCashout = all.reduce(function(sum, m) { return sum + (Number(m.cashoutAmount) || 0); }, 0);
+  // 1. Calculate 8 Main Real Stats (converted to viewer's active currency)
+  const totalBalance = all.reduce(function(sum, m) {
+    return sum + convertBetweenCurrencies(Number(m.balance) || 0, m.currency || 'BDT', viewerCurr);
+  }, 0);
+  const totalRecharge = all.reduce(function(sum, m) {
+    return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'BDT', viewerCurr);
+  }, 0);
+  const totalCashout = all.reduce(function(sum, m) {
+    return sum + convertBetweenCurrencies(Number(m.cashoutAmount) || 0, m.currency || 'BDT', viewerCurr);
+  }, 0);
   const totalFlow = totalRecharge + totalCashout + totalBalance;
   const firstChargeCount = all.filter(function(m) { return (Number(m.rechargeAmount) || 0) > 0; }).length;
   const directPushCount = tier1.length;
@@ -7458,6 +8002,7 @@ function updateActiveTierMetrics(cachedTeamData) {
     }
   }
 
+  const viewerCurr = getUserCurrency(getCurrentUser());
   const tier1 = cachedTeamData.tier1 || [];
   const tier2 = cachedTeamData.tier2 || [];
   const tier3 = cachedTeamData.tier3 || [];
@@ -7473,7 +8018,9 @@ function updateActiveTierMetrics(cachedTeamData) {
   }
 
   const count = targetList.length;
-  const rechargeSum = targetList.reduce(function(sum, m) { return sum + (Number(m.rechargeAmount) || 0); }, 0);
+  const rechargeSum = targetList.reduce(function(sum, m) {
+    return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'BDT', viewerCurr);
+  }, 0);
   const rebateSum = rechargeSum * rate;
 
   if (mEl) mEl.textContent = String(count);
@@ -7522,7 +8069,8 @@ document.addEventListener('click', function(event) {
     pendingPurchaseLevel = currentPurchaseLevel;
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
-    const deficit = pkg ? Math.max(0, pkg.price - (Number(user && user.balance) || 0)) : 3500;
+    const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
+    const deficit = Number(Math.max(0, pkgPrice - (Number(user && user.balance) || 0)).toFixed(2));
     const customInputs = document.querySelectorAll('#custom-deposit-amount');
     customInputs.forEach(function(inp) { inp.value = deficit; });
     selectedDepositAmount = deficit;
@@ -7552,7 +8100,8 @@ document.addEventListener('click', function(event) {
   const customerServiceLiveBtn = event.target.closest('#customer-service-live-btn');
   if (customerServiceLiveBtn) {
     event.preventDefault();
-    showToastNotification('💬 সরাসরি সহায়তা প্রতিনিধির সাথে সংযুক্ত হচ্ছে...');
+    const l = getActiveLang();
+    showToastNotification(tLang(l, '💬 সরাসরি সহায়তা প্রতিনিধির সাথে সংযুক্ত হচ্ছে...', '💬 Connecting to live support agent...', '💬 جارٍ الاتصال بممثل الدعم المباشر...'));
     return;
   }
 
@@ -7560,8 +8109,9 @@ document.addEventListener('click', function(event) {
   const customerServiceTelegramBtn = event.target.closest('#customer-service-telegram-btn');
   if (customerServiceTelegramBtn) {
     event.preventDefault();
+    const l = getActiveLang();
     const tgUrl = (window.aloPlatformConfig && window.aloPlatformConfig.telegramUrl) || 'https://t.me/PW_Official_Manager_BD';
-    showToastNotification('টেলিগ্রাম ম্যানেজারের সাথে সংযুক্ত হচ্ছে...');
+    showToastNotification(tLang(l, 'টেলিগ্রাম ম্যানেজারের সাথে সংযুক্ত হচ্ছে...', 'Connecting to Telegram manager...', 'جارٍ الاتصال بمدير تيليجرام...'));
     try {
       window.open(tgUrl, '_blank');
     } catch (e) {
@@ -7615,15 +8165,18 @@ document.addEventListener('click', function(event) {
   const copyMgrBtn = event.target.closest('#copy-manager-id-btn');
   if (copyMgrBtn) {
     event.preventDefault();
+    const l = getActiveLang();
     const mgrCode = '#PW-MANAGER-8802';
+    const copiedTxt = tLang(l, '📋 ম্যানেজার আইডি কপি করা হয়েছে: ' + mgrCode, '📋 Manager ID copied: ' + mgrCode, '📋 تم نسخ معرف المدير: ' + mgrCode);
+    const fallbackTxt = tLang(l, 'ম্যানেজার আইডি: ' + mgrCode, 'Manager ID: ' + mgrCode, 'معرف المدير: ' + mgrCode);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(mgrCode).then(function() {
-        showToastNotification('📋 ম্যানেজার আইডি কপি করা হয়েছে: ' + mgrCode);
+        showToastNotification(copiedTxt);
       }).catch(function() {
-        showToastNotification('ম্যানেজার আইডি: ' + mgrCode);
+        showToastNotification(fallbackTxt);
       });
     } else {
-      showToastNotification('ম্যানেজার আইডি: ' + mgrCode);
+      showToastNotification(fallbackTxt);
     }
     return;
   }
@@ -7632,8 +8185,9 @@ document.addEventListener('click', function(event) {
   const tgMgrBtn = event.target.closest('#manager-telegram-action-btn');
   if (tgMgrBtn) {
     event.preventDefault();
+    const l = getActiveLang();
     const tgUrl = (window.aloPlatformConfig && window.aloPlatformConfig.telegramUrl) || 'https://t.me/PW_Official_Manager_BD';
-    showToastNotification('🚀 টেলিগ্রাম ম্যানেজার সার্ভিস কানেক্ট হচ্ছে...');
+    showToastNotification(tLang(l, '🚀 টেলিগ্রাম ম্যানেজার সার্ভিস কানেক্ট হচ্ছে...', '🚀 Connecting to Telegram manager service...', '🚀 جارٍ الاتصال بخدمة مدير تيليجرام...'));
     try { window.open(tgUrl, '_blank'); } catch (e) {}
     return;
   }
@@ -7642,7 +8196,8 @@ document.addEventListener('click', function(event) {
   const liveChatBtn = event.target.closest('#manager-live-chat-btn');
   if (liveChatBtn) {
     event.preventDefault();
-    showToastNotification('💬 অনলাইন ম্যানেজার চ্যাটে যুক্ত হচ্ছেন...');
+    const l = getActiveLang();
+    showToastNotification(tLang(l, '💬 অনলাইন ম্যানেজার চ্যাটে যুক্ত হচ্ছেন...', '💬 Connecting to online manager chat...', '💬 جارٍ الاتصال بدردشة المدير المباشرة...'));
     return;
   }
 
@@ -7652,7 +8207,18 @@ document.addEventListener('click', function(event) {
     event.preventDefault();
     if (typeof dashMsgBtn.blur === 'function') dashMsgBtn.blur();
     const msg = dashMsgBtn.dataset.dashboardMessage;
-    if (msg) showToastNotification(msg);
+    if (msg) {
+      const l = getActiveLang();
+      const map = {
+        'অনলাইন গ্রাহক সেবা সহায়তা শীঘ্রই চালু হবে।': { en: 'Online customer support will be available soon.', ar: 'سيتم تفعيل خدمة العملاء عبر الإنترنت قريباً.' },
+        'অ্যাকাউন্ট পরিবর্তনের রেকর্ড এখানে উপলভ্য নয়।': { en: 'Account change records are not available here.', ar: 'سجلات تغييرات الحساب غير متوفرة هنا.' },
+        'নিরাপত্তা কেন্দ্রের সুবিধা এখানে চালু নেই।': { en: 'Security center is not enabled here.', ar: 'مركز الأمان غير مفعّل هنا.' },
+        'টেলিগ্রাম সহায়তার লিংক এখানে যুক্ত করা হয়নি।': { en: 'Telegram support link is not configured here.', ar: 'رابط دعم تيليجرام غير مضاف هنا.' },
+        'অ্যাপ ডাউনলোডের সুবিধা শীঘ্রই আসবে।': { en: 'App download will be available soon.', ar: 'سيتوفر تنزيل التطبيق قريباً.' }
+      };
+      const localized = (l !== 'bn' && map[msg]) ? (map[msg][l] || map[msg].en) : msg;
+      showToastNotification(localized);
+    }
     return;
   }
 
@@ -7729,15 +8295,16 @@ document.addEventListener('click', function(event) {
     const membersContent = document.getElementById('team-members-view-content');
     const headerTitle = document.getElementById('team-panel-header-title');
 
+    const l = getActiveLang();
     if (tab === 'members') {
       if (reportContent) reportContent.classList.add('hidden');
       if (membersContent) membersContent.classList.remove('hidden');
-      if (headerTitle) headerTitle.textContent = 'আমার দল';
+      if (headerTitle) headerTitle.textContent = tLang(l, 'আমার দল', 'My Team', 'فريقي');
       renderFreshTeamView();
     } else {
       if (reportContent) reportContent.classList.remove('hidden');
       if (membersContent) membersContent.classList.add('hidden');
-      if (headerTitle) headerTitle.textContent = 'দলের রিপোর্ট';
+      if (headerTitle) headerTitle.textContent = tLang(l, 'দলের রিপোর্ট', 'Team Report', 'تقرير الفريق');
       updateTeamReportMetrics();
     }
     return;
@@ -7808,14 +8375,17 @@ document.addEventListener('click', function(event) {
   if (teamCopyBtn) {
     event.preventDefault();
     const text = teamCopyBtn.dataset.copyText;
+    const l = getActiveLang();
+    const copiedTxt = tLang(l, `📋 আমন্ত্রণ কোড কপি করা হয়েছে: ${text}`, `📋 Invite code copied: ${text}`, `📋 تم نسخ رمز الدعوة: ${text}`);
+    const fallbackTxt = tLang(l, `আমন্ত্রণ কোড: ${text}`, `Invite code: ${text}`, `رمز الدعوة: ${text}`);
     if (text && navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function() {
-        showToastNotification(`📋 আমন্ত্রণ কোড কপি করা হয়েছে: ${text}`);
+        showToastNotification(copiedTxt);
       }).catch(function() {
-        showToastNotification(`আমন্ত্রণ কোড: ${text}`);
+        showToastNotification(fallbackTxt);
       });
     } else if (text) {
-      showToastNotification(`আমন্ত্রণ কোড: ${text}`);
+      showToastNotification(fallbackTxt);
     }
     return;
   }
@@ -7849,7 +8419,8 @@ document.addEventListener('click', function(event) {
       return;
     }
 
-    showToastNotification(`পছন্দ: ${methodName}`);
+    const l = getActiveLang();
+    showToastNotification(tLang(l, `পছন্দ: ${methodName}`, `Selected: ${methodName}`, `تم الاختيار: ${methodName}`));
     return;
   }
 
@@ -8069,9 +8640,16 @@ document.addEventListener('click', function(event) {
   if (personalMsgBtn && !personalMsgBtn.closest('#personal-bkash-row, [data-profile-edit="bkash"], #bkash-setup-panel, #personal-nagad-row, [data-profile-edit="nagad"], #nagad-setup-panel, #personal-usdt-row, [data-profile-edit="usdt"], #usdt-setup-panel, #personal-account-row, [data-profile-edit="account"], #realname-setup-panel, #personal-fund-password-row, [data-profile-edit="fund-password"], #fund-password-setup-panel')) {
     event.preventDefault();
     const msg = personalMsgBtn.dataset.personalMessage;
+    const l = getActiveLang();
+    const map = {
+      'সহায়তা সেবা এখানে চালু নেই।': { en: 'Help service is not enabled here.', ar: 'خدمة المساعدة غير مفعّلة هنا.' },
+      'প্রোফাইল ছবি পরিবর্তনের সুবিধা এখানে চালু নেই।': { en: 'Profile photo editing is not enabled here.', ar: 'تعديل صورة الملف الشخصي غير مفعّل هنا.' },
+      'প্রবেশের গুপ্তসংকেত পরিবর্তনের সুবিধা এখানে চালু নেই।': { en: 'Login password change is not enabled here.', ar: 'تغيير كلمة مرور الدخول غير مفعّل هنا.' }
+    };
+    const localized = (l !== 'bn' && map[msg]) ? (map[msg][l] || map[msg].en) : msg;
     const msgEl = document.getElementById('personal-message');
-    if (msgEl) msgEl.textContent = msg;
-    showToastNotification(msg);
+    if (msgEl) msgEl.textContent = localized;
+    showToastNotification(localized);
     return;
   }
 
@@ -8080,11 +8658,12 @@ document.addEventListener('click', function(event) {
   if (withdrawSheetSubmitBtn) {
     event.preventDefault();
     if (window.isSubmittingWithdrawal) return;
+    const lPre = getActiveLang();
     const label = document.getElementById('withdraw-selected-method-label');
-    const selectedMethod = label ? label.textContent.trim() : 'পছন্দ করুন';
+    const selectedMethod = label ? label.textContent.trim() : '';
 
-    if (!userSelectedWithdrawMethod || selectedMethod === 'পছন্দ করুন' || selectedMethod.includes('সেট নেই')) {
-      showToastNotification('⚠️ অনুগ্রহ করে প্রথমে প্রত্যাহার পদ্ধতি পছন্দ করুন');
+    if (!userSelectedWithdrawMethod || !selectedMethod || selectedMethod === 'পছন্দ করুন' || selectedMethod === 'Select Method' || selectedMethod === 'اختر الطريقة' || selectedMethod.includes('সেট নেই') || selectedMethod.includes('Not Bound') || selectedMethod.includes('غير مضبوط')) {
+      showToastNotification(tLang(lPre, '⚠️ অনুগ্রহ করে প্রথমে প্রত্যাহার পদ্ধতি পছন্দ করুন', '⚠️ Please select a withdrawal method first', '⚠️ يرجى اختيار طريقة السحب أولاً'));
       openMethodPicker();
       return;
     }
@@ -8095,15 +8674,15 @@ document.addEventListener('click', function(event) {
 
     if (userSelectedWithdrawMethod === 'USDT' || selectedMethod.includes('USDT')) {
       if (!usdt || !usdt.address) {
-        showToastNotification('⚠️ উত্তোলন করার পূর্বে USDT (BEP20) সেট করতে হবে');
+        showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে USDT (BEP20) সেট করতে হবে', '⚠️ Please set up USDT (BEP20) before withdrawing', '⚠️ يرجى إعداد USDT (BEP20) قبل السحب'));
         closeWithdrawSheet();
         previousDashboardPanel = 'my-pass';
         openDashboardPanel('usdt-setup');
         return;
       }
-    } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ')) {
+    } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ') || selectedMethod.includes('Nagad')) {
       if (!nagad || !nagad.phone) {
-        showToastNotification('⚠️ উত্তোলন করার পূর্বে নগদ সেট করতে হবে');
+        showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে নগদ সেট করতে হবে', '⚠️ Please set up Nagad before withdrawing', '⚠️ يرجى إعداد Nagad قبل السحب'));
         closeWithdrawSheet();
         previousDashboardPanel = 'my-pass';
         openDashboardPanel('nagad-setup');
@@ -8111,7 +8690,7 @@ document.addEventListener('click', function(event) {
       }
     } else {
       if (!bkash || !bkash.phone) {
-        showToastNotification('⚠️ উত্তোলন করার পূর্বে বিকাশ সেট করতে হবে');
+        showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে বিকাশ সেট করতে হবে', '⚠️ Please set up bKash before withdrawing', '⚠️ يرجى إعداد bKash قبل السحب'));
         closeWithdrawSheet();
         previousDashboardPanel = 'my-pass';
         openDashboardPanel('bkash-setup');
@@ -8123,25 +8702,30 @@ document.addEventListener('click', function(event) {
     const amt = parseFloat(amtInp ? amtInp.value : '0') || 0;
     const user = getCurrentUser();
     if (!user || (!user.phone && !user.accountNumber)) {
-      showToastNotification('⚠️ অনুগ্রহ করে প্রথমে লগইন করুন');
+      showToastNotification(tLang(lPre, '⚠️ অনুগ্রহ করে প্রথমে লগইন করুন', '⚠️ Please log in first', '⚠️ يرجى تسجيل الدخول أولاً'));
       showView('login');
       return;
     }
 
+    const isUsd = isUsdOnlyUser(user);
     const curr = getUserCurrency(user);
-    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : 'bn') || (user.country === 'IN' ? 'hi' : (user.country === 'BD' ? 'bn' : 'en'));
+    const sym = getUserCurrencySymbol(user);
+    const lang = getActiveLang(user);
     const pCfg = window.aloPlatformConfig || {};
-    const minWithdrawAmt = Number(pCfg.minWithdraw) || 700;
+    const minWithdrawAmt = toUserCurrencyAmount(Number(pCfg.minWithdraw) || 700, user);
 
     if (pCfg.withdrawEnabled === false) {
-      showToastNotification(lang === 'en' ? '⚠️ Withdrawals are temporarily paused by Administrator.' : '⚠️ অ্যাডমিন কর্তৃক উত্তোলন সাময়িকভাবে বন্ধ রাখা হয়েছে।');
+      showToastNotification(tLang(lang, '⚠️ অ্যাডমিন কর্তৃক উত্তোলন সাময়িকভাবে বন্ধ রাখা হয়েছে।', '⚠️ Withdrawals are temporarily paused by Administrator.', '⚠️ السحوبات متوقفة مؤقتاً من قبل المسؤول.'));
       return;
     }
 
     if (isNaN(amt) || amt < minWithdrawAmt) {
-      const minNotice = lang === 'hi' 
-        ? `⚠️ कृपया वैध निकासी राशि दर्ज करें (न्यूनतम ${minWithdrawAmt})` 
-        : (lang === 'en' ? `⚠️ Please enter a valid withdrawal amount (Min ${minWithdrawAmt})` : `⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন (ন্যূনতম ${minWithdrawAmt})`);
+      const minNotice = tLang(
+        lang,
+        `⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন (ন্যূনতম ${minWithdrawAmt})`,
+        `⚠️ Please enter a valid withdrawal amount (Min ${sym}${minWithdrawAmt.toFixed(2)} ${curr})`,
+        `⚠️ يرجى إدخال مبلغ سحب صالح (الحد الأدنى ${sym}${minWithdrawAmt.toFixed(2)} ${curr})`
+      );
       showToastNotification(minNotice);
       if (amtInp) amtInp.focus();
       return;
@@ -8150,9 +8734,7 @@ document.addEventListener('click', function(event) {
     const pwdInp = document.getElementById('withdraw-sheet-fund-password');
     const pwd = pwdInp ? pwdInp.value.trim() : '';
     if (!pwd) {
-      const pwdNotice = lang === 'hi'
-        ? '⚠️ कृपया फंड पासवर्ड दर्ज करें'
-        : (lang === 'en' ? '⚠️ Please enter your fund password' : '⚠️ অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন');
+      const pwdNotice = tLang(lang, '⚠️ অনুগ্রহ করে ফান্ডের পাসওয়ার্ড লিখুন', '⚠️ Please enter your fund password', '⚠️ يرجى إدخال كلمة مرور السحب');
       showToastNotification(pwdNotice);
       if (pwdInp) pwdInp.focus();
       return;
@@ -8160,18 +8742,14 @@ document.addEventListener('click', function(event) {
 
     const savedFundPass = getSavedFundPassword();
     if (!savedFundPass) {
-      const needSetupMsg = lang === 'hi'
-        ? '⚠️ कृपया पहले 6-अंकीय निकासी पासवर्ड सेट करें'
-        : (lang === 'en' ? '⚠️ Please set up your 6-digit withdrawal password first' : '⚠️ অনুগ্রহ করে প্রথমে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সেট করুন');
+      const needSetupMsg = tLang(lang, '⚠️ অনুগ্রহ করে প্রথমে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সেট করুন', '⚠️ Please set up your 6-digit withdrawal password first', '⚠️ يرجى إعداد كلمة مرور السحب المكونة من 6 أرقام أولاً');
       showToastNotification(needSetupMsg);
       closeActionSheet();
       openDashboardPanel('fund-password-setup');
       return;
     }
     if (pwd !== savedFundPass) {
-      const wrongMsg = lang === 'hi'
-        ? '⚠️ निकासी पासवर्ड सही नहीं है, पुनः जाँचें'
-        : (lang === 'en' ? '⚠️ Fund password incorrect, please check' : '⚠️ ফান্ডের পাসওয়ার্ড সঠিক নয়, পুনরায় যাচাই করুন');
+      const wrongMsg = tLang(lang, '⚠️ ফান্ডের পাসওয়ার্ড সঠিক নয়, পুনরায় যাচাই করুন', '⚠️ Fund password incorrect, please check', '⚠️ كلمة مرور السحب غير صحيحة، يرجى التحقق');
       showToastNotification(wrongMsg);
       if (pwdInp) pwdInp.focus();
       return;
@@ -8192,9 +8770,12 @@ document.addEventListener('click', function(event) {
 
         const liveBal = Number(liveUser.balance) || 0;
         if (amt > liveBal) {
-          const insMsg = lang === 'hi'
-            ? `⚠️ अपर्याप्त बैलेंस! आपका उपलब्ध बैलेंस ${liveBal.toFixed(2)} ${curr}`
-            : (lang === 'en' ? `⚠️ Insufficient balance! Your available balance is ${liveBal.toFixed(2)} ${curr}` : `⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${formatBanglaNumber(liveBal.toFixed(2))} ${curr}`);
+          const insMsg = tLang(
+            lang,
+            `⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${formatBanglaNumber(liveBal.toFixed(2))} ${curr}`,
+            `⚠️ Insufficient balance! Your available balance is ${liveBal.toFixed(2)} ${curr}`,
+            `⚠️ رصيد غير كافٍ! رصيدك المتاح هو ${liveBal.toFixed(2)} ${curr}`
+          );
           showToastNotification(insMsg);
           if (amtInp) amtInp.focus();
           return;
@@ -8210,13 +8791,17 @@ document.addEventListener('click', function(event) {
         const dateStr = now.toISOString().split('T')[0];
         const hours = String(now.getHours()).padStart(2, '0');
         const mins = String(now.getMinutes()).padStart(2, '0');
-        let payoutMethodLabel = 'বিকাশ (bKash)';
+        let payoutMethodLabel = lang !== 'bn' ? 'bKash' : 'বিকাশ (bKash)';
         if (userSelectedWithdrawMethod === 'USDT' || selectedMethod.includes('USDT')) {
           payoutMethodLabel = (usdt && usdt.address) ? `USDT BEP20 (${usdt.address})` : 'USDT (BEP20)';
-        } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ')) {
-          payoutMethodLabel = (nagad && nagad.phone) ? `নগদ (${nagad.phone})` : 'নগদ (Nagad)';
+        } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ') || selectedMethod.includes('Nagad')) {
+          payoutMethodLabel = (nagad && nagad.phone)
+            ? (lang !== 'bn' ? `Nagad (${nagad.phone})` : `নগদ (${nagad.phone})`)
+            : (lang !== 'bn' ? 'Nagad' : 'নগদ (Nagad)');
         } else {
-          payoutMethodLabel = (bkash && bkash.phone) ? `বিকাশ (${bkash.phone})` : 'বিকাশ (bKash)';
+          payoutMethodLabel = (bkash && bkash.phone)
+            ? (lang !== 'bn' ? `bKash (${bkash.phone})` : `বিকাশ (${bkash.phone})`)
+            : (lang !== 'bn' ? 'bKash' : 'বিকাশ (bKash)');
         }
 
         const wdNetPct = Number((window.aloPlatformConfig && window.aloPlatformConfig.withdrawNetPercent) || 50);
@@ -8255,9 +8840,12 @@ document.addEventListener('click', function(event) {
         renderWithdrawalHistory();
         closeWithdrawSheet();
 
-        const successNotice = lang === 'hi'
-          ? `🎉 ${amt.toFixed(2)} ${curr} निकासी का अनुरोध सफलतापूर्वक सबमिट किया गया!`
-          : (lang === 'en' ? `🎉 ${amt.toFixed(2)} ${curr} withdrawal request submitted successfully!` : `🎉 ${formatBanglaNumber(amt.toFixed(2))} ${curr} উত্তোলনের আবেদন সফলভাবে জমা দেওয়া হয়েছে!`);
+        const successNotice = tLang(
+          lang,
+          `🎉 ${formatBanglaNumber(amt.toFixed(2))} ${curr} উত্তোলনের আবেদন সফলভাবে জমা দেওয়া হয়েছে!`,
+          `🎉 ${amt.toFixed(2)} ${curr} withdrawal request submitted successfully!`,
+          `🎉 تم إرسال طلب السحب بمبلغ ${amt.toFixed(2)} ${curr} بنجاح!`
+        );
         showToastNotification(successNotice);
       } finally {
         window.isSubmittingWithdrawal = false;
@@ -8279,6 +8867,8 @@ document.addEventListener('click', function(event) {
     const key = `${tier}-${type}`;
 
     const curUser = getCurrentUser();
+    const l = getActiveLang(curUser);
+    const dispTier = getVipTierLabel(tier, l);
     let claimed = Array.isArray(curUser && curUser.claimedInviteRewards) ? curUser.claimedInviteRewards.slice() : [];
     try {
       const localC = JSON.parse(localStorage.getItem('alo_claimed_invite_rewards') || '[]');
@@ -8288,14 +8878,23 @@ document.addEventListener('click', function(event) {
     } catch(e) {}
 
     if (claimed.includes(key)) {
-      showToastNotification(`✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`);
+      showToastNotification(
+        tLang(l, `✓ আপনি ${dispTier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`, `✓ You have already claimed this bonus for ${dispTier}!`, `✓ لقد حصلت بالفعل على هذه المكافأة لمستوى ${dispTier}!`)
+      );
       return;
     }
 
     // If progress is not unlocked yet (< reqMembers), notify and open progress info
     if (currentCount < reqMembers) {
       const needed = reqMembers - currentCount;
-      showToastNotification(`🔒 শর্ত পূরণ হয়নি! ${tier} আনলক করতে আরও ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন (অগ্রগতি: ${formatBanglaNumber(currentCount)}/${formatBanglaNumber(reqMembers)})`);
+      showToastNotification(
+        tLang(
+          l,
+          `🔒 শর্ত পূরণ হয়নি! ${dispTier} আনলক করতে আরও ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন (অগ্রগতি: ${formatBanglaNumber(currentCount)}/${formatBanglaNumber(reqMembers)})`,
+          `🔒 Requirements not met! Need ${needed} more active member(s) to unlock ${dispTier} (${currentCount}/${reqMembers})`,
+          `🔒 لم تكتمل الشروط! تحتاج إلى ${needed} عضو نشط إضافي لفتح ${dispTier} (${currentCount}/${reqMembers})`
+        )
+      );
       openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount);
       return;
     }
@@ -8310,11 +8909,19 @@ document.addEventListener('click', function(event) {
   if (modalClaimBtn) {
     event.preventDefault();
     if (currentInviteClaim) {
+      const l = getActiveLang();
       const curCount = Number(currentInviteClaim.currentCount) || 0;
       const reqMembers = Number(currentInviteClaim.reqMembers) || 1;
       if (curCount < reqMembers) {
         const needed = reqMembers - curCount;
-        showToastNotification(`🔒 শর্ত পূরণ না হলে ক্লাইম করা যাবে না! আরও ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন।`);
+        showToastNotification(
+          tLang(
+            l,
+            `🔒 শর্ত পূরণ না হলে ক্লাইম করা যাবে না! আরও ${formatBanglaNumber(needed)} জন সক্রিয় সদস্য প্রয়োজন।`,
+            `🔒 Cannot claim until requirements are met! ${needed} more active member(s) required.`,
+            `🔒 لا يمكن المطالبة حتى تكتمل الشروط! مطلوب ${needed} عضو نشط إضافي.`
+          )
+        );
         return;
       }
       executeVipRewardClaim(
@@ -8333,20 +8940,23 @@ document.addEventListener('click', function(event) {
   if (modalCopyBtn) {
     event.preventDefault();
     const user = getCurrentUser();
+    const l = getActiveLang(user);
     const code = (user && (user.inviteCode || user.accountNumber)) || '';
     if (!code) {
-      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
       return;
     }
     const link = `${window.location.origin}${window.location.pathname}?ref=${code}`;
+    const copiedTxt = tLang(l, `🔗 ইনভাইট লিংক কপি হয়েছে: ${link}`, `🔗 Invite link copied: ${link}`, `🔗 تم نسخ رابط الدعوة: ${link}`);
+    const fallbackTxt = tLang(l, `আমন্ত্রণ কোড: ${code}`, `Invite code: ${code}`, `رمز الدعوة: ${code}`);
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(link).then(function() {
-        showToastNotification(`🔗 ইনভাইট লিংক কপি হয়েছে: ${link}`);
+        showToastNotification(copiedTxt);
       }).catch(function() {
-        showToastNotification(`আমন্ত্রণ কোড: ${code}`);
+        showToastNotification(fallbackTxt);
       });
     } else {
-      showToastNotification(`আমন্ত্রণ কোড: ${code}`);
+      showToastNotification(fallbackTxt);
     }
     return;
   }
@@ -8363,18 +8973,21 @@ document.addEventListener('click', function(event) {
   if (copyCodeBtn) {
     event.preventDefault();
     const user = getCurrentUser();
+    const l = getActiveLang(user);
     const code = (user && (user.inviteCode || user.accountNumber)) || '';
     if (!code) {
-      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
       return;
     }
     const copyCodeTextEl = document.getElementById('invite-copy-code-text');
     const onCodeCopied = function() {
       if (copyCodeTextEl) {
-        copyCodeTextEl.textContent = 'কপি সম্পন্ন!';
-        setTimeout(function() { copyCodeTextEl.textContent = 'আমন্ত্রণ কোড কপি করুন'; }, 2000);
+        copyCodeTextEl.textContent = tLang(l, 'কপি সম্পন্ন!', 'Copied!', 'تم النسخ!');
+        setTimeout(function() {
+          copyCodeTextEl.textContent = tLang(l, 'আমন্ত্রণ কোড কপি করুন', 'Copy Invite Code', 'نسخ رمز الدعوة');
+        }, 2000);
       }
-      showToastNotification(`আমন্ত্রণ কোড কপি করা হয়েছে: ${code}`);
+      showToastNotification(tLang(l, `আমন্ত্রণ কোড কপি করা হয়েছে: ${code}`, `Invite code copied: ${code}`, `تم نسخ رمز الدعوة: ${code}`));
     };
     const fallbackCopyText = function(text) {
       const ta = document.createElement('textarea');
@@ -8406,9 +9019,10 @@ document.addEventListener('click', function(event) {
     const linkDisplay = document.getElementById('invite-link-display');
     const companyDisplay = document.getElementById('invite-company-link-display');
     const user = getCurrentUser();
+    const l = getActiveLang(user);
     const code = (user && (user.inviteCode || user.accountNumber)) || '';
     if (!code) {
-      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
       return;
     }
     const linkText = (linkInput && linkInput.value)
@@ -8421,15 +9035,17 @@ document.addEventListener('click', function(event) {
     const companyCopyText = document.getElementById('invite-company-copy-text');
     function onCopied() {
       if (copyBtnText) {
-        copyBtnText.textContent = 'কপি সম্পন্ন!';
-        setTimeout(function() { copyBtnText.textContent = 'আমন্ত্রণ লিঙ্ক কপি করুন'; }, 2000);
+        copyBtnText.textContent = tLang(l, 'কপি সম্পন্ন!', 'Copied!', 'تم النسخ!');
+        setTimeout(function() {
+          copyBtnText.textContent = tLang(l, 'আমন্ত্রণ লিঙ্ক কপি করুন', 'Copy Invite Link', 'نسخ رابط الدعوة');
+        }, 2000);
       }
       if (companyCopyText) {
         const origComp = companyCopyText.textContent;
-        companyCopyText.textContent = 'কপি হয়েছে! ✓';
+        companyCopyText.textContent = tLang(l, 'কপি হয়েছে! ✓', 'Copied! ✓', 'تم النسخ! ✓');
         setTimeout(function() { companyCopyText.textContent = origComp; }, 2000);
       }
-      showToastNotification('আমন্ত্রণ লিঙ্ক কপি করা হয়েছে!');
+      showToastNotification(tLang(l, 'আমন্ত্রণ লিঙ্ক কপি করা হয়েছে!', 'Invite link copied!', 'تم نسخ رابط الدعوة!'));
     }
     function fallbackCopyLink(text) {
       const ta = document.createElement('textarea');
@@ -8465,8 +9081,8 @@ document.addEventListener('click', function(event) {
       return;
     }
     event.preventDefault();
-    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.language) || 'bn';
-    const msg = lang === 'hi' ? 'खरीदा नहीं गया' : (lang === 'en' ? 'Not purchased' : 'ক্রয় করা হয়নি');
+    const lang = getActiveLang(user);
+    const msg = tLang(lang, 'ক্রয় করা হয়নি', 'Not purchased', 'غير مشترى');
     showCenterTextNotice(msg);
     return;
   }
@@ -8588,11 +9204,12 @@ document.addEventListener('click', function(event) {
   if (acceptBtn) {
     const user = getCurrentUser();
     if (!user) {
-      showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+      const l = getActiveLang();
+      showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
       showView('login');
       return;
     }
-    const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
+    const lang = getActiveLang(user);
 
     if (activePackageLevel !== 'LV0' && !isLevelUnlocked(activePackageLevel, user)) {
       openPackageDetailPage(activePackageLevel);
@@ -8605,16 +9222,16 @@ document.addEventListener('click', function(event) {
     const quota = packageTaskSettings[activePackageLevel]?.count || 5;
     const userLevel = (user && user.packageLevel) || 'LV0';
     const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
-    const today = new Date().toDateString();
+    const nowMs = Date.now();
     const acceptedToday = readAcceptedMissions().filter(function(m) {
-      return m.level === activePackageLevel && m.status !== 'failed' && new Date(m.acceptedAt).toDateString() === today;
+      return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
     });
     const allTodayAccepted = readAcceptedMissions().filter(function(m) {
-      return new Date(m.acceptedAt).toDateString() === today && m.status !== 'failed';
+      return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
     });
 
     if (acceptedToday.length >= quota || allTodayAccepted.length >= userMaxQuota) {
-      showTaskCenterToast(lang === 'hi' ? 'दैनिक कोटा पूर्ण' : (lang === 'en' ? 'Daily Limit Reached' : 'দৈনিক কোটা পূর্ণ'));
+      showTaskCenterToast(tLang(lang, 'দৈনিক কোটা পূর্ণ', 'Daily Limit Reached', 'تم بلوغ الحد اليومي'));
       refreshDailyMissionLimit(activePackageLevel);
       return;
     }
@@ -8625,16 +9242,17 @@ document.addEventListener('click', function(event) {
     acceptBtn.disabled = true;
     acceptBtn.dataset.accepted = 'true';
     acceptBtn.removeAttribute('data-limit-reached');
-    acceptBtn.textContent = lang === 'hi' ? 'स्वीकृत' : (lang === 'en' ? 'Accepted' : 'গৃহীত');
+    acceptBtn.textContent = tLang(lang, 'গৃহীত', 'Accepted', 'تم القبول');
 
     // Step 2: Show centered modal: "গ্রহণ করা হচ্ছে"
-    showTaskCenterToast(lang === 'hi' ? 'स्वीकार किया जा रहा है' : (lang === 'en' ? 'Accepting...' : 'গ্রহণ করা হচ্ছে'));
+    showTaskCenterToast(tLang(lang, 'গ্রহণ করা হচ্ছে', 'Accepting...', 'جارٍ القبول...'));
 
     // Step 3: Complete mission saving smoothly in background
     setTimeout(function() {
-      const taskTitle = `${activePlatform} · ${lang === 'hi' ? 'कार्य' : (lang === 'en' ? 'Task' : 'কাজ')} ${taskIndex + 1}`;
+      const taskTitle = `${activePlatform} · ${tLang(lang, 'কাজ', 'Task', 'مهمة')} ${taskIndex + 1}`;
       const desc = getPlatformTaskDescription(activePlatform, taskIndex, lang);
-      const reward = (packageTaskSettings[activePackageLevel] && packageTaskSettings[activePackageLevel].reward) || 20;
+      const baseReward = (packageTaskSettings[activePackageLevel] && packageTaskSettings[activePackageLevel].reward) || 20;
+      const reward = toUserCurrencyAmount(baseReward, user);
       const taskLink = getUniqueRandomTaskUrl(activePlatform, taskIndex, readAcceptedMissions());
 
       saveAcceptedMission({
@@ -8645,16 +9263,18 @@ document.addEventListener('click', function(event) {
         description: desc,
         level: activePackageLevel,
         reward: reward,
+        currency: getUserCurrency(user),
         status: 'active',
         taskLink: taskLink,
         acceptedAt: new Date().toISOString()
       });
 
+      const doneNowMs = Date.now();
       const currentMissions = readAcceptedMissions().filter(function(m) {
-        return m.level === activePackageLevel && m.status !== 'failed' && new Date(m.acceptedAt).toDateString() === today;
+        return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, doneNowMs);
       });
       const allMissionsToday = readAcceptedMissions().filter(function(m) {
-        return new Date(m.acceptedAt).toDateString() === today && m.status !== 'failed';
+        return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, doneNowMs);
       });
       const newAcceptedCount = currentMissions.length;
       const reached = newAcceptedCount >= quota || allMissionsToday.length >= userMaxQuota;
@@ -8664,7 +9284,7 @@ document.addEventListener('click', function(event) {
         const listEl = document.getElementById('platform-task-list');
         if (listEl) {
           const rows = listEl.querySelectorAll('.platform-task-row');
-          const limitReachedText = lang === 'hi' ? 'कोटा पूर्ण' : (lang === 'en' ? 'Limit Reached' : 'সীমা পূর্ণ');
+          const limitReachedText = tLang(lang, 'সীমা পূর্ণ', 'Limit Reached', 'تم بلوغ الحد');
           rows.forEach(function(r) {
             const btn = r.querySelector('[data-platform-accept]');
             if (btn && !btn.dataset.accepted) {
@@ -8696,6 +9316,43 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // Appeal failed mission & open resubmit panel
+  const appealBtn = event.target.closest('[data-appeal-mission]');
+  if (appealBtn) {
+    const card = appealBtn.closest('[data-mission-id]');
+    if (card) {
+      const allMissions = readAllMissionsRaw();
+      const target = allMissions.find(function(m) { return m.id === card.dataset.missionId; });
+      if (target && target.status === 'failed' && !target.rewardCredited) {
+        const l = getActiveLang();
+        const appealCount = Number(target.appealCount) || 0;
+        if (appealCount >= 3) {
+          showToastNotification(tLang(l, 'এই কাজের সর্বোচ্চ আপিল সীমা (৩ বার) পূর্ণ হয়েছে।', 'Maximum appeal limit (3) reached for this task.', 'تم بلوغ الحد الأقصى للاستئناف (3) لهذه المهمة.'));
+          return;
+        }
+        const user = getCurrentUser();
+        const curPhone = user ? normalizeBdPhone(user.phone || user.accountNumber || '') : '';
+        const userLevel = (user && user.packageLevel) || 'LV0';
+        const maxDayQuota = Math.max(
+          (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5,
+          (packageTaskSettings[target.level || 'LV0'] && packageTaskSettings[target.level || 'LV0'].count) || 5
+        );
+        const missionDay = new Date(target.acceptedAt || Date.now()).toDateString();
+        const nonFailedSameDay = allMissions.filter(function(m) {
+          const belongs = !m.userPhone || !curPhone || normalizeBdPhone(m.userPhone) === curPhone;
+          return belongs && m.id !== target.id && m.status !== 'failed' && new Date(m.acceptedAt || Date.now()).toDateString() === missionDay;
+        });
+        if (nonFailedSameDay.length >= maxDayQuota) {
+          showToastNotification(tLang(l, 'সেই দিনের দৈনিক কাজের কোটা অন্য কাজের মাধ্যমে পূর্ণ হয়ে গেছে।', 'Daily task limit is already filled by other tasks for that day.', 'تم استيفاء حد المهام اليومي بمهام أخرى في ذلك اليوم.'));
+          return;
+        }
+        activeSubmissionId = target.id;
+        openDashboardPanel('mission-submit');
+      }
+    }
+    return;
+  }
+
   // Manual approval disabled: tasks complete automatically after the 15-minute countdown
 
   // Mission filter tab click
@@ -8715,12 +9372,13 @@ document.addEventListener('click', function(event) {
       const target = allMissions.find(function(m) { return m.id === card.dataset.missionId; });
       if (target) {
         target.status = 'failed';
+        target.cancelledByUser = true;
         target.cancelledAt = new Date().toISOString();
         target.failedAt = new Date().toISOString();
         saveAllMissionsRaw(allMissions);
         const user = getCurrentUser();
-        const lang = (window.aloI18n ? window.aloI18n.getLanguage() : '') || (user && user.country === 'IN' ? 'hi' : (user && user.country === 'BD' ? 'bn' : 'en'));
-        showToastNotification(lang === 'hi' ? 'कार्य रद्द कर दिया गया और रिकॉर्ड में सहेजा गया' : (lang === 'en' ? 'Task cancelled and archived' : 'কাজটি বাতিল করা হয়েছে এবং রেকর্ডে এককালীন সংরক্ষিত থাকবে'));
+        const lang = getActiveLang(user);
+        showToastNotification(tLang(lang, 'কাজটি বাতিল করা হয়েছে এবং রেকর্ডে এককালীন সংরক্ষিত থাকবে', 'Task cancelled and archived', 'تم إلغاء المهمة وحفظها في السجل'));
         renderMissionRecords(activeMissionFilter);
         refreshDailyMissionLimit(activePackageLevel);
       }
@@ -8749,8 +9407,26 @@ document.addEventListener('click', function(event) {
     const missions = readAcceptedMissions();
     const mission = missions.find(function(m) { return m.id === missionId; });
     if (mission && mission.screenshot) {
-      openScreenshotLightbox(mission.screenshot, (mission.platform || 'টাস্ক') + ' - কাজের স্ক্রিনশট প্রিভিউ');
+      const l = getActiveLang();
+      const cap = tLang(
+        l,
+        (mission.platform || 'টাস্ক') + ' - কাজের স্ক্রিনশট প্রিভিউ',
+        (mission.platform || 'Task') + ' - Screenshot Preview',
+        (mission.platform || 'مهمة') + ' - معاينة لقطة الشاشة'
+      );
+      const canRemove = mission.status === 'failed' || mission.status === 'active';
+      openScreenshotLightbox(mission.screenshot, cap, canRemove ? function() {
+        removeMissionCardScreenshot(mission.id);
+      } : null);
     }
+    return;
+  }
+
+  // Remove screenshot directly from a failed/active mission card
+  const removeCardShotBtn = event.target.closest('[data-remove-task-screenshot]');
+  if (removeCardShotBtn) {
+    const missionId = removeCardShotBtn.dataset.removeTaskScreenshot;
+    removeMissionCardScreenshot(missionId);
     return;
   }
 });
@@ -8764,15 +9440,67 @@ if (confirmSubmitBtn) {
     const allMissions = readAllMissionsRaw();
     const mission = allMissions.find(function(item) { return item.id === activeSubmissionId; });
     if (!mission) return;
+    if (mission.status === 'complete' || mission.status === 'review') return;
 
+    const l = getActiveLang();
+    const isAppealMode = mission.status === 'failed';
     const msgEl = document.getElementById('mission-submit-message');
-    const screenshotToUse = activeSubmissionImage || mission.screenshot;
+    const commentEl = document.getElementById('mission-submit-comment');
+    const commentVal = commentEl ? commentEl.value.trim() : '';
+
+    if (isAppealMode) {
+      if (mission.rewardCredited) return;
+      if ((Number(mission.appealCount) || 0) >= 3) {
+        const maxMsg = tLang(l, 'এই কাজের সর্বোচ্চ আপিল সীমা (৩ বার) পূর্ণ হয়েছে।', 'Maximum appeal limit (3) reached for this task.', 'تم بلوغ الحد الأقصى للاستئناف (3) لهذه المهمة.');
+        if (msgEl) msgEl.textContent = maxMsg;
+        if (typeof showToastNotification === 'function') showToastNotification(maxMsg);
+        return;
+      }
+      const user = getCurrentUser();
+      const curPhone = user ? normalizeBdPhone(user.phone || user.accountNumber || '') : '';
+      const userLevel = (user && user.packageLevel) || 'LV0';
+      const maxDayQuota = Math.max(
+        (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5,
+        (packageTaskSettings[mission.level || 'LV0'] && packageTaskSettings[mission.level || 'LV0'].count) || 5
+      );
+      const missionDay = new Date(mission.acceptedAt || Date.now()).toDateString();
+      const nonFailedSameDay = allMissions.filter(function(m) {
+        const belongs = !m.userPhone || !curPhone || normalizeBdPhone(m.userPhone) === curPhone;
+        return belongs && m.id !== mission.id && m.status !== 'failed' && new Date(m.acceptedAt || Date.now()).toDateString() === missionDay;
+      });
+      if (nonFailedSameDay.length >= maxDayQuota) {
+        const quotaMsg = tLang(l, 'সেই দিনের দৈনিক কাজের কোটা ইতিমধ্যেই পূর্ণ হয়েছে।', 'Daily task limit is already filled for that day.', 'تم استيفاء حد المهام اليومي لذلك اليوم.');
+        if (msgEl) msgEl.textContent = quotaMsg;
+        if (typeof showToastNotification === 'function') showToastNotification(quotaMsg);
+        return;
+      }
+    }
+
+    const screenshotToUse = window._screenshotRemovedInEditor ? '' : (activeSubmissionImage || mission.screenshot);
     if (!screenshotToUse) {
-      const needMsg = 'অনুগ্রহ করে লাইক দেওয়ার স্ক্রিনশট আপলোড করুন।';
+      const needMsg = tLang(
+        l,
+        'অনুগ্রহ করে লাইক দেওয়ার স্ক্রিনশট আপলোড করুন।',
+        'Please upload a screenshot showing your Like.',
+        'يرجى رفع لقطة شاشة تُظهر الإعجاب.'
+      );
       if (msgEl) msgEl.textContent = needMsg;
       if (typeof showToastNotification === 'function') showToastNotification(needMsg);
       return;
     }
+
+    if (isAppealMode && mission.screenshot && !window._screenshotUpdatedInEditor && !commentVal) {
+      const needAppealMsg = tLang(
+        l,
+        'আপিল জমা দিতে দয়া করে নতুন স্ক্রিনশট আপলোড করুন অথবা আপিলের কারণ লিখুন।',
+        'Please upload a new screenshot or write your appeal reason before resubmitting.',
+        'يرجى رفع لقطة شاشة جديدة أو كتابة سبب الاستئناف قبل إعادة الإرسال.'
+      );
+      if (msgEl) msgEl.textContent = needAppealMsg;
+      if (typeof showToastNotification === 'function') showToastNotification(needAppealMsg);
+      return;
+    }
+
     if (msgEl) msgEl.textContent = '';
 
     // Review for exactly 15 minutes (15 * 60 * 1000)
@@ -8788,21 +9516,47 @@ if (confirmSubmitBtn) {
     mission.likeVerifyStatus = 'pending';
     mission.likeVerifyAttempts = 0;
     mission.likeVerifyReason = '';
+    mission.likeVerifyReasonEn = '';
     mission.failReason = '';
+    mission.failReasonEn = '';
+    mission.failedAt = '';
+    mission.cancelledAt = '';
+    mission.cancelledByUser = false;
 
-    const commentEl = document.getElementById('mission-submit-comment');
+    if (isAppealMode) {
+      mission.isAppeal = true;
+      mission.appealCount = (Number(mission.appealCount) || 0) + 1;
+      mission.appealedAt = new Date(now).toISOString();
+      mission.appealNote = commentVal;
+    }
+
     if (commentEl) {
-      mission.userComment = commentEl.value.trim();
+      mission.userComment = commentVal;
       commentEl.value = '';
     }
-    if (activeSubmissionImage) {
-      mission.screenshot = activeSubmissionImage;
-      activeSubmissionImage = '';
+    mission.screenshot = screenshotToUse;
+    activeSubmissionImage = '';
+    window._screenshotRemovedInEditor = false;
+    window._screenshotUpdatedInEditor = false;
+    if (window._likeVerifyLastTry) {
+      window._likeVerifyLastTry[mission.id] = 0;
     }
 
     const previewEl = document.getElementById('mission-submit-preview');
     if (previewEl) {
-      previewEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3a1.5 1.5 0 0 1 1.5 1.5v10A1.5 1.5 0 0 1 20 20H4a1.5 1.5 0 0 1-1.5-1.5v-10A1.5 1.5 0 0 1 4 7Z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>';
+      previewEl.innerHTML = '<svg viewBox="0 0 24 24" class="h-8 w-8 text-white transition group-hover:scale-110" fill="currentColor"><path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>';
+    }
+    const removeImgBtn = document.getElementById('mission-submit-remove-img');
+    if (removeImgBtn) removeImgBtn.classList.add('hidden');
+    const viewPreviewBtn = document.getElementById('btn-view-preview-modal');
+    if (viewPreviewBtn) {
+      viewPreviewBtn.classList.add('hidden');
+      viewPreviewBtn.style.display = 'none';
+    }
+    const removePreviewBtn = document.getElementById('btn-remove-preview-img');
+    if (removePreviewBtn) {
+      removePreviewBtn.classList.add('hidden');
+      removePreviewBtn.style.display = 'none';
     }
     const fileStatus = document.getElementById('mission-submit-file-status');
     if (fileStatus) fileStatus.textContent = '';
@@ -8812,6 +9566,20 @@ if (confirmSubmitBtn) {
     activeMissionFilter = 'review';
     openDashboardPanel('tasks');
     renderMissionRecords('review');
+    if (typeof refreshDailyMissionLimit === 'function') {
+      refreshDailyMissionLimit(activePackageLevel);
+    }
+
+    if (isAppealMode && typeof showToastNotification === 'function') {
+      showToastNotification(
+        tLang(
+          l,
+          '✓ আপিল সফলভাবে জমা হয়েছে! ১৫ মিনিটের পুনঃপর্যালোচনা শুরু হয়েছে।',
+          '✓ Appeal submitted! Your task is back under 15-minute review.',
+          '✓ تم إرسال الاستئناف! عادت مهمتك إلى المراجعة لمدة 15 دقيقة.'
+        )
+      );
+    }
 
     // Start AI Like-screenshot verification right away during the 15-minute window
     verifyMissionScreenshotLike(mission.id);
@@ -8826,13 +9594,30 @@ if (confirmSubmitBtn) {
 
 
 // --- SCREENSHOT LIGHTBOX & INSTANT PREVIEW CONTROLLERS ---
-function openScreenshotLightbox(imageSrc, caption) {
+window._lightboxRemoveHandler = null;
+
+function openScreenshotLightbox(imageSrc, caption, onRemove) {
   const modal = document.getElementById('screenshot-lightbox-modal');
   const img = document.getElementById('lightbox-image');
   const cap = document.getElementById('lightbox-caption');
+  const removeBtn = document.getElementById('lightbox-remove-btn');
+  const okBtn = document.getElementById('close-lightbox-action');
   if (!modal || !img) return;
+  const l = getActiveLang();
   img.src = imageSrc || '';
-  if (cap) cap.textContent = caption || 'স্ক্রিনশট প্রিভিউ';
+  if (cap) cap.textContent = caption || tLang(l, 'স্ক্রিনশট প্রিভিউ', 'Screenshot Preview', 'معاينة لقطة الشاشة');
+  if (okBtn) okBtn.textContent = tLang(l, 'ঠিক আছে', 'OK', 'حسناً');
+  window._lightboxRemoveHandler = (typeof onRemove === 'function') ? onRemove : null;
+  if (removeBtn) {
+    removeBtn.textContent = tLang(l, '🗑️ রিমুভ', '🗑️ Remove', '🗑️ إزالة');
+    if (window._lightboxRemoveHandler) {
+      removeBtn.classList.remove('hidden');
+      removeBtn.style.display = 'inline-flex';
+    } else {
+      removeBtn.classList.add('hidden');
+      removeBtn.style.display = 'none';
+    }
+  }
   modal.removeAttribute('hidden');
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -8844,18 +9629,44 @@ function closeScreenshotLightbox() {
     modal.setAttribute('hidden', '');
     modal.style.display = 'none';
   }
+  window._lightboxRemoveHandler = null;
   document.body.style.overflow = '';
+}
+
+function removeMissionCardScreenshot(missionId) {
+  if (!missionId) return;
+  const allMissions = readAllMissionsRaw();
+  const target = allMissions.find(function(m) { return m.id === missionId; });
+  if (!target || (target.status !== 'failed' && target.status !== 'active')) return;
+  target.screenshot = '';
+  if (target.id === activeSubmissionId) {
+    activeSubmissionImage = '';
+    window._screenshotRemovedInEditor = true;
+    window._screenshotUpdatedInEditor = false;
+  }
+  saveAllMissionsRaw(allMissions);
+  renderMissionRecords(activeMissionFilter);
+  const submitPanel = document.getElementById('mission-submit-panel');
+  if (submitPanel && !submitPanel.hidden && target.id === activeSubmissionId) {
+    removeScreenshotImage();
+  }
+  const l = getActiveLang();
+  if (typeof showToastNotification === 'function') {
+    showToastNotification(tLang(l, 'স্ক্রিনশট রিমুভ করা হয়েছে।', 'Screenshot removed.', 'تمت إزالة لقطة الشاشة.'));
+  }
 }
 
 // Instant screenshot preview and persistent storage
 function handleScreenshotFile(file) {
   if (!file) return;
+  const l = getActiveLang();
   const statusEl = document.getElementById('mission-submit-file-status');
   const previewEl = document.getElementById('mission-submit-preview');
   const removeBtn = document.getElementById('mission-submit-remove-img');
   const viewPreviewBtn = document.getElementById('btn-view-preview-modal');
+  const removePreviewBtn = document.getElementById('btn-remove-preview-img');
 
-  if (statusEl) statusEl.textContent = 'স্ক্রিনশট লোড হচ্ছে...';
+  if (statusEl) statusEl.textContent = tLang(l, 'স্ক্রিনশট লোড হচ্ছে...', 'Loading screenshot...', 'جارٍ تحميل لقطة الشاشة...');
 
   const reader = new FileReader();
   reader.onload = function(evt) {
@@ -8897,26 +9708,37 @@ function handleScreenshotFile(file) {
     img.src = rawDataUrl;
   };
   reader.onerror = function() {
-    if (statusEl) statusEl.textContent = 'স্ক্রিনশট লোড করতে সমস্যা হয়েছে';
+    if (statusEl) statusEl.textContent = tLang(l, 'স্ক্রিনশট লোড করতে সমস্যা হয়েছে', 'Failed to load screenshot', 'فشل تحميل لقطة الشاشة');
   };
   reader.readAsDataURL(file);
 
   function applyScreenshot(src) {
     activeSubmissionImage = src;
+    window._screenshotRemovedInEditor = false;
+    window._screenshotUpdatedInEditor = true;
+    const altTxt = tLang(l, 'স্ক্রিনশট', 'Screenshot', 'لقطة شاشة');
+    const titleTxt = tLang(l, 'পূর্ণ স্ক্রিনশট প্রিভিউ দেখতে ক্লিক করুন', 'Click to view full screenshot preview', 'اضغط لعرض المعاينة الكاملة للقطة الشاشة');
     if (previewEl) {
-      previewEl.innerHTML = `<img src="${src}" alt="স্ক্রিনশট" class="h-full w-full object-cover rounded cursor-pointer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;" title="পূর্ণ স্ক্রিনশট প্রিভিউ দেখতে ক্লিক করুন">`;
+      previewEl.innerHTML = `<img src="${src}" alt="${altTxt}" class="h-full w-full object-cover rounded cursor-pointer" style="width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;" title="${titleTxt}">`;
     }
     if (removeBtn) removeBtn.classList.remove('hidden');
     if (viewPreviewBtn) {
       viewPreviewBtn.classList.remove('hidden');
       viewPreviewBtn.style.display = 'inline-flex';
     }
-    if (statusEl) statusEl.textContent = '✓ স্ক্রিনশট সফলভাবে লোড হয়েছে';
+    if (removePreviewBtn) {
+      removePreviewBtn.classList.remove('hidden');
+      removePreviewBtn.style.display = 'inline-flex';
+    }
+    if (statusEl) statusEl.textContent = tLang(l, '✓ স্ক্রিনশট সফলভাবে লোড হয়েছে', '✓ Screenshot loaded successfully', '✓ تم تحميل لقطة الشاشة بنجاح');
   }
 }
 
 function removeScreenshotImage() {
+  const l = getActiveLang();
   activeSubmissionImage = '';
+  window._screenshotRemovedInEditor = true;
+  window._screenshotUpdatedInEditor = false;
   const camInput = document.getElementById('mission-submit-camera-file');
   if (camInput) camInput.value = '';
   const galInput = document.getElementById('mission-submit-gallery-file');
@@ -8934,8 +9756,13 @@ function removeScreenshotImage() {
     viewPreviewBtn.classList.add('hidden');
     viewPreviewBtn.style.display = 'none';
   }
+  const removePreviewBtn = document.getElementById('btn-remove-preview-img');
+  if (removePreviewBtn) {
+    removePreviewBtn.classList.add('hidden');
+    removePreviewBtn.style.display = 'none';
+  }
   const statusEl = document.getElementById('mission-submit-file-status');
-  if (statusEl) statusEl.textContent = 'স্ক্রিনশট মুছে ফেলা হয়েছে';
+  if (statusEl) statusEl.textContent = tLang(l, 'স্ক্রিনশট মুছে ফেলা হয়েছে', 'Screenshot removed', 'تمت إزالة لقطة الشاشة');
 }
 
 // 1. Direct camera input change
@@ -8971,7 +9798,8 @@ if (uploadTriggerBtn) {
   uploadTriggerBtn.addEventListener('click', function(e) {
     e.preventDefault();
     if (activeSubmissionImage) {
-      openScreenshotLightbox(activeSubmissionImage, 'আপলোডকৃত স্ক্রিনশট প্রিভিউ');
+      const l = getActiveLang();
+      openScreenshotLightbox(activeSubmissionImage, tLang(l, 'আপলোডকৃত স্ক্রিনশট প্রিভিউ', 'Uploaded Screenshot Preview', 'معاينة لقطة الشاشة المرفوعة'), removeScreenshotImage);
     } else {
       const gal = document.getElementById('mission-submit-gallery-file') || document.getElementById('mission-submit-file');
       if (gal) gal.click();
@@ -8995,7 +9823,8 @@ if (btnPreviewModal) {
   btnPreviewModal.addEventListener('click', function(e) {
     e.preventDefault();
     if (activeSubmissionImage) {
-      openScreenshotLightbox(activeSubmissionImage, 'আপলোডকৃত স্ক্রিনশট প্রিভিউ');
+      const l = getActiveLang();
+      openScreenshotLightbox(activeSubmissionImage, tLang(l, 'আপলোডকৃত স্ক্রিনশট প্রিভিউ', 'Uploaded Screenshot Preview', 'معاينة لقطة الشاشة المرفوعة'), removeScreenshotImage);
     } else {
       const gal = document.getElementById('mission-submit-gallery-file') || document.getElementById('mission-submit-file');
       if (gal) gal.click();
@@ -9003,13 +9832,30 @@ if (btnPreviewModal) {
   });
 }
 
-// Remove image button
+// Remove image buttons (thumbnail corner badge + Remove button next to Preview + inside Lightbox)
 const removeImgBtn = document.getElementById('mission-submit-remove-img');
 if (removeImgBtn) {
   removeImgBtn.addEventListener('click', function(e) {
     e.preventDefault();
     e.stopPropagation();
     removeScreenshotImage();
+  });
+}
+const removePreviewImgBtn = document.getElementById('btn-remove-preview-img');
+if (removePreviewImgBtn) {
+  removePreviewImgBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    removeScreenshotImage();
+  });
+}
+const lightboxRemoveBtn = document.getElementById('lightbox-remove-btn');
+if (lightboxRemoveBtn) {
+  lightboxRemoveBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    const fn = window._lightboxRemoveHandler;
+    closeScreenshotLightbox();
+    if (typeof fn === 'function') fn();
   });
 }
 
@@ -9057,7 +9903,8 @@ if (openDepositFromPurchaseBtn) {
     pendingPurchaseLevel = currentPurchaseLevel;
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
-    const deficit = pkg ? Math.max(0, pkg.price - (Number(user && user.balance) || 0)) : 3500;
+    const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
+    const deficit = Number(Math.max(0, pkgPrice - (Number(user && user.balance) || 0)).toFixed(2));
     const customInput = document.getElementById('custom-deposit-amount');
     if (customInput) customInput.value = deficit;
     selectedDepositAmount = deficit;
@@ -9149,6 +9996,7 @@ if (customDepositInput) {
 }
 
 function handleLogout() {
+  const l = getActiveLang();
   try {
     if (window.aloSupabase) {
       if (supabaseLiveChannel) {
@@ -9164,7 +10012,7 @@ function handleLogout() {
   cachedTeamReportData = null;
   clearUserCachesOnAuthSwitch();
   localStorage.removeItem('aloSignedInUser');
-  showToastNotification('সফলভাবে সাইন আউট করা হয়েছে।');
+  showToastNotification(tLang(l, 'সফলভাবে সাইন আউট করা হয়েছে।', 'Signed out successfully.', 'تم تسجيل الخروج بنجاح.'));
   const loginPass = document.getElementById('login-password');
   if (loginPass) loginPass.value = '';
   showView('login');
@@ -9257,9 +10105,10 @@ async function hydrateSessionFromSupabase() {
     }
 
     if (dbUser.accountStatus === 'banned') {
+      const l = getActiveLang(dbUser);
       clearUserCachesOnAuthSwitch();
       localStorage.removeItem('aloSignedInUser');
-      showToastNotification('⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত (Suspended) করা হয়েছে।');
+      showToastNotification(tLang(l, '⛔ আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত (Suspended) করা হয়েছে।', '⛔ Your account has been suspended by an administrator.', '⛔ تم تعليق حسابك من قبل المسؤول.'));
       showView('login');
       return;
     }
@@ -9288,6 +10137,138 @@ async function hydrateSessionFromSupabase() {
 }
 window.hydrateSessionFromSupabase = hydrateSessionFromSupabase;
 
+function updateHomeWithdrawalTicker() {
+  const groups = document.querySelectorAll('.team-update-group');
+  if (!groups || groups.length === 0) return;
+
+  const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
+
+  const bdRows = [
+    { bnPhone: '০১৭....৪৫..১২', enPhone: '017....45..12', bdt: 120 },
+    { bnPhone: '০১৮....৯৮..৪০', enPhone: '018....98..40', bdt: 180 },
+    { bnPhone: '০১৯....২৩..৭৮', enPhone: '019....23..78', bdt: 130 },
+    { bnPhone: '০১৬....৭২..১০', enPhone: '016....72..10', bdt: 120 },
+    { bnPhone: '০১৫....৮৮..৯৫', enPhone: '015....88..95', bdt: 180 },
+    { bnPhone: '০১৩....৫৬..৪০', enPhone: '013....56..40', bdt: 130 },
+    { bnPhone: '০১৭....৩৪..০৮', enPhone: '017....34..08', bdt: 120 },
+    { bnPhone: '০১৮....৬৬..৭৩', enPhone: '018....66..73', bdt: 180 },
+    { bnPhone: '০১৯....৯১..০২', enPhone: '019....91..02', bdt: 130 },
+    { bnPhone: '০১৬....১২..৫৬', enPhone: '016....12..56', bdt: 120 },
+    { bnPhone: '০১৭....৭৮..৮৪', enPhone: '017....78..84', bdt: 180 },
+    { bnPhone: '০১৮....৩৪..৯১', enPhone: '018....34..91', bdt: 130 }
+  ];
+  const intlRows = [
+    { phone: '+14....82..19', usd: 15.00 },
+    { phone: '+44....39..04', usd: 25.00 },
+    { phone: '+60....64..71', usd: 18.00 },
+    { phone: '+97....51..38', usd: 30.00 },
+    { phone: '+65....90..22', usd: 20.00 },
+    { phone: '+16....77..85', usd: 45.00 },
+    { phone: '+49....14..63', usd: 15.00 },
+    { phone: '+61....28..50', usd: 25.00 },
+    { phone: '+33....83..11', usd: 18.00 },
+    { phone: '+81....42..97', usd: 35.00 },
+    { phone: '+39....19..64', usd: 22.00 },
+    { phone: '+13....55..08', usd: 40.00 }
+  ];
+
+  const html = isUsd
+    ? intlRows.map(function(r) {
+        const msg1 = tLang(lang, 'একজন ব্যবহারকারীকে সুপারিশ করার জন্য', 'For referring a new member,', 'لإحالة عضو جديد،');
+        const msg2 = tLang(lang, 'প্রচার পুরস্কার পাওয়ার জন্য অভিনন্দন!', 'congratulations on earning a promotion bonus!', 'تهانينا على حصولك على مكافأة الترويج!');
+        return `<span class="team-update-item"><strong class="ticker-number">${r.phone}</strong> — <span>${msg1}</span> <strong class="ticker-amount">$${r.usd.toFixed(2)} <span class="user-currency-text">USD</span></strong> <span>${msg2}</span></span>`;
+      }).join('')
+    : bdRows.map(function(r) {
+        if (lang === 'ar') {
+          return `<span class="team-update-item"><strong class="ticker-number">${r.enPhone}</strong> — <span>لإحالة عضو جديد،</span> <strong class="ticker-amount">${r.bdt.toFixed(2)} <span class="user-currency-text">BDT</span></strong> <span>تهانينا على حصولك على مكافأة الترويج!</span></span>`;
+        }
+        if (lang !== 'bn') {
+          return `<span class="team-update-item"><strong class="ticker-number">${r.enPhone}</strong> — <span>For referring a new member,</span> <strong class="ticker-amount">${r.bdt.toFixed(2)} <span class="user-currency-text">BDT</span></strong> <span>congratulations on earning a promotion bonus!</span></span>`;
+        }
+        return `<span class="team-update-item"><strong class="ticker-number">${r.bnPhone}</strong> — <span>একজন ব্যবহারকারীকে সুপারিশ করার জন্য</span> <strong class="ticker-amount">${formatBanglaNumber(r.bdt.toFixed(2))} <span class="user-currency-text">BDT</span></strong> <span>প্রচার পুরস্কার পাওয়ার জন্য অভিনন্দন!</span></span>`;
+      }).join('');
+
+  groups.forEach(function(g) { g.innerHTML = html; });
+}
+window.updateHomeWithdrawalTicker = updateHomeWithdrawalTicker;
+
+function updateHomeMemberUpdates() {
+  const groups = document.querySelectorAll('.home-member-group');
+  if (!groups || groups.length === 0) return;
+
+  const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
+
+  const bdItems = [
+    { icon: '🙂', bnId: '১৮****৫৪', enId: '18****54', tasks: 5, bdt: 100 },
+    { icon: '🐰', bnId: '১৭****২৭', enId: '17****27', tasks: 2, bdt: 40 },
+    { icon: '🌟', bnId: '১৩****২৯', enId: '13****29', tasks: 3, bdt: 60 },
+    { icon: '🌿', bnId: '২১****৬৪', enId: '21****64', tasks: 6, bdt: 180 },
+    { icon: '👑', bnId: '১৯****০৮', enId: '19****08', tasks: 12, bdt: 480 }
+  ];
+  const intlItems = [
+    { icon: '🙂', id: '48****54', tasks: 5, usd: 1.50 },
+    { icon: '🐰', id: '73****27', tasks: 2, usd: 0.60 },
+    { icon: '🌟', id: '39****29', tasks: 3, usd: 0.90 },
+    { icon: '🌿', id: '61****64', tasks: 6, usd: 3.00 },
+    { icon: '👑', id: '92****08', tasks: 12, usd: 6.00 }
+  ];
+
+  const html = isUsd
+    ? intlItems.map(function(m) {
+        const nameTxt = tLang(lang, `সদস্য: ${m.id}`, `Member: ${m.id}`, `عضو: ${m.id}`);
+        const subTxt = tLang(lang, `আজ ${formatBanglaNumber(m.tasks)}টি মিশন সম্পন্ন করেছেন`, `Completed ${m.tasks} missions today`, `أكمل ${m.tasks} مهام اليوم`);
+        return `
+          <article class="home-member-row flex items-center gap-3 border-b py-3" style="border-color: var(--color-profile-border);">
+            <span class="home-member-avatar" aria-hidden="true">${m.icon}</span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold">${nameTxt}</p>
+              <p class="mt-1 text-[11px] leading-4" style="color: var(--color-muted);">${subTxt}</p>
+            </div>
+            <span class="home-member-badge">+$${m.usd.toFixed(2)}</span>
+          </article>`;
+      }).join('')
+    : bdItems.map(function(m) {
+        if (lang === 'ar') {
+          return `
+            <article class="home-member-row flex items-center gap-3 border-b py-3" style="border-color: var(--color-profile-border);">
+              <span class="home-member-avatar" aria-hidden="true">${m.icon}</span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold">عضو: ${m.enId}</p>
+                <p class="mt-1 text-[11px] leading-4" style="color: var(--color-muted);">أكمل ${m.tasks} مهام اليوم</p>
+              </div>
+              <span class="home-member-badge">+${m.bdt.toFixed(2)}</span>
+            </article>`;
+        }
+        if (lang !== 'bn') {
+          return `
+            <article class="home-member-row flex items-center gap-3 border-b py-3" style="border-color: var(--color-profile-border);">
+              <span class="home-member-avatar" aria-hidden="true">${m.icon}</span>
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold">Member: ${m.enId}</p>
+                <p class="mt-1 text-[11px] leading-4" style="color: var(--color-muted);">Completed ${m.tasks} missions today</p>
+              </div>
+              <span class="home-member-badge">+${m.bdt.toFixed(2)}</span>
+            </article>`;
+        }
+        return `
+          <article class="home-member-row flex items-center gap-3 border-b py-3" style="border-color: var(--color-profile-border);">
+            <span class="home-member-avatar" aria-hidden="true">${m.icon}</span>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold">সদস্য: ${m.bnId}</p>
+              <p class="mt-1 text-[11px] leading-4" style="color: var(--color-muted);">আজ ${formatBanglaNumber(m.tasks)}টি মিশন সম্পন্ন করেছেন</p>
+            </div>
+            <span class="home-member-badge">+${formatBanglaNumber(m.bdt.toFixed(2))}</span>
+          </article>`;
+      }).join('');
+
+  groups.forEach(function(g) { g.innerHTML = html; });
+}
+window.updateHomeMemberUpdates = updateHomeMemberUpdates;
+
 // Initial session check
 function initApp() {
   initPWBannerCarousel();
@@ -9303,15 +10284,10 @@ function initApp() {
       savedUser.packageLevel = 'LV0';
     }
     if (typeof savedUser.balance !== 'number') savedUser.balance = 0.00;
+    const userLang = normalizeAppLang(savedUser.language || localStorage.getItem('alo_lang') || 'en');
+    savedUser.language = userLang;
     localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
 
-    const isUserInd = isIndianUser(savedUser);
-    let userLang = savedUser.language || localStorage.getItem('alo_lang');
-    if (isUserInd) {
-      if (!userLang || userLang === 'bn') userLang = 'hi';
-    } else {
-      if (!userLang) userLang = 'bn';
-    }
     if (typeof setAppLanguage === 'function') {
       setAppLanguage(userLang);
     }
@@ -9321,6 +10297,8 @@ function initApp() {
     updateVipHallRooms();
     updateRecordsPanelPackages();
     updateBkashDisplayAcrossApp(); updateNagadDisplayAcrossApp(); updateUsdtDisplayAcrossApp(); updateRealNameDisplayAcrossApp(); updateFundPasswordDisplayAcrossApp();
+    updateHomeWithdrawalTicker();
+    updateHomeMemberUpdates();
     if (typeof initSupabaseLiveSync === 'function') initSupabaseLiveSync(savedUser);
 
     // Open HOME panel so the banner carousel is immediately visible on first load!
@@ -9330,6 +10308,14 @@ function initApp() {
     // Immediately pull live authoritative state from Supabase
     hydrateSessionFromSupabase();
   } else {
+    const savedLang = normalizeAppLang(localStorage.getItem('alo_lang') || 'en');
+    if (typeof setAppLanguage === 'function') {
+      setAppLanguage(savedLang);
+    } else if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+      window.aloI18n.translateDOM(savedLang);
+    }
+    updateHomeWithdrawalTicker();
+    updateHomeMemberUpdates();
     // Show login view when not authenticated
     showView('login');
   }
@@ -9420,7 +10406,17 @@ function initApp() {
 
               localStorage.setItem(creditedKey, 'true');
               if (creditedAmt > 0 && typeof showToastNotification === 'function') {
-                showToastNotification(`🎉 পেমেন্ট সফল! ৳ ${creditedAmt.toLocaleString('en-US')} অ্যাকাউন্টে যোগ হয়েছে!`);
+                const sym = getUserCurrencySymbol(currentUser);
+                const lToast = getActiveLang(currentUser);
+                const msgAmt = isUsdOnlyUser(currentUser) ? `${sym}${creditedAmt.toFixed(2)} USD` : `${sym} ${creditedAmt.toLocaleString('en-US')}`;
+                showToastNotification(
+                  tLang(
+                    lToast,
+                    `🎉 পেমেন্ট সফল! ${msgAmt} অ্যাকাউন্টে যোগ হয়েছে!`,
+                    `🎉 Payment successful! ${msgAmt} added to your balance!`,
+                    `🎉 تم الدفع بنجاح! تمت إضافة ${msgAmt} إلى رصيدك!`
+                  )
+                );
               }
             }
             localStorage.removeItem('alo_pending_recharge_order');
@@ -9445,8 +10441,9 @@ function initApp() {
         regInviteInput.value = cleanCode;
       }
       if (!savedUser) {
+        const l = getActiveLang();
         showView('register');
-        showToastNotification(`স্বাগতম! আমন্ত্রণ কোড: ${cleanCode}`);
+        showToastNotification(tLang(l, `স্বাগতম! আমন্ত্রণ কোড: ${cleanCode}`, `Welcome! Invite code: ${cleanCode}`, `مرحباً! رمز الدعوة: ${cleanCode}`));
       }
     }
   } catch(e) {}
@@ -9530,36 +10527,130 @@ function getUserSavingsPlan() {
 }
 
 function updateSavingsCalculationPreview(amount) {
+  const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
   const val = Number(amount) || 0;
-  const daily = Math.round(val * 0.05);
-  const totalProfit = Math.round(val * 0.05 * 45); // একবারে ৪৫ দিনে ২২৫%
-  const totalReturn = val + totalProfit;
+  const daily = isUsd ? Number((val * 0.05).toFixed(2)) : Math.round(val * 0.05);
+  const totalProfit = isUsd ? Number((val * 0.05 * 45).toFixed(2)) : Math.round(val * 0.05 * 45);
+  const totalReturn = Number((val + totalProfit).toFixed(2));
 
   const dailyEl = document.getElementById('savings-calc-daily');
   const profitEl = document.getElementById('savings-calc-profit');
   const totalEl = document.getElementById('savings-calc-total');
 
-  if (dailyEl) dailyEl.textContent = '৳ ' + formatBanglaNumber(daily) + '.০০';
-  if (profitEl) profitEl.textContent = '৳ ' + formatBanglaNumber(totalProfit) + '.০০';
-  if (totalEl) totalEl.textContent = '৳ ' + formatBanglaNumber(totalReturn) + '.০০ লাভ সহ';
+  if (isUsd || lang !== 'bn') {
+    if (dailyEl) dailyEl.textContent = `${sym}${daily.toFixed(2)}`;
+    if (profitEl) profitEl.textContent = `${sym}${totalProfit.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `${sym}${totalReturn.toFixed(2)} ${tLang(lang, 'লাভ সহ', '(incl. profit)', '(شامل الربح)')}`;
+  } else {
+    if (dailyEl) dailyEl.textContent = '৳ ' + formatBanglaNumber(daily) + '.০০';
+    if (profitEl) profitEl.textContent = '৳ ' + formatBanglaNumber(totalProfit) + '.০০';
+    if (totalEl) totalEl.textContent = '৳ ' + formatBanglaNumber(totalReturn) + '.০০ লাভ সহ';
+  }
 }
 
 function renderSavingsRecordCard(plan) {
-  const amount = Number(plan.amount) || 3500;
-  const target = Number(plan.target) || 10000;
+  const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
+
+  const rawAmt = Number(plan.amount) || (isUsd ? toUserCurrencyAmount(3500, user) : 3500);
+  const rawTarget = Number(plan.target) || (isUsd ? toUserCurrencyAmount(10000, user) : 10000);
+  const amount = (isUsd && plan.currency !== 'USD') ? toUserCurrencyAmount(rawAmt, user) : rawAmt;
+  const target = (isUsd && plan.currency !== 'USD') ? toUserCurrencyAmount(rawTarget, user) : rawTarget;
   const days = Number(plan.days) || 45;
   const rate = Number(plan.rate) || 5;
-  const pct = Math.min(100, Math.max(1, Math.round((amount / target) * 100)));
-  const needed = Math.max(0, target - amount);
-  const dailyProfit = Math.round(amount * (rate / 100));
-  const totalProfit = Math.round(amount * (rate / 100) * days);
-  const totalReturn = amount + totalProfit;
+  const pct = Math.min(100, Math.max(1, Math.round((amount / (target || 1)) * 100)));
+  const needed = Number(Math.max(0, target - amount).toFixed(2));
+  const dailyProfit = isUsd ? Number((amount * (rate / 100)).toFixed(2)) : Math.round(amount * (rate / 100));
+  const totalProfit = isUsd ? Number((amount * (rate / 100) * days).toFixed(2)) : Math.round(amount * (rate / 100) * days);
+  const totalReturn = Number((amount + totalProfit).toFixed(2));
+
+  const fmtDisp = function(v, forceDec) {
+    if (isUsd || lang !== 'bn') {
+      return `${sym}${Number(v).toFixed(2)}`;
+    }
+    return `৳ ${formatBanglaNumber(Math.round(v))}${forceDec ? '.০০' : ''}`;
+  };
+
+  if (isUsd || lang !== 'bn') {
+    const titleTxt = tLang(lang, 'আমার সঞ্চয়', 'My Savings', 'مدخراتي');
+    const targetTxt = tLang(lang, 'লক্ষ্যমাত্রা', 'Target', 'الهدف');
+    const progressTxt = tLang(lang, 'সঞ্চয়ের অগ্রগতি', 'Savings Progress', 'تقدم الادخار');
+    const remainTxt = tLang(lang, 'আরও প্রয়োজন', 'Remaining', 'المتبقي');
+    const durationTxt = tLang(lang, 'পরিকল্পনার মেয়াদ', 'Plan Duration', 'مدة الخطة');
+    const daysTxt = tLang(lang, `${days} দিন`, `${days} Days`, `${days} يوماً`);
+    const dailyLbl = tLang(lang, 'দৈনিক প্রফিট (৫%):', 'Daily Profit (5%):', 'الربح اليومي (5%):');
+    const profit45Lbl = tLang(lang, '৪৫ দিনে মোট মুনাফা (২২৫%):', '45-Day Total Profit (225%):', 'إجمالي ربح 45 يوماً (225%):');
+    const maturityLbl = tLang(lang, 'একবারে ৪৫ দিন পর লাভ সহ প্রফিট:', 'Total Maturity Return (45 Days):', 'إجمالي العائد عند الاستحقاق (45 يوماً):');
+    const activeBadgeTxt = tLang(lang, 'সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)', 'Savings Plan Active (One-Time Enrollment)', 'خطة الادخار نشطة (اشتراك لمرة واحدة)');
+    return `
+      <div class="bg-[#071536] rounded-3xl p-5 shadow-2xl space-y-4 relative overflow-hidden">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-sm font-medium text-slate-300">${titleTxt}</p>
+            <h3 class="text-3xl font-extrabold text-white tracking-tight mt-1 font-mono">
+              ${fmtDisp(amount, false)}
+            </h3>
+            <p class="text-xs text-slate-400 font-medium mt-1">
+              ${targetTxt} ${fmtDisp(target, false)}
+            </p>
+          </div>
+          <div class="relative w-[72px] h-[72px] flex items-center justify-center shrink-0">
+            <svg class="w-[72px] h-[72px] -rotate-90" viewBox="0 0 36 36">
+              <path class="text-[#0e214d]" stroke="currentColor" stroke-width="3.6" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="text-[#2dd4bf] transition-all duration-700 ease-out" stroke="currentColor" stroke-width="3.6" stroke-dasharray="${pct}, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span class="absolute font-extrabold text-white text-sm font-mono tracking-tight">${pct}%</span>
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="font-semibold text-slate-200">${progressTxt}</span>
+            <span class="font-bold text-slate-200 font-mono">${pct}%</span>
+          </div>
+          <div class="w-full bg-[#0e214d] h-2.5 rounded-full overflow-hidden mt-2">
+            <div class="h-full bg-[#2dd4bf] rounded-full transition-all duration-700 ease-out" style="width: ${pct}%;"></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
+            <p class="text-xs text-slate-400 font-medium">${remainTxt}</p>
+            <p class="text-2xl font-extrabold text-white mt-1 font-mono">${fmtDisp(needed, false)}</p>
+          </div>
+          <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
+            <p class="text-xs text-slate-400 font-medium">${durationTxt}</p>
+            <p class="text-2xl font-extrabold text-white mt-1 font-mono">${daysTxt}</p>
+          </div>
+        </div>
+        <div class="bg-[#040c21] p-3.5 rounded-2xl space-y-1.5 text-xs">
+          <div class="flex items-center justify-between text-slate-300">
+            <span>${dailyLbl}</span>
+            <span class="font-bold text-[#34d399] font-mono">${fmtDisp(dailyProfit, true)}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-300">
+            <span>${profit45Lbl}</span>
+            <span class="font-bold text-[#38bdf8] font-mono">${fmtDisp(totalProfit, true)}</span>
+          </div>
+          <div class="flex items-center justify-between pt-1 font-semibold text-white">
+            <span>${maturityLbl}</span>
+            <span class="font-extrabold text-amber-300 font-mono text-sm">${fmtDisp(totalReturn, true)}</span>
+          </div>
+        </div>
+        <div class="w-full py-3.5 rounded-2xl bg-[#091a42] text-[#38bdf8] font-bold text-xs text-center shadow-lg flex items-center justify-center gap-2 select-none">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#34d399] animate-pulse"></span>
+          <span>${activeBadgeTxt}</span>
+        </div>
+      </div>
+    `;
+  }
 
   return `
     <!-- EXACT MATCH WITH USER SCREENSHOT CARD (FRESH & BORDERLESS) -->
     <div class="bg-[#071536] rounded-3xl p-5 shadow-2xl space-y-4 relative overflow-hidden">
-      
-      <!-- Top Row: আমার সঞ্চয়, মূল্য, লক্ষ্যমাত্রা এবং বৃত্তাকার Donut চার্ট -->
       <div class="flex items-start justify-between">
         <div>
           <p class="text-sm font-medium text-slate-300">আমার সঞ্চয়</p>
@@ -9570,8 +10661,6 @@ function renderSavingsRecordCard(plan) {
             লক্ষ্যমাত্রা ৳ ${formatBanglaNumber(target)}
           </p>
         </div>
-
-        <!-- Circular Donut Progress Ring matching user screenshot -->
         <div class="relative w-[72px] h-[72px] flex items-center justify-center shrink-0">
           <svg class="w-[72px] h-[72px] -rotate-90" viewBox="0 0 36 36">
             <path class="text-[#0e214d]" stroke="currentColor" stroke-width="3.6" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -9580,8 +10669,6 @@ function renderSavingsRecordCard(plan) {
           <span class="absolute font-extrabold text-white text-sm font-mono tracking-tight">${pct}%</span>
         </div>
       </div>
-
-      <!-- Middle: সঞ্চয়ের অগ্রগতি Progress Bar Row -->
       <div>
         <div class="flex items-center justify-between text-sm">
           <span class="font-semibold text-slate-200">সঞ্চয়ের অগ্রগতি</span>
@@ -9591,18 +10678,13 @@ function renderSavingsRecordCard(plan) {
           <div class="h-full bg-[#2dd4bf] rounded-full transition-all duration-700 ease-out" style="width: ${pct}%;"></div>
         </div>
       </div>
-
-      <!-- Bottom 2 Tiles Grid: আরও প্রয়োজন এবং পরিকল্পনার মেয়াদ (৪৫ দিন) -->
       <div class="grid grid-cols-2 gap-3">
-        <!-- Left Tile: আরও প্রয়োজন -->
         <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
           <p class="text-xs text-slate-400 font-medium">আরও প্রয়োজন</p>
           <p class="text-2xl font-extrabold text-white mt-1 font-mono">
             ৳ ${formatBanglaNumber(needed)}
           </p>
         </div>
-
-        <!-- Right Tile: পরিকল্পনার মেয়াদ (৪৫ দিন) -->
         <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
           <p class="text-xs text-slate-400 font-medium">পরিকল্পনার মেয়াদ</p>
           <p class="text-2xl font-extrabold text-white mt-1 font-mono">
@@ -9610,8 +10692,6 @@ function renderSavingsRecordCard(plan) {
           </p>
         </div>
       </div>
-
-      <!-- Profit Return Details: একবারে ৪৫ দিন লাভ সহ প্রফিট -->
       <div class="bg-[#040c21] p-3.5 rounded-2xl space-y-1.5 text-xs">
         <div class="flex items-center justify-between text-slate-300">
           <span>দৈনিক প্রফিট (৫%):</span>
@@ -9626,28 +10706,49 @@ function renderSavingsRecordCard(plan) {
           <span class="font-extrabold text-amber-300 font-mono text-sm">৳ ${formatBanglaNumber(totalReturn)}.০০</span>
         </div>
       </div>
-
-      <!-- Locked Status: একজন কাস্টমার একবার নিবে, আর নিতে পারবে না -->
       <div class="w-full py-3.5 rounded-2xl bg-[#091a42] text-[#38bdf8] font-bold text-xs text-center shadow-lg flex items-center justify-center gap-2 select-none">
         <span class="w-2.5 h-2.5 rounded-full bg-[#34d399] animate-pulse"></span>
         <span>সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)</span>
       </div>
-
     </div>
   `;
 }
 
 function renderSavingsPlanPanel() {
   const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
   const bal = Number((user && user.balance) || 0);
 
   // 1. Update user balance display
   const balEl = document.getElementById('savings-user-balance');
   if (balEl) {
-    balEl.textContent = '৳ ' + formatNumber(bal, user);
+    balEl.textContent = isUsd ? `${sym} ${bal.toFixed(2)} USD` : ('৳ ' + formatNumber(bal, user));
   }
 
-  // 2. Check if user already has an active savings plan
+  // 2. Sync preset buttons to user's currency ($8/$16/$28/$40/$80 for USD vs ৳1000..৳10000 for BD)
+  const basePresets = [1000, 2000, 3500, 5000, 10000];
+  const presetBtns = document.querySelectorAll('.savings-preset-btn');
+  presetBtns.forEach(function(btn, idx) {
+    const base = basePresets[idx];
+    if (!base) return;
+    if (isUsd) {
+      const usdAmt = toUserCurrencyAmount(base, user);
+      btn.dataset.amount = String(usdAmt);
+      btn.textContent = `$${usdAmt}`;
+    } else {
+      btn.dataset.amount = String(base);
+      btn.textContent = lang === 'bn'
+        ? `৳${formatBanglaNumber(base.toLocaleString('en-US'))}`
+        : `৳${base.toLocaleString('en-US')}`;
+    }
+  });
+
+  const symEl = document.getElementById('savings-input-currency-sym');
+  if (symEl) symEl.textContent = sym;
+
+  // 3. Check if user already has an active savings plan
   const activePlan = getUserSavingsPlan();
   const frontFace = document.getElementById('savings-front-face');
   const backFace = document.getElementById('savings-back-face');
@@ -9664,6 +10765,12 @@ function renderSavingsPlanPanel() {
     if (backFace) backFace.style.display = 'none';
     const inputEl = document.getElementById('savings-deposit-input');
     if (inputEl) {
+      const curVal = Number(inputEl.value || 0);
+      if (isUsd && (curVal === 3500 || curVal === 0)) {
+        inputEl.value = String(toUserCurrencyAmount(3500, user));
+      } else if (!isUsd && curVal > 0 && curVal < 100) {
+        inputEl.value = '3500';
+      }
       updateSavingsCalculationPreview(inputEl.value);
     }
   }
@@ -9678,21 +10785,36 @@ function handleSavingsSubmission() {
 
   const user = getCurrentUser();
   if (!user || (!user.phone && !user.accountNumber)) {
-    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    const l = getActiveLang();
+    showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
     if (typeof showView === 'function') showView('login');
     return;
   }
 
+  const isUsd = isUsdOnlyUser(user);
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
+
   // গ্রাহক যদি ইতিমধ্যে নিয়ে থাকেন, আর নিতে পারবেন না
   const existingPlan = getUserSavingsPlan();
   if (existingPlan) {
-    showToastNotification('আপনি ইতিমধ্যে সঞ্চয় পরিকল্পনা নিয়েছেন। একজন গ্রাহক একবারই নিতে পারবেন।');
+    showToastNotification(tLang(
+      lang,
+      'আপনি ইতিমধ্যে সঞ্চয় পরিকল্পনা নিয়েছেন। একজন গ্রাহক একবারই নিতে পারবেন।',
+      'You already have an active savings plan. One plan per account.',
+      'لديك خطة ادخار نشطة بالفعل. خطة واحدة فقط لكل حساب.'
+    ));
     return;
   }
 
   const amount = parseFloat(inputEl.value);
   if (!amount || isNaN(amount) || amount <= 0) {
-    showToastNotification('অনুগ্রহ করে সঠিক সঞ্চয়ের পরিমাণ লিখুন।');
+    showToastNotification(tLang(
+      lang,
+      'অনুগ্রহ করে সঠিক সঞ্চয়ের পরিমাণ লিখুন।',
+      'Please enter a valid savings amount.',
+      'يرجى إدخال مبلغ ادخار صالح.'
+    ));
     inputEl.focus();
     return;
   }
@@ -9706,7 +10828,7 @@ function handleSavingsSubmission() {
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
       </svg>
-      <span>যাচাই করা হচ্ছে...</span>
+      <span>${tLang(lang, 'যাচাই করা হচ্ছে...', 'Verifying...', 'جارٍ التحقق...')}</span>
     </span>
   `;
   btn.className = 'w-full py-3.5 rounded-2xl bg-[#2bb4d4] text-[#030d24] font-bold text-sm shadow-xl opacity-90 cursor-wait flex items-center justify-center gap-2';
@@ -9731,7 +10853,7 @@ function handleSavingsSubmission() {
             <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
-            <span>অপর্যাপ্ত ব্যালেন্স</span>
+            <span>${tLang(lang, 'অপর্যাপ্ত ব্যালেন্স', 'Insufficient Balance', 'رصيد غير كافٍ')}</span>
           </span>
         `;
 
@@ -9756,22 +10878,28 @@ function handleSavingsSubmission() {
       }
 
       // Sufficient balance: save savings plan to Supabase
-      const targetGoal = Math.max(10000, Math.round((amount * 2.85) / 1000) * 1000);
+      const isFreshUsd = isUsdOnlyUser(freshUser);
+      const targetGoal = isFreshUsd
+        ? Math.max(80, Math.round(amount * 2.85))
+        : Math.max(10000, Math.round((amount * 2.85) / 1000) * 1000);
+      const dailyP = isFreshUsd ? Number((amount * 0.05).toFixed(2)) : Math.round(amount * 0.05);
+      const totalP = isFreshUsd ? Number((amount * 0.05 * 45).toFixed(2)) : Math.round(amount * 0.05 * 45);
       const newPlan = {
         id: 'plan_' + Date.now(),
         amount: amount,
+        currency: getUserCurrency(freshUser),
         target: targetGoal,
         rate: 5,
         days: 45,
         daysElapsed: 0,
-        dailyProfit: Math.round(amount * 0.05),
-        totalProfit: Math.round(amount * 0.05 * 45),
-        totalReturn: amount + Math.round(amount * 0.05 * 45),
+        dailyProfit: dailyP,
+        totalProfit: totalP,
+        totalReturn: Number((amount + totalP).toFixed(2)),
         status: 'active',
         createdAt: new Date().toISOString()
       };
 
-      freshUser.balance = Math.max(0, freshBal - amount);
+      freshUser.balance = Number(Math.max(0, freshBal - amount).toFixed(2));
       freshUser.savingsPlan = newPlan;
       localStorage.setItem('my_pass_available_bal', freshUser.balance.toFixed(2));
       localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
@@ -9787,7 +10915,7 @@ function handleSavingsSubmission() {
         ratio: '100%',
         actual: amount,
         status: 'অনুমোদিত',
-        method: 'সঞ্চয় পরিকল্পনা (৪৫ দিন)',
+        method: isFreshUsd ? 'Savings Plan (45 Days)' : 'সঞ্চয় পরিকল্পনা (৪৫ দিন)',
         date: now.toISOString().split('T')[0],
         time: now.toTimeString().split(' ')[0],
         newBalance: freshUser.balance
@@ -9828,9 +10956,17 @@ function handleSavingsSubmission() {
       updateUserDetails(freshUser);
       updateProfileMetrics();
       const balEl = document.getElementById('savings-user-balance');
-      if (balEl) balEl.textContent = '৳ ' + formatNumber(freshUser.balance, freshUser);
+      if (balEl) balEl.textContent = isFreshUsd ? `${sym} ${freshUser.balance.toFixed(2)} USD` : ('৳ ' + formatNumber(freshUser.balance, freshUser));
 
-      showToastNotification(`🎉 অভিনন্দন! ৳ ${formatBanglaNumber(amount)} টাকার সঞ্চয় পরিকল্পনা সফলভাবে শুরু হয়েছে!`);
+      const amtDisp = isFreshUsd ? `${sym}${amount.toFixed(2)} USD` : `৳ ${amount.toLocaleString('en-US')}`;
+      showToastNotification(
+        tLang(
+          lang,
+          `🎉 অভিনন্দন! ৳ ${formatBanglaNumber(amount)} টাকার সঞ্চয় পরিকল্পনা সফলভাবে শুরু হয়েছে!`,
+          `🎉 Congratulations! Your ${amtDisp} Savings Plan is now active!`,
+          `🎉 تهانينا! تم تفعيل خطة الادخار بمبلغ ${amtDisp} بنجاح!`
+        )
+      );
     } catch (e) {
       btn.disabled = false;
       btn.className = origClass;
@@ -9929,13 +11065,15 @@ function getLocalUsdtDepositRecords() {
 function saveLocalUsdtDepositRecord(deposit) {
   try {
     const records = getLocalUsdtDepositRecords();
+    const l = getActiveLang();
+    const loc = l === 'bn' ? 'bn-BD' : (l === 'ar' ? 'ar-EG' : 'en-US');
     records.unshift({
       txHash: deposit.txHash,
       senderAddress: deposit.senderAddress || '',
       usdtAmount: deposit.usdtAmount,
       bdtAmount: deposit.bdtAmount,
-      date: new Date().toLocaleDateString('bn-BD'),
-      time: new Date().toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      date: new Date().toLocaleDateString(loc),
+      time: new Date().toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' }),
       status: 'অনুমোদিত'
     });
     localStorage.setItem('alo_usdt_deposits_history', JSON.stringify(records.slice(0, 30)));
@@ -9943,11 +11081,14 @@ function saveLocalUsdtDepositRecord(deposit) {
 }
 
 function renderUsdtDepositCardsHtml(container, records) {
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
   if (!records || records.length === 0) {
     container.innerHTML = `
       <div class="p-4 rounded-2xl bg-[#071a48]/60 border border-[#143270]/70 text-center">
-        <p class="text-xs font-semibold text-slate-300">এখনো কোনো USDT ডিপোজিট পাওয়া যায়নি</p>
-        <p class="text-[11px] text-[#8da0be] mt-1">BEP20 নেটওয়ার্কে ডিপোজিট করলে এখানে সাথে সাথে যুক্ত হবে।</p>
+        <p class="text-xs font-semibold text-slate-300">${tLang(lang, 'এখনো কোনো USDT ডিপোজিট পাওয়া যায়নি', 'No USDT deposits found yet', 'لم يتم العثور على إيداعات USDT حتى الآن')}</p>
+        <p class="text-[11px] text-[#8da0be] mt-1">${tLang(lang, 'BEP20 নেটওয়ার্কে ডিপোজিট করলে এখানে সাথে সাথে যুক্ত হবে।', 'Deposits sent via BEP20 network appear here automatically.', 'ستظهر الإيداعات المرسلة عبر شبكة BEP20 هنا تلقائياً.')}</p>
       </div>
     `;
     return;
@@ -9963,7 +11104,7 @@ function renderUsdtDepositCardsHtml(container, records) {
       }
     } catch(e) {}
 
-    const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+    const activeRate = isUsd ? 1 : Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
     const usdtVal = item.usdtAmount !== undefined
       ? parseFloat(item.usdtAmount || 0)
       : (parseFloat(item.amount || 0) / (activeRate > 0 ? activeRate : 125));
@@ -9972,7 +11113,9 @@ function renderUsdtDepositCardsHtml(container, records) {
     const stLower = String(item.status || '').toLowerCase();
     const isRejected = stLower.includes('বাতিল') || stLower.includes('reject');
     const isPending = !isRejected && !(stLower.includes('অনুমোদিত') || stLower.includes('approv') || stLower.includes('credit') || stLower.includes('সফল'));
-    const statusLabel = isRejected ? 'Rejected' : (isPending ? 'Pending' : 'Credited');
+    const statusLabel = isRejected
+      ? tLang(lang, 'বাতিল', 'Rejected', 'مرفوض')
+      : (isPending ? tLang(lang, 'মুলতবি', 'Pending', 'قيد الانتظار') : tLang(lang, 'গৃহীত', 'Credited', 'تمت الإضافة'));
     const statusCls = isRejected ? 'text-rose-400' : (isPending ? 'text-amber-400' : 'text-emerald-400');
 
     return `
@@ -9984,7 +11127,7 @@ function renderUsdtDepositCardsHtml(container, records) {
             </svg>
           </div>
           <div class="min-w-0">
-            <p class="text-sm font-bold text-white leading-tight">USDT deposit</p>
+            <p class="text-sm font-bold text-white leading-tight">${tLang(lang, 'USDT ডিপোজিট', 'USDT deposit', 'إيداع USDT')}</p>
             <p class="text-xs text-[#8da0be] mt-0.5 font-normal">${displayDate} · BEP20${shortTx ? ' · ' + shortTx : ''}</p>
           </div>
         </div>
@@ -10004,13 +11147,14 @@ function renderRecentUsdtDeposits() {
   renderUsdtDepositCardsHtml(container, cachedRecords);
 
   const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
   if (user && (user.phone || user.accountNumber)) {
     dbGetTransactions(user.phone || user.accountNumber, 'deposit').then(function(dbList) {
       if (!Array.isArray(dbList)) return;
       const usdtOnly = dbList.filter(function(tx) {
         return String(tx.method || '').toLowerCase().includes('usdt') || String(tx.orderId || '').startsWith('0x');
       }).map(function(tx) {
-        const rate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+        const rate = isUsd ? 1 : Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
         return {
           txHash: tx.orderId || '',
           usdtAmount: Number((Number(tx.amount || 0) / (rate > 0 ? rate : 125)).toFixed(2)),
@@ -10032,7 +11176,8 @@ function selectUsdtMode(mode) {
   const cryptoTab = document.getElementById('usdt-tab-crypto');
   const binanceTab = document.getElementById('usdt-tab-binance');
   const activeClasses = ['bg-[#0e2764]', 'text-white', 'shadow-md', 'border', 'border-[#1d4ed8]/50'];
-  
+  const l = getActiveLang();
+
   if (mode === 'binance') {
     if (cryptoTab) {
       cryptoTab.classList.remove(...activeClasses);
@@ -10043,7 +11188,12 @@ function selectUsdtMode(mode) {
       binanceTab.classList.add(...activeClasses);
     }
     if (typeof showToastNotification === 'function') {
-      showToastNotification('Binance Pay: BEP20 নেটওয়ার্কের মাধ্যমে ট্রান্সফার করুন');
+      showToastNotification(tLang(
+        l,
+        'Binance Pay: BEP20 নেটওয়ার্কের মাধ্যমে ট্রান্সফার করুন',
+        'Binance Pay: Please transfer via BEP20 network',
+        'Binance Pay: يرجى التحويل عبر شبكة BEP20'
+      ));
     }
   } else {
     if (binanceTab) {
@@ -10093,6 +11243,9 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
   const qrSpinner = document.getElementById('usdt-qr-loading-spinner');
   const statusBadge = document.getElementById('usdt-address-status-badge');
 
+  const l = getActiveLang(user);
+  const badgeLiveTxt = tLang(l, `ইউজার ID: #${userId} · লাইভ`, `User ID: #${userId} · Live`, `معرّف المستخدم: #${userId} · مباشر`);
+
   // Check cache first for instant zero-latency display (ignore fallback company address)
   const cached = localStorage.getItem(cacheKey);
   const isFallback = (cached === COMPANY_USDT_BEP20_ADDRESS);
@@ -10100,7 +11253,7 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
     currentUserBep20Address = cached;
     if (addressEl) addressEl.textContent = cached;
     if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cached)}`;
-    if (statusBadge) statusBadge.textContent = `ইউজার ID: #${userId} · লাইভ`;
+    if (statusBadge) statusBadge.textContent = badgeLiveTxt;
   }
 
   if (isFetchingUserCryptoAddress) return currentUserBep20Address;
@@ -10131,7 +11284,7 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
         localStorage.setItem(cacheKey, currentUserBep20Address);
         if (addressEl) addressEl.textContent = currentUserBep20Address;
         if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUserBep20Address)}`;
-        if (statusBadge) statusBadge.textContent = `ইউজার ID: #${userId} · লাইভ`;
+        if (statusBadge) statusBadge.textContent = badgeLiveTxt;
       }
     }
   } catch (err) {
@@ -10196,12 +11349,13 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
 
         if (rawBalance > lastCredited) {
           const newUsdt = rawBalance - lastCredited;
+          const isUsd = isUsdOnlyUser(user);
           const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
-          const bdtCredit = newUsdt * activeRate;
+          const creditAmt = isUsd ? Number(newUsdt.toFixed(2)) : Number((newUsdt * activeRate).toFixed(2));
 
           if (user) {
-            user.balance = (Number(user.balance) || 0) + bdtCredit;
-            user.rechargeAmount = (Number(user.rechargeAmount) || 0) + bdtCredit;
+            user.balance = Number(((Number(user.balance) || 0) + creditAmt).toFixed(2));
+            user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmt).toFixed(2));
             user.claimedUsdtOnchain = rawBalance;
             if (typeof saveUser === 'function') saveUser(user);
             if (typeof dbSaveUser === 'function') await dbSaveUser(user);
@@ -10214,8 +11368,8 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
               await dbRecordTransaction({
                 phone: user.phone || user.accountNumber,
                 type: 'deposit',
-                amount: bdtCredit,
-                actual: bdtCredit,
+                amount: creditAmt,
+                actual: creditAmt,
                 ratio: '100%',
                 status: 'অনুমোদিত',
                 method: 'USDT (BEP20)',
@@ -10231,7 +11385,7 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
                 txHash: `onchain_${Date.now()}`,
                 senderAddress: currentUserBep20Address || '',
                 usdtAmount: newUsdt,
-                bdtAmount: bdtCredit
+                bdtAmount: creditAmt
               });
             }
             if (typeof renderRecentUsdtDeposits === 'function') {
@@ -10242,11 +11396,32 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
           localStorage.setItem(creditedKey, String(rawBalance));
 
           if (typeof showToastNotification === 'function') {
-            showToastNotification(`🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT (৳ ${bdtCredit.toLocaleString('en-US')}) ব্যালেন্সে যোগ হয়েছে!`);
+            const l = getActiveLang(user);
+            showToastNotification(
+              isUsd
+                ? tLang(
+                    l,
+                    `🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) ব্যালেন্সে যোগ হয়েছে!`,
+                    `🎉 Congratulations! ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) added to your balance!`,
+                    `🎉 تهانينا! تمت إضافة ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) إلى رصيدك!`
+                  )
+                : tLang(
+                    l,
+                    `🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT (৳ ${creditAmt.toLocaleString('en-US')}) ব্যালেন্সে যোগ হয়েছে!`,
+                    `🎉 Congratulations! ${newUsdt.toFixed(2)} USDT (৳ ${creditAmt.toLocaleString('en-US')}) added to your balance!`,
+                    `🎉 تهانينا! تمت إضافة ${newUsdt.toFixed(2)} USDT (৳ ${creditAmt.toLocaleString('en-US')}) إلى رصيدك!`
+                  )
+            );
           }
         } else if (options && options.showToast) {
           if (typeof showToastNotification === 'function') {
-            showToastNotification(`অন-চেন ব্যালেন্স: ${rawBalance.toFixed(2)} USDT (কোনো নতুন ডিপোজিট পাওয়া যায়নি)`);
+            const l = getActiveLang(user);
+            showToastNotification(tLang(
+              l,
+              `অন-চেন ব্যালেন্স: ${rawBalance.toFixed(2)} USDT (কোনো নতুন ডিপোজিট পাওয়া যায়নি)`,
+              `On-chain balance: ${rawBalance.toFixed(2)} USDT (No new deposit found)`,
+              `الرصيد على الشبكة: ${rawBalance.toFixed(2)} USDT (لم يتم العثور على إيداع جديد)`
+            ));
           }
         }
       }
@@ -10254,11 +11429,13 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
   } catch (err) {
     console.warn('[Crypto] Balance check error:', err);
     if (options && options.showToast && typeof showToastNotification === 'function') {
-      showToastNotification('ব্যালেন্স চেক সম্পন্ন হতে পারেনি, আবার চেষ্টা করুন');
+      const l = getActiveLang(user);
+      showToastNotification(tLang(l, 'ব্যালেন্স চেক সম্পন্ন হতে পারেনি, আবার চেষ্টা করুন', 'Unable to check balance, please try again.', 'تعذر التحقق من الرصيد، يرجى المحاولة مرة أخرى.'));
     }
   } finally {
+    const lFin = getActiveLang(user);
     if (spinner) spinner.classList.add('hidden');
-    if (refreshText) refreshText.textContent = 'Check Balance ↺';
+    if (refreshText) refreshText.textContent = tLang(lFin, 'ব্যালেন্স চেক ↺', 'Check Balance ↺', 'فحص الرصيد ↺');
     if (btn) btn.disabled = false;
   }
 }
@@ -10316,7 +11493,8 @@ window.showUsdtSelectionView = showUsdtSelectionView;
 function refreshUsdtDepositRecords() {
   renderRecentUsdtDeposits();
   if (typeof showToastNotification === 'function') {
-    showToastNotification('ডিপোজিট হিস্ট্রি রিফ্রেশ করা হয়েছে ↺');
+    const l = getActiveLang();
+    showToastNotification(tLang(l, 'ডিপোজিট হিস্ট্রি রিফ্রেশ করা হয়েছে ↺', 'Deposit history refreshed ↺', 'تم تحديث سجل الإيداعات ↺'));
   }
 }
 window.refreshUsdtDepositRecords = refreshUsdtDepositRecords;
@@ -10384,7 +11562,8 @@ function initUsdtDeposit() {
           if (text) {
             txInput.value = text.trim();
             if (typeof showToastNotification === 'function') {
-              showToastNotification('TxHash পেস্ট করা হয়েছে');
+              const l = getActiveLang();
+              showToastNotification(tLang(l, 'TxHash পেস্ট করা হয়েছে', 'TxHash pasted', 'تم لصق TxHash'));
             }
           }
         } else {
@@ -10396,13 +11575,14 @@ function initUsdtDeposit() {
     };
   }
 
-  // 3. Amount Input -> BDT preview calculation
+  // 3. Amount Input -> User currency preview calculation
   const amountInput = document.getElementById('usdt-amount-input');
   const bdtPreview = document.getElementById('usdt-bdt-preview');
   if (amountInput && bdtPreview) {
     amountInput.oninput = function() {
       const val = parseFloat(amountInput.value) || 0;
-      const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+      const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+      const activeRate = isUsdOnlyUser(u) ? 1 : Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
       bdtPreview.textContent = (val * activeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
   }
@@ -10434,9 +11614,10 @@ function initUsdtDeposit() {
     submitBtn.onclick = async function(e) {
       e.preventDefault();
       const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+      const l = getActiveLang(user);
       if (!user) {
         if (typeof showToastNotification === 'function') {
-          showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন');
+          showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
         }
         return;
       }
@@ -10447,7 +11628,7 @@ function initUsdtDeposit() {
       if (!senderAddress) {
         if (msgEl) {
           msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
-          msgEl.textContent = 'অনুগ্রহ করে আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) প্রদান করুন।';
+          msgEl.textContent = tLang(l, 'অনুগ্রহ করে আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) প্রদান করুন।', 'Please provide your sender wallet address.', 'يرجى إدخال عنوان محفظة المرسل.');
           msgEl.classList.remove('hidden');
         }
         if (senderInput) senderInput.focus();
@@ -10457,7 +11638,7 @@ function initUsdtDeposit() {
       if (!/^0x[a-fA-F0-9]{40}$/.test(senderAddress)) {
         if (msgEl) {
           msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
-          msgEl.textContent = 'ভুল প্রেরক ওয়ালেট অ্যাড্রেস ফরম্যাট (0x দিয়ে শুরু হওয়া ৪২ অক্ষরের হতে হবে)।';
+          msgEl.textContent = tLang(l, 'ভুল প্রেরক ওয়ালেট অ্যাড্রেস ফরম্যাট (0x দিয়ে শুরু হওয়া ৪২ অক্ষরের হতে হবে)।', 'Invalid sender address format (must start with 0x and be 42 chars).', 'صيغة عنوان المرسل غير صحيحة (يجب أن يبدأ بـ 0x ويتكون من 42 حرفاً).');
           msgEl.classList.remove('hidden');
         }
         if (senderInput) senderInput.focus();
@@ -10467,7 +11648,7 @@ function initUsdtDeposit() {
       if (!txHash) {
         if (msgEl) {
           msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
-          msgEl.textContent = 'অনুগ্রহ করে ট্রানজেকশন হ্যাশ (TxHash / TxID) প্রদান করুন।';
+          msgEl.textContent = tLang(l, 'অনুগ্রহ করে ট্রানজেকশন হ্যাশ (TxHash / TxID) প্রদান করুন।', 'Please provide the transaction hash (TxHash / TxID).', 'يرجى إدخال معرّف المعاملة (TxHash / TxID).');
           msgEl.classList.remove('hidden');
         }
         if (txInput) txInput.focus();
@@ -10477,7 +11658,7 @@ function initUsdtDeposit() {
       if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
         if (msgEl) {
           msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
-          msgEl.textContent = 'ভুল TxHash ফরম্যাট! ট্রানজেকশন হ্যাশ অবশ্যই 0x দিয়ে শুরু হওয়া ৬৬ অক্ষরের হেক্সাডেসিমাল কোড হতে হবে।';
+          msgEl.textContent = tLang(l, 'ভুল TxHash ফরম্যাট! ট্রানজেকশন হ্যাশ অবশ্যই 0x দিয়ে শুরু হওয়া ৬৬ অক্ষরের হেক্সাডেসিমাল কোড হতে হবে।', 'Invalid TxHash format! Must start with 0x and be a 66-char hex hash.', 'صيغة TxHash غير صحيحة! يجب أن يبدأ بـ 0x ويتكون من 66 حرفاً ست عشرياً.');
           msgEl.classList.remove('hidden');
         }
         return;
@@ -10487,10 +11668,10 @@ function initUsdtDeposit() {
       submitBtn.disabled = true;
       if (btnSpinner) btnSpinner.classList.remove('hidden');
       if (btnIcon) btnIcon.classList.add('hidden');
-      if (btnText) btnText.textContent = 'ব্লকচেইন ভেরিফাই হচ্ছে...';
+      if (btnText) btnText.textContent = tLang(l, 'ব্লকচেইন ভেরিফাই হচ্ছে...', 'Verifying on blockchain...', 'جاري التحقق عبر البلوكتشين...');
       if (msgEl) {
         msgEl.className = 'text-xs text-center font-semibold text-sky-400 py-1.5 bg-sky-500/10 rounded-lg border border-sky-500/30 animate-pulse';
-        msgEl.textContent = 'অন-চেইন রিসিপ্ট ও ১৫ কনফার্মেশন যাচাই করা হচ্ছে...';
+        msgEl.textContent = tLang(l, 'অন-চেইন রিসিপ্ট ও ১৫ কনফার্মেশন যাচাই করা হচ্ছে...', 'Checking on-chain receipt and confirmations...', 'جاري فحص إيصال الشبكة وتأكيدات البلوكتشين...');
         msgEl.classList.remove('hidden');
       }
 
@@ -10504,21 +11685,23 @@ function initUsdtDeposit() {
 
         if (result && result.success) {
           const depositData = result.deposit || {};
-          const bdtAmount = Number(depositData.bdtAmount) || 0;
           const usdtAmount = Number(depositData.usdtAmount) || 0;
+          const isUsd = isUsdOnlyUser(user);
+          const creditAmount = isUsd ? Number(usdtAmount.toFixed(2)) : (Number(depositData.bdtAmount) || 0);
 
           // 1. Credit User Balance & Personal Balance (Lifetime earnings) strictly from on-chain value
-          if (typeof depositData.newBalance === 'number') {
+          if (!isUsd && typeof depositData.newBalance === 'number') {
             user.balance = depositData.newBalance;
           } else {
-            user.balance = (Number(user.balance) || 0) + bdtAmount;
+            user.balance = Number(((Number(user.balance) || 0) + creditAmount).toFixed(2));
           }
 
           if (typeof user.lifetimeEarnings === 'number') {
-            user.lifetimeEarnings += bdtAmount;
+            user.lifetimeEarnings = Number((user.lifetimeEarnings + creditAmount).toFixed(2));
           } else {
             user.lifetimeEarnings = user.balance;
           }
+          user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmount).toFixed(2));
 
           localStorage.setItem('aloSignedInUser', JSON.stringify(user));
           if (typeof dbSaveUser === 'function') {
@@ -10533,11 +11716,12 @@ function initUsdtDeposit() {
             dbRecordTransaction({
               phone: user.phone || user.accountNumber,
               type: 'deposit',
-              amount: bdtAmount,
-              actual: bdtAmount,
+              amount: creditAmount,
+              actual: creditAmount,
               ratio: '100%',
               status: 'অনুমোদিত',
               method: 'USDT (BEP20)',
+              order_id: depositData.txHash || txHash,
               date: dateStr,
               time: timeStr,
               newBalance: user.balance
@@ -10555,30 +11739,60 @@ function initUsdtDeposit() {
             txHash: depositData.txHash || txHash,
             senderAddress: depositData.senderAddress || senderAddress,
             usdtAmount: usdtAmount,
-            bdtAmount: bdtAmount
+            bdtAmount: creditAmount
           });
           renderRecentUsdtDeposits();
 
           // 5. Success Feedback
           if (msgEl) {
             msgEl.className = 'text-xs text-center font-bold text-emerald-400 py-2 px-3 bg-emerald-500/15 rounded-xl border border-emerald-500/40';
-            msgEl.textContent = result.message || `🎉 অভিনন্দন! ${usdtAmount} USDT (৳ ${bdtAmount.toLocaleString('en-US')}) অটো এপ্রুভ হয়েছে।`;
+            msgEl.textContent = isUsd
+              ? tLang(
+                  l,
+                  `🎉 সফল! ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD) অটো এপ্রুভ হয়েছে।`,
+                  `🎉 Success! ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD) auto-approved & credited.`,
+                  `🎉 تم بنجاح! تمت الموافقة التلقائية وإضافة ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD).`
+                )
+              : tLang(
+                  l,
+                  (result.message || `🎉 অভিনন্দন! ${usdtAmount} USDT (৳ ${creditAmount.toLocaleString('en-US')}) অটো এপ্রুভ হয়েছে।`),
+                  `🎉 Success! ${usdtAmount} USDT (৳ ${creditAmount.toLocaleString('en-US')}) auto-approved & credited.`,
+                  `🎉 تم بنجاح! تمت الموافقة وإضافة ${usdtAmount} USDT (৳ ${creditAmount.toLocaleString('en-US')}).`
+                );
             msgEl.classList.remove('hidden');
           }
 
           if (typeof showToastNotification === 'function') {
-            showToastNotification(`🎉 ${usdtAmount} USDT ডিপোজিট সফল ও ব্যালেন্সে যুক্ত হয়েছে!`);
+            showToastNotification(
+              isUsd
+                ? tLang(
+                    l,
+                    `🎉 ${usdtAmount} USDT আপনার USD ব্যালেন্সে যুক্ত হয়েছে!`,
+                    `🎉 ${usdtAmount} USDT deposit credited to your USD balance!`,
+                    `🎉 تمت إضافة إيداع ${usdtAmount} USDT إلى رصيدك!`
+                  )
+                : tLang(
+                    l,
+                    `🎉 ${usdtAmount} USDT ডিপোজিট সফল ও ব্যালেন্সে যুক্ত হয়েছে!`,
+                    `🎉 ${usdtAmount} USDT deposit credited to your balance!`,
+                    `🎉 تم إيداع ${usdtAmount} USDT وإضافته إلى رصيدك بنجاح!`
+                  )
+            );
           }
 
           // Clear inputs
           if (txInput) txInput.value = '';
           if (senderInput) senderInput.value = '';
           if (amountInput) amountInput.value = '';
-          if (bdtPreview) bdtPreview.textContent = '০.০০';
+          if (bdtPreview) bdtPreview.textContent = (isUsd || l !== 'bn') ? '0.00' : '০.০০';
 
         } else {
           // Failure response from API
-          const errMsg = (result && result.message) ? result.message : 'ডিপোজিট ভেরিফিকেশন ব্যর্থ হয়েছে।';
+          const errMsg = (l !== 'bn' && result && result.messageEn)
+            ? result.messageEn
+            : ((result && result.message)
+              ? result.message
+              : tLang(l, 'ডিপোজিট ভেরিফিকেশন ব্যর্থ হয়েছে।', 'Deposit verification failed.', 'فشل التحقق من الإيداع.'));
           if (msgEl) {
             msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-2 px-3 bg-rose-500/15 rounded-xl border border-rose-500/40';
             msgEl.textContent = errMsg;
@@ -10590,7 +11804,12 @@ function initUsdtDeposit() {
         }
       } catch (err) {
         console.error('USDT Deposit submit error:', err);
-        const errMsg = 'সার্ভার যোগাযোগে সমস্যা হয়েছে: ' + (err.message || 'Network Error');
+        const errMsg = tLang(
+          l,
+          'সার্ভার যোগাযোগে সমস্যা হয়েছে: ' + (err.message || 'Network Error'),
+          'Server connection error: ' + (err.message || 'Network Error'),
+          'خطأ في الاتصال بالخادم: ' + (err.message || 'Network Error')
+        );
         if (msgEl) {
           msgEl.className = 'text-xs text-center font-semibold text-rose-400 py-1.5 bg-rose-500/10 rounded-lg border border-rose-500/30';
           msgEl.textContent = errMsg;
@@ -10603,7 +11822,7 @@ function initUsdtDeposit() {
         submitBtn.disabled = false;
         if (btnSpinner) btnSpinner.classList.add('hidden');
         if (btnIcon) btnIcon.classList.remove('hidden');
-        if (btnText) btnText.textContent = 'জমা দিন ও অটো এপ্রুভ করুন';
+        if (btnText) btnText.textContent = tLang(l, 'জমা দিন ও অটো এপ্রুভ করুন', 'Submit & Auto-Approve', 'إرسال والموافقة التلقائية');
       }
     };
   }
@@ -10623,19 +11842,20 @@ function setGatewayMethod(method) {
   const icon = document.getElementById('gateway-method-icon');
   const label = document.getElementById('gateway-method-label');
   const buttons = document.querySelectorAll('.gateway-switch-method-btn');
+  const l = getActiveLang();
 
   if (selectedGatewayMethod === 'BKASH') {
     if (icon) {
       icon.className = 'w-7 h-7 rounded-full bg-[#e2136e] flex items-center justify-center text-white text-[11px] font-bold shadow';
       icon.textContent = 'bK';
     }
-    if (label) label.textContent = 'বিকাশ (bKash)';
+    if (label) label.textContent = tLang(l, 'বিকাশ (bKash)', 'bKash', 'bKash');
   } else {
     if (icon) {
       icon.className = 'w-7 h-7 rounded-full bg-[#f7931e] flex items-center justify-center text-white text-[11px] font-bold shadow';
-      icon.textContent = 'নগদ';
+      icon.textContent = l === 'bn' ? 'নগদ' : 'NG';
     }
-    if (label) label.textContent = 'নগদ (Nagad)';
+    if (label) label.textContent = tLang(l, 'নগদ (Nagad)', 'Nagad', 'Nagad');
   }
 
   buttons.forEach(function(btn) {
@@ -10655,6 +11875,7 @@ async function handleGatewayPayNow() {
   const payBtn = document.getElementById('gateway-pay-now-btn');
   const btnSpinner = document.getElementById('gateway-btn-spinner');
   const btnText = document.getElementById('gateway-btn-text');
+  const l = getActiveLang();
 
   const rawAmount = customInput ? parseFloat(customInput.value) : 0;
   const amount = Math.round(rawAmount);
@@ -10665,7 +11886,12 @@ async function handleGatewayPayNow() {
   if (!amount || isNaN(amount) || amount < minRcAmt || amount > 50000) {
     if (statusMsg) {
       statusMsg.className = 'text-xs text-center font-semibold text-rose-400 py-2 bg-rose-500/10 rounded-lg border border-rose-500/30';
-      statusMsg.textContent = `টাকার পরিমাণ অবশ্যই ${minRcAmt} থেকে ৫০,০০০ এর মধ্যে হতে হবে। (Min ${minRcAmt}, Max 50000 BDT)`;
+      statusMsg.textContent = tLang(
+        l,
+        `টাকার পরিমাণ অবশ্যই ${minRcAmt} থেকে ৫০,০০০ এর মধ্যে হতে হবে। (Min ${minRcAmt}, Max 50000 BDT)`,
+        `Amount must be between ${minRcAmt} and 50,000 BDT.`,
+        `يجب أن يكون المبلغ بين ${minRcAmt} و 50,000 BDT.`
+      );
       statusMsg.classList.remove('hidden');
     }
     if (customInput) customInput.focus();
@@ -10681,10 +11907,10 @@ async function handleGatewayPayNow() {
   // Loading state & double-submit prevention
   if (payBtn) payBtn.disabled = true;
   if (btnSpinner) btnSpinner.classList.remove('hidden');
-  if (btnText) btnText.textContent = 'গেটওয়ে পেজে নিয়ে যাওয়া হচ্ছে...';
+  if (btnText) btnText.textContent = tLang(l, 'গেটওয়ে পেজে নিয়ে যাওয়া হচ্ছে...', 'Redirecting to gateway...', 'جاري التحويل إلى بوابة الدفع...');
   if (statusMsg) {
     statusMsg.className = 'text-xs text-center font-semibold text-sky-400 py-2 bg-sky-500/10 rounded-lg border border-sky-500/30 animate-pulse';
-    statusMsg.textContent = 'পেমেন্ট গেটওয়ে লিংক প্রস্তুত হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+    statusMsg.textContent = tLang(l, 'পেমেন্ট গেটওয়ে লিংক প্রস্তুত হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...', 'Preparing payment gateway link, please wait...', 'جاري تجهيز رابط الدفع، يرجى الانتظار...');
     statusMsg.classList.remove('hidden');
   }
 
@@ -10758,7 +11984,7 @@ async function handleGatewayPayNow() {
     if (data.success === true && paymentUrl) {
       if (statusMsg) {
         statusMsg.className = 'text-xs text-center font-bold text-emerald-400 py-2 bg-emerald-500/15 rounded-lg border border-emerald-500/30';
-        statusMsg.textContent = '✅ সফল! পেমেন্ট ক্যাশিয়ার পেজে রিডাইরেক্ট করা হচ্ছে...';
+        statusMsg.textContent = tLang(l, '✅ সফল! পেমেন্ট ক্যাশিয়ার পেজে রিডাইরেক্ট করা হচ্ছে...', '✅ Success! Redirecting to payment cashier...', '✅ تم بنجاح! جاري التحويل إلى صفحة الدفع...');
       }
       // Redirect to the cashier URL returned by the backend
       window.location.href = paymentUrl;
@@ -10770,11 +11996,11 @@ async function handleGatewayPayNow() {
                    data?.message || 
                    data?.msg || 
                    (typeof data?.error === 'string' ? data.error : '') || 
-                   'পেমেন্ট লিংক পাওয়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+                   tLang(l, 'পেমেন্ট লিংক পাওয়া যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।', 'Payment link not found. Please try again.', 'لم يتم العثور على رابط الدفع. يرجى المحاولة مرة أخرى.');
 
     if (statusMsg) {
       statusMsg.className = 'text-xs text-center font-semibold text-rose-400 py-2 bg-rose-500/10 rounded-lg border border-rose-500/30';
-      statusMsg.textContent = 'পেমেন্ট ত্রুটি: ' + errMsg;
+      statusMsg.textContent = tLang(l, 'পেমেন্ট ত্রুটি: ', 'Payment Error: ', 'خطأ في الدفع: ') + errMsg;
       statusMsg.classList.remove('hidden');
     }
     if (typeof showToastNotification === 'function') {
@@ -10785,16 +12011,16 @@ async function handleGatewayPayNow() {
     console.error('Payment request error:', err);
     if (statusMsg) {
       statusMsg.className = 'text-xs text-center font-semibold text-rose-400 py-2 bg-rose-500/10 rounded-lg border border-rose-500/30';
-      statusMsg.textContent = 'সার্ভার যোগাযোগে সমস্যা হয়েছে: ' + (err.message || 'নেটওয়ার্ক এরর');
+      statusMsg.textContent = tLang(l, 'সার্ভার যোগাযোগে সমস্যা হয়েছে: ', 'Server connection error: ', 'خطأ في الاتصال بالخادم: ') + (err.message || 'Network Error');
       statusMsg.classList.remove('hidden');
     }
     if (typeof showToastNotification === 'function') {
-      showToastNotification('পেমেন্ট সার্ভারে সংযোগ করা যায়নি।');
+      showToastNotification(tLang(l, 'পেমেন্ট সার্ভারে সংযোগ করা যায়নি।', 'Could not connect to payment server.', 'تعذر الاتصال بخادم الدفع.'));
     }
   } finally {
     if (payBtn) payBtn.disabled = false;
     if (btnSpinner) btnSpinner.classList.add('hidden');
-    if (btnText) btnText.textContent = 'Pay Now (পেমেন্ট করুন) ⚡';
+    if (btnText) btnText.textContent = tLang(l, 'Pay Now (পেমেন্ট করুন) ⚡', 'Pay Now ⚡', 'ادفع الآن ⚡');
   }
 }
 window.handleGatewayPayNow = handleGatewayPayNow;
@@ -10861,7 +12087,8 @@ let currentBdPaymentMethod = 'BKASH';
 
 function openBdRechargePage(method) {
   currentBdPaymentMethod = (method === 'NAGAD') ? 'NAGAD' : 'BKASH';
-  
+  const l = getActiveLang();
+
   const titleEl = document.getElementById('bd-recharge-title');
   const badgeEl = document.getElementById('bd-recharge-method-badge');
   const nameEl = document.getElementById('bd-recharge-method-name');
@@ -10878,7 +12105,7 @@ function openBdRechargePage(method) {
 
   if (spinner) spinner.classList.add('hidden');
   if (submitBtn) submitBtn.disabled = false;
-  if (btnText) btnText.textContent = 'জমা দিন';
+  if (btnText) btnText.textContent = tLang(l, 'জমা দিন', 'Submit', 'إرسال');
 
   if (amountInput) {
     amountInput.value = '500';
@@ -10894,8 +12121,8 @@ function openBdRechargePage(method) {
   });
 
   if (currentBdPaymentMethod === 'BKASH') {
-    if (titleEl) titleEl.textContent = 'বিকাশ';
-    if (nameEl) nameEl.textContent = 'বিকাশ (bKash)';
+    if (titleEl) titleEl.textContent = tLang(l, 'বিকাশ', 'bKash', 'bKash');
+    if (nameEl) nameEl.textContent = tLang(l, 'বিকাশ (bKash)', 'bKash Payment', 'الدفع عبر bKash');
     if (badgeEl) {
       badgeEl.className = 'w-12 h-12 rounded-full bg-[#e2136e] flex items-center justify-center shrink-0 shadow-md';
       badgeEl.innerHTML = `
@@ -10910,8 +12137,8 @@ function openBdRechargePage(method) {
       `;
     }
   } else {
-    if (titleEl) titleEl.textContent = 'নগদ';
-    if (nameEl) nameEl.textContent = 'নগদ (Nagad)';
+    if (titleEl) titleEl.textContent = tLang(l, 'নগদ', 'Nagad', 'Nagad');
+    if (nameEl) nameEl.textContent = tLang(l, 'নগদ (Nagad)', 'Nagad Payment', 'الدفع عبر Nagad');
     if (badgeEl) {
       badgeEl.className = 'w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md p-1.5';
       badgeEl.innerHTML = `
@@ -10919,7 +12146,7 @@ function openBdRechargePage(method) {
           <path d="M32 8C23 8 15 15 15 25c0 13 17 25 17 25s17-12 17-25c0-10-8-17-17-17z" fill="#f7931e"/>
           <path d="M32 16c-5 0-9 4-9 9 0 7 9 15 9 15s9-8 9-15c0-5-4-9-9-9z" fill="#e22d24"/>
           <circle cx="32" cy="25" r="3.5" fill="#ffffff"/>
-          <text x="32" y="60" font-size="12" font-weight="900" fill="#e22d24" text-anchor="middle" font-family="sans-serif">নগদ</text>
+          <text x="32" y="60" font-size="12" font-weight="900" fill="#e22d24" text-anchor="middle" font-family="sans-serif">Nagad</text>
         </svg>
       `;
     }
@@ -10950,6 +12177,7 @@ async function handleBdRechargeSubmit() {
   const submitBtn = document.getElementById('bd-recharge-submit-btn');
   const spinner = document.getElementById('bd-recharge-spinner');
   const btnText = document.getElementById('bd-recharge-btn-text');
+  const l = getActiveLang();
 
   const rawAmount = amountInput ? parseFloat(amountInput.value) : 0;
   const amount = Math.round(rawAmount);
@@ -10958,7 +12186,12 @@ async function handleBdRechargeSubmit() {
   if (!amount || isNaN(amount) || amount < minRcAmt || amount > 50000) {
     if (statusMsg) {
       statusMsg.className = 'text-xs text-center font-semibold text-rose-300 py-2.5 bg-rose-500/20 rounded-xl border border-rose-500/40';
-      statusMsg.textContent = `টাকার পরিমাণ অবশ্যই ${minRcAmt} থেকে ৫০,০০০ এর মধ্যে হতে হবে।`;
+      statusMsg.textContent = tLang(
+        l,
+        `টাকার পরিমাণ অবশ্যই ${minRcAmt} থেকে ৫০,০০০ এর মধ্যে হতে হবে।`,
+        `Amount must be between ${minRcAmt} and 50,000 BDT.`,
+        `يجب أن يكون المبلغ بين ${minRcAmt} و 50,000 BDT.`
+      );
       statusMsg.classList.remove('hidden');
     }
     if (amountInput) amountInput.focus();
@@ -11003,10 +12236,10 @@ async function handleBdRechargeSubmit() {
 
   if (submitBtn) submitBtn.disabled = true;
   if (spinner) spinner.classList.remove('hidden');
-  if (btnText) btnText.textContent = 'প্রসেসিং হচ্ছে...';
+  if (btnText) btnText.textContent = tLang(l, 'প্রসেসিং হচ্ছে...', 'Processing...', 'جاري المعالجة...');
   if (statusMsg) {
     statusMsg.className = 'text-xs text-center font-semibold text-sky-300 py-2.5 bg-sky-500/20 rounded-xl border border-sky-500/30 animate-pulse';
-    statusMsg.textContent = 'ক্যাশিয়ারে নিয়ে যাওয়া হচ্ছে, অপেক্ষা করুন...';
+    statusMsg.textContent = tLang(l, 'ক্যাশিয়ারে নিয়ে যাওয়া হচ্ছে, অপেক্ষা করুন...', 'Redirecting to payment cashier, please wait...', 'جاري التحويل إلى صفحة الدفع، يرجى الانتظار...');
     statusMsg.classList.remove('hidden');
   }
 
@@ -11041,7 +12274,7 @@ async function handleBdRechargeSubmit() {
     if (data.success === true && paymentUrl) {
       if (statusMsg) {
         statusMsg.className = 'text-xs text-center font-bold text-emerald-300 py-2.5 bg-emerald-500/20 rounded-xl border border-emerald-500/40';
-        statusMsg.textContent = '✅ সফল! পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে...';
+        statusMsg.textContent = tLang(l, '✅ সফল! পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে...', '✅ Success! Redirecting to payment page...', '✅ تم بنجاح! جاري التحويل إلى صفحة الدفع...');
       }
       window.location.href = paymentUrl;
       return;
@@ -11050,24 +12283,24 @@ async function handleBdRechargeSubmit() {
     const errMsg = data?.gatewayResponse?.msg || 
                    data?.message || 
                    data?.msg || 
-                   'পেমেন্ট চ্যানেল বর্তমানে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।';
+                   tLang(l, 'পেমেন্ট চ্যানেল বর্তমানে অনুপলব্ধ। অনুগ্রহ করে আবার চেষ্টা করুন।', 'Payment channel currently unavailable. Please try again.', 'قناة الدفع غير متاحة حالياً. يرجى المحاولة مرة أخرى.');
 
     if (statusMsg) {
       statusMsg.className = 'text-xs text-center font-semibold text-rose-300 py-2.5 bg-rose-500/20 rounded-xl border border-rose-500/40';
-      statusMsg.textContent = 'ত্রুটি: ' + errMsg;
+      statusMsg.textContent = tLang(l, 'ত্রুটি: ', 'Error: ', 'خطأ: ') + errMsg;
       statusMsg.classList.remove('hidden');
     }
   } catch (err) {
     console.error('Recharge error:', err);
     if (statusMsg) {
       statusMsg.className = 'text-xs text-center font-semibold text-rose-300 py-2.5 bg-rose-500/20 rounded-xl border border-rose-500/40';
-      statusMsg.textContent = 'সার্ভার সংযোগে ত্রুটি: ' + (err.message || 'নেটওয়ার্ক এরর');
+      statusMsg.textContent = tLang(l, 'সার্ভার সংযোগে ত্রুটি: ', 'Server connection error: ', 'خطأ في الاتصال بالخادم: ') + (err.message || 'Network Error');
       statusMsg.classList.remove('hidden');
     }
   } finally {
     if (submitBtn) submitBtn.disabled = false;
     if (spinner) spinner.classList.add('hidden');
-    if (btnText) btnText.textContent = 'জমা দিন';
+    if (btnText) btnText.textContent = tLang(l, 'জমা দিন', 'Submit', 'إرسال');
   }
 }
 window.handleBdRechargeSubmit = handleBdRechargeSubmit;
@@ -11075,8 +12308,9 @@ window.handleBdRechargeSubmit = handleBdRechargeSubmit;
 function openDirectPaymentCheckout() {
   const user = getCurrentUser();
   if (!user || (!user.phone && !user.accountNumber)) {
+    const l = getActiveLang();
     showView('login');
-    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
     return;
   }
   showView('dashboard');
@@ -11085,16 +12319,43 @@ function openDirectPaymentCheckout() {
 window.openDirectPaymentCheckout = openDirectPaymentCheckout;
 
 window.addEventListener('alo-language-changed', function(e) {
-  const lang = e.detail && e.detail.lang;
+  const lang = normalizeAppLang((e.detail && e.detail.lang) || getActiveLang());
   const user = getCurrentUser();
   if (user && lang) {
     user.language = lang;
     localStorage.setItem('aloSignedInUser', JSON.stringify(user));
   }
+  if (typeof updateHomeWithdrawalTicker === 'function') updateHomeWithdrawalTicker();
+  if (typeof updateHomeMemberUpdates === 'function') updateHomeMemberUpdates();
   if (user) {
     if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
     if (typeof updateUserDetails === 'function') updateUserDetails(user);
+    if (typeof updateRealNameDisplayAcrossApp === 'function') updateRealNameDisplayAcrossApp();
+    if (typeof updateFundPasswordDisplayAcrossApp === 'function') updateFundPasswordDisplayAcrossApp();
+    if (typeof updateBkashDisplayAcrossApp === 'function') updateBkashDisplayAcrossApp();
+    if (typeof updateNagadDisplayAcrossApp === 'function') updateNagadDisplayAcrossApp();
+    if (typeof updateUsdtDisplayAcrossApp === 'function') updateUsdtDisplayAcrossApp();
+    if (typeof updateWithdrawalMethodLabelDisplay === 'function') updateWithdrawalMethodLabelDisplay();
+    if (typeof renderWithdrawMethodPickerOptions === 'function') renderWithdrawMethodPickerOptions();
+    if (typeof renderSavingsPlanPanel === 'function') renderSavingsPlanPanel();
+    if (typeof renderInvitePage === 'function') renderInvitePage();
+    if (typeof renderMissionRecords === 'function') renderMissionRecords(activeMissionFilter || 'active');
+    const missionSubmitPanel = document.getElementById('mission-submit-panel');
+    if (missionSubmitPanel && !missionSubmitPanel.hidden && typeof renderMissionSubmission === 'function') {
+      renderMissionSubmission();
+    }
+    const teamMembersContent = document.getElementById('team-members-view-content');
+    const teamHeaderTitle = document.getElementById('team-panel-header-title');
+    if (teamHeaderTitle) {
+      const membersVisible = teamMembersContent && !teamMembersContent.classList.contains('hidden');
+      teamHeaderTitle.textContent = membersVisible
+        ? tLang(lang, 'আমার দল', 'My Team', 'فريقي')
+        : tLang(lang, 'দলের রিপোর্ট', 'Team Report', 'تقرير الفريق');
+    }
+    if (typeof renderFreshTeamView === 'function' && teamMembersContent && !teamMembersContent.classList.contains('hidden')) {
+      renderFreshTeamView();
+    }
     const taskPanel = document.getElementById('platform-tasks-panel');
     if (taskPanel && !taskPanel.hidden && typeof renderPackageTasks === 'function') {
       renderPackageTasks(activePackageLevel || 'LV0');
@@ -11136,11 +12397,25 @@ let luckySpinCurrentRotation = 0;
 let isLuckySpinAnimating = false;
 let luckySpinWheelBuilt = false;
 
+function getLuckySpinPrizeAmountForUser(baseBdtAmount, user) {
+  return toUserCurrencyAmount(baseBdtAmount, user);
+}
+
+function getLuckySpinPrizeLabelForUser(item, user, lang) {
+  if (isUsdOnlyUser(user)) {
+    const usdAmt = toUserCurrencyAmount(item.amount, user);
+    return usdAmt >= 100 ? `$${Math.round(usdAmt)}` : `$${usdAmt.toFixed(2)}`;
+  }
+  return lang === 'bn' ? item.label : item.enLabel;
+}
+
 function buildLuckySpinWheelSvg() {
   const rotator = document.getElementById('lucky-spin-wheel-rotator');
   if (!rotator) return;
 
-  const lang = (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const isUsd = isUsdOnlyUser(user);
+  const lang = getActiveLang(user);
   const cx = 200;
   const cy = 200;
   const r = 183;
@@ -11161,8 +12436,8 @@ function buildLuckySpinWheelSvg() {
     const y2 = cy + r * Math.sin(endRad);
 
     const d = `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
-    const prizeText = lang === 'en' ? item.enLabel : item.label;
-    const fontSize = prizeText.length >= 6 ? '14' : (prizeText.length >= 5 ? '15.5' : '17');
+    const prizeText = getLuckySpinPrizeLabelForUser(item, user, lang);
+    const fontSize = prizeText.length >= 6 ? '13.5' : (prizeText.length >= 5 ? '15' : '17');
 
     svgParts.push(
       `<path d="${d}" fill="${item.fill}" stroke="#071638" stroke-width="2" stroke-linejoin="round"/>`,
@@ -11276,7 +12551,10 @@ async function computeLuckySpinStats(user) {
 async function renderLuckySpinPanel() {
   buildLuckySpinWheelSvg();
 
-  const lang = (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const user = getCurrentUser();
+  const isUsd = isUsdOnlyUser(user);
+  const sym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
   const drawsEl = document.getElementById('lucky-spin-draws-num');
   const qualEl = document.getElementById('lucky-spin-qualified-count');
   const todaySpinsEl = document.getElementById('lucky-spin-today-count');
@@ -11284,21 +12562,20 @@ async function renderLuckySpinPanel() {
   const btnLabel = document.getElementById('lucky-spin-btn-label');
   const historyList = document.getElementById('lucky-spin-history-list');
 
-  const user = getCurrentUser();
   if (!user) {
-    if (drawsEl) drawsEl.textContent = lang === 'en' ? '0' : '০';
-    if (qualEl) qualEl.textContent = lang === 'en' ? '0' : '০';
-    if (todaySpinsEl) todaySpinsEl.textContent = lang === 'en' ? '0' : '০';
-    if (balEl) balEl.textContent = '৳ 0.00';
+    if (drawsEl) drawsEl.textContent = lang === 'bn' ? '০' : '0';
+    if (qualEl) qualEl.textContent = lang === 'bn' ? '০' : '0';
+    if (todaySpinsEl) todaySpinsEl.textContent = lang === 'bn' ? '০' : '0';
+    if (balEl) balEl.textContent = isUsd ? '$0.00' : '৳ 0.00';
     return;
   }
 
   const fmtNum = function(val) {
-    return lang === 'en' ? String(val) : formatBanglaNumber(String(val));
+    return (lang !== 'bn' || isUsd) ? String(val) : formatBanglaNumber(String(val));
   };
 
   if (balEl) {
-    balEl.textContent = `৳ ${Number(user.balance || 0).toFixed(2)}`;
+    balEl.textContent = `${sym} ${Number(user.balance || 0).toFixed(2)}`;
   }
 
   const stats = await computeLuckySpinStats(user);
@@ -11313,7 +12590,7 @@ async function renderLuckySpinPanel() {
         .from('transactions')
         .select('*')
         .eq('phone', normPhone)
-        .ilike('method', '%স্পিন%')
+        .or('method.ilike.%স্পিন%,method.ilike.%Spin%')
         .order('created_at', { ascending: false })
         .limit(30);
       if (Array.isArray(data) && data.length > 0) {
@@ -11337,7 +12614,7 @@ async function renderLuckySpinPanel() {
   const finalTodaySpins = Math.max(stats.todaySpinsCount, todayTxCount);
 
   if (balEl) {
-    balEl.textContent = `৳ ${Number(activeUser.balance || 0).toFixed(2)}`;
+    balEl.textContent = `${sym} ${Number(activeUser.balance || 0).toFixed(2)}`;
   }
   if (drawsEl) {
     drawsEl.textContent = fmtNum(stats.availableDraws);
@@ -11350,25 +12627,30 @@ async function renderLuckySpinPanel() {
   }
   if (btnLabel) {
     if (stats.availableDraws > 0) {
-      btnLabel.textContent = lang === 'en'
-        ? `Spin Now (${stats.availableDraws} Draw)`
-        : `স্পিন ঘুরান (${fmtNum(stats.availableDraws)}টি ড্র)`;
+      btnLabel.textContent = tLang(
+        lang,
+        `স্পিন ঘুরান (${fmtNum(stats.availableDraws)}টি ড্র)`,
+        `Spin Now (${stats.availableDraws} Draw)`,
+        `أدر العجلة (${stats.availableDraws} محاولة)`
+      );
     } else {
-      btnLabel.textContent = lang === 'en' ? 'Spin Now' : 'স্পিন ঘুরান';
+      btnLabel.textContent = tLang(lang, 'স্পিন ঘুরান', 'Spin Now', 'أدر العجلة');
     }
   }
 
   if (historyList) {
     if (rows.length === 0) {
-      historyList.innerHTML = `<p class="text-center text-xs text-[#7f8fb0] py-4">${lang === 'en' ? 'No lucky spin rewards yet.' : 'এখনো কোনো স্পিন পুরস্কার রেকর্ড নেই'}</p>`;
+      historyList.innerHTML = `<p class="text-center text-xs text-[#7f8fb0] py-4">${tLang(lang, 'এখনো কোনো স্পিন পুরস্কার রেকর্ড নেই', 'No lucky spin rewards yet.', 'لا توجد جوائز عجلة حظ حتى الآن.')}</p>`;
     } else {
       historyList.innerHTML = rows.slice(0, 15).map(function(r) {
-        const amtText = lang === 'en' ? `+${r.amount}৳` : `+${formatBanglaNumber(String(r.amount))}৳`;
+        const amtText = isUsd
+          ? `+$${Number(r.amount || 0).toFixed(2)}`
+          : (lang !== 'bn' ? `+${r.amount}৳` : `+${formatBanglaNumber(String(r.amount))}৳`);
         return `
           <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0b1730] border-0">
             <div class="flex items-center gap-3 min-w-0">
               <div class="min-w-0">
-                <p class="text-sm font-semibold text-[#eef2fb] truncate">${lang === 'en' ? 'Lucky Spin Reward' : 'ভাগ্যবান স্পিন পুরস্কার'}</p>
+                <p class="text-sm font-semibold text-[#eef2fb] truncate">${tLang(lang, 'ভাগ্যবান স্পিন পুরস্কার', 'Lucky Spin Reward', 'جائزة عجلة الحظ')}</p>
                 <p class="text-[11px] text-[#7f8fb0] font-mono">${r.date || ''} ${r.time || ''}</p>
               </div>
             </div>
@@ -11385,23 +12667,25 @@ async function executeLuckySpin() {
   if (isLuckySpinAnimating) return;
   const user = getCurrentUser();
   if (!user) {
+    const l = getActiveLang();
     showView('login');
-    showToastNotification('অনুগ্রহ করে প্রথমে লগইন করুন।');
+    showToastNotification(tLang(l, 'অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.'));
     return;
   }
 
-  const lang = (window.aloI18n && window.aloI18n.getLanguage()) || 'bn';
+  const lang = getActiveLang(user);
   const startBtn = document.getElementById('lucky-spin-start-btn');
   if (startBtn) startBtn.disabled = true;
 
   try {
     const stats = await computeLuckySpinStats(user);
     if (stats.availableDraws <= 0) {
-      showToastNotification(
-        lang === 'en'
-          ? 'No draws available! Refer a Level 1 friend who recharges to unlock 1 spin.'
-          : '⚠️ আপনার ড্র ০! প্রথম লেভেলে রেফার যুক্ত করে সে রিচার্জ করলে ১টি ঘুরার সুযোগ পাবেন।'
-      );
+      showToastNotification(tLang(
+        lang,
+        '⚠️ আপনার ড্র ০! প্রথম লেভেলে রেফার যুক্ত করে সে রিচার্জ করলে ১টি ঘুরার সুযোগ পাবেন।',
+        'No draws available! Refer a Level 1 friend who recharges to unlock 1 spin.',
+        'لا توجد محاولات متاحة! قم بدعوة صديق في المستوى الأول يقوم بالإيداع لفتح محاولة واحدة.'
+      ));
       if (startBtn) startBtn.disabled = false;
       return;
     }
@@ -11441,29 +12725,32 @@ async function executeLuckySpin() {
     const latestUser = (normPhone ? await dbGetUser(normPhone) : null) || freshUser;
     latestUser.usedSpins = Math.max(Number(latestUser.usedSpins) || 0, freshUser.usedSpins);
 
+    const isUsd = isUsdOnlyUser(latestUser);
+    const wonAmount = getLuckySpinPrizeAmountForUser(prize.amount, latestUser);
     const prevBal = Number(latestUser.balance) || 0;
-    const nextBal = Number((prevBal + prize.amount).toFixed(2));
+    const nextBal = Number((prevBal + wonAmount).toFixed(2));
     latestUser.balance = nextBal;
-    latestUser.lifetimeEarnings = Number(((Number(latestUser.lifetimeEarnings) || 0) + prize.amount).toFixed(2));
-    latestUser.totalIncome = Number(((Number(latestUser.totalIncome) || 0) + prize.amount).toFixed(2));
-    latestUser.todayIncome = Number(((Number(latestUser.todayIncome) || 0) + prize.amount).toFixed(2));
+    latestUser.lifetimeEarnings = Number(((Number(latestUser.lifetimeEarnings) || 0) + wonAmount).toFixed(2));
+    latestUser.totalIncome = Number(((Number(latestUser.totalIncome) || 0) + wonAmount).toFixed(2));
+    latestUser.todayIncome = Number(((Number(latestUser.todayIncome) || 0) + wonAmount).toFixed(2));
 
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0];
+    const wonLabel = getLuckySpinPrizeLabelForUser(prize, latestUser, lang);
     const hist = Array.isArray(latestUser.spinHistory) ? latestUser.spinHistory.slice(0, 19) : [];
-    hist.unshift({ amount: prize.amount, label: prize.label, date: dateStr, time: timeStr });
+    hist.unshift({ amount: wonAmount, label: wonLabel, date: dateStr, time: timeStr });
     latestUser.spinHistory = hist;
 
     await dbSaveUser(latestUser);
     await dbRecordTransaction({
       phone: normPhone,
       type: 'commission',
-      amount: prize.amount,
+      amount: wonAmount,
       ratio: '100%',
-      actual: prize.amount,
+      actual: wonAmount,
       status: 'অনুমোদিত',
-      method: 'ভাগ্যবান স্পিন (Lucky Spin)',
+      method: isUsd ? 'Lucky Spin Reward' : 'ভাগ্যবান স্পিন (Lucky Spin)',
       date: dateStr,
       time: timeStr,
       newBalance: nextBal
@@ -11478,7 +12765,9 @@ async function executeLuckySpin() {
     const winModal = document.getElementById('lucky-spin-win-modal');
     const winAmtEl = document.getElementById('lucky-spin-win-amount');
     if (winAmtEl) {
-      winAmtEl.textContent = lang === 'en' ? `+${prize.amount}৳` : `+${formatBanglaNumber(String(prize.amount))}৳`;
+      winAmtEl.textContent = isUsd
+        ? `+$${wonAmount.toFixed(2)} USD`
+        : (lang !== 'bn' ? `+${prize.amount}৳` : `+${formatBanglaNumber(String(prize.amount))}৳`);
     }
     if (winModal) {
       winModal.classList.remove('hidden');
@@ -11488,7 +12777,7 @@ async function executeLuckySpin() {
     await renderLuckySpinPanel();
   } catch (err) {
     console.error('Lucky Spin error:', err);
-    showToastNotification('স্পিন সম্পন্ন করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।');
+    showToastNotification(tLang(lang, 'স্পিন সম্পন্ন করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।', 'Unable to complete spin, please try again.', 'تعذر إتمام السحب، يرجى المحاولة مرة أخرى.'));
   } finally {
     isLuckySpinAnimating = false;
     if (startBtn) startBtn.disabled = false;

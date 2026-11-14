@@ -69,7 +69,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, message: 'শুধুমাত্র POST মেথড গ্রহণযোগ্য।' });
+    return res.status(405).json({ success: false, message: 'শুধুমাত্র POST মেথড গ্রহণযোগ্য।', messageEn: 'Only POST method is allowed.' });
   }
 
   try {
@@ -81,7 +81,8 @@ export default async function handler(req, res) {
     if (!authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         success: false,
-        message: 'অননুমোদিত অনুরোধ! Authorization Bearer টোকেন পাওয়া যায়নি।'
+        message: 'অননুমোদিত অনুরোধ! Authorization Bearer টোকেন পাওয়া যায়নি।',
+        messageEn: 'Unauthorized request! Authorization Bearer token is missing.'
       });
     }
 
@@ -89,7 +90,8 @@ export default async function handler(req, res) {
     if (!accessToken) {
       return res.status(401).json({
         success: false,
-        message: 'অবৈধ Authorization টোকেন।'
+        message: 'অবৈধ Authorization টোকেন।',
+        messageEn: 'Invalid Authorization token.'
       });
     }
 
@@ -97,7 +99,8 @@ export default async function handler(req, res) {
     if (!supabaseAdmin) {
       return res.status(500).json({
         success: false,
-        message: 'সার্ভার কনফিগারেশন ত্রুটি: SUPABASE_SERVICE_ROLE_KEY পাওয়া যায়নি।'
+        message: 'সার্ভার কনফিগারেশন ত্রুটি: SUPABASE_SERVICE_ROLE_KEY পাওয়া যায়নি।',
+        messageEn: 'Server configuration error: missing SUPABASE_SERVICE_ROLE_KEY.'
       });
     }
 
@@ -105,7 +108,8 @@ export default async function handler(req, res) {
     if (authError || !authData || !authData.user) {
       return res.status(401).json({
         success: false,
-        message: 'ব্যবহারকারীর সেশন মেয়াদোত্তীর্ণ বা অবৈধ। পুনরায় লগইন করে চেষ্টা করুন।'
+        message: 'ব্যবহারকারীর সেশন মেয়াদোত্তীর্ণ বা অবৈধ। পুনরায় লগইন করে চেষ্টা করুন।',
+        messageEn: 'User session expired or invalid. Please log in again and retry.'
       });
     }
 
@@ -127,7 +131,8 @@ export default async function handler(req, res) {
     if (!rawTxHash) {
       return res.status(400).json({
         success: false,
-        message: 'অনুগ্রহ করে Transaction Hash (TxHash / TxID) প্রদান করুন।'
+        message: 'অনুগ্রহ করে Transaction Hash (TxHash / TxID) প্রদান করুন।',
+        messageEn: 'Please provide your Transaction Hash (TxHash / TxID).'
       });
     }
 
@@ -135,14 +140,16 @@ export default async function handler(req, res) {
     if (!/^0x[a-f0-9]{64}$/.test(cleanTxHash)) {
       return res.status(400).json({
         success: false,
-        message: 'ভুল TxHash ফরম্যাট! ট্রানজেকশন হ্যাশ অবশ্যই 0x দিয়ে শুরু হওয়া ৬৬ অক্ষরের হেক্সাডেসিমাল কোড হতে হবে।'
+        message: 'ভুল TxHash ফরম্যাট! ট্রানজেকশন হ্যাশ অবশ্যই 0x দিয়ে শুরু হওয়া ৬৬ অক্ষরের হেক্সাডেসিমাল কোড হতে হবে।',
+        messageEn: 'Invalid TxHash format! Transaction hash must start with 0x and be a 66-character hexadecimal string.'
       });
     }
 
     if (!rawSender) {
       return res.status(400).json({
         success: false,
-        message: 'অনুগ্রহ করে আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) প্রদান করুন।'
+        message: 'অনুগ্রহ করে আপনার প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) প্রদান করুন।',
+        messageEn: 'Please provide your sender wallet address.'
       });
     }
 
@@ -150,7 +157,8 @@ export default async function handler(req, res) {
     if (!ethers.isAddress(cleanSender)) {
       return res.status(400).json({
         success: false,
-        message: 'ভুল প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) ফরম্যাট।'
+        message: 'ভুল প্রেরক ওয়ালেট অ্যাড্রেস (Sender Address) ফরম্যাট।',
+        messageEn: 'Invalid sender wallet address format.'
       });
     }
 
@@ -170,21 +178,24 @@ export default async function handler(req, res) {
       console.error('[Deposit API] BSC RPC fetch error:', rpcErr);
       return res.status(502).json({
         success: false,
-        message: 'ব্লকচেইন নোডের সাথে সংযোগ করা যায়নি। অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।'
+        message: 'ব্লকচেইন নোডের সাথে সংযোগ করা যায়নি। অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।',
+        messageEn: 'Unable to connect to blockchain node. Please retry in a few seconds.'
       });
     }
 
     if (!receipt) {
       return res.status(404).json({
         success: false,
-        message: 'ট্রানজেকশনটি এখনো ব্লকচেইনে মাইন বা অন্তর্ভুক্ত হয়নি। অনুগ্রহ করে ১-২ মিনিট অপেক্ষা করে পুনরায় চেষ্টা করুন।'
+        message: 'ট্রানজেকশনটি এখনো ব্লকচেইনে মাইন বা অন্তর্ভুক্ত হয়নি। অনুগ্রহ করে ১-২ মিনিট অপেক্ষা করে পুনরায় চেষ্টা করুন।',
+        messageEn: 'Transaction not yet confirmed on the blockchain. Please wait 1–2 minutes and try again.'
       });
     }
 
     if (receipt.status !== 1) {
       return res.status(400).json({
         success: false,
-        message: 'এই ট্রানজেকশনটি ব্লকচেইনে বাতিল (Failed / Reverted) হয়েছে।'
+        message: 'এই ট্রানজেকশনটি ব্লকচেইনে বাতিল (Failed / Reverted) হয়েছে।',
+        messageEn: 'This transaction failed or was reverted on the blockchain.'
       });
     }
 
@@ -193,6 +204,7 @@ export default async function handler(req, res) {
       return res.status(400).json({
         success: false,
         message: `ট্রানজেকশনটি এখনো পর্যাপ্ত কনফার্মেশন পায়নি (বর্তমান কনফার্মেশন: ${Math.max(0, confirmations)}/${MIN_CONFIRMATIONS})। ব্লকচেইন সুরক্ষার জন্য কমপক্ষে ১৫ কনফার্মেশন প্রয়োজন। অনুগ্রহ করে আরও কিছুক্ষণ অপেক্ষা করুন।`,
+        messageEn: `Transaction does not have enough confirmations yet (${Math.max(0, confirmations)}/${MIN_CONFIRMATIONS}). At least ${MIN_CONFIRMATIONS} confirmations are required.`,
         confirmations: Math.max(0, confirmations),
         requiredConfirmations: MIN_CONFIRMATIONS
       });
@@ -252,7 +264,8 @@ export default async function handler(req, res) {
     if (!matchedTransfer) {
       return res.status(400).json({
         success: false,
-        message: `ব্লকচেইন রেকর্ডে আপনার প্রেরক অ্যাড্রেস (${cleanSender}) থেকে কোম্পানির ডিপোজিট ওয়ালেটে (${COMPANY_BEP20_ADDRESS}) কোনো অনুমোদিত USDT (BEP20) Transfer ইভেন্ট পাওয়া যায়নি।`
+        message: `ব্লকচেইন রেকর্ডে আপনার প্রেরক অ্যাড্রেস (${cleanSender}) থেকে কোম্পানির ডিপোজিট ওয়ালেটে (${COMPANY_BEP20_ADDRESS}) কোনো অনুমোদিত USDT (BEP20) Transfer ইভেন্ট পাওয়া যায়নি।`,
+        messageEn: `No matching USDT (BEP20) Transfer event found from ${cleanSender} to ${COMPANY_BEP20_ADDRESS}.`
       });
     }
 
@@ -282,18 +295,21 @@ export default async function handler(req, res) {
       if (rpcError.message && (rpcError.message.includes('unique') || rpcError.code === '23505')) {
         return res.status(400).json({
           success: false,
-          message: 'এই ট্রানজেকশনটি (TxHash ও log_index) ইতিপূর্বে সিস্টেমে অনুমোদিত হয়ে গেছে!'
+          message: 'এই ট্রানজেকশনটি (TxHash ও log_index) ইতিপূর্বে সিস্টেমে অনুমোদিত হয়ে গেছে!',
+          messageEn: 'This transaction (TxHash & log_index) has already been approved and credited!'
         });
       }
       return res.status(400).json({
         success: false,
-        message: rpcError.message || 'ডাটাবেসে ডিপোজিট প্রসেস করার সময় ত্রুটি ঘটেছে।'
+        message: rpcError.message || 'ডাটাবেসে ডিপোজিট প্রসেস করার সময় ত্রুটি ঘটেছে।',
+        messageEn: rpcError.message || 'Error processing deposit in database.'
       });
     }
 
     return res.status(200).json({
       success: true,
       message: `অভিনন্দন! আপনার ${verifiedUsdt} USDT (৳ ${verifiedBdt.toLocaleString('en-US')}) ডিপোজিট সফলভাবে ব্লকচেইনে ভেরিফাই ও ব্যালেন্সে যুক্ত হয়েছে!`,
+      messageEn: `Congratulations! Your ${verifiedUsdt} USDT deposit has been verified on-chain and credited to your balance.`,
       deposit: {
         txHash: cleanTxHash,
         logIndex: matchedTransfer.logIndex,
@@ -312,7 +328,8 @@ export default async function handler(req, res) {
     console.error('[Deposit API] Unhandled server error:', error);
     return res.status(500).json({
       success: false,
-      message: 'অভ্যন্তরীণ সার্ভার ত্রুটি: ' + (error.message || 'Unknown error')
+      message: 'অভ্যন্তরীণ সার্ভার ত্রুটি: ' + (error.message || 'Unknown error'),
+      messageEn: 'Internal server error: ' + (error.message || 'Unknown error')
     });
   }
 }

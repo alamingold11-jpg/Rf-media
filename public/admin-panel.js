@@ -1437,13 +1437,13 @@ const DEFAULT_PLATFORM_CONTROLS = {
 const PACKAGE_LEVEL_KEYS = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
 
 const DEFAULT_PACKAGE_CONFIGS = {
-  LV0: { count: 5, reward: 20, price: 0, nameBn: 'ফ্রি স্তর', nameEn: 'Free Tier', nameHi: 'निःशुल्क स्तर' },
-  LV1: { count: 6, reward: 30, price: 3500, nameBn: 'বেসিক প্যাকেজ', nameEn: 'Basic Package', nameHi: 'बेसिक पैकेज' },
-  LV2: { count: 12, reward: 40, price: 7500, nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameEn: 'Standard Package', nameHi: 'स्टैंडर्ड पैकेज' },
-  LV3: { count: 15, reward: 50, price: 36000, nameBn: 'সিলভার প্যাকেজ', nameEn: 'Silver Package', nameHi: 'सिल्वर पैकेज' },
-  LV4: { count: 25, reward: 60, price: 84000, nameBn: 'গোল্ড প্যাকেজ', nameEn: 'Gold Package', nameHi: 'गोल्ड पैकेज' },
-  LV5: { count: 35, reward: 70, price: 150000, nameBn: 'প্রিমিয়াম প্যাকেজ', nameEn: 'Premium Package', nameHi: 'प्रीमियम पैकेज' },
-  LV6: { count: 50, reward: 100, price: 300000, nameBn: 'এলিট প্যাকেজ', nameEn: 'Elite Package', nameHi: 'एलीट पैकेज' }
+  LV0: { count: 5, reward: 20, price: 0, nameBn: 'ফ্রি স্তর', nameEn: 'Free Tier', nameAr: 'المستوى المجاني' },
+  LV1: { count: 6, reward: 30, price: 3500, nameBn: 'বেসিক প্যাকেজ', nameEn: 'Basic Package', nameAr: 'الباقة الأساسية' },
+  LV2: { count: 12, reward: 40, price: 7500, nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameEn: 'Standard Package', nameAr: 'الباقة القياسية' },
+  LV3: { count: 15, reward: 50, price: 36000, nameBn: 'সিলভার প্যাকেজ', nameEn: 'Silver Package', nameAr: 'الباقة الفضية' },
+  LV4: { count: 25, reward: 60, price: 84000, nameBn: 'গোল্ড প্যাকেজ', nameEn: 'Gold Package', nameAr: 'الباقة الذهبية' },
+  LV5: { count: 35, reward: 70, price: 150000, nameBn: 'প্রিমিয়াম প্যাকেজ', nameEn: 'Premium Package', nameAr: 'الباقة المميزة' },
+  LV6: { count: 50, reward: 100, price: 300000, nameBn: 'এলিট প্যাকেজ', nameEn: 'Elite Package', nameAr: 'باقة النخبة' }
 };
 
 let latestSystemConfig = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, {
@@ -1474,7 +1474,7 @@ function normalizePackagesMap(rawPackages) {
       price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : def.price,
       nameBn: String(src.nameBn || '').trim() || def.nameBn,
       nameEn: String(src.nameEn || '').trim() || def.nameEn,
-      nameHi: String(src.nameHi || '').trim() || def.nameHi
+      nameAr: String(src.nameAr || '').trim() || def.nameAr
     };
   });
   return out;
@@ -1555,9 +1555,9 @@ function renderPackageConfigEditor(packagesObj) {
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
           </div>
           <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">हिन्दी नाम (Hindi)</label>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">العربية (Arabic)</label>
             <input type="text" required
-              data-pkg-level="${lvl}" data-pkg-field="nameHi" value="${escapeHtml(p.nameHi)}"
+              data-pkg-level="${lvl}" data-pkg-field="nameAr" value="${escapeHtml(p.nameAr)}"
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
           </div>
         </div>
@@ -1601,7 +1601,7 @@ function collectPackagesFromForm() {
       price: Number.isFinite(priceVal) && priceVal >= 0 ? priceVal : def.price,
       nameBn: String(getVal('nameBn')).trim() || def.nameBn,
       nameEn: String(getVal('nameEn')).trim() || def.nameEn,
-      nameHi: String(getVal('nameHi')).trim() || def.nameHi
+      nameAr: String(getVal('nameAr')).trim() || def.nameAr
     };
   });
   return out;

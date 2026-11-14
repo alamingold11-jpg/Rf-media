@@ -25,7 +25,8 @@ export default async function handler(req, res) {
       success: false,
       nonRetryable: true,
       code: 'API_KEY_MISSING',
-      message: 'সার্ভারে বৈধ GEMINI_API_KEY সেট করা নেই (Vercel Environment Variables বা Settings > Secrets চেক করুন)।'
+      message: 'সার্ভারে বৈধ GEMINI_API_KEY সেট করা নেই (Vercel Environment Variables বা Settings > Secrets চেক করুন)।',
+      messageEn: 'Valid GEMINI_API_KEY is not configured on the server.'
     });
   }
 
@@ -42,7 +43,8 @@ export default async function handler(req, res) {
       isLiked: false,
       reasonBn: 'সঠিক ফরম্যাটের স্ক্রিনশট পাওয়া যায়নি',
       reasonEn: 'Invalid screenshot image format',
-      message: 'সঠিক ফরম্যাটের স্ক্রিনশট পাওয়া যায়নি'
+      message: 'সঠিক ফরম্যাটের স্ক্রিনশট পাওয়া যায়নি',
+      messageEn: 'Invalid screenshot image format'
     });
   }
 
@@ -109,9 +111,13 @@ Respond strictly using the JSON schema.`;
               reasonEn: {
                 type: Type.STRING,
                 description: 'Short English explanation under 12 words.'
+              },
+              reasonAr: {
+                type: Type.STRING,
+                description: 'Short natural Arabic explanation under 12 words.'
               }
             },
-            required: ['isLiked', 'detectedPlatform', 'reasonBn', 'reasonEn']
+            required: ['isLiked', 'detectedPlatform', 'reasonBn', 'reasonEn', 'reasonAr']
           }
         }
       });
@@ -125,7 +131,8 @@ Respond strictly using the JSON schema.`;
         isLiked,
         detectedPlatform: String(parsed.detectedPlatform || expectedPlatform),
         reasonBn: String(parsed.reasonBn || (isLiked ? 'স্ক্রিনশটে লাইক শনাক্ত হয়েছে' : 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি')),
-        reasonEn: String(parsed.reasonEn || (isLiked ? 'Active Like confirmed' : 'Active Like not found in screenshot'))
+        reasonEn: String(parsed.reasonEn || (isLiked ? 'Active Like confirmed' : 'Active Like not found in screenshot')),
+        reasonAr: String(parsed.reasonAr || (isLiked ? 'تم تأكيد الإعجاب بنجاح' : 'لم يتم العثور على إعجاب صالح في لقطة الشاشة'))
       });
     } catch (err) {
       lastError = err;
@@ -139,7 +146,8 @@ Respond strictly using the JSON schema.`;
           success: false,
           nonRetryable: true,
           code: 'API_KEY_INVALID',
-          message: 'Gemini API কী সঠিক নয় — Settings > Secrets প্যানেল থেকে বৈধ GEMINI_API_KEY চেক বা সিলেক্ট করুন।'
+          message: 'Gemini API কী সঠিক নয় — Settings > Secrets প্যানেল থেকে বৈধ GEMINI_API_KEY চেক বা সিলেক্ট করুন।',
+          messageEn: 'Gemini API key is invalid or unauthorized. Please check server configuration.'
         });
       }
 
@@ -152,6 +160,8 @@ Respond strictly using the JSON schema.`;
   console.error('[Verify-Like API] Transient Error:', lastError && lastError.message ? lastError.message : lastError);
   return res.status(502).json({
     success: false,
-    message: 'স্ক্রিনশট যাচাই করতে সাময়িক সমস্যা হয়েছে।'
+    message: 'স্ক্রিনশট যাচাই করতে সাময়িক সমস্যা হয়েছে।',
+    messageEn: 'Temporary error verifying screenshot. Please wait.',
+    reasonEn: 'Temporary verification error'
   });
 }
