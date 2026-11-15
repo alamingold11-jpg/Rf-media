@@ -148,7 +148,8 @@ function mapSupabaseUser(d) {
     : [d.package_level || d.packageLevel || 'LV0'];
   if (!purchasedPackages.includes('LV0')) purchasedPackages.unshift('LV0');
 
-  const mappedLang = normalizeAppLang(opt.language || 'en');
+  const isManualLang = Boolean(opt.language_manual);
+  const mappedLang = isManualLang ? normalizeAppLang(opt.language || 'en') : 'en';
   const defaultNameForLang = tLang(mappedLang, 'সদস্য', 'Member', 'عضو');
   const rawName = String(d.name || '').trim();
   const isDefaultPlaceholder = !rawName || rawName === 'সদস্য' || rawName === 'Member' || rawName === 'عضو' || rawName === 'सदस्य';
@@ -169,6 +170,9 @@ function mapSupabaseUser(d) {
     purchasedPackages: purchasedPackages,
     balance: typeof d.balance === 'number' ? d.balance : parseFloat(d.balance || 0) || 0,
     frozenBalance: Number(opt.frozen_balance) || 0,
+    lv0FrozenBalance: Number(opt.lv0_frozen_balance) || 0,
+    adminUnfrozenBalance: Number(opt.admin_unfrozen_balance) || 0,
+    rechargeFrozenBalance: opt.recharge_frozen_balance !== undefined ? (Number(opt.recharge_frozen_balance) || 0) : null,
     lifetimeEarnings: Number(opt.lifetime_earnings) || 0,
     todayIncome: Number(opt.today_income) || 0,
     totalIncome: Number(opt.total_income) || 0,
@@ -192,6 +196,7 @@ function mapSupabaseUser(d) {
     })(),
     dialCode: opt.dial_code || '',
     language: mappedLang,
+    languageManual: isManualLang,
     bkashName: d.bkash_name || d.bkashName || '',
     bkashPhone: d.bkash_phone || d.bkashPhone || '',
     bkash: {
@@ -485,9 +490,17 @@ function initSupabaseLiveSync(user) {
           }
 
           const updated = Object.assign({}, currentUser, mapped || {});
-          updated.language = normalizeAppLang((mapped && mapped.language) || currentUser.language || localStorage.getItem('alo_lang') || 'en');
+          const localManual = localStorage.getItem('alo_lang_manual') === '1';
+          const resolvedLang = (mapped && mapped.languageManual)
+            ? normalizeAppLang(mapped.language || 'en')
+            : (localManual ? normalizeAppLang(localStorage.getItem('alo_lang') || currentUser.language || 'en') : 'en');
+          updated.language = resolvedLang;
+          updated.languageManual = Boolean((mapped && mapped.languageManual) || localManual || currentUser.languageManual);
           hydrateUserCachesFromCloud(updated);
           localStorage.setItem('aloSignedInUser', JSON.stringify(updated));
+          if (typeof setAppLanguage === 'function' && window.aloI18n && window.aloI18n.getLanguage() !== resolvedLang) {
+            setAppLanguage(resolvedLang, { silent: true });
+          }
           if (typeof updateUserDetails === 'function') updateUserDetails(updated);
           if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
           if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
@@ -501,6 +514,13 @@ function initSupabaseLiveSync(user) {
           }
           if (typeof renderSavingsPlanPanel === 'function') renderSavingsPlanPanel();
           if (typeof renderMissionRecords === 'function') renderMissionRecords(activeMissionFilter);
+          const withdrawSheet = document.getElementById('my-pass-withdraw-sheet');
+          if (withdrawSheet && !withdrawSheet.hidden) {
+            const availEl = document.getElementById('withdraw-sheet-avail-val');
+            const frozenEl = document.getElementById('withdraw-sheet-frozen-val');
+            if (availEl) availEl.textContent = (Number(updated.balance) || 0).toFixed(2);
+            if (frozenEl) frozenEl.textContent = (Number(updated.frozenBalance) || 0).toFixed(2);
+          }
           const spinPanel = document.getElementById('lucky-spin-panel');
           if (spinPanel && !spinPanel.hidden && typeof renderLuckySpinPanel === 'function') {
             renderLuckySpinPanel();
@@ -662,6 +682,9 @@ async function dbSaveUser(account) {
         fund_password: account.fundPassword || baseOpt.fund_password || '',
         account_status: account.accountStatus || baseOpt.account_status || 'active',
         frozen_balance: typeof account.frozenBalance === 'number' ? account.frozenBalance : (Number(baseOpt.frozen_balance) || 0),
+        lv0_frozen_balance: typeof account.lv0FrozenBalance === 'number' ? account.lv0FrozenBalance : (Number(baseOpt.lv0_frozen_balance) || 0),
+        admin_unfrozen_balance: typeof account.adminUnfrozenBalance === 'number' ? account.adminUnfrozenBalance : (Number(baseOpt.admin_unfrozen_balance) || 0),
+        recharge_frozen_balance: typeof account.rechargeFrozenBalance === 'number' ? account.rechargeFrozenBalance : (baseOpt.recharge_frozen_balance !== undefined ? (Number(baseOpt.recharge_frozen_balance) || 0) : 0),
         lifetime_earnings: typeof account.lifetimeEarnings === 'number' ? account.lifetimeEarnings : (Number(baseOpt.lifetime_earnings) || 0),
         today_income: typeof account.todayIncome === 'number' ? account.todayIncome : (Number(baseOpt.today_income) || 0),
         total_income: typeof account.totalIncome === 'number' ? account.totalIncome : (Number(baseOpt.total_income) || 0),
@@ -691,7 +714,8 @@ async function dbSaveUser(account) {
         country: account.country || baseOpt.country || 'BD',
         currency: (account.country || baseOpt.country || 'BD') === 'BD' ? 'BDT' : 'USD',
         dial_code: account.dialCode || baseOpt.dial_code || '+880',
-        language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || baseOpt.language || 'en')
+        language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || baseOpt.language || 'en'),
+        language_manual: Boolean(account.languageManual || (account.profileData && account.profileData.languageManual) || baseOpt.language_manual)
       });
 
       account._rawOpt = extraMeta;
@@ -731,7 +755,7 @@ async function dbSaveUser(account) {
       const payload = {
         phone: account.phone || account.accountNumber,
         accountNumber: account.accountNumber || account.phone,
-        name: account.name || 'সদস্য',
+        name: account.name || tLang(normalizeAppLang(account.language || 'en'), 'সদস্য', 'Member', 'عضو'),
         passwordHash: account.passwordHash || '',
         plainPassword: account.plainPassword || '',
         memberId: account.memberId || ('AL' + Date.now().toString().slice(-8)),
@@ -739,12 +763,20 @@ async function dbSaveUser(account) {
         superiorId: account.superiorId || '11',
         packageLevel: account.packageLevel || 'LV0',
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
+        frozenBalance: typeof account.frozenBalance === 'number' ? account.frozenBalance : 0.00,
+        lv0FrozenBalance: typeof account.lv0FrozenBalance === 'number' ? account.lv0FrozenBalance : 0.00,
+        rechargeFrozenBalance: typeof account.rechargeFrozenBalance === 'number' ? account.rechargeFrozenBalance : 0.00,
         bkashName: (account.bkash && account.bkash.fullName) || account.bkashName || '',
         bkashPhone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
         nagadName: (account.nagad && account.nagad.fullName) || account.nagadName || '',
         nagadPhone: (account.nagad && account.nagad.phone) || account.nagadPhone || '',
         usdtName: (account.usdt && account.usdt.fullName) || account.usdtName || '',
         usdtAddress: (account.usdt && account.usdt.address) || account.usdtAddress || '',
+        country: account.country || 'BD',
+        currency: (account.country || 'BD') === 'BD' ? 'BDT' : 'USD',
+        dialCode: account.dialCode || '+880',
+        language: normalizeAppLang(account.language || 'en'),
+        languageManual: Boolean(account.languageManual),
         updatedAt: new Date().toISOString(),
         createdAt: account.createdAt || new Date().toISOString()
       };
@@ -1452,7 +1484,7 @@ async function dbGetTransactions(phone, type) {
 }
 
 // Alo App Core Script
-const viewIds = ['home', 'login', 'register', 'dashboard'];
+const viewIds = ['landing', 'home', 'login', 'register', 'dashboard'];
 const dashboardTitles = {
   home: 'Home',
   vip: 'Hall',
@@ -1590,29 +1622,143 @@ window.addEventListener('alo-language-changed', function(e) {
   } catch(err) {}
 });
 
-const viewOrder = { home: 0, login: 1, register: 2, dashboard: 3 };
+// PW NEW MEDIA Landing Page Certificates & Lightbox (add image paths to CERTS[].src when ready)
+var CERTS = [
+  { n: 'TikTok', code: 'PW-TT-2026', descKey: 'lp_cert_tt_desc', src: '' },
+  { n: 'Facebook', code: 'PW-FB-2026', descKey: 'lp_cert_fb_desc', src: '' },
+  { n: 'YouTube', code: 'PW-YT-2026', descKey: 'lp_cert_yt_desc', src: '' }
+];
+window.CERTS = CERTS;
+
+var LANDING_LG = {
+  TikTok: '<svg class="lg" viewBox="0 0 24 24" aria-hidden="true"><defs><path id="lp-tt" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></defs><use href="#lp-tt" fill="#25F4EE" transform="translate(-.7 -.5)"/><use href="#lp-tt" fill="#FE2C55" transform="translate(.7 .5)"/><use href="#lp-tt" fill="currentColor"/></svg>',
+  Facebook: '<svg class="lg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="#1877F2"/><path fill="#fff" d="M13.2 20v-6.6h2.2l.4-2.6h-2.6V9.2c0-.8.3-1.3 1.4-1.3h1.3V5.6c-.2 0-1-.1-1.9-.1-2 0-3.3 1.2-3.3 3.4v1.9H8.5v2.6h2.2V20z"/></svg>',
+  YouTube: '<svg class="lg" viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4.5" width="22" height="15" rx="4.5" fill="#FF0000"/><path fill="#fff" d="M10 8.8v6.4l5.5-3.2z"/></svg>'
+};
+
+function buildLandingCertificateMarkup(c, fullView) {
+  const logoHtml = LANDING_LG[c.n] || '';
+  const code = c.code || ('PW-' + c.n.slice(0, 2).toUpperCase() + '-2026');
+  const descKey = c.descKey || 'lp_ce_p';
+  const t = function(k, fallback) {
+    return (window.aloI18n && typeof window.aloI18n.t === 'function') ? window.aloI18n.t(k) : (fallback || '');
+  };
+  const metaHtml = fullView
+    ? '<div class="lp-cert-meta">' +
+        '<div><span data-i18n="lp_cert_ref_label">' + t('lp_cert_ref_label', 'Certificate ID') + '</span><strong class="notranslate">' + code + '</strong></div>' +
+        '<div><span data-i18n="lp_cert_year_label">' + t('lp_cert_year_label', 'Year') + '</span><strong class="notranslate">2026</strong></div>' +
+        '<div><span data-i18n="lp_cert_auth">' + t('lp_cert_auth', 'Authorized Program') + '</span><strong data-i18n="lp_cert_status">' + t('lp_cert_status', 'Active Partner') + '</strong></div>' +
+      '</div>'
+    : '';
+  const footHtml = fullView
+    ? '<div class="lp-cert-foot">' +
+        '<div class="lp-cert-sign notranslate">PW NEW MEDIA<span data-i18n="lp_cert_auth">' + t('lp_cert_auth', 'Authorized Program') + '</span></div>' +
+        '<span class="lp-cert-seal" data-i18n="lp_cert_status">' + t('lp_cert_status', 'Active Partner') + '</span>' +
+      '</div>'
+    : '<div class="lp-cert-foot">' +
+        '<span class="lp-cert-ref notranslate">' + code + '</span>' +
+        '<span class="lp-cert-seal" data-i18n="lp_cert_status">' + t('lp_cert_status', 'Active Partner') + '</span>' +
+      '</div>';
+
+  return (
+    '<div class="' + (fullView ? 'lp-cert-full' : 'lp-cert-mini') + '">' +
+      '<div class="lp-cert-top">' +
+        '<span class="lp-cert-pair notranslate" dir="ltr">' + logoHtml + '<span>PW NEW MEDIA</span><i>×</i><span>' + c.n + '</span></span>' +
+        '<span class="lp-cert-kicker" data-i18n="lp_cert_badge">' + t('lp_cert_badge', 'OFFICIAL COLLABORATION') + '</span>' +
+      '</div>' +
+      '<div class="lp-cert-body">' +
+        '<strong data-i18n="lp_cert_title">' + t('lp_cert_title', 'Media Campaign Partner') + '</strong>' +
+        '<div class="lp-cert-rule" aria-hidden="true"></div>' +
+        '<p data-i18n="' + descKey + '">' + t(descKey, '') + '</p>' +
+      '</div>' +
+      metaHtml +
+      footHtml +
+    '</div>'
+  );
+}
+
+function renderLandingCertificates() {
+  const cg = document.getElementById('landing-cg');
+  const lb = document.getElementById('landing-lb');
+  if (!cg) return;
+  cg.innerHTML = '';
+  (window.CERTS || CERTS).forEach(function(c) {
+    const b = document.createElement('button');
+    b.className = 'cs';
+    b.type = 'button';
+    b.innerHTML =
+      '<div class="cf">' +
+      (c.src ? '<img alt="' + c.n + '" src="' + c.src + '">' : buildLandingCertificateMarkup(c, false)) +
+      '</div><b>' + (LANDING_LG[c.n] || '') + '<span class="notranslate">' + c.n + '</span></b>';
+    b.onclick = function() {
+      if (!lb) return;
+      lb.innerHTML = c.src
+        ? '<img alt="' + c.n + '" src="' + c.src + '">'
+        : buildLandingCertificateMarkup(c, true);
+      lb.hidden = false;
+    };
+    cg.appendChild(b);
+  });
+
+  if (lb && !lb.dataset.lbBound) {
+    lb.dataset.lbBound = 'true';
+    lb.addEventListener('click', function() {
+      lb.hidden = true;
+      lb.innerHTML = '';
+    });
+  }
+
+  document.querySelectorAll('#landing-view [data-landing-modal]').forEach(function(link) {
+    if (link.dataset.modalBound) return;
+    link.dataset.modalBound = 'true';
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (!lb || !window.aloI18n) return;
+      const type = link.getAttribute('data-landing-modal');
+      const titleKey = type === 'terms' ? 'lp_terms' : (type === 'priv' ? 'lp_priv' : 'lp_sup');
+      const bodyKey = type === 'terms' ? 'lp_terms_body' : (type === 'priv' ? 'lp_priv_body' : 'lp_sup_body');
+      const titleText = window.aloI18n.t(titleKey);
+      const bodyText = window.aloI18n.t(bodyKey);
+      lb.innerHTML = '';
+      const box = document.createElement('div');
+      const titleNode = document.createElement('span');
+      titleNode.textContent = titleText;
+      const bodyNode = document.createElement('p');
+      bodyNode.textContent = bodyText;
+      box.appendChild(titleNode);
+      box.appendChild(bodyNode);
+      lb.appendChild(box);
+      lb.hidden = false;
+    });
+  });
+}
+window.renderLandingCertificates = renderLandingCertificates;
+
+const viewOrder = { landing: 0, home: 0, login: 1, register: 2, dashboard: 3 };
 let viewTransitionTimer = null;
 let viewsReady = false;
 
 function showView(viewName, style) {
-  if (viewName === 'home') {
+  if (viewName === 'landing' || viewName === 'home') {
     const user = getCurrentUser();
     if (user) {
       showView('dashboard');
       openDashboardPanel('home');
       return;
-    } else {
-      showView('login');
-      return;
     }
+    viewName = 'landing';
   }
-  const nextView = viewIds.includes(viewName) ? viewName : 'login';
+  const nextView = viewIds.includes(viewName) ? viewName : 'landing';
   const nextEl = document.getElementById(nextView + '-view');
   const allViews = Array.from(document.querySelectorAll('.page-view'));
   const currentEl = allViews.find(function(view) { return !view.hidden; });
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const applyHidden = function() {
     allViews.forEach(function(view) { view.hidden = view.id !== nextView + '-view'; });
+    document.documentElement.classList.toggle('landing-active', nextView === 'landing');
+    if (nextView === 'landing') {
+      renderLandingCertificates();
+    }
     if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
       window.aloI18n.translateDOM();
     }
@@ -2182,7 +2328,7 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
 
   const balEl = document.getElementById('records-balance-display');
   if (balEl) {
-    balEl.textContent = formatMoney(newBal, liveUser);
+    balEl.textContent = formatMoney(Number((newBal + (Number(liveUser.rechargeFrozenBalance) || 0)).toFixed(2)), liveUser);
     balEl.classList.add('scale-110', 'text-emerald-400');
     setTimeout(() => balEl.classList.remove('scale-110', 'text-emerald-400'), 1500);
   }
@@ -2500,7 +2646,11 @@ function updateUserDetails(user) {
   user.currencySymbol = isBd ? '৳' : '$';
   user.currencyName = isBd ? 'Taka' : 'USD';
   user.dialCode = isBd ? '+880' : (user.dialCode || countryObj.dialCode || '');
-  user.language = normalizeAppLang(user.language || (window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
+  const isManualLang = Boolean(user.languageManual || localStorage.getItem('alo_lang_manual') === '1');
+  user.languageManual = isManualLang;
+  user.language = isManualLang
+    ? normalizeAppLang((localStorage.getItem('alo_lang_manual') === '1' ? localStorage.getItem('alo_lang') : '') || user.language || (window.aloI18n ? window.aloI18n.getLanguage() : '') || 'en')
+    : normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || 'en');
 
   try {
     localStorage.setItem('aloSignedInUser', JSON.stringify(user));
@@ -2700,9 +2850,16 @@ window.addEventListener('alo-language-changed', function(e) {
   const lang = normalizeAppLang((e && e.detail && e.detail.lang) || (window.aloI18n && window.aloI18n.getLanguage()) || 'en');
   const user = getCurrentUser();
   if (user) {
+    const isUserInit = Boolean(e && e.detail && e.detail.userInitiated);
     user.language = lang;
+    if (isUserInit) {
+      user.languageManual = true;
+    }
     if (!user.profileData || typeof user.profileData !== 'object') user.profileData = {};
     user.profileData.language = lang;
+    if (isUserInit) {
+      user.profileData.languageManual = true;
+    }
     try {
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
     } catch(err) {}
@@ -2711,7 +2868,7 @@ window.addEventListener('alo-language-changed', function(e) {
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
     if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
     if (typeof updateTeamReportMetrics === 'function') updateTeamReportMetrics();
-    if (e && e.detail && e.detail.userInitiated && typeof dbSaveUser === 'function') {
+    if (isUserInit && typeof dbSaveUser === 'function') {
       clearTimeout(_langSaveTimer);
       _langSaveTimer = setTimeout(function() {
         dbSaveUser(user).catch(function() {});
@@ -3266,6 +3423,31 @@ if (loginForm) {
         return;
       }
 
+      const accountCountryCode = String(account.country || (account.profileData && account.profileData.country) || 'BD').trim().toUpperCase();
+      const selectedLoginCode = String(loginCountry.code || 'BD').trim().toUpperCase();
+      if (accountCountryCode !== selectedLoginCode) {
+        const regCountryObj = getCountryByCode(accountCountryCode) || COUNTRY_DATABASE[0];
+        const regCountryName = currentAppLang === 'bn'
+          ? (regCountryObj.nameBn || regCountryObj.nameEn)
+          : (currentAppLang === 'ar' ? (regCountryObj.nameAr || regCountryObj.nameEn) : regCountryObj.nameEn);
+        const regCountryLabel = `${regCountryName} (${regCountryObj.dialCode || ''})`;
+        const wrongCountryMsg = tLang(
+          currentAppLang,
+          `এই অ্যাকাউন্টটি "${regCountryLabel}" দিয়ে নিবন্ধিত। প্রবেশ করতে অনুগ্রহ করে "${regCountryLabel}" দেশ নির্বাচন করুন।`,
+          `This account was registered with ${regCountryLabel}. Please select ${regCountryLabel} to log in.`,
+          `هذا الحساب مسجل بدولة ${regCountryLabel}. يرجى اختيار ${regCountryLabel} لتسجيل الدخول.`
+        );
+        if (message) {
+          message.textContent = wrongCountryMsg;
+          message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
+        }
+        const countrySelectEl = document.getElementById('login-country-select');
+        if (countrySelectEl) {
+          countrySelectEl.focus();
+        }
+        return;
+      }
+
       if (account.accountStatus === 'banned') {
         const banMsg = tLang(
           currentAppLang,
@@ -3286,11 +3468,13 @@ if (loginForm) {
       clearUserCachesOnAuthSwitch();
 
       const regNumber = account.accountNumber || account.phone || normPhone;
-      const accCountryCode = (account.country && String(account.country).toUpperCase()) || loginCountry.code || 'BD';
-      const isAccBd = accCountryCode === 'BD' && loginCountry.code === 'BD';
-      const resolvedCode = isAccBd ? 'BD' : (accCountryCode !== 'BD' ? accCountryCode : loginCountry.code);
-      const resolvedCountry = getCountryByCode(resolvedCode);
-      const targetUserLang = normalizeAppLang(account.language || currentAppLang || 'en');
+      const isAccBd = accountCountryCode === 'BD';
+      const resolvedCountry = getCountryByCode(accountCountryCode) || loginCountry;
+      const localManual = localStorage.getItem('alo_lang_manual') === '1';
+      const targetUserLang = localManual
+        ? currentAppLang
+        : (account.languageManual ? normalizeAppLang(account.language || 'en') : 'en');
+      const targetLangManual = Boolean(localManual || account.languageManual);
       const signedInUser = Object.assign({}, account, {
         name: (!account.name || account.name === 'সদস্য' || account.name === 'Member' || account.name === 'عضو' || account.name === 'सदस्य') ? tLang(targetUserLang, 'সদস্য', 'Member', 'عضو') : account.name,
         phone: regNumber,
@@ -3301,21 +3485,22 @@ if (loginForm) {
         packageLevel: account.packageLevel || 'LV0',
         purchasedPackages: Array.isArray(account.purchasedPackages) && account.purchasedPackages.length > 0 ? account.purchasedPackages : ['LV0'],
         balance: typeof account.balance === 'number' ? account.balance : 0.00,
-        country: isAccBd ? 'BD' : resolvedCountry.code,
+        country: resolvedCountry.code,
         countryName: isAccBd ? 'বাংলাদেশ' : resolvedCountry.nameEn,
         countryNameEn: isAccBd ? 'Bangladesh' : resolvedCountry.nameEn,
         currency: isAccBd ? 'BDT' : 'USD',
         currencySymbol: isAccBd ? '৳' : '$',
         currencyName: isAccBd ? 'Taka' : 'USD',
         dialCode: isAccBd ? '+880' : (account.dialCode || resolvedCountry.dialCode || ''),
-        language: targetUserLang
+        language: targetUserLang,
+        languageManual: targetLangManual
       });
 
       hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
 
       if (typeof setAppLanguage === 'function') {
-        setAppLanguage(targetUserLang, { silent: true });
+        setAppLanguage(targetUserLang, { silent: !targetLangManual });
       }
 
       if (message) message.textContent = '';
@@ -3419,7 +3604,10 @@ if (registerForm) {
     const isBd = country.code === 'BD';
     const countryCode = country.code;
     const regLangSelect = document.getElementById('register-language-switch');
-    const targetLang = normalizeAppLang((regLangSelect && regLangSelect.value) || (window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'en');
+    const hasManualChoice = localStorage.getItem('alo_lang_manual') === '1' || Boolean(regLangSelect && regLangSelect.value && regLangSelect.value !== 'en');
+    const targetLang = hasManualChoice
+      ? normalizeAppLang((regLangSelect && regLangSelect.value) || (window.aloI18n && window.aloI18n.getLanguage()) || localStorage.getItem('alo_lang') || 'en')
+      : 'en';
     const countryName = isBd ? 'বাংলাদেশ' : country.nameEn;
     const countryNameEn = country.nameEn;
     const currencyCode = isBd ? 'BDT' : 'USD';
@@ -3524,6 +3712,8 @@ if (registerForm) {
         purchasedPackages: ['LV0'],
         balance: 0.00,
         frozenBalance: 0.00,
+        lv0FrozenBalance: 0.00,
+        rechargeFrozenBalance: 0.00,
         lifetimeEarnings: 0.00,
         todayIncome: 0.00,
         totalIncome: 0.00,
@@ -3542,6 +3732,7 @@ if (registerForm) {
         currencyName: currencyName,
         dialCode: dialCode,
         language: targetLang,
+        languageManual: hasManualChoice,
         profileData: {
           country: countryCode,
           countryName: countryName,
@@ -3549,7 +3740,8 @@ if (registerForm) {
           currencySymbol: currencySymbol,
           currencyName: currencyName,
           dialCode: dialCode,
-          language: targetLang
+          language: targetLang,
+          languageManual: hasManualChoice
         },
         createdAt: new Date().toISOString()
       };
@@ -3784,7 +3976,11 @@ function getCurrentUser() {
   // Strictly enforce currency based on country (BD -> BDT, non-BD -> USD),
   // while always preserving user's chosen/registered UI language (default 'en')!
   const isBd = isBangladeshUser(user);
-  user.language = normalizeAppLang(user.language || localStorage.getItem('alo_lang') || 'en');
+  const isManualLang = Boolean(user.languageManual || localStorage.getItem('alo_lang_manual') === '1');
+  user.languageManual = isManualLang;
+  user.language = isManualLang
+    ? normalizeAppLang(user.language || localStorage.getItem('alo_lang') || 'en')
+    : 'en';
   if (!isBd) {
     const cObj = getCountryByCode(user.country || 'US');
     user.country = cObj.code === 'BD' ? 'US' : cObj.code;
@@ -3920,9 +4116,13 @@ function updateRecordsPanelPackages() {
     const pkgName = getPackageName(userLevel, lang);
     curLevelDisplay.textContent = `${userLevel} (${pkgName})`;
   }
+  if (typeof reconcileUserFrozenBuckets === 'function' && user) {
+    reconcileUserFrozenBuckets(user);
+  }
   const balDisplay = document.getElementById('records-balance-display');
   if (balDisplay) {
-    balDisplay.textContent = formatMoney((user && user.balance) || 0, user);
+    const pkgSpendableBal = Number((Number((user && user.balance) || 0) + Number((user && user.rechargeFrozenBalance) || 0)).toFixed(2));
+    balDisplay.textContent = formatMoney(pkgSpendableBal, user);
   }
 
   const labels = {
@@ -4413,12 +4613,18 @@ function handlePackagePurchase(level, triggerBtn) {
         freshUser = Object.assign({}, freshUser, liveDbUser);
       }
 
+      if (typeof reconcileUserFrozenBuckets === 'function') {
+        reconcileUserFrozenBuckets(freshUser);
+      }
+
       const isUsd = isUsdOnlyUser(freshUser);
       const lang = getActiveLang(freshUser);
       const userBal = Number(freshUser.balance || 0);
+      const rechargeBal = Number(freshUser.rechargeFrozenBalance || 0);
+      const spendableForPkg = Number((userBal + rechargeBal).toFixed(2));
       const price = toUserCurrencyAmount(Number(pkg.price || 0), freshUser);
 
-      if (userBal < price) {
+      if (spendableForPkg < price) {
         if (btn) {
           btn.disabled = true;
           btn.style.transition = 'all 0.5s ease-in-out';
@@ -4455,9 +4661,12 @@ function handlePackagePurchase(level, triggerBtn) {
         return;
       }
 
-      // Sufficient live Supabase balance: deduct & persist
-      freshUser.balance = Number(Math.max(0, userBal - price).toFixed(2));
-      freshUser.frozenBalance = Number(((Number(freshUser.frozenBalance) || 0) + price).toFixed(2));
+      // Sufficient package-purchasable balance (recharge frozen credit first, then available earnings)
+      const usedFromRecharge = Math.min(rechargeBal, price);
+      const usedFromAvail = Number((price - usedFromRecharge).toFixed(2));
+      freshUser.rechargeFrozenBalance = Number(Math.max(0, rechargeBal - usedFromRecharge).toFixed(2));
+      freshUser.balance = Number(Math.max(0, userBal - usedFromAvail).toFixed(2));
+      freshUser.frozenBalance = Number(((Number(freshUser.frozenBalance) || 0) + usedFromAvail).toFixed(2));
       freshUser.packageLevel = level;
       if (!Array.isArray(freshUser.purchasedPackages)) freshUser.purchasedPackages = ['LV0'];
       if (!freshUser.purchasedPackages.includes(level)) {
@@ -4991,8 +5200,15 @@ function openWithdrawSheet() {
     updateUsdtDisplayAcrossApp();
     updatePaymentAndWithdrawalForUser();
     const user = getCurrentUser();
+    if (user && typeof reconcileUserFrozenBuckets === 'function') {
+      reconcileUserFrozenBuckets(user);
+    }
     const pCfg = window.aloPlatformConfig || {};
     const minW = toUserCurrencyAmount(Number(pCfg.minWithdraw) || 700, user);
+    const availEl = document.getElementById('withdraw-sheet-avail-val');
+    const frozenEl = document.getElementById('withdraw-sheet-frozen-val');
+    if (availEl) availEl.textContent = (Number(user && user.balance) || 0).toFixed(2);
+    if (frozenEl) frozenEl.textContent = (Number(user && user.frozenBalance) || 0).toFixed(2);
     const amtInp = document.getElementById('withdraw-sheet-amount');
     if (amtInp) {
       amtInp.value = '';
@@ -6243,6 +6459,69 @@ function readAcceptedMissions() {
   });
 }
 
+function reconcileUserFrozenBuckets(user) {
+  if (!user || (!user.phone && !user.accountNumber)) return false;
+  let changed = false;
+
+  const missions = readAcceptedMissions();
+  const completedLv0Sum = missions.reduce(function(sum, m) {
+    if (m && m.status === 'complete' && m.rewardCredited && String(m.level || 'LV0').toUpperCase() === 'LV0') {
+      let rew = Number(m.reward);
+      if (!rew || isNaN(rew)) {
+        rew = toUserCurrencyAmount(packageTaskSettings.LV0 ? packageTaskSettings.LV0.reward : 20, user);
+      } else if (isUsdOnlyUser(user) && m.currency !== 'USD') {
+        rew = toUserCurrencyAmount(rew, user);
+      }
+      return sum + rew;
+    }
+    return sum;
+  }, 0);
+
+  const prevLv0Frozen = Number(user.lv0FrozenBalance) || 0;
+  const adminUnfrozen = Number(user.adminUnfrozenBalance) || 0;
+  const accountedLv0 = prevLv0Frozen + adminUnfrozen;
+  if (completedLv0Sum > accountedLv0 + 0.001) {
+    const unmigratedLv0 = Number((completedLv0Sum - accountedLv0).toFixed(2));
+    const curAvail = Number(user.balance) || 0;
+    const moveAmt = Math.min(curAvail, unmigratedLv0);
+    if (moveAmt > 0) {
+      user.balance = Number(Math.max(0, curAvail - moveAmt).toFixed(2));
+      user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + moveAmt).toFixed(2));
+    }
+    user.lv0FrozenBalance = Number(Math.max(0, completedLv0Sum - adminUnfrozen).toFixed(2));
+    changed = true;
+  }
+
+  if (user.rechargeFrozenBalance === null || user.rechargeFrozenBalance === undefined) {
+    let movedRecharge = 0;
+    const uLvl = String(user.packageLevel || 'LV0').toUpperCase();
+    const curAvail = Number(user.balance) || 0;
+    const curRecharge = Number(user.rechargeAmount) || 0;
+    if (uLvl === 'LV0' && curRecharge > 0 && curAvail > 0) {
+      movedRecharge = Number(Math.min(curAvail, curRecharge).toFixed(2));
+      user.balance = Number(Math.max(0, curAvail - movedRecharge).toFixed(2));
+      user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + movedRecharge).toFixed(2));
+    }
+    user.rechargeFrozenBalance = movedRecharge;
+    changed = true;
+  }
+
+  if (changed) {
+    try {
+      localStorage.setItem('my_pass_available_bal', (Number(user.balance) || 0).toFixed(2));
+      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+    } catch (e) {}
+    if (typeof dbSaveUser === 'function' && !window._isSavingReconciledBuckets) {
+      window._isSavingReconciledBuckets = true;
+      dbSaveUser(user).finally(function() {
+        window._isSavingReconciledBuckets = false;
+      });
+    }
+  }
+  return changed;
+}
+window.reconcileUserFrozenBuckets = reconcileUserFrozenBuckets;
+
 const DAILY_QUOTA_RESET_MS = 24 * 60 * 60 * 1000;
 
 function isMissionIn24hQuotaWindow(mission, refMs) {
@@ -6316,6 +6595,10 @@ function updateProfileMetrics() {
   try {
     currentUser = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
   } catch (e) {}
+
+  if (currentUser && typeof reconcileUserFrozenBuckets === 'function') {
+    reconcileUserFrozenBuckets(currentUser);
+  }
 
   const currentBal = currentUser && typeof currentUser.balance === 'number'
     ? currentUser.balance
@@ -7522,6 +7805,8 @@ function checkPendingReviews() {
 
     let changed = false;
     let totalReward = 0;
+    let lv0Reward = 0;
+    let paidReward = 0;
     let completedInBatch = 0;
     let failedInBatch = 0;
     let lastFailReason = '';
@@ -7566,14 +7851,20 @@ function checkPendingReviews() {
           if (!m.rewardCredited) {
             m.rewardCredited = true;
             const userCurr = getUserCurrency(u);
+            const mLevel = String(m.level || 'LV0').toUpperCase();
             let mReward = Number(m.reward);
             if (!mReward || isNaN(mReward)) {
-              mReward = toUserCurrencyAmount(packageTaskSettings[m.level || 'LV0']?.reward || 20, u);
+              mReward = toUserCurrencyAmount(packageTaskSettings[mLevel]?.reward || 20, u);
             } else if (isUsdOnlyUser(u) && m.currency !== 'USD') {
               mReward = toUserCurrencyAmount(mReward, u);
             }
             m.reward = mReward;
             m.currency = userCurr;
+            if (mLevel === 'LV0') {
+              lv0Reward += mReward;
+            } else {
+              paidReward += mReward;
+            }
             totalReward += mReward;
             completedInBatch += 1;
           }
@@ -7599,13 +7890,22 @@ function checkPendingReviews() {
       const lang = getActiveLang(user);
       if (user) {
         if (totalReward > 0) {
-          user.balance = Number(((Number(user.balance) || 0) + totalReward).toFixed(2));
+          if (lv0Reward > 0) {
+            user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + lv0Reward).toFixed(2));
+            user.lv0FrozenBalance = Number(((Number(user.lv0FrozenBalance) || 0) + lv0Reward).toFixed(2));
+          }
+          if (paidReward > 0) {
+            user.balance = Number(((Number(user.balance) || 0) + paidReward).toFixed(2));
+          }
           user.todayIncome = Number(((Number(user.todayIncome) || 0) + totalReward).toFixed(2));
           user.totalIncome = Number(((Number(user.totalIncome) || 0) + totalReward).toFixed(2));
           user.lifetimeEarnings = Number(((Number(user.lifetimeEarnings) || 0) + totalReward).toFixed(2));
           user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
 
           const dNow = new Date();
+          const methodDesc = lv0Reward > 0 && paidReward === 0
+            ? (isUsd ? `LV0 Free Task Reward (Frozen, ${completedInBatch} tasks)` : `LV0 ফ্রি টাস্ক পুরস্কার (বরফ/হিমায়িত, ${completedInBatch} টি কাজ)`)
+            : (isUsd ? `Task Reward (${completedInBatch} tasks)` : `টাস্ক পুরস্কার (${completedInBatch} টি কাজ)`);
           dbRecordTransaction({
             phone: curPhone,
             type: 'mission',
@@ -7613,7 +7913,7 @@ function checkPendingReviews() {
             ratio: '100%',
             actual: totalReward,
             status: 'অনুমোদিত',
-            method: isUsd ? `Task Reward (${completedInBatch} tasks)` : `টাস্ক পুরস্কার (${completedInBatch} টি কাজ)`,
+            method: methodDesc,
             date: dNow.toISOString().split('T')[0],
             time: dNow.toTimeString().split(' ')[0],
             newBalance: user.balance
@@ -7630,14 +7930,20 @@ function checkPendingReviews() {
         updateProfileMetrics();
       }
       if (completedInBatch > 0 && typeof showToastNotification === 'function') {
-        showToastNotification(
-          tLang(
-            lang,
-            `✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার ব্যালেন্সে যোগ হয়েছে।`,
-            `✓ Like verified! Reward for ${completedInBatch} task(s) added to balance.`,
-            `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة إلى رصيدك.`
-          )
-        );
+        const toastMsg = lv0Reward > 0 && paidReward === 0
+          ? tLang(
+              lang,
+              `✓ লাইক যাচাই সফল! ফ্রি (LV0) কাজের ${completedInBatch}টি পুরস্কার হিমায়িত (বরফ) ব্যালেন্সে যোগ হয়েছে। শুধুমাত্র LV1+ কাজের টাকা উপলব্ধ থাকে।`,
+              `✓ Like verified! Reward for ${completedInBatch} free (LV0) task(s) added to Frozen balance. Only LV1+ task earnings are available.`,
+              `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة مجانية (LV0) إلى الرصيد المجمد. أرباح LV1+ فقط متاحة.`
+            )
+          : tLang(
+              lang,
+              `✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার উপলব্ধ ব্যালেন্সে যোগ হয়েছে।`,
+              `✓ Like verified! Reward for ${completedInBatch} task(s) added to Available balance.`,
+              `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة إلى رصيدك المتاح.`
+            );
+        showToastNotification(toastMsg);
       }
       if (failedInBatch > 0 && typeof showToastNotification === 'function') {
         const defaultFail = tLang(lang, 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি', 'Valid Like not found in screenshot', 'لم يتم العثور على إعجاب صالح في لقطة الشاشة');
@@ -8215,7 +8521,8 @@ document.addEventListener('click', function(event) {
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
     const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
-    const deficit = Number(Math.max(0, pkgPrice - (Number(user && user.balance) || 0)).toFixed(2));
+    const pkgBal = Number(((Number(user && user.balance) || 0) + (Number(user && user.rechargeFrozenBalance) || 0)).toFixed(2));
+    const deficit = Number(Math.max(0, pkgPrice - pkgBal).toFixed(2));
     const customInputs = document.querySelectorAll('#custom-deposit-amount');
     customInputs.forEach(function(inp) { inp.value = deficit; });
     selectedDepositAmount = deficit;
@@ -8913,13 +9220,18 @@ document.addEventListener('click', function(event) {
           localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
         }
 
+        if (typeof reconcileUserFrozenBuckets === 'function') {
+          reconcileUserFrozenBuckets(liveUser);
+        }
+
         const liveBal = Number(liveUser.balance) || 0;
+        const liveFrozen = Number(liveUser.frozenBalance) || 0;
         if (amt > liveBal) {
           const insMsg = tLang(
             lang,
-            `⚠️ অপর্যাপ্ত ব্যালেন্স! আপনার উপলব্ধ ব্যালেন্স ${formatBanglaNumber(liveBal.toFixed(2))} ${curr}`,
-            `⚠️ Insufficient balance! Your available balance is ${liveBal.toFixed(2)} ${curr}`,
-            `⚠️ رصيد غير كافٍ! رصيدك المتاح هو ${liveBal.toFixed(2)} ${curr}`
+            `⚠️ অপর্যাপ্ত উপলব্ধ ব্যালেন্স! উপলব্ধ: ${formatBanglaNumber(liveBal.toFixed(2))} ${curr} (হিমায়িত/বরফ: ${formatBanglaNumber(liveFrozen.toFixed(2))} ${curr} — LV0 ফ্রি কাজ ও রিচার্জ ব্যালেন্স বরফ থাকে, শুধু LV1+ কাজের টাকা উত্তোলনযোগ্য)।`,
+            `⚠️ Insufficient available balance! Available: ${liveBal.toFixed(2)} ${curr} (Frozen: ${liveFrozen.toFixed(2)} ${curr} — LV0 free task & recharge balances stay frozen; only LV1+ task earnings are withdrawable).`,
+            `⚠️ الرصيد المتاح غير كافٍ! المتاح: ${liveBal.toFixed(2)} ${curr} (المجمد: ${liveFrozen.toFixed(2)} ${curr} — أرباح LV0 المجانية ورصيد الشحن يظلان مجمدين؛ أرباح المهام من LV1+ فقط متاحة).`
           );
           showToastNotification(insMsg);
           if (amtInp) amtInp.focus();
@@ -10049,7 +10361,8 @@ if (openDepositFromPurchaseBtn) {
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
     const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
-    const deficit = Number(Math.max(0, pkgPrice - (Number(user && user.balance) || 0)).toFixed(2));
+    const pkgBal = Number(((Number(user && user.balance) || 0) + (Number(user && user.rechargeFrozenBalance) || 0)).toFixed(2));
+    const deficit = Number(Math.max(0, pkgPrice - pkgBal).toFixed(2));
     const customInput = document.getElementById('custom-deposit-amount');
     if (customInput) customInput.value = deficit;
     selectedDepositAmount = deficit;
@@ -10259,8 +10572,22 @@ async function hydrateSessionFromSupabase() {
     }
 
     const updated = Object.assign({}, user, dbUser);
+    const localManual = localStorage.getItem('alo_lang_manual') === '1';
+    if (localManual) {
+      updated.language = normalizeAppLang(localStorage.getItem('alo_lang') || user.language || 'en');
+      updated.languageManual = true;
+    } else if (dbUser.languageManual) {
+      updated.language = normalizeAppLang(dbUser.language || 'en');
+      updated.languageManual = true;
+    } else {
+      updated.language = 'en';
+      updated.languageManual = false;
+    }
     hydrateUserCachesFromCloud(updated);
     localStorage.setItem('aloSignedInUser', JSON.stringify(updated));
+    if (typeof setAppLanguage === 'function' && window.aloI18n && window.aloI18n.getLanguage() !== updated.language) {
+      setAppLanguage(updated.language, { silent: !updated.languageManual });
+    }
 
     updateUserDetails(updated);
     updateProfileMetrics();
@@ -10429,12 +10756,16 @@ function initApp() {
       savedUser.packageLevel = 'LV0';
     }
     if (typeof savedUser.balance !== 'number') savedUser.balance = 0.00;
-    const userLang = normalizeAppLang(savedUser.language || localStorage.getItem('alo_lang') || 'en');
+    const isManualLang = Boolean(savedUser.languageManual || localStorage.getItem('alo_lang_manual') === '1');
+    const userLang = isManualLang
+      ? normalizeAppLang((localStorage.getItem('alo_lang_manual') === '1' ? localStorage.getItem('alo_lang') : '') || savedUser.language || 'en')
+      : 'en';
     savedUser.language = userLang;
+    savedUser.languageManual = isManualLang;
     localStorage.setItem('aloSignedInUser', JSON.stringify(savedUser));
 
     if (typeof setAppLanguage === 'function') {
-      setAppLanguage(userLang);
+      setAppLanguage(userLang, { silent: true });
     }
 
     updateUserDetails(savedUser);
@@ -10453,16 +10784,27 @@ function initApp() {
     // Immediately pull live authoritative state from Supabase
     hydrateSessionFromSupabase();
   } else {
-    const savedLang = normalizeAppLang(localStorage.getItem('alo_lang') || 'en');
+    const savedLang = (localStorage.getItem('alo_lang_manual') === '1')
+      ? normalizeAppLang(localStorage.getItem('alo_lang') || localStorage.getItem('lang') || 'en')
+      : 'en';
     if (typeof setAppLanguage === 'function') {
-      setAppLanguage(savedLang);
+      setAppLanguage(savedLang, { silent: true });
     } else if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
       window.aloI18n.translateDOM(savedLang);
     }
     updateHomeWithdrawalTicker();
     updateHomeMemberUpdates();
-    // Show login view when not authenticated
-    showView('login');
+    renderLandingCertificates();
+    // Show landing page at "/" before login/register (or route directly if /login or /register requested)
+    const initialPath = (window.location.pathname || '/').toLowerCase();
+    const initialHash = (window.location.hash || '').toLowerCase();
+    if (initialPath === '/login' || initialHash === '#login') {
+      showView('login');
+    } else if (initialPath === '/register' || initialHash === '#register') {
+      showView('register');
+    } else {
+      showView('landing');
+    }
   }
 
   // Handle direct payment page requests (?payment or ?page=payment or #payment)
@@ -10537,14 +10879,15 @@ function initApp() {
                 await hydrateSessionFromSupabase();
               } else if (creditedAmt > 0) {
                 const liveU = await dbGetUser(currentUser.phone || currentUser.accountNumber) || currentUser;
-                liveU.balance = (Number(liveU.balance) || 0) + creditedAmt;
-                liveU.rechargeAmount = (Number(liveU.rechargeAmount) || 0) + creditedAmt;
-                liveU.totalIncome = (Number(liveU.totalIncome) || 0) + creditedAmt;
+                liveU.frozenBalance = Number(((Number(liveU.frozenBalance) || 0) + creditedAmt).toFixed(2));
+                liveU.rechargeFrozenBalance = Number(((Number(liveU.rechargeFrozenBalance) || 0) + creditedAmt).toFixed(2));
+                liveU.rechargeAmount = Number(((Number(liveU.rechargeAmount) || 0) + creditedAmt).toFixed(2));
                 const mergedU = Object.assign({}, currentUser, liveU);
                 if (typeof saveUser === 'function') saveUser(mergedU);
                 if (typeof dbSaveUser === 'function') await dbSaveUser(mergedU);
                 updateUserDetails(mergedU);
                 updateProfileMetrics();
+                updateRecordsPanelPackages();
                 updateVipHallRooms();
                 distributeTeamRebate(mergedU.phone || mergedU.accountNumber, creditedAmt).catch(function() {});
               }
@@ -10557,9 +10900,9 @@ function initApp() {
                 showToastNotification(
                   tLang(
                     lToast,
-                    `🎉 পেমেন্ট সফল! ${msgAmt} অ্যাকাউন্টে যোগ হয়েছে!`,
-                    `🎉 Payment successful! ${msgAmt} added to your balance!`,
-                    `🎉 تم الدفع بنجاح! تمت إضافة ${msgAmt} إلى رصيدك!`
+                    `🎉 পেমেন্ট সফল! ${msgAmt} রিচার্জ হিমায়িত (বরফ) ব্যালেন্সে যোগ হয়েছে — প্যাকেজ কিনতে ব্যবহার করুন!`,
+                    `🎉 Payment successful! ${msgAmt} recharge added to Frozen balance — use it to activate a VIP package!`,
+                    `🎉 تم الدفع بنجاح! تمت إضافة ${msgAmt} إلى الرصيد المجمد — استخدمه لتفعيل باقة VIP!`
                   )
                 );
               }
@@ -11499,13 +11842,15 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
           const creditAmt = isUsd ? Number(newUsdt.toFixed(2)) : Number((newUsdt * activeRate).toFixed(2));
 
           if (user) {
-            user.balance = Number(((Number(user.balance) || 0) + creditAmt).toFixed(2));
+            user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + creditAmt).toFixed(2));
+            user.rechargeFrozenBalance = Number(((Number(user.rechargeFrozenBalance) || 0) + creditAmt).toFixed(2));
             user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmt).toFixed(2));
             user.claimedUsdtOnchain = rawBalance;
             if (typeof saveUser === 'function') saveUser(user);
             if (typeof dbSaveUser === 'function') await dbSaveUser(user);
             if (typeof updateUserDetails === 'function') updateUserDetails(user);
             if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+            if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
             if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
 
             if (typeof dbRecordTransaction === 'function') {
@@ -11834,18 +12179,9 @@ function initUsdtDeposit() {
           const isUsd = isUsdOnlyUser(user);
           const creditAmount = isUsd ? Number(usdtAmount.toFixed(2)) : (Number(depositData.bdtAmount) || 0);
 
-          // 1. Credit User Balance & Personal Balance (Lifetime earnings) strictly from on-chain value
-          if (!isUsd && typeof depositData.newBalance === 'number') {
-            user.balance = depositData.newBalance;
-          } else {
-            user.balance = Number(((Number(user.balance) || 0) + creditAmount).toFixed(2));
-          }
-
-          if (typeof user.lifetimeEarnings === 'number') {
-            user.lifetimeEarnings = Number((user.lifetimeEarnings + creditAmount).toFixed(2));
-          } else {
-            user.lifetimeEarnings = user.balance;
-          }
+          // 1. Credit Recharged Funds to Frozen Balance (withdrawals require LV1+ task earnings)
+          user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + creditAmount).toFixed(2));
+          user.rechargeFrozenBalance = Number(((Number(user.rechargeFrozenBalance) || 0) + creditAmount).toFixed(2));
           user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmount).toFixed(2));
 
           localStorage.setItem('aloSignedInUser', JSON.stringify(user));
@@ -11869,13 +12205,14 @@ function initUsdtDeposit() {
               order_id: depositData.txHash || txHash,
               date: dateStr,
               time: timeStr,
-              newBalance: user.balance
+              newBalance: Number(user.balance) || 0
             });
           }
 
           // 3. Update UI
           if (typeof updateUserDetails === 'function') updateUserDetails(user);
           if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+          if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
           if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
           if (typeof updatePaymentAndWithdrawalForUser === 'function') updatePaymentAndWithdrawalForUser();
 

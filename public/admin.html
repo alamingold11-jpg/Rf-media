@@ -411,7 +411,7 @@
                     <th class="py-3 px-4">Phone / Name</th>
                     <th class="py-3 px-4">ID / Superior</th>
                     <th class="py-3 px-4">Level</th>
-                    <th class="py-3 px-4 text-right">Balance</th>
+                    <th class="py-3 px-4 text-right">Avail / Frozen</th>
                     <th class="py-3 px-4">Wallets</th>
                     <th class="py-3 px-4">Joined</th>
                     <th class="py-3 px-4 text-right">Action</th>
@@ -643,9 +643,14 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Balance (BDT)</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Available Balance (উপলব্ধ)</label>
             <input id="edit-user-balance" type="number" step="0.01" required
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono font-bold text-emerald-700 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Frozen Balance (বরফ)</label>
+            <input id="edit-user-frozen-balance" type="number" step="0.01" min="0" required
+              class="w-full px-3 py-2 bg-sky-50 border border-sky-200 rounded-lg text-sm font-mono font-bold text-sky-700 focus:outline-none focus:bg-white focus:border-sky-400" />
           </div>
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Package Level</label>
@@ -660,12 +665,25 @@
               <option value="LV6">LV6 (৳500,000)</option>
             </select>
           </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Quick Balance</label>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Quick Available Balance</label>
             <div class="flex gap-1.5">
               <button type="button" onclick="quickBumpBalance(500)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-semibold cursor-pointer">+500</button>
               <button type="button" onclick="quickBumpBalance(1000)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-semibold cursor-pointer">+1k</button>
               <button type="button" onclick="quickBumpBalance(-500)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-rose-600 text-xs font-mono font-semibold cursor-pointer">-500</button>
+            </div>
+          </div>
+          <div class="rounded-lg bg-sky-50/70 border border-sky-200/80 p-2.5">
+            <label class="block text-[11px] font-semibold text-sky-900 mb-1.5">Frozen → Available (বরফ থেকে উপলব্ধ দিন)</label>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <input id="edit-user-unfreeze-amount" type="number" step="0.01" min="0.01" placeholder="Amount"
+                class="w-24 flex-1 min-w-[90px] px-2.5 py-1.5 bg-white border border-sky-200 rounded-md text-xs font-mono font-semibold text-slate-900 focus:outline-none focus:border-sky-400" />
+              <button type="button" onclick="fillMaxUnfreezeAmount()" class="px-2 py-1.5 rounded-md bg-white border border-sky-200 hover:bg-sky-100 text-sky-800 text-[11px] font-semibold cursor-pointer">Max</button>
+              <button type="button" onclick="moveUserFrozenToAvailable(false)" class="px-2.5 py-1.5 rounded-md bg-sky-600 hover:bg-sky-700 text-white text-[11px] font-semibold cursor-pointer">Move</button>
+              <button type="button" onclick="moveUserFrozenToAvailable(true)" class="px-2.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">Move All</button>
             </div>
           </div>
         </div>

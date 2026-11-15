@@ -201,7 +201,69 @@
       'avatar': 'অবতার',
       'account_binding': 'অ্যাকাউন্ট বাঁধাই',
       'usdt_address': 'USDT ঠিকানা',
-      'set_now': 'সেট করুন'
+      'set_now': 'সেট করুন',
+
+      // Public Landing Page (PW NEW MEDIA)
+      'lp_h1a': 'সৎ কাজ।',
+      'lp_h1b': 'সহজ কাজ, সত্যিকারের উপার্জন।',
+      'lp_sub': 'যে প্রতিষ্ঠান তাদের ভিডিও মানুষের কাছে পৌঁছাতে চায় আর যাঁরা ঘরে বসে আয় করতে চান, আমরা তাঁদের মধ্যে সেতুবন্ধন। যোগ দেওয়া বিনামূল্যে, কাজ সহজ, আর প্রতিটি পুরস্কার যাচাই করেই আপনার কাছে পৌঁছায়।',
+      'lp_start': 'শুরু করুন',
+      'lp_login': 'প্রবেশ করুন',
+      'lp_ab_h': 'আমাদের কাজ সম্পর্কে',
+      'lp_ab_p1': 'প্রতিদিন বিভিন্ন প্রতিষ্ঠান ও ভিডিও নির্মাতা TikTok, YouTube এবং Facebook-এ ভিডিও প্রকাশ করেন এবং চান বাস্তব মানুষ সেগুলো দেখুক। আমরা এই প্রতিষ্ঠানগুলোর সঙ্গে সরাসরি কাজ করি এবং তাদের পক্ষে প্রচারাভিযান পরিচালনা করি।',
+      'lp_ab_p2': 'ফাঁকা সংখ্যার জন্য নয়, প্রতিষ্ঠান অর্থ দেয় প্রকৃত মনোযোগের জন্য। আমরা প্রতিটি প্রচারাভিযানকে ছোট ও স্পষ্ট কাজে ভাগ করি, আর আপনি নিজের মুঠোফোন থেকে সেগুলো সম্পন্ন করেন। প্রতিষ্ঠান পায় আসল সাড়া, আপনি পান আপনার সময়ের মূল্য।',
+      'lp_co_h': 'প্রচারাভিযান কীভাবে আপনার কাছে আসে',
+      'lp_co1t': 'প্রতিষ্ঠান আমাদের কাছে আসে',
+      'lp_co1d': 'একটি ব্যবসা বা ভিডিও নির্মাতা যে ভিডিও প্রচার করতে চান এবং সেটি কোন মাধ্যমে আছে, তা আমাদের জানান।',
+      'lp_co2t': 'আমরা পরিকল্পনা ঠিক করি',
+      'lp_co2d': 'বরাদ্দ ও কাজের সংখ্যা একসঙ্গে ঠিক হয়, আর প্রতিষ্ঠান আগেভাগে অর্থ পরিশোধ করে, ফলে কাজ শুরুর আগেই পুরস্কারের অর্থ প্রস্তুত থাকে।',
+      'lp_co3t': 'আমরা কাজ সাজাই',
+      'lp_co3d': 'প্রচারাভিযানটি সহজ শুধু-পছন্দ কাজে ভাগ হয়ে সদস্যদের জন্য কাজের কক্ষে রাখা হয়।',
+      'lp_co4t': 'আমরা যাচাই করে প্রতিবেদন দিই',
+      'lp_co4d': 'সম্পন্ন প্রতিটি কাজ পর্যালোচনা করা হয় এবং চূড়ান্ত ফলাফল প্রতিষ্ঠানকে জানানো হয়।',
+      'lp_us_h': 'আপনি কীভাবে কাজ করবেন',
+      'lp_u1t': 'বিনামূল্যে হিসাব খুলুন',
+      'lp_u1d': 'আপনার তথ্য দিয়ে নিবন্ধন করুন। কোনো ভর্তি ফি বা জামানত নেই, কখনোই নয়।',
+      'lp_u2t': 'একটি কাজ বেছে নিন',
+      'lp_u2d': 'কাজের কক্ষে গিয়ে TikTok, YouTube বা Facebook-এর যেকোনো খোলা কাজ নিন।',
+      'lp_u3t': 'ভিডিওটি পছন্দ করুন',
+      'lp_u3d': 'লিংকে গিয়ে নিজের হিসাব থেকে ভিডিওটি পছন্দ করুন। মন্তব্য, অনুসরণ বা কোনো খরচ করতে হবে না।',
+      'lp_u4t': 'যাচাইয়ের জন্য জমা দিন',
+      'lp_u4d': 'কাজটি নিশ্চিত করুন। আমাদের দল দেখে নেয় কাজটি ঠিকভাবে হয়েছে কি না।',
+      'lp_u5t': 'পুরস্কার বুঝে নিন',
+      'lp_u5d': 'অনুমোদিত পুরস্কার আপনার জমা অর্থে যুক্ত হয়, প্রস্তুত হলেই তুলে নিতে পারবেন।',
+      'lp_fr_h': 'আপনার জন্য সম্পূর্ণ বিনামূল্যে',
+      'lp_fr_p': 'আমাদের আয় আসে প্রতিষ্ঠানের কাছ থেকে, আপনার কাছ থেকে নয়। যোগ দিতে বা কাজ পেতে আপনাকে কখনো অর্থ দিতে হবে না।',
+      'lp_nt_h': 'সরাসরি অর্থ উত্তোলনের খবর',
+      'lp_nt_p': 'প্রতিটি সফল অর্থ উত্তোলন এখানে তাৎক্ষণিক দেখানো হয়, তাই দেখতে পাবেন সদস্যরা অর্থ পাচ্ছেন।',
+      'lp_st': 'উত্তোলন সফল ✓',
+      'lp_faq': 'সাধারণ প্রশ্ন',
+      'lp_q1': 'নিবন্ধন কি বিনামূল্যে?',
+      'lp_a1': 'হ্যাঁ, হিসাব খোলা বিনামূল্যে।',
+      'lp_q2': 'অর্থ কীভাবে পাব?',
+      'lp_a2': 'আমার হিসাব পাতা থেকে আপনার মানিব্যাগে অর্থ তুলে নিন।',
+      'lp_q3': 'দিনে কয়টি কাজ?',
+      'lp_a3': 'এটি খোলা কাজের সংখ্যার উপর নির্ভর করে।',
+      'lp_cta': 'আয় শুরু করতে প্রস্তুত?',
+      'lp_ce_h': 'সনদ ও স্বীকৃতি',
+      'lp_ce_p': 'প্রতিটি মাধ্যম থেকে পাওয়া সনদ ও স্বীকৃতি এখানে দেখানো হবে।',
+      'lp_ce_s': 'এখানে সনদের ছবি বসবে',
+      'lp_terms': 'শর্তাবলী',
+      'lp_priv': 'গোপনীয়তা',
+      'lp_sup': 'সহায়তা',
+      'lp_copyright': '© 2026 PW NEW MEDIA',
+      'lp_terms_body': 'নিজের হিসাব সৎভাবে ব্যবহার করে কাজ সম্পন্ন করুন এবং নিয়ম মেনে চলুন। নিবন্ধনের জন্য কোনো ফি বা জামানত প্রয়োজন নেই।',
+      'lp_priv_body': 'আপনার হিসাবের তথ্য কেবল আপনার প্রোফাইল পরিচালনা, সম্পন্ন কাজ যাচাই এবং অর্থ উত্তোলনের জন্য ব্যবহৃত হয়।',
+      'lp_sup_body': 'সহায়তা প্রয়োজন? আপনার হিসাবে প্রবেশ করে আমার হিসাব পাতা থেকে গ্রাহক সেবা অংশটি খুলুন।',
+      'lp_cert_badge': 'আনুষ্ঠানিক সহযোগিতা সনদ',
+      'lp_cert_title': 'মিডিয়া প্রচার সহযোগিতা',
+      'lp_cert_tt_desc': 'PW NEW MEDIA-এর সাথে স্বল্পদৈর্ঘ্য ভিডিও প্রচার ও প্রকৃত দর্শক সংযোগ সহযোগিতা।',
+      'lp_cert_fb_desc': 'PW NEW MEDIA-এর সাথে নির্মাতা ভিডিও প্রচার ও সামাজিক সাড়া প্রচারাভিযান সহযোগিতা।',
+      'lp_cert_yt_desc': 'PW NEW MEDIA-এর সাথে চ্যানেল ভিডিও প্রচার ও বাস্তব দর্শক সংযোগ সহযোগিতা।',
+      'lp_cert_status': 'সক্রিয় সহযোগী',
+      'lp_cert_auth': 'অনুমোদিত স্বীকৃতি',
+      'lp_cert_ref_label': 'সনদ নং',
+      'lp_cert_year_label': 'সাল'
     },
 
     en: {
@@ -391,7 +453,69 @@
       'avatar': 'Avatar',
       'account_binding': 'Account Binding',
       'usdt_address': 'USDT Address',
-      'set_now': 'Set Up'
+      'set_now': 'Set Up',
+
+      // Public Landing Page (PW NEW MEDIA)
+      'lp_h1a': 'Honest work.',
+      'lp_h1b': 'Simple tasks. Real rewards.',
+      'lp_sub': 'We connect businesses that want their videos seen with people who like to earn from home. Free to join, easy to do, and every reward is verified before it reaches you.',
+      'lp_start': 'Get Started',
+      'lp_login': 'Login',
+      'lp_ab_h': 'About our work',
+      'lp_ab_p1': 'Every day, businesses and creators publish videos on TikTok, YouTube and Facebook, and they want real people to notice them. We work with these companies directly and run their engagement campaigns on their behalf.',
+      'lp_ab_p2': 'The company does not pay for empty numbers, it pays for real attention. We turn each campaign into small, clear tasks, and you complete them from your own phone. The company gets genuine engagement, and you are rewarded for your time.',
+      'lp_co_h': 'How a campaign reaches you',
+      'lp_co1t': 'A company comes to us',
+      'lp_co1d': 'A business or creator shares the video they want to promote and the platform it is on.',
+      'lp_co2t': 'We agree on the plan',
+      'lp_co2d': 'We settle the budget and the number of tasks together, and the company pays in advance so rewards are ready before work begins.',
+      'lp_co3t': 'We prepare the tasks',
+      'lp_co3d': 'The campaign is divided into simple like-only tasks and placed in the Mission Hall for members.',
+      'lp_co4t': 'We check and report',
+      'lp_co4d': 'Every completed task is reviewed, and the final results are shared with the company.',
+      'lp_us_h': 'How you do the work',
+      'lp_u1t': 'Create your free account',
+      'lp_u1d': 'Sign up with your details. There is no joining fee and no deposit, ever.',
+      'lp_u2t': 'Choose a task',
+      'lp_u2d': 'Open the Mission Hall and pick any available task on TikTok, YouTube or Facebook.',
+      'lp_u3t': 'Like the video',
+      'lp_u3d': 'Follow the link and like the video from your own account. No comment, no follow, no spending.',
+      'lp_u4t': 'Submit for review',
+      'lp_u4d': 'Confirm your task. Our team checks that it was done properly.',
+      'lp_u5t': 'Receive your reward',
+      'lp_u5d': 'Approved rewards are added to your balance, and you can withdraw whenever you are ready.',
+      'lp_fr_h': 'Completely free for you',
+      'lp_fr_p': 'We earn from the companies, not from you. You will never be asked to pay to join or to unlock tasks.',
+      'lp_nt_h': 'Live withdraw notices',
+      'lp_nt_p': 'Every successful withdrawal appears here in real time, so you can see members getting paid.',
+      'lp_st': 'Withdrawn ✓',
+      'lp_faq': 'Questions',
+      'lp_q1': 'Is registration free?',
+      'lp_a1': 'Yes, creating an account is free.',
+      'lp_q2': 'How do I get paid?',
+      'lp_a2': 'Withdraw to your wallet from the Mine page.',
+      'lp_q3': 'How many tasks per day?',
+      'lp_a3': 'It depends on the tasks available.',
+      'lp_cta': 'Ready to start earning?',
+      'lp_ce_h': 'Certificates',
+      'lp_ce_p': 'Certificates and recognitions from each platform are shown here.',
+      'lp_ce_s': 'Certificate image goes here',
+      'lp_terms': 'Terms',
+      'lp_priv': 'Privacy',
+      'lp_sup': 'Support',
+      'lp_copyright': '© 2026 PW NEW MEDIA',
+      'lp_terms_body': 'Use your own account honestly to complete tasks and follow platform rules. Registration is free with no deposit required.',
+      'lp_priv_body': 'Your account details are used only to manage your profile, verify completed tasks, and process withdrawals.',
+      'lp_sup_body': 'Need help? Sign in to your account and open Customer Service from the Mine page.',
+      'lp_cert_badge': 'OFFICIAL COLLABORATION',
+      'lp_cert_title': 'Media Campaign Partner',
+      'lp_cert_tt_desc': 'Short-video promotion and authentic viewer engagement cooperation with PW NEW MEDIA.',
+      'lp_cert_fb_desc': 'Creator video distribution and verified like-campaign cooperation with PW NEW MEDIA.',
+      'lp_cert_yt_desc': 'Channel video promotion and genuine audience engagement cooperation with PW NEW MEDIA.',
+      'lp_cert_status': 'Active Partner',
+      'lp_cert_auth': 'Authorized Program',
+      'lp_cert_ref_label': 'Certificate ID',
+      'lp_cert_year_label': 'Year'
     },
 
     ar: {
@@ -581,7 +705,69 @@
       'avatar': 'الصورة الشخصية',
       'account_binding': 'ربط الحساب',
       'usdt_address': 'عنوان USDT',
-      'set_now': 'إعداد'
+      'set_now': 'إعداد',
+
+      // Public Landing Page (PW NEW MEDIA)
+      'lp_h1a': 'عمل صادق.',
+      'lp_h1b': 'مهام بسيطة ومكافآت حقيقية.',
+      'lp_sub': 'نربط الشركات التي تريد أن تُشاهد فيديوهاتها بالأشخاص الذين يحبون الربح من المنزل. الانضمام مجاني، والمهام سهلة، وكل مكافأة يتم التحقق منها قبل وصولها إليك.',
+      'lp_start': 'ابدأ الآن',
+      'lp_login': 'تسجيل الدخول',
+      'lp_ab_h': 'عن عملنا',
+      'lp_ab_p1': 'كل يوم تنشر شركات وصنّاع محتوى فيديوهات على تيك توك ويوتيوب وفيسبوك، ويريدون أن يراها أشخاص حقيقيون. نعمل مع هذه الشركات مباشرة وننفذ حملات التفاعل نيابةً عنها.',
+      'lp_ab_p2': 'لا تدفع الشركة مقابل أرقام فارغة، بل مقابل اهتمام حقيقي. نحوّل كل حملة إلى مهام صغيرة وواضحة تنجزها من هاتفك. تحصل الشركة على تفاعل حقيقي، وتحصل أنت على مكافأة لوقتك.',
+      'lp_co_h': 'كيف تصلك الحملة',
+      'lp_co1t': 'شركة تتواصل معنا',
+      'lp_co1d': 'تخبرنا الشركة أو صانع المحتوى بالفيديو الذي يريد ترويجه والمنصة التي يوجد عليها.',
+      'lp_co2t': 'نتفق على الخطة',
+      'lp_co2d': 'نحدد الميزانية وعدد المهام معًا، وتدفع الشركة مقدمًا لتكون المكافآت جاهزة قبل بدء العمل.',
+      'lp_co3t': 'نجهّز المهام',
+      'lp_co3d': 'تُقسَّم الحملة إلى مهام إعجاب بسيطة وتوضع في قاعة المهام للأعضاء.',
+      'lp_co4t': 'نتحقق ونرفع التقرير',
+      'lp_co4d': 'تتم مراجعة كل مهمة منجزة، وتُرسل النتائج النهائية إلى الشركة.',
+      'lp_us_h': 'كيف تنجز العمل',
+      'lp_u1t': 'أنشئ حسابك المجاني',
+      'lp_u1d': 'سجّل ببياناتك. لا رسوم انضمام ولا إيداع، أبدًا.',
+      'lp_u2t': 'اختر مهمة',
+      'lp_u2d': 'افتح قاعة المهام واختر أي مهمة متاحة على تيك توك أو يوتيوب أو فيسبوك.',
+      'lp_u3t': 'ضع إعجابًا للفيديو',
+      'lp_u3d': 'افتح الرابط وضع إعجابًا من حسابك. لا حاجة لتعليق أو متابعة أو أي إنفاق.',
+      'lp_u4t': 'أرسلها للمراجعة',
+      'lp_u4d': 'أكّد المهمة وسيتأكد فريقنا من إنجازها بشكل صحيح.',
+      'lp_u5t': 'استلم مكافأتك',
+      'lp_u5d': 'تُضاف المكافآت المعتمدة إلى رصيدك ويمكنك السحب متى شئت.',
+      'lp_fr_h': 'مجاني تمامًا لك',
+      'lp_fr_p': 'أرباحنا تأتي من الشركات وليس منك. لن يُطلب منك دفع أي مبلغ للانضمام أو للحصول على المهام.',
+      'lp_nt_h': 'إشعارات السحب المباشرة',
+      'lp_nt_p': 'يظهر كل سحب ناجح هنا لحظة حدوثه، لترى الأعضاء وهم يستلمون أرباحهم.',
+      'lp_st': 'تم السحب ✓',
+      'lp_faq': 'الأسئلة الشائعة',
+      'lp_q1': 'هل التسجيل مجاني؟',
+      'lp_a1': 'نعم، إنشاء الحساب مجاني.',
+      'lp_q2': 'كيف أستلم أرباحي؟',
+      'lp_a2': 'اسحب إلى محفظتك من صفحة حسابي.',
+      'lp_q3': 'كم مهمة يوميًا؟',
+      'lp_a3': 'يعتمد ذلك على المهام المتاحة.',
+      'lp_cta': 'هل أنت مستعد للربح؟',
+      'lp_ce_h': 'الشهادات والاعتمادات',
+      'lp_ce_p': 'تُعرض هنا الشهادات والاعتمادات الصادرة عن كل منصة.',
+      'lp_ce_s': 'تُوضع صورة الشهادة هنا',
+      'lp_terms': 'الشروط',
+      'lp_priv': 'الخصوصية',
+      'lp_sup': 'الدعم',
+      'lp_copyright': '© 2026 PW NEW MEDIA',
+      'lp_terms_body': 'استخدم حسابك الشخصي بصدق لإنجاز المهام والتزم بقواعد المنصة. لا توجد أي رسوم تسجيل أو إيداع.',
+      'lp_priv_body': 'تُستخدم بيانات حسابك فقط لإدارة ملفك الشخصي والتحقق من المهام المنجزة ومعالجة السحوبات.',
+      'lp_sup_body': 'هل تحتاج إلى مساعدة؟ سجّل الدخول إلى حسابك وافتح خدمة العملاء من صفحة حسابي.',
+      'lp_cert_badge': 'شهادة تعاون رسمي',
+      'lp_cert_title': 'شراكة الحملات الإعلامية',
+      'lp_cert_tt_desc': 'تعاون موثّق لترويج الفيديوهات القصيرة وتفاعل الجمهور الحقيقي مع PW NEW MEDIA.',
+      'lp_cert_fb_desc': 'تعاون نشر فيديوهات الصنّاع وحملات الإعجاب المجتمعي الموثّقة مع PW NEW MEDIA.',
+      'lp_cert_yt_desc': 'تعاون ترويج محتوى القنوات وتفاعل المشاهدين الحقيقي مع PW NEW MEDIA.',
+      'lp_cert_status': 'شريك نشط',
+      'lp_cert_auth': 'برنامج معتمد',
+      'lp_cert_ref_label': 'رقم الشهادة',
+      'lp_cert_year_label': 'السنة'
     }
   };
 
@@ -1062,6 +1248,7 @@
     "প্যাকেজসমূহ": { en: "VIP Packages", ar: "باقات VIP" },
     "আপনার বর্তমান স্তর:": { en: "Your Current Tier:", ar: "مستواك الحالي:" },
     "উপলব্ধ ব্যালেন্স:": { en: "Available Balance:", ar: "الرصيد المتاح:" },
+    "প্যাকেজ ব্যালেন্স:": { en: "Package Balance:", ar: "رصيد الباقات:" },
     "ব্যালেন্স রিচার্জ (জমা)": { en: "Recharge Balance (Deposit)", ar: "شحن الرصيد (إيداع)" },
     "রিচার্জের পরিমাণ নির্বাচন করুন:": { en: "Select Recharge Amount:", ar: "اختر مبلغ الشحن:" },
     "অথবা নির্দিষ্ট পরিমাণ": { en: "Or Specific Amount", ar: "أو مبلغ محدد" },
@@ -1553,20 +1740,20 @@
     return VALID_LANGS.slice();
   }
 
-  // Initial language resolution: English ('en') is default. Never overridden by country.
+  // Initial language resolution: English ('en') is default for all countries unless manually changed.
   let currentLang = 'en';
   try {
     const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
-    const storedLang = localStorage.getItem('alo_lang');
-    if (user && user.language) {
+    const isManualLang = localStorage.getItem('alo_lang_manual') === '1';
+    const storedLang = localStorage.getItem('alo_lang') || localStorage.getItem('lang');
+    if (user && user.languageManual && user.language) {
       currentLang = normalizeLangCode(user.language);
-    } else if (storedLang) {
+    } else if (isManualLang && storedLang) {
       currentLang = normalizeLangCode(storedLang);
     } else {
       currentLang = 'en';
-    }
-    if (storedLang === 'hi') {
-      localStorage.setItem('alo_lang', currentLang);
+      localStorage.setItem('alo_lang', 'en');
+      localStorage.setItem('lang', 'en');
     }
   } catch(e) {
     currentLang = 'en';
@@ -1574,16 +1761,23 @@
 
   function syncCountryLanguageOptions() {
     currentLang = normalizeLangCode(currentLang);
-    const selectors = document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
+    const selectors = document.querySelectorAll('#landing-language-switch, #language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
     const targetTag = 'EN_AR_BN';
     selectors.forEach(function(sel) {
       if (!sel) return;
       if (sel.dataset.countryTag !== targetTag) {
         sel.dataset.countryTag = targetTag;
-        sel.innerHTML =
-          '<option value="en" class="bg-[#050e21] text-white">English</option>' +
-          '<option value="ar" class="bg-[#050e21] text-white">العربية</option>' +
-          '<option value="bn" class="bg-[#050e21] text-white">বাংলা</option>';
+        if (sel.id === 'landing-language-switch') {
+          sel.innerHTML =
+            '<option value="en">English</option>' +
+            '<option value="bn">বাংলা</option>' +
+            '<option value="ar">العربية</option>';
+        } else {
+          sel.innerHTML =
+            '<option value="en" class="bg-[#050e21] text-white">English</option>' +
+            '<option value="ar" class="bg-[#050e21] text-white">العربية</option>' +
+            '<option value="bn" class="bg-[#050e21] text-white">বাংলা</option>';
+        }
       }
       if (sel.value !== currentLang) {
         sel.value = currentLang;
@@ -1702,13 +1896,7 @@
         document.body.classList.toggle('lang-ar', lang === 'ar');
       }
 
-      if (lang === 'bn') {
-        document.title = 'PW New Media | ইনভেস্টমেন্ট ও মিশন প্ল্যাটফর্ম';
-      } else if (lang === 'ar') {
-        document.title = 'PW New Media | منصة الاستثمار والمهام';
-      } else {
-        document.title = 'PW New Media | Investment & Mission Platform';
-      }
+      document.title = 'PW NEW MEDIA';
     }
 
     // 2. Synchronize all language selectors
@@ -1854,14 +2042,22 @@
   function setAppLanguage(newLang, options) {
     const prevLang = currentLang;
     const normalized = normalizeLangCode(newLang);
+    const isSilent = Boolean(options && options.silent);
     const changed = (prevLang !== normalized);
     currentLang = normalized;
 
     try {
       localStorage.setItem('alo_lang', normalized);
+      localStorage.setItem('lang', normalized);
+      if (!isSilent) {
+        localStorage.setItem('alo_lang_manual', '1');
+      }
       const user = JSON.parse(localStorage.getItem('aloSignedInUser') || 'null');
       if (user) {
         user.language = normalized;
+        if (!isSilent) {
+          user.languageManual = true;
+        }
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
       }
     } catch(e) {}
@@ -1907,7 +2103,7 @@
   // Bind change events on all language selectors
   function bindLanguageSelectors() {
     syncCountryLanguageOptions();
-    document.querySelectorAll('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher').forEach(function(sel) {
+    document.querySelectorAll('#landing-language-switch, #language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher').forEach(function(sel) {
       if (sel && !sel.dataset.i18nBound) {
         sel.dataset.i18nBound = 'true';
         sel.addEventListener('change', function(e) {
@@ -1920,7 +2116,7 @@
 
   // Global delegated listener ensures dynamic selects always trigger
   document.addEventListener('change', function(e) {
-    if (e.target && e.target.matches && e.target.matches('#language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher')) {
+    if (e.target && e.target.matches && e.target.matches('#landing-language-switch, #language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher')) {
       setAppLanguage(e.target.value, { silent: false });
     }
   });

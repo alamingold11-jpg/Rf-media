@@ -91,35 +91,48 @@ export default async function handler(req, res) {
           .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`)
           .catch(() => {});
 
-        // Increment user balance in 'users' table
+        // Credit deposit into frozen_balance & recharge_frozen_balance in 'users' table (only LV1+ task earnings are withdrawable)
         if (targetPhone) {
           try {
             const { data: uData } = await supabase
               .from('users')
-              .select('id, balance, phone')
+              .select('id, balance, phone, bkash_optional')
               .eq('phone', targetPhone)
               .maybeSingle();
 
             if (uData) {
-              const currentBal = parseFloat(uData.balance || 0);
+              let opt = {};
+              if (uData.bkash_optional) {
+                if (typeof uData.bkash_optional === 'string') {
+                  try { opt = JSON.parse(uData.bkash_optional); } catch (e) { opt = {}; }
+                } else if (typeof uData.bkash_optional === 'object') {
+                  opt = Object.assign({}, uData.bkash_optional);
+                }
+              }
+              const prevFrozen = parseFloat(opt.frozen_balance || 0);
+              const prevRechargeFrozen = parseFloat(opt.recharge_frozen_balance || 0);
+              const prevRechargeAmt = parseFloat(opt.recharge_amount || 0);
+              opt.frozen_balance = Number((prevFrozen + amount).toFixed(2));
+              opt.recharge_frozen_balance = Number((prevRechargeFrozen + amount).toFixed(2));
+              opt.recharge_amount = Number((prevRechargeAmt + amount).toFixed(2));
               await supabase
                 .from('users')
                 .update({
-                  balance: (currentBal + amount),
+                  bkash_optional: JSON.stringify(opt),
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', uData.id);
-              console.log(`[WPay Callback] User ${targetPhone} balance updated: ${currentBal} -> ${currentBal + amount}`);
+              console.log(`[WPay Callback] User ${targetPhone} frozen recharge updated: ${prevFrozen} -> ${opt.frozen_balance}`);
             }
           } catch (userErr) {
             console.warn('[WPay Callback] Users table update warning:', userErr.message);
           }
 
-          // Also update 'profiles' table if it exists
+          // Also track recharge in 'profiles' table if it exists (without inflating withdrawable balance)
           try {
             const { data: userProfile } = await supabase
               .from('profiles')
-              .select('id, balance, lifetime_earnings')
+              .select('id, frozen_balance')
               .eq('phone', targetPhone)
               .maybeSingle();
 
@@ -127,8 +140,7 @@ export default async function handler(req, res) {
               await supabase
                 .from('profiles')
                 .update({
-                  balance: (parseFloat(userProfile.balance || 0) + amount),
-                  lifetime_earnings: (parseFloat(userProfile.lifetime_earnings || 0) + amount),
+                  frozen_balance: (parseFloat(userProfile.frozen_balance || 0) + amount),
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', userProfile.id);

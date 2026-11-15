@@ -97,7 +97,8 @@ function parseUserMeta(userRow) {
     nagadPhone: userRow?.nagad_phone || opt.nagad_phone || '',
     usdtName: userRow?.usdt_name || opt.usdt_name || '',
     usdtAddress: userRow?.usdt_address || opt.usdt_address || '',
-    accountStatus: opt.account_status || 'active'
+    accountStatus: opt.account_status || 'active',
+    frozenBalance: Number(opt.frozen_balance) || 0
   };
 }
 
@@ -585,7 +586,10 @@ function renderOverviewQueues() {
             <td class="py-3 px-4 font-mono text-xs text-slate-600">
               ${escapeHtml(u.member_id || '-')} · <span class="text-slate-900 font-semibold">${escapeHtml(u.package_level || 'LV0')}</span>
             </td>
-            <td class="py-3 px-4 text-right font-mono font-semibold text-emerald-700 tabular-nums">${formatMoney(u.balance)}</td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums">
+              <div class="font-semibold text-emerald-700">${formatMoney(u.balance)}</div>
+              ${meta.frozenBalance > 0 ? `<div class="text-[11px] font-medium text-sky-700">Frozen: ${formatMoney(meta.frozenBalance)}</div>` : ''}
+            </td>
             <td class="py-3 px-4 text-xs text-slate-500 font-mono">${escapeHtml(dateLabel)}</td>
             <td class="py-3 px-4 text-right">
               <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
@@ -728,27 +732,32 @@ async function handleRechargeAction(txId, targetState) {
         .maybeSingle();
 
       if (userRow) {
-        const curBal = Number(userRow.balance) || 0;
         const rawOpt = parseRawUserOpt(userRow);
+        const curFrozen = Number(rawOpt.frozen_balance) || 0;
+        const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
         const curRechargeAmt = Number(rawOpt.recharge_amount) || 0;
-        let nextBal = curBal;
+        let nextFrozen = curFrozen;
+        let nextRechargeFrozen = curRechargeFrozen;
         let nextRechargeAmt = curRechargeAmt;
         if (prevState !== 'approved' && targetState === 'approved') {
-          nextBal = Number((curBal + amt).toFixed(2));
+          nextFrozen = Number((curFrozen + amt).toFixed(2));
+          nextRechargeFrozen = Number((curRechargeFrozen + amt).toFixed(2));
           nextRechargeAmt = Number((curRechargeAmt + amt).toFixed(2));
-          balanceNote = ` (+${formatMoney(amt)} credited to user)`;
+          balanceNote = ` (+${formatMoney(amt)} credited to Frozen balance)`;
         } else if (prevState === 'approved' && targetState !== 'approved') {
-          nextBal = Math.max(0, Number((curBal - amt).toFixed(2)));
+          nextFrozen = Math.max(0, Number((curFrozen - amt).toFixed(2)));
+          nextRechargeFrozen = Math.max(0, Number((curRechargeFrozen - amt).toFixed(2)));
           nextRechargeAmt = Math.max(0, Number((curRechargeAmt - amt).toFixed(2)));
-          balanceNote = ` (-${formatMoney(amt)} reverted from balance)`;
+          balanceNote = ` (-${formatMoney(amt)} reverted from Frozen balance)`;
         }
 
-        if (nextBal !== curBal || nextRechargeAmt !== curRechargeAmt) {
+        if (nextFrozen !== curFrozen || nextRechargeFrozen !== curRechargeFrozen || nextRechargeAmt !== curRechargeAmt) {
+          rawOpt.frozen_balance = nextFrozen;
+          rawOpt.recharge_frozen_balance = nextRechargeFrozen;
           rawOpt.recharge_amount = nextRechargeAmt;
           await supabaseClient
             .from('users')
             .update({
-              balance: nextBal,
               bkash_optional: JSON.stringify(rawOpt),
               updated_at: new Date().toISOString()
             })
@@ -993,7 +1002,8 @@ function openInspectModal(txId) {
         <div class="flex justify-between text-xs"><span class="text-slate-500">Account Phone</span><span class="font-mono text-slate-900 font-semibold">${escapeHtml(tx.phone || '-')}</span></div>
         <div class="flex justify-between text-xs"><span class="text-slate-500">Full / Real Name</span><span class="text-slate-900 font-semibold">${escapeHtml(holderName)}</span></div>
         <div class="flex justify-between text-xs"><span class="text-slate-500">Member ID / Level</span><span class="font-mono text-slate-700">${escapeHtml(u?.member_id || '-')} · ${escapeHtml(u?.package_level || 'LV0')}</span></div>
-        <div class="flex justify-between text-xs"><span class="text-slate-500">Current User Balance</span><span class="font-mono text-emerald-700 font-semibold">${u ? formatMoney(u.balance) : '-'}</span></div>
+        <div class="flex justify-between text-xs"><span class="text-slate-500">Available User Balance</span><span class="font-mono text-emerald-700 font-semibold">${u ? formatMoney(u.balance) : '-'}</span></div>
+        <div class="flex justify-between text-xs"><span class="text-slate-500">Frozen Balance</span><span class="font-mono text-sky-700 font-semibold">${u ? formatMoney(meta.frozenBalance) : '-'}</span></div>
         <div class="flex justify-between text-xs"><span class="text-slate-500">Payout Channel</span><span class="text-slate-900 font-semibold">${escapeHtml(methodStr)}</span></div>
         <div class="flex justify-between items-center text-xs pt-2 border-t border-slate-200/70">
           <span class="text-slate-500">Destination Wallet</span>
@@ -1105,14 +1115,25 @@ function renderUsersTable() {
         <td class="py-3.5 px-4">
           <span class="font-mono text-xs font-semibold ${u.package_level && u.package_level !== 'LV0' ? 'text-slate-900' : 'text-slate-400'}">${escapeHtml(u.package_level || 'LV0')}</span>
         </td>
-        <td class="py-3.5 px-4 text-right font-mono font-semibold text-emerald-700 tabular-nums">${formatMoney(u.balance)}</td>
+        <td class="py-3.5 px-4 text-right font-mono tabular-nums">
+          <div class="font-semibold text-emerald-700">${formatMoney(u.balance)}</div>
+          ${meta.frozenBalance > 0 ? `<div class="text-[11px] font-medium text-sky-700">Frozen: ${formatMoney(meta.frozenBalance)}</div>` : ''}
+        </td>
         <td class="py-3.5 px-4 text-xs text-slate-600 font-mono max-w-[220px] truncate" title="${escapeHtml(payouts)}">${escapeHtml(payouts)}</td>
         <td class="py-3.5 px-4 text-xs text-slate-500 font-mono">${escapeHtml(joinedDate)}</td>
         <td class="py-3.5 px-4 text-right">
-          <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
-            class="px-3 py-1 rounded-md bg-slate-100 hover:bg-slate-900 text-slate-700 hover:text-white text-xs font-semibold transition cursor-pointer">
-            Control
-          </button>
+          <div class="inline-flex items-center justify-end gap-1.5">
+            ${meta.frozenBalance > 0 ? `
+              <button type="button" onclick="quickUnfreezeAllToAvailable('${escapeHtml(u.phone)}')"
+                class="px-2.5 py-1 rounded-md bg-sky-50 hover:bg-sky-600 text-sky-700 hover:text-white text-xs font-semibold transition cursor-pointer" title="Move all frozen balance to available balance">
+                Unfreeze
+              </button>
+            ` : ''}
+            <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
+              class="px-3 py-1 rounded-md bg-slate-100 hover:bg-slate-900 text-slate-700 hover:text-white text-xs font-semibold transition cursor-pointer">
+              Control
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -1128,6 +1149,13 @@ function openEditUserModal(phoneKey) {
   document.getElementById('edit-user-phone-key').value = u.phone;
   document.getElementById('edit-user-subtitle').textContent = `Phone: ${u.phone} · Member ID: ${u.member_id || '-'}`;
   document.getElementById('edit-user-balance').value = Number(u.balance || 0).toFixed(2);
+  const frozenInp = document.getElementById('edit-user-frozen-balance');
+  if (frozenInp) frozenInp.value = Number(meta.frozenBalance || 0).toFixed(2);
+  const unfreezeInp = document.getElementById('edit-user-unfreeze-amount');
+  if (unfreezeInp) {
+    unfreezeInp.value = '';
+    unfreezeInp.max = Number(meta.frozenBalance || 0).toFixed(2);
+  }
   document.getElementById('edit-user-level').value = u.package_level || 'LV0';
   document.getElementById('edit-user-name').value = meta.realName || u.name || '';
   document.getElementById('edit-user-superior').value = u.superior_id || '';
@@ -1161,6 +1189,100 @@ function quickBumpBalance(delta) {
   inp.value = Math.max(0, cur + delta).toFixed(2);
 }
 
+function fillMaxUnfreezeAmount() {
+  const frozenInp = document.getElementById('edit-user-frozen-balance');
+  const unfreezeInp = document.getElementById('edit-user-unfreeze-amount');
+  if (!frozenInp || !unfreezeInp) return;
+  const curFrozen = Math.max(0, parseFloat(frozenInp.value) || 0);
+  unfreezeInp.value = curFrozen.toFixed(2);
+}
+
+async function applyFrozenToAvailableTransfer(phoneKey, requestedAmt, moveAll) {
+  const existing = usersByPhone.get(normalizePhone(phoneKey)) || allUsers.find(x => String(x.phone) === String(phoneKey));
+  if (!existing) return false;
+
+  const rawOpt = parseRawUserOpt(existing);
+  const curAvail = Number(existing.balance) || 0;
+  const curFrozen = Number(rawOpt.frozen_balance) || 0;
+
+  if (curFrozen <= 0) {
+    showToast('This user has no frozen balance to move.', 'error');
+    return false;
+  }
+
+  let transferAmt = moveAll ? curFrozen : (parseFloat(requestedAmt) || 0);
+  if (isNaN(transferAmt) || transferAmt <= 0) {
+    showToast('Enter a valid frozen amount to move to available balance.', 'error');
+    return false;
+  }
+  if (transferAmt > curFrozen + 0.001) {
+    showToast(`Transfer amount exceeds frozen balance (${formatMoney(curFrozen)}).`, 'error');
+    return false;
+  }
+  transferAmt = Number(Math.min(curFrozen, transferAmt).toFixed(2));
+
+  const nextFrozen = Math.max(0, Number((curFrozen - transferAmt).toFixed(2)));
+  const nextAvail = Number((curAvail + transferAmt).toFixed(2));
+  const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
+  const nextRechargeFrozen = Math.max(0, Math.min(nextFrozen, Number((curRechargeFrozen - transferAmt).toFixed(2))));
+  const prevAdminUnfrozen = Number(rawOpt.admin_unfrozen_balance) || 0;
+
+  const updatedMeta = Object.assign({}, rawOpt, {
+    frozen_balance: nextFrozen,
+    recharge_frozen_balance: nextRechargeFrozen,
+    admin_unfrozen_balance: Number((prevAdminUnfrozen + transferAmt).toFixed(2))
+  });
+
+  try {
+    const { error } = await supabaseClient
+      .from('users')
+      .update({
+        balance: nextAvail,
+        bkash_optional: JSON.stringify(updatedMeta),
+        updated_at: new Date().toISOString()
+      })
+      .eq('phone', existing.phone);
+
+    if (error) {
+      showToast('Failed to move frozen balance: ' + error.message, 'error');
+      return false;
+    }
+
+    const availInp = document.getElementById('edit-user-balance');
+    const frozenInp = document.getElementById('edit-user-frozen-balance');
+    const unfreezeInp = document.getElementById('edit-user-unfreeze-amount');
+    if (availInp && document.getElementById('edit-user-phone-key')?.value === existing.phone) {
+      availInp.value = nextAvail.toFixed(2);
+    }
+    if (frozenInp && document.getElementById('edit-user-phone-key')?.value === existing.phone) {
+      frozenInp.value = nextFrozen.toFixed(2);
+    }
+    if (unfreezeInp && document.getElementById('edit-user-phone-key')?.value === existing.phone) {
+      unfreezeInp.value = '';
+      unfreezeInp.max = nextFrozen.toFixed(2);
+    }
+
+    showToast(`Moved ${formatMoney(transferAmt)} from Frozen to Available balance for ${existing.phone}.`, 'success');
+    await refreshAllData(false);
+    return true;
+  } catch (err) {
+    showToast('Error moving frozen balance: ' + (err.message || 'Unknown'), 'error');
+    return false;
+  }
+}
+
+async function moveUserFrozenToAvailable(moveAll) {
+  const phoneKey = document.getElementById('edit-user-phone-key')?.value;
+  if (!phoneKey) return;
+  const unfreezeInp = document.getElementById('edit-user-unfreeze-amount');
+  await applyFrozenToAvailableTransfer(phoneKey, unfreezeInp ? unfreezeInp.value : 0, Boolean(moveAll));
+}
+
+async function quickUnfreezeAllToAvailable(phoneKey) {
+  if (!phoneKey) return;
+  await applyFrozenToAvailableTransfer(phoneKey, 0, true);
+}
+
 async function handleSaveUserForm(e) {
   e.preventDefault();
   const phoneKey = document.getElementById('edit-user-phone-key').value;
@@ -1172,6 +1294,16 @@ async function handleSaveUserForm(e) {
   const newName = document.getElementById('edit-user-name').value.trim() || 'Member';
   const newPlainPass = document.getElementById('edit-user-password').value.trim();
 
+  const prevAvail = Number(existing.balance) || 0;
+  const nextAvail = Math.max(0, parseFloat(document.getElementById('edit-user-balance').value) || 0);
+  const prevFrozen = Number(rawOpt.frozen_balance) || 0;
+  const frozenInp = document.getElementById('edit-user-frozen-balance');
+  const nextFrozen = frozenInp ? Math.max(0, parseFloat(frozenInp.value) || 0) : prevFrozen;
+  const frozenReduction = Math.max(0, Number((prevFrozen - nextFrozen).toFixed(2)));
+  const availIncrease = Math.max(0, Number((nextAvail - prevAvail).toFixed(2)));
+  const unlockedDelta = Math.min(frozenReduction, availIncrease);
+  const nextRechargeFrozen = Math.max(0, Math.min(nextFrozen, Number(rawOpt.recharge_frozen_balance || 0) - frozenReduction));
+
   const updatedMeta = Object.assign({}, rawOpt, {
     nagad_name: existingMeta.nagadName || newName,
     nagad_phone: document.getElementById('edit-user-nagad-phone').value.trim(),
@@ -1179,12 +1311,15 @@ async function handleSaveUserForm(e) {
     usdt_address: document.getElementById('edit-user-usdt-address').value.trim(),
     real_name: newName,
     fund_password: document.getElementById('edit-user-fundpass').value.trim(),
-    account_status: document.getElementById('edit-user-status').value || 'active'
+    account_status: document.getElementById('edit-user-status').value || 'active',
+    frozen_balance: Number(nextFrozen.toFixed(2)),
+    recharge_frozen_balance: Number(nextRechargeFrozen.toFixed(2)),
+    admin_unfrozen_balance: Number(((Number(rawOpt.admin_unfrozen_balance) || 0) + unlockedDelta).toFixed(2))
   });
 
   const payload = {
     name: newName,
-    balance: parseFloat(document.getElementById('edit-user-balance').value) || 0,
+    balance: Number(nextAvail.toFixed(2)),
     package_level: document.getElementById('edit-user-level').value || 'LV0',
     superior_id: document.getElementById('edit-user-superior').value.trim() || '11',
     plain_password: newPlainPass,
@@ -1798,6 +1933,9 @@ window.renderUsersTable = renderUsersTable;
 window.openEditUserModal = openEditUserModal;
 window.closeEditUserModal = closeEditUserModal;
 window.quickBumpBalance = quickBumpBalance;
+window.fillMaxUnfreezeAmount = fillMaxUnfreezeAmount;
+window.moveUserFrozenToAvailable = moveUserFrozenToAvailable;
+window.quickUnfreezeAllToAvailable = quickUnfreezeAllToAvailable;
 window.deleteEditedUser = deleteEditedUser;
 window.openManualAdjustModal = openManualAdjustModal;
 window.closeManualAdjustModal = closeManualAdjustModal;
