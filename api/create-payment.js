@@ -39,36 +39,54 @@ export default async function handler(req, res) {
     }
     body = body || {};
 
+function normalizeBdPhone(raw) {
+  if (!raw) return '';
+  let digits = String(raw).replace(/\D/g, '');
+  if (digits.startsWith('880') && digits.length >= 13) digits = '0' + digits.slice(3);
+  if (digits.length === 10 && digits.startsWith('1')) digits = '0' + digits;
+  return digits || String(raw).trim();
+}
+
     const rawAmount = Math.round(parseFloat(body.amount) || 0);
     const payType = String(body.payType || body.pay_type || 'BKASH').toUpperCase().trim();
-    const phone = String(body.phone || body.user_phone || 'guest').trim();
+    const rawPhone = String(body.phone || body.user_phone || 'guest').trim();
+    const phone = rawPhone === 'guest' ? 'guest' : (normalizeBdPhone(rawPhone) || rawPhone);
     const orderId = String(body.orderId || body.order_id || ('ORD' + Date.now() + Math.floor(100 + Math.random() * 900))).trim();
 
-    if (rawAmount < 300 || rawAmount > 50000) {
+    if (rawAmount < 126 || rawAmount > 50000) {
       return res.status(400).json({
         success: false,
-        message: 'টাকার পরিমাণ অবশ্যই ৩০০ থেকে ৫০,০০০ এর মধ্যে হতে হবে।'
+        message: 'টাকার পরিমাণ অবশ্যই ১২৬ থেকে ৫০,০০০ এর মধ্যে হতে হবে।'
       });
     }
 
-    // 1. Record pending order in Supabase
+    // 1. Record pending order in Supabase (avoid duplicate if client already inserted same order_id)
     const supabase = getSupabaseAdminClient();
     if (supabase) {
       try {
-        await supabase.from('transactions').insert({
-          phone: phone,
-          type: 'deposit',
-          amount: rawAmount,
-          actual: rawAmount,
-          ratio: '0%',
-          status: 'মুলতবি (Pending)',
-          method: payType === 'NAGAD' ? 'নগদ (Nagad)' : 'বিকাশ (bKash)',
-          order_id: orderId,
-          out_trade_no: orderId,
-          date: new Date().toISOString().split('T')[0],
-          time: new Date().toTimeString().split(' ')[0],
-          created_at: new Date().toISOString()
-        });
+        const { data: existingOrder } = await supabase
+          .from('transactions')
+          .select('id')
+          .eq('order_id', orderId)
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingOrder) {
+          await supabase.from('transactions').insert({
+            phone: phone,
+            type: 'deposit',
+            amount: rawAmount,
+            actual: 0,
+            ratio: '0%',
+            status: 'মুলতবি (Pending)',
+            method: payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]',
+            order_id: orderId,
+            out_trade_no: orderId,
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toTimeString().split(' ')[0],
+            created_at: new Date().toISOString()
+          });
+        }
       } catch (dbErr) {
         console.warn('[Create Payment] Supabase log notice:', dbErr.message);
       }

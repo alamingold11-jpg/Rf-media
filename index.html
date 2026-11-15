@@ -1246,15 +1246,15 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                         </svg>
                       </button>
 
-                      <!-- ২. অ্যাকাউন্ট পরিবর্তন রেকর্ড -->
-                      <button type="button" class="w-full flex items-center justify-between h-[34px] min-h-[34px] transition-opacity active:opacity-70 text-left cursor-pointer bg-transparent border-0 p-0 shadow-none outline-none focus:outline-none" style="background: transparent; border: none; padding: 0; box-shadow: none;" data-dashboard-message="অ্যাকাউন্ট পরিবর্তনের রেকর্ড এখানে উপলভ্য নয়।">
+                      <!-- ২. অ্যাকাউন্ট রেকর্ড -->
+                      <button type="button" class="w-full flex items-center justify-between h-[34px] min-h-[34px] transition-opacity active:opacity-70 text-left cursor-pointer bg-transparent border-0 p-0 shadow-none outline-none focus:outline-none" style="background: transparent; border: none; padding: 0; box-shadow: none;" data-panel="account-change">
                         <div class="flex items-center gap-[16px] min-w-0">
                           <svg viewBox="0 0 24 24" class="w-[23px] h-[23px] shrink-0 text-[#a78bfa]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                             <path d="M3 3v5h5"/>
                             <path d="M12 7v5l4 2"/>
                           </svg>
-                          <span class="text-[18px] font-medium text-[#eef2fb] leading-none truncate">অ্যাকাউন্ট পরিবর্তন রেকর্ড</span>
+                          <span class="text-[18px] font-medium text-[#eef2fb] leading-none truncate">অ্যাকাউন্ট রেকর্ড</span>
                         </div>
                         <svg viewBox="0 0 24 24" class="w-[18px] h-[18px] shrink-0 text-[#5c6e94]" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                           <path d="m9 18 6-6-6-6"/>
@@ -1985,50 +1985,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
 
             <!-- HERO GIFT ILLUSTRATION + CENTERED INVITATION CARD (Matches Screenshot 1 with Site Palette) -->
             <div class="mx-auto max-w-[380px] pt-1 relative">
-              <!-- Subtle Celebratory Gift Illustration Header (Matte Site Colors) -->
-              <div class="relative w-full h-[126px] flex items-end justify-center overflow-hidden pointer-events-none select-none -mb-3 z-0">
-                <svg viewBox="0 0 360 130" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <!-- Soft ambient podium base -->
-                  <path d="M18 130 L64 108 L296 108 L342 130 Z" fill="#0d2354"/>
-                  <!-- Subtle confetti ribbons & small coins (matte, muted tones) -->
-                  <circle cx="52" cy="48" r="6" fill="#d99b26" opacity="0.75"/>
-                  <circle cx="88" cy="24" r="5" fill="#d99b26" opacity="0.65"/>
-                  <circle cx="272" cy="26" r="5.5" fill="#d99b26" opacity="0.7"/>
-                  <circle cx="308" cy="54" r="6" fill="#d99b26" opacity="0.7"/>
-                  <rect x="116" y="28" width="12" height="8" rx="1.5" transform="rotate(-18 116 28)" fill="#1877f2" opacity="0.85"/>
-                  <rect x="234" y="34" width="12" height="8" rx="1.5" transform="rotate(20 234 34)" fill="#1877f2" opacity="0.85"/>
-                  <rect x="148" y="14" width="7" height="10" rx="1" transform="rotate(14 148 14)" fill="#60a5fa" opacity="0.6"/>
-                  <rect x="208" y="16" width="7" height="10" rx="1" transform="rotate(-16 208 16)" fill="#60a5fa" opacity="0.6"/>
-
-                  <!-- Left character figure pointing up -->
-                  <circle cx="108" cy="68" r="6.5" fill="#e2b49a"/>
-                  <path d="M101 66 C101 60 114 60 114 67" fill="#334155"/>
-                  <path d="M98 116 L102 80 L114 80 L117 116 Z" fill="#1e3a8a"/>
-                  <path d="M102 80 C102 74 114 74 114 80 L127 68 L130 71 L114 87 Z" fill="#38bdf8"/>
-
-                  <!-- Right character figure holding gift -->
-                  <circle cx="252" cy="68" r="6.5" fill="#e2b49a"/>
-                  <path d="M246 65 C246 60 258 60 258 66" fill="#1e293b"/>
-                  <path d="M244 116 L246 82 L258 82 L260 116 Z" fill="#0f295c"/>
-                  <path d="M245 80 C245 75 259 75 259 80 L259 96 L245 96 Z" fill="#10b981"/>
-                  <path d="M245 83 L232 90 L234 94 L245 88 Z" fill="#10b981"/>
-
-                  <!-- Center Open Gift Box -->
-                  <!-- Inner stack inside box -->
-                  <rect x="157" y="64" width="46" height="18" rx="2" fill="#10b981"/>
-                  <rect x="176" y="64" width="8" height="18" fill="#60a5fa"/>
-                  <!-- Gift box body -->
-                  <rect x="150" y="78" width="60" height="40" rx="3" fill="#e5a93b"/>
-                  <rect x="175" y="78" width="10" height="40" fill="#1877f2"/>
-                  <!-- Gift box open lid hovering cleanly -->
-                  <g transform="translate(0, -4)">
-                    <rect x="146" y="42" width="68" height="14" rx="2.5" fill="#f0b949"/>
-                    <rect x="175" y="42" width="10" height="14" fill="#1877f2"/>
-                    <path d="M180 42 C170 30 158 34 166 42 Z" fill="#60a5fa"/>
-                    <path d="M180 42 C190 30 202 34 194 42 Z" fill="#60a5fa"/>
-                  </g>
-                </svg>
-              </div>
+              <div id="invite-promo-banner-root" class="mb-3.5"></div>
 
               <!-- Centered Dark-Navy Invitation Card -->
               <div class="relative z-10 rounded-xl bg-[#0b1730] px-6 py-7 text-center">
@@ -2266,7 +2223,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ১</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম স্তরে ৩ জন সক্রিয় সদস্য যুক্ত হলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ৩ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2293,7 +2250,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ২</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ৫ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ৫ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2320,7 +2277,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ৩</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ৮ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ৮ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2345,7 +2302,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ৪</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ১৫ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ১৫ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2374,7 +2331,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ৫</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ২৫ জন বা তার বেশি <b>A ও B-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ২৫ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2399,7 +2356,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ৬</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ৪০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ৪০ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2425,7 +2382,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ৭</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ৭০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ৭০ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2452,7 +2409,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                   <div class="salary-pos">অবস্থান ৮</div>
                   <div class="salary-desc">
-                    <div>আপনার প্রথম ১০০ জন বা তার বেশি <b>A, B ও C-লেভেল</b> সদস্য থাকলে যোগ্য হবেন।</div>
+                    <div>আপনার প্রথম ১০০ জন বা তার বেশি <b>A-লেভেল</b> সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।</div>
                     <div class="prog">
                       <div class="bar">
                         <div class="fill" style="width: 0%;"></div>
@@ -2508,7 +2465,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 </div>
 
                 <div class="p-2.5 rounded-xl bg-[#071638] text-[11.5px] text-[#94a3b8] leading-relaxed mb-4">
-                  আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। নির্ধারিত সক্রিয় সদস্য পূরণ হলেই আপনার অবস্থান সক্রিয় হবে এবং মাসিক বেতন সরাসরি মূল ব্যালেন্সে গ্রহণ করতে পারবেন।
+                  আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। শুধু ফ্রি রেফার করলে গণ্য হবে না — A-লেভেলের সদস্যরা রিচার্জ করে প্যাকেজ কিনলেই সক্রিয় হবে এবং বেতন অগ্রগতি বাড়বে।
                 </div>
 
                 <!-- Action Buttons in Modal -->
@@ -2580,58 +2537,8 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
               </div>
             </div>
 
-            <!-- Table Rows (History / Withdrawal records matching user screenshot) -->
-            <div id="my-pass-history-rows" class="divide-y divide-[#0f245a]/70 bg-[#06153d]/90 relative z-10 text-xs shadow-lg">
-              
-              <!-- Row 1 -->
-              <div class="grid grid-cols-5 items-center py-3.5 px-2 text-center hover:bg-[#081a4b] transition">
-                <div class="text-left pl-1 font-bold font-mono text-white text-[13px]">5100.00</div>
-                <div class="font-bold text-[13px]" style="color: #2d79f8;">50.0%</div>
-                <div class="font-bold font-mono text-white text-[13px]">2550.00</div>
-                <div class="font-bold text-xs" style="color: #2d79f8;">স্থানান্তরিত</div>
-                <div class="text-[10.5px] text-slate-200 leading-tight font-mono">
-                  <div>2022-05-19</div>
-                  <div class="mt-0.5 text-slate-400">10:58</div>
-                </div>
-              </div>
-
-              <!-- Row 2 -->
-              <div class="grid grid-cols-5 items-center py-3.5 px-2 text-center hover:bg-[#081a4b] transition">
-                <div class="text-left pl-1 font-bold font-mono text-white text-[13px]">3000.00</div>
-                <div class="font-bold text-[13px]" style="color: #2d79f8;">50.0%</div>
-                <div class="font-bold font-mono text-white text-[13px]">1500.00</div>
-                <div class="font-bold text-xs" style="color: #2d79f8;">স্থানান্তরিত</div>
-                <div class="text-[10.5px] text-slate-200 leading-tight font-mono">
-                  <div>2022-05-13</div>
-                  <div class="mt-0.5 text-slate-400">10:24</div>
-                </div>
-              </div>
-
-              <!-- Row 3 -->
-              <div class="grid grid-cols-5 items-center py-3.5 px-2 text-center hover:bg-[#081a4b] transition">
-                <div class="text-left pl-1 font-bold font-mono text-white text-[13px]">2100.00</div>
-                <div class="font-bold text-[13px]" style="color: #2d79f8;">50.0%</div>
-                <div class="font-bold font-mono text-white text-[13px]">1050.00</div>
-                <div class="font-bold text-xs" style="color: #2d79f8;">স্থানান্তরিত</div>
-                <div class="text-[10.5px] text-slate-200 leading-tight font-mono">
-                  <div>2022-04-29</div>
-                  <div class="mt-0.5 text-slate-400">14:25</div>
-                </div>
-              </div>
-
-              <!-- Row 4 -->
-              <div class="grid grid-cols-5 items-center py-3.5 px-2 text-center hover:bg-[#081a4b] transition">
-                <div class="text-left pl-1 font-bold font-mono text-white text-[13px]">600.00</div>
-                <div class="font-bold text-[13px]" style="color: #2d79f8;">50.0%</div>
-                <div class="font-bold font-mono text-white text-[13px]">300.00</div>
-                <div class="font-bold text-xs" style="color: #2d79f8;">স্থানান্তরিত</div>
-                <div class="text-[10.5px] text-slate-200 leading-tight font-mono">
-                  <div>2022-04-20</div>
-                  <div class="mt-0.5 text-slate-400">11:44</div>
-                </div>
-              </div>
-
-            </div>
+            <!-- Table Rows (Withdrawal records only, rendered dynamically) -->
+            <div id="my-pass-history-rows" class="divide-y divide-[#0f245a]/70 bg-[#06153d]/90 relative z-10 text-xs shadow-lg hidden"></div>
 
             <!-- Empty state when no records (Exact match with user screenshot) -->
             <div id="my-pass-empty-state" class="hidden flex-col items-center justify-center py-12 px-4 text-center z-10 relative">
@@ -2753,6 +2660,82 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
             </div>
 
 
+          </section>
+
+          <!-- ACCOUNT RECORD (অ্যাকাউন্ট রেকর্ড / রিচার্জ রেকর্ড) SCREEN -->
+          <section id="account-change-panel" class="dashboard-panel -mx-4 -mt-4 min-h-screen text-white relative flex flex-col overflow-hidden" style="background: radial-gradient(circle at 50% 90%, #061952 0%, #040e2d 45%, #02071d 100%);" aria-label="অ্যাকাউন্ট রেকর্ড" hidden>
+
+            <!-- Top Navigation Header -->
+            <header class="flex items-center justify-between px-3 py-3 border-b border-[#0d2156]/60 bg-[#051133] sticky top-0 z-20">
+              <button type="button" class="p-1 text-white hover:text-[#35c6e7] active:scale-90 transition cursor-pointer flex items-center" data-panel="profile" aria-label="পেছনে যান">
+                <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="m15 18-6-6 6-6"></path>
+                </svg>
+              </button>
+              <h1 class="text-base font-bold text-white tracking-wide">অ্যাকাউন্ট রেকর্ড</h1>
+              <div class="w-7" aria-hidden="true"></div>
+            </header>
+
+            <!-- Table Header (5 Columns - Matching My Pass) -->
+            <div class="bg-[#051133] border-b border-[#0f245a] px-2 py-2.5 text-center text-xs font-bold text-white relative z-10">
+              <div class="grid grid-cols-5 items-center">
+                <div class="text-left pl-1">পরিমাণ</div>
+                <div class="leading-tight">লাভ শেয়ারিং<br>অনুপাত</div>
+                <div class="leading-tight">প্রকৃত<br>আগমন</div>
+                <div>অবস্থা</div>
+                <div>তারিখ</div>
+              </div>
+            </div>
+
+            <!-- Table Rows (Recharge records only, rendered dynamically) -->
+            <div id="account-change-history-rows" class="divide-y divide-[#0f245a]/70 bg-[#06153d]/90 relative z-10 text-xs shadow-lg hidden"></div>
+
+            <!-- Empty state when no records -->
+            <div id="account-change-empty-state" class="hidden flex-col items-center justify-center py-12 px-4 text-center z-10 relative">
+              <div class="w-32 h-24 relative flex items-center justify-center opacity-85">
+                <svg class="absolute top-0 right-3 w-8 h-6 text-[#2563eb]/40 fill-current" viewBox="0 0 24 24">
+                  <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                </svg>
+                <svg class="w-24 h-24" viewBox="0 0 100 100" fill="none">
+                  <rect x="25" y="44" width="18" height="38" rx="2" fill="#1d3568" opacity="0.8"/>
+                  <rect x="40" y="28" width="28" height="54" rx="2" fill="#2d529a" opacity="0.9"/>
+                  <rect x="46" y="36" width="16" height="3.5" rx="1" fill="#60a5fa" opacity="0.6"/>
+                  <rect x="46" y="43" width="16" height="3.5" rx="1" fill="#60a5fa" opacity="0.6"/>
+                  <rect x="46" y="50" width="16" height="3.5" rx="1" fill="#60a5fa" opacity="0.6"/>
+                  <rect x="65" y="34" width="16" height="48" rx="2" fill="#1d3568" opacity="0.8"/>
+                </svg>
+              </div>
+              <p class="text-xs text-slate-400 font-medium mt-1">কোন রেকর্ড নেই</p>
+            </div>
+
+            <!-- Cyber Floor Concentric Circles -->
+            <div class="flex-1 relative min-h-[260px] pointer-events-none select-none overflow-hidden">
+              <div class="absolute bottom-16 left-1/2 -translate-x-1/2 w-44 h-44 rounded-full bg-[#38bdf8]/25 blur-3xl"></div>
+              <div class="absolute bottom-24 left-1/2 -translate-x-1/2 w-28 h-28 rounded-full bg-[#2563eb]/35 blur-2xl"></div>
+
+              <svg class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[460px] h-[220px] opacity-40" viewBox="0 0 400 200" preserveAspectRatio="none">
+                <ellipse cx="200" cy="180" rx="190" ry="60" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6,4"/>
+                <ellipse cx="200" cy="180" rx="140" ry="44" fill="none" stroke="#38bdf8" stroke-width="2"/>
+                <ellipse cx="200" cy="180" rx="90" ry="28" fill="none" stroke="#60a5fa" stroke-width="2.5"/>
+                <ellipse cx="200" cy="180" rx="40" ry="12" fill="none" stroke="#93c5fd" stroke-width="3"/>
+                <line x1="200" y1="180" x2="30" y2="200" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+                <line x1="200" y1="180" x2="80" y2="200" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+                <line x1="200" y1="180" x2="140" y2="200" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+                <line x1="200" y1="180" x2="200" y2="200" stroke="#60a5fa" stroke-width="2" opacity="0.8"/>
+                <line x1="200" y1="180" x2="260" y2="200" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+                <line x1="200" y1="180" x2="320" y2="200" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+                <line x1="200" y1="180" x2="370" y2="200" stroke="#3b82f6" stroke-width="1.5" opacity="0.6"/>
+              </svg>
+
+              <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-70">
+                <div class="text-[#38bdf8] text-xs">▲</div>
+                <div class="w-12 h-12 rounded-full border-2 border-[#38bdf8]/50 flex items-center justify-center p-1.5 shadow-[0_0_15px_rgba(56,189,248,0.4)]">
+                  <div class="w-full h-full rounded-full border-2 border-[#38bdf8]/70 flex items-center justify-center">
+                    <div class="w-3 h-3 rounded-full bg-[#38bdf8]"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section id="personal-panel" class="dashboard-panel -mx-4 -mt-4 min-h-[calc(100vh-9rem)] px-4 pb-8" aria-label="ব্যক্তিগত তথ্য" hidden>
@@ -4303,10 +4286,10 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                     type="number" 
                     id="bd-recharge-amount-input" 
                     value="500" 
-                    min="300" 
+                    min="126" 
                     max="50000" 
                     step="1"
-                    placeholder="৩০০ থেকে ৫০,০০০" 
+                    placeholder="১২৬ থেকে ৫০,০০০" 
                     class="w-full pl-9 pr-14 py-3.5 rounded-xl bg-[#030d29] border border-[#1b3e85] text-white text-base font-bold placeholder-slate-500 focus:outline-none focus:border-[#38bdf8] transition font-mono"
                   >
                   <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-emerald-400 font-bold text-xs">BDT</span>
@@ -4314,7 +4297,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
 
                 <!-- Quick Amount Chips -->
                 <div class="grid grid-cols-4 gap-2 pt-1 text-center text-xs font-bold">
-                  <button type="button" class="bd-amt-chip py-2 rounded-lg bg-[#0c2357] hover:bg-[#123685] border border-[#173a7d] text-white transition cursor-pointer" onclick="setBdRechargeAmount(300, this)">৳ ৩০০</button>
+                  <button type="button" class="bd-amt-chip py-2 rounded-lg bg-[#0c2357] hover:bg-[#123685] border border-[#173a7d] text-white transition cursor-pointer" onclick="setBdRechargeAmount(126, this)">৳ ১২৬</button>
                   <button type="button" class="bd-amt-chip py-2 rounded-lg bg-[#0284c7] hover:bg-[#123685] border border-[#38bdf8] text-white transition cursor-pointer ring-2 ring-[#38bdf8]" onclick="setBdRechargeAmount(500, this)">৳ ৫০০</button>
                   <button type="button" class="bd-amt-chip py-2 rounded-lg bg-[#0c2357] hover:bg-[#123685] border border-[#173a7d] text-white transition cursor-pointer" onclick="setBdRechargeAmount(1000, this)">৳ ১,০০০</button>
                   <button type="button" class="bd-amt-chip py-2 rounded-lg bg-[#0c2357] hover:bg-[#123685] border border-[#173a7d] text-white transition cursor-pointer" onclick="setBdRechargeAmount(2000, this)">৳ ২,০০০</button>
@@ -4452,7 +4435,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   <div class="space-y-1">
                     <h5 class="text-xs font-bold text-white tracking-wide">USDT · BEP20</h5>
                     <p class="text-xs text-slate-300 leading-relaxed">
-                      Send at least 10.00 USDT through the selected network (BEP20). Your balance updates after the transfer is detected and credited.
+                      Send at least 1.00 USDT through the selected network (BEP20). Your balance updates after the transfer is detected and credited.
                     </p>
                   </div>
                 </div>
@@ -4625,7 +4608,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                     <p id="tier-metric-recharge" class="text-base font-bold tracking-wide" style="color: #2b7fff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">0.00</p>
                   </div>
                   <div class="space-y-0.5">
-                    <p class="text-[11.5px] text-slate-300 font-normal"><span>রিচার্জ রিবেট</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="text-[11.5px] text-slate-300 font-normal"><span>টিম কমিশন</span>(<span class="user-currency-text">BDT</span>)</p>
                     <p id="tier-metric-rebate" class="text-base font-bold tracking-wide" style="color: #2b7fff; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">0.00</p>
                   </div>
                 </div>

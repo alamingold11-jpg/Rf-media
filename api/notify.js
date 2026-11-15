@@ -68,13 +68,13 @@ export default async function handler(req, res) {
         let targetPhone = phone;
         if (!targetPhone && outTradeNo) {
           try {
-            const { data: txRecord } = await supabase
+            const { data: txRecords } = await supabase
               .from('transactions')
               .select('phone, amount')
               .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`)
-              .maybeSingle();
-            if (txRecord && txRecord.phone) {
-              targetPhone = txRecord.phone;
+              .limit(1);
+            if (Array.isArray(txRecords) && txRecords[0] && txRecords[0].phone) {
+              targetPhone = txRecords[0].phone;
             }
           } catch (lookupErr) {
             console.warn('[WPay Callback] Transaction phone lookup warning:', lookupErr.message);
@@ -82,14 +82,22 @@ export default async function handler(req, res) {
         }
 
         // Update transaction in Supabase
-        await supabase
-          .from('transactions')
-          .update({
-            status: 'অনুমোদিত',
-            updated_at: new Date().toISOString()
-          })
-          .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`)
-          .catch(() => {});
+        const txUpdatePayload = {
+          status: 'অনুমোদিত',
+          ratio: '100%',
+          updated_at: new Date().toISOString()
+        };
+        if (amount > 0) {
+          txUpdatePayload.actual = amount;
+        }
+        try {
+          await supabase
+            .from('transactions')
+            .update(txUpdatePayload)
+            .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`);
+        } catch (txUpErr) {
+          console.warn('[WPay Callback] Transaction update warning:', txUpErr.message);
+        }
 
         // Credit deposit into frozen_balance & recharge_frozen_balance in 'users' table (only LV1+ task earnings are withdrawable)
         if (targetPhone) {

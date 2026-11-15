@@ -168,8 +168,8 @@
 
         <div class="flex items-center gap-2 shrink-0">
           <button type="button" onclick="openManualAdjustModal()"
-            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer">
-            + Add Balance
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer">
+            ± Adjust Balance
           </button>
           <button type="button" id="refresh-data-btn" onclick="refreshAllData(true)"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white transition cursor-pointer">
@@ -668,15 +668,28 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Quick Available Balance</label>
+          <div class="rounded-lg bg-slate-50 border border-slate-200/80 p-2.5 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <label class="block text-[11px] font-semibold text-slate-800">Real-Time Live Adjust (+ / -)</label>
+              <select id="edit-live-bal-type" class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700">
+                <option value="available">Available (উপলব্ধ)</option>
+                <option value="frozen">Frozen (বরফ)</option>
+              </select>
+            </div>
             <div class="flex gap-1.5">
-              <button type="button" onclick="quickBumpBalance(500)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-semibold cursor-pointer">+500</button>
-              <button type="button" onclick="quickBumpBalance(1000)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-mono font-semibold cursor-pointer">+1k</button>
-              <button type="button" onclick="quickBumpBalance(-500)" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-rose-600 text-xs font-mono font-semibold cursor-pointer">-500</button>
+              <button type="button" onclick="quickBumpBalance(500)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+500</button>
+              <button type="button" onclick="quickBumpBalance(1000)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+1k</button>
+              <button type="button" onclick="quickBumpBalance(-500)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-500</button>
+              <button type="button" onclick="quickBumpBalance(-1000)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-1k</button>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <input id="edit-live-delta-amount" type="number" step="0.01" min="0.01" placeholder="Custom amount"
+                class="w-24 flex-1 min-w-[90px] px-2.5 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+              <button type="button" onclick="applyCustomLiveModalDelta(1)" class="px-2.5 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold cursor-pointer">+ Add</button>
+              <button type="button" onclick="applyCustomLiveModalDelta(-1)" class="px-2.5 py-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold cursor-pointer">- Minus</button>
             </div>
           </div>
-          <div class="rounded-lg bg-sky-50/70 border border-sky-200/80 p-2.5">
+          <div class="rounded-lg bg-sky-50/70 border border-sky-200/80 p-2.5 flex flex-col justify-between">
             <label class="block text-[11px] font-semibold text-sky-900 mb-1.5">Frozen → Available (বরফ থেকে উপলব্ধ দিন)</label>
             <div class="flex flex-wrap items-center gap-1.5">
               <input id="edit-user-unfreeze-amount" type="number" step="0.01" min="0.01" placeholder="Amount"
@@ -766,12 +779,15 @@
   </div>
 
   <!-- =========================================================
-       MODAL: MANUAL RECHARGE
+       MODAL: REAL-TIME BALANCE ADJUST (+ / -)
   ========================================================== -->
   <div id="manual-adjust-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/45">
     <div class="w-full max-w-md bg-white rounded-xl shadow-xl overflow-hidden">
       <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="text-base font-bold text-slate-900">Add Recharge / Balance</h3>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Real-Time Balance Adjust (+ / -)</h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">Instant sync to user account without page reload</p>
+        </div>
         <button type="button" onclick="closeManualAdjustModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -779,29 +795,54 @@
       <form id="manual-adjust-form" class="p-5 space-y-4">
         <div>
           <label class="block text-xs font-medium text-slate-600 mb-1">User Phone</label>
-          <input id="manual-user-phone" type="text" required placeholder="e.g. 01712345678"
+          <input id="manual-user-phone" type="text" required placeholder="e.g. 01712345678" oninput="updateManualAdjustUserPreview()"
             class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          <div id="manual-user-preview" class="hidden mt-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/80 text-xs flex items-center justify-between gap-2"></div>
         </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="manual-op-add-btn" onclick="setManualAdjustOp('add')"
+            class="py-2 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition cursor-pointer">
+            + Add Balance
+          </button>
+          <button type="button" id="manual-op-sub-btn" onclick="setManualAdjustOp('subtract')"
+            class="py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer">
+            - Minus Balance
+          </button>
+        </div>
+        <input type="hidden" id="manual-operation" value="add" />
+
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (BDT)</label>
-            <input id="manual-amount" type="number" step="0.01" min="1" required placeholder="500"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Method</label>
-            <select id="manual-method"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
-              <option value="bKash [Admin Approved]">bKash (Admin)</option>
-              <option value="Nagad [Admin Approved]">Nagad (Admin)</option>
-              <option value="USDT BEP20 [Admin Approved]">USDT BEP20</option>
-              <option value="System Bonus [Admin]">System Bonus</option>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Target Balance</label>
+            <select id="manual-wallet-type"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+              <option value="available">Available (উপলব্ধ)</option>
+              <option value="frozen">Frozen (বরফ)</option>
             </select>
           </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (BDT)</label>
+            <input id="manual-amount" type="number" step="0.01" min="0.01" required placeholder="500"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+          </div>
         </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Method / Note</label>
+          <select id="manual-method"
+            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+            <option value="Admin Real-Time Credit">Admin Real-Time Adjust</option>
+            <option value="bKash [Admin Approved]">bKash (Admin)</option>
+            <option value="Nagad [Admin Approved]">Nagad (Admin)</option>
+            <option value="USDT BEP20 [Admin Approved]">USDT BEP20</option>
+            <option value="System Bonus [Admin]">System Bonus</option>
+          </select>
+        </div>
+
         <div class="flex items-center justify-end gap-2 pt-2">
           <button type="button" onclick="closeManualAdjustModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-xs font-medium text-slate-700 cursor-pointer">Cancel</button>
-          <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">Credit &amp; Approve</button>
+          <button type="submit" id="manual-adjust-submit-btn" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white cursor-pointer">+ Add Balance Live</button>
         </div>
       </form>
     </div>

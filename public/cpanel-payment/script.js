@@ -10,7 +10,7 @@
 const API_URL = 'https://imcagro.top/api/create-payment';
 
 // Configuration & Constraints
-const MIN_AMOUNT = 300;
+const MIN_AMOUNT = 126;
 const MAX_AMOUNT = 50000;
 const REQUEST_TIMEOUT_MS = 20000; // 20 Seconds Timeout
 
@@ -63,7 +63,7 @@ function validateAmount() {
     return null;
   }
 
-  // Minimum constraint (300 BDT)
+  // Minimum constraint (126 BDT / ~$1 USD)
   if (numValue < MIN_AMOUNT) {
     showFieldError(`সর্বনিম্ন পেমেন্ট পরিমাণ ৳${MIN_AMOUNT} টাকা। / Minimum payment amount is ৳${MIN_AMOUNT} BDT.`);
     return null;

@@ -220,6 +220,7 @@ export default async function handler(req, res) {
     ]);
 
     let matchedTransfer = null;
+    let belowMinimumAmount = 0;
 
     for (const log of receipt.logs) {
       // Must be the official BSC USDT contract
@@ -245,7 +246,7 @@ export default async function handler(req, res) {
         if (logFrom === cleanSender && logTo === COMPANY_BEP20_ADDRESS) {
           // Rule 1: strictly value / 10^18
           const actualUsdt = parseFloat(ethers.formatUnits(logRawValue, 18));
-          if (actualUsdt > 0) {
+          if (actualUsdt >= 1) {
             matchedTransfer = {
               logIndex: Number(log.index ?? log.logIndex ?? 0),
               from: logFrom,
@@ -254,6 +255,8 @@ export default async function handler(req, res) {
               blockNumber: receipt.blockNumber
             };
             break;
+          } else if (actualUsdt > 0) {
+            belowMinimumAmount = actualUsdt;
           }
         }
       } catch (parseError) {
@@ -262,6 +265,13 @@ export default async function handler(req, res) {
     }
 
     if (!matchedTransfer) {
+      if (belowMinimumAmount > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `সর্বনিম্ন ডিপোজিট পরিমাণ 1.00 USDT ($1)। এই ট্রানজেকশনে কেবল ${belowMinimumAmount.toFixed(4)} USDT পাওয়া গেছে।`,
+          messageEn: `Minimum deposit is 1.00 USDT ($1). Only ${belowMinimumAmount.toFixed(4)} USDT was transferred in this transaction.`
+        });
+      }
       return res.status(400).json({
         success: false,
         message: `ব্লকচেইন রেকর্ডে আপনার প্রেরক অ্যাড্রেস (${cleanSender}) থেকে কোম্পানির ডিপোজিট ওয়ালেটে (${COMPANY_BEP20_ADDRESS}) কোনো অনুমোদিত USDT (BEP20) Transfer ইভেন্ট পাওয়া যায়নি।`,

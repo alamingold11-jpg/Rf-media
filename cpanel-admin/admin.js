@@ -97,13 +97,15 @@ function parseUserMeta(userRow) {
     nagadPhone: userRow?.nagad_phone || opt.nagad_phone || '',
     usdtName: userRow?.usdt_name || opt.usdt_name || '',
     usdtAddress: userRow?.usdt_address || opt.usdt_address || '',
-    accountStatus: opt.account_status || 'active'
+    accountStatus: opt.account_status || 'active',
+    frozenBalance: Number(opt.frozen_balance) || 0
   };
 }
 
 function classifyStatus(rawStatus) {
   const s = String(rawStatus || '').trim().toLowerCase();
   if (
+    s.includes('অসফল') ||
     s.includes('বাতিল') ||
     s.includes('reject') ||
     s.includes('cancel') ||
@@ -304,6 +306,9 @@ function setupRealtimeSubscriptions() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
         refreshAllData(false);
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, () => {
+        refreshAllData(false);
+      })
       .subscribe();
   } catch (e) {}
 }
@@ -382,10 +387,36 @@ async function refreshAllData(showFeedback = false) {
   }
 }
 
+function getRechargeStatusPriority(rawStatus) {
+  const k = classifyStatus(rawStatus);
+  if (k === 'approved') return 3;
+  if (k === 'rejected') return 2;
+  return 1;
+}
+
 function getRechargeList() {
   const txDeposits = allTransactions.filter(t => String(t.type || '').toLowerCase() === 'deposit');
+  const dedupMap = new Map();
+  txDeposits.forEach(t => {
+    const key = String(t.order_id || t.out_trade_no || t.id || '');
+    if (!key) return;
+    const prev = dedupMap.get(key);
+    if (!prev) {
+      dedupMap.set(key, Object.assign({}, t));
+      return;
+    }
+    const curPrio = getRechargeStatusPriority(t.status);
+    const prevPrio = getRechargeStatusPriority(prev.status);
+    const pickCur = curPrio > prevPrio || (curPrio === prevPrio && (Number(t.amount) || 0) > (Number(prev.amount) || 0));
+    const winner = pickCur ? Object.assign({}, prev, t) : Object.assign({}, t, prev);
+    if ((Number(winner.amount) || 0) <= 0) {
+      winner.amount = Math.max(Number(t.amount) || 0, Number(prev.amount) || 0);
+    }
+    dedupMap.set(key, winner);
+  });
+
+  const merged = Array.from(dedupMap.values());
   // Merge extra `deposits` rows if any aren't already represented
-  const merged = txDeposits.slice();
   if (allExtraDeposits && allExtraDeposits.length > 0) {
     allExtraDeposits.forEach(d => {
       const hash = String(d.tx_hash || '');
@@ -496,11 +527,13 @@ function renderOverviewQueues() {
       rcBox.innerHTML = recharges.map(tx => {
         const u = usersByPhone.get(normalizePhone(tx.phone));
         const meta = parseUserMeta(u);
+        const isUsdtVerify = (Number(tx.amount) || 0) <= 0 && String(tx.method || '').toLowerCase().includes('usdt');
+        const amtLabel = isUsdtVerify ? '<span class="text-xs font-semibold text-amber-600">Verifying USDT...</span>' : `<span class="font-mono text-sm font-bold text-slate-900 tabular-nums">${formatMoney(tx.amount)}</span>`;
         return `
           <div class="p-4 flex items-center justify-between gap-3 hover:bg-slate-50 transition">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-mono text-sm font-bold text-slate-900 tabular-nums">${formatMoney(tx.amount)}</span>
+                ${amtLabel}
                 <span class="text-xs text-slate-400">·</span>
                 <span class="font-mono text-xs text-slate-600">${escapeHtml(tx.phone || '-')}</span>
               </div>
@@ -588,10 +621,16 @@ function renderOverviewQueues() {
             <td class="py-3 px-4 text-right font-mono font-semibold text-emerald-700 tabular-nums">${formatMoney(u.balance)}</td>
             <td class="py-3 px-4 text-xs text-slate-500 font-mono">${escapeHtml(dateLabel)}</td>
             <td class="py-3 px-4 text-right">
-              <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
-                class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer">
-                Edit
-              </button>
+              <div class="inline-flex items-center gap-1">
+                <button type="button" onclick="openManualAdjustModal('${escapeHtml(u.phone)}')"
+                  class="px-2 py-1 rounded-md bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white text-xs font-semibold cursor-pointer" title="Real-time + / - Balance">
+                  ± Bal
+                </button>
+                <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
+                  class="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 cursor-pointer">
+                  Edit
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -651,6 +690,11 @@ function renderRechargesTable() {
     const orderRef = tx.order_id || tx.out_trade_no || `#${tx.id}`;
     const isExtraDeposit = tx._sourceTable === 'deposits';
 
+    const isUsdtVerify = statusKey === 'pending' && (Number(tx.amount) || 0) <= 0 && String(tx.method || '').toLowerCase().includes('usdt');
+    const amountCellHtml = isUsdtVerify
+      ? `<span class="text-xs font-semibold text-amber-600">Verifying USDT...</span>`
+      : formatMoney(tx.amount);
+
     return `
       <tr class="hover:bg-slate-50 transition">
         <td class="py-3.5 px-4">
@@ -665,7 +709,7 @@ function renderRechargesTable() {
           <div class="text-xs font-medium text-slate-700">${escapeHtml(tx.method || 'Deposit')}</div>
           <div class="text-[11px] text-slate-400">${isAuto ? 'Automated Gateway' : 'Manual / Standard'}</div>
         </td>
-        <td class="py-3.5 px-4 text-right font-mono font-semibold text-emerald-700 tabular-nums">${formatMoney(tx.amount)}</td>
+        <td class="py-3.5 px-4 text-right font-mono font-semibold text-emerald-700 tabular-nums">${amountCellHtml}</td>
         <td class="py-3.5 px-4">${renderStatusBadge(statusKey, isAuto && statusKey === 'approved')}</td>
         <td class="py-3.5 px-4 text-right">
           ${isExtraDeposit ? `<span class="text-[11px] font-mono text-slate-400">On-Chain Auto</span>` : `
@@ -690,7 +734,7 @@ function renderRechargesTable() {
 }
 
 async function handleRechargeAction(txId, targetState) {
-  const tx = allTransactions.find(t => String(t.id) === String(txId));
+  const tx = getRechargeList().find(t => String(t.id) === String(txId)) || allTransactions.find(t => String(t.id) === String(txId));
   if (!tx) return;
 
   const prevState = classifyStatus(tx.status);
@@ -701,58 +745,81 @@ async function handleRechargeAction(txId, targetState) {
 
   const newStatusStr = targetState === 'approved'
     ? 'অনুমোদিত'
-    : (targetState === 'rejected' ? 'বাতিল (Rejected)' : 'মুলতবি (Pending)');
+    : (targetState === 'rejected' ? 'অসফল (Failed)' : 'মুলতবি (Pending)');
 
   const amt = Number(tx.amount) || 0;
   const normPhone = normalizePhone(tx.phone);
+  const orderKey = String(tx.order_id || tx.out_trade_no || '').trim();
+  const txUpdatePayload = {
+    status: newStatusStr,
+    ratio: targetState === 'approved' ? '100%' : '0%',
+    actual: targetState === 'approved' ? amt : 0,
+    updated_at: new Date().toISOString()
+  };
 
   try {
-    // 1. Update transaction status
-    const { error: txErr } = await supabaseClient
-      .from('transactions')
-      .update({ status: newStatusStr, updated_at: new Date().toISOString() })
-      .eq('id', tx.id);
+    let txErr = null;
+    if (orderKey) {
+      const resByOrd = await supabaseClient
+        .from('transactions')
+        .update(txUpdatePayload)
+        .eq('type', 'deposit')
+        .or(`order_id.eq.${orderKey},out_trade_no.eq.${orderKey}`);
+      txErr = resByOrd.error;
+    } else {
+      const resById = await supabaseClient
+        .from('transactions')
+        .update(txUpdatePayload)
+        .eq('id', tx.id);
+      txErr = resById.error;
+    }
 
     if (txErr) {
       showToast('Failed to update recharge status: ' + txErr.message, 'error');
       return;
     }
 
-    // 2. Balance sync logic (prevent double crediting!)
     let balanceNote = '';
     if (normPhone && amt > 0) {
+      const matchedUser = usersByPhone.get(normPhone) || allUsers.find(u => normalizePhone(u.phone || u.account_number) === normPhone);
+      const dbPhone = matchedUser ? matchedUser.phone : normPhone;
       const { data: userRow } = await supabaseClient
         .from('users')
         .select('*')
-        .eq('phone', normPhone)
+        .eq('phone', dbPhone)
         .maybeSingle();
 
       if (userRow) {
-        const curBal = Number(userRow.balance) || 0;
         const rawOpt = parseRawUserOpt(userRow);
+        const curFrozen = Number(rawOpt.frozen_balance) || 0;
+        const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
         const curRechargeAmt = Number(rawOpt.recharge_amount) || 0;
-        let nextBal = curBal;
+        let nextFrozen = curFrozen;
+        let nextRechargeFrozen = curRechargeFrozen;
         let nextRechargeAmt = curRechargeAmt;
         if (prevState !== 'approved' && targetState === 'approved') {
-          nextBal = Number((curBal + amt).toFixed(2));
+          nextFrozen = Number((curFrozen + amt).toFixed(2));
+          nextRechargeFrozen = Number((curRechargeFrozen + amt).toFixed(2));
           nextRechargeAmt = Number((curRechargeAmt + amt).toFixed(2));
-          balanceNote = ` (+${formatMoney(amt)} credited to user)`;
+          balanceNote = ` (+${formatMoney(amt)} credited to Frozen balance)`;
         } else if (prevState === 'approved' && targetState !== 'approved') {
-          nextBal = Math.max(0, Number((curBal - amt).toFixed(2)));
+          nextFrozen = Math.max(0, Number((curFrozen - amt).toFixed(2)));
+          nextRechargeFrozen = Math.max(0, Number((curRechargeFrozen - amt).toFixed(2)));
           nextRechargeAmt = Math.max(0, Number((curRechargeAmt - amt).toFixed(2)));
-          balanceNote = ` (-${formatMoney(amt)} reverted from balance)`;
+          balanceNote = ` (-${formatMoney(amt)} reverted from Frozen balance)`;
         }
 
-        if (nextBal !== curBal || nextRechargeAmt !== curRechargeAmt) {
+        if (nextFrozen !== curFrozen || nextRechargeFrozen !== curRechargeFrozen || nextRechargeAmt !== curRechargeAmt) {
+          rawOpt.frozen_balance = nextFrozen;
+          rawOpt.recharge_frozen_balance = nextRechargeFrozen;
           rawOpt.recharge_amount = nextRechargeAmt;
           await supabaseClient
             .from('users')
             .update({
-              balance: nextBal,
               bkash_optional: JSON.stringify(rawOpt),
               updated_at: new Date().toISOString()
             })
-            .eq('phone', normPhone);
+            .eq('phone', userRow.phone);
         }
       }
     }
@@ -1105,14 +1172,23 @@ function renderUsersTable() {
         <td class="py-3.5 px-4">
           <span class="font-mono text-xs font-semibold ${u.package_level && u.package_level !== 'LV0' ? 'text-slate-900' : 'text-slate-400'}">${escapeHtml(u.package_level || 'LV0')}</span>
         </td>
-        <td class="py-3.5 px-4 text-right font-mono font-semibold text-emerald-700 tabular-nums">${formatMoney(u.balance)}</td>
+        <td class="py-3.5 px-4 text-right font-mono tabular-nums">
+          <div class="font-semibold text-emerald-700">${formatMoney(u.balance)}</div>
+          ${meta.frozenBalance > 0 ? `<div class="text-[11px] font-medium text-sky-700">Frozen: ${formatMoney(meta.frozenBalance)}</div>` : ''}
+        </td>
         <td class="py-3.5 px-4 text-xs text-slate-600 font-mono max-w-[220px] truncate" title="${escapeHtml(payouts)}">${escapeHtml(payouts)}</td>
         <td class="py-3.5 px-4 text-xs text-slate-500 font-mono">${escapeHtml(joinedDate)}</td>
         <td class="py-3.5 px-4 text-right">
-          <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
-            class="px-3 py-1 rounded-md bg-slate-100 hover:bg-slate-900 text-slate-700 hover:text-white text-xs font-semibold transition cursor-pointer">
-            Control
-          </button>
+          <div class="inline-flex items-center justify-end gap-1.5">
+            <button type="button" onclick="openManualAdjustModal('${escapeHtml(u.phone)}')"
+              class="px-2.5 py-1 rounded-md bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white text-xs font-semibold transition cursor-pointer" title="Real-Time + Add / - Minus Balance">
+              ± Bal
+            </button>
+            <button type="button" onclick="openEditUserModal('${escapeHtml(u.phone)}')"
+              class="px-3 py-1 rounded-md bg-slate-100 hover:bg-slate-900 text-slate-700 hover:text-white text-xs font-semibold transition cursor-pointer">
+              Control
+            </button>
+          </div>
         </td>
       </tr>
     `;
@@ -1128,6 +1204,8 @@ function openEditUserModal(phoneKey) {
   document.getElementById('edit-user-phone-key').value = u.phone;
   document.getElementById('edit-user-subtitle').textContent = `Phone: ${u.phone} · Member ID: ${u.member_id || '-'}`;
   document.getElementById('edit-user-balance').value = Number(u.balance || 0).toFixed(2);
+  const frozenInp = document.getElementById('edit-user-frozen-balance');
+  if (frozenInp) frozenInp.value = Number(meta.frozenBalance || 0).toFixed(2);
   document.getElementById('edit-user-level').value = u.package_level || 'LV0';
   document.getElementById('edit-user-name').value = meta.realName || u.name || '';
   document.getElementById('edit-user-superior').value = u.superior_id || '';
@@ -1154,11 +1232,129 @@ function closeEditUserModal() {
   }
 }
 
-function quickBumpBalance(delta) {
-  const inp = document.getElementById('edit-user-balance');
-  if (!inp) return;
-  const cur = parseFloat(inp.value) || 0;
-  inp.value = Math.max(0, cur + delta).toFixed(2);
+async function applyRealtimeBalanceDelta(phoneKey, rawDelta, walletType = 'available', options = {}) {
+  const norm = normalizePhone(phoneKey);
+  const cachedUser = usersByPhone.get(norm) || allUsers.find(x => String(x.phone) === String(phoneKey));
+  const lookupPhone = cachedUser ? cachedUser.phone : (norm || String(phoneKey || '').trim());
+  const delta = Number(rawDelta) || 0;
+
+  if (!lookupPhone || delta === 0 || isNaN(delta)) {
+    showToast('Enter a valid non-zero amount.', 'error');
+    return false;
+  }
+
+  try {
+    let { data: userRow, error: findErr } = await supabaseClient
+      .from('users')
+      .select('*')
+      .eq('phone', lookupPhone)
+      .maybeSingle();
+
+    if ((!userRow || findErr) && norm && norm !== lookupPhone) {
+      const resAlt = await supabaseClient.from('users').select('*').eq('phone', norm).maybeSingle();
+      userRow = resAlt.data;
+      findErr = resAlt.error;
+    }
+
+    if (findErr || !userRow) {
+      showToast(`User ${phoneKey} not found in database.`, 'error');
+      return false;
+    }
+
+    const now = new Date();
+    const rawOpt = parseRawUserOpt(userRow);
+    let updatePayload = { updated_at: now.toISOString() };
+    let prevVal = 0;
+    let nextVal = 0;
+    let nextAvail = Number(userRow.balance) || 0;
+    let nextFrozen = Number(rawOpt.frozen_balance) || 0;
+
+    if (walletType === 'frozen') {
+      prevVal = nextFrozen;
+      nextFrozen = Math.max(0, Number((prevVal + delta).toFixed(2)));
+      nextVal = nextFrozen;
+      const actualDiff = Number((nextFrozen - prevVal).toFixed(2));
+      const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
+      rawOpt.frozen_balance = nextFrozen;
+      rawOpt.recharge_frozen_balance = Math.max(0, Number((curRechargeFrozen + actualDiff).toFixed(2)));
+      if (options.isRechargeCredit && actualDiff > 0) {
+        rawOpt.recharge_amount = Number(((Number(rawOpt.recharge_amount) || 0) + actualDiff).toFixed(2));
+      }
+      updatePayload.bkash_optional = JSON.stringify(rawOpt);
+    } else {
+      prevVal = nextAvail;
+      nextAvail = Math.max(0, Number((prevVal + delta).toFixed(2)));
+      nextVal = nextAvail;
+      updatePayload.balance = nextAvail;
+    }
+
+    const { error: uErr } = await supabaseClient
+      .from('users')
+      .update(updatePayload)
+      .eq('phone', userRow.phone);
+
+    if (uErr) {
+      showToast('Failed to update balance: ' + uErr.message, 'error');
+      return false;
+    }
+
+    if (options.logRechargeTx && delta > 0) {
+      const orderId = 'ADM' + Date.now();
+      await supabaseClient.from('transactions').insert({
+        phone: userRow.phone,
+        type: 'deposit',
+        amount: Math.abs(delta),
+        actual: Math.abs(delta),
+        ratio: '100%',
+        status: 'অনুমোদিত',
+        method: options.method || 'Admin Real-Time Credit',
+        order_id: orderId,
+        out_trade_no: orderId,
+        date: getTodayDateString(),
+        time: now.toTimeString().split(' ')[0],
+        created_at: now.toISOString()
+      });
+    }
+
+    const editKey = document.getElementById('edit-user-phone-key')?.value;
+    if (editKey && normalizePhone(editKey) === normalizePhone(userRow.phone)) {
+      const availInp = document.getElementById('edit-user-balance');
+      const frozenInp = document.getElementById('edit-user-frozen-balance');
+      if (availInp) availInp.value = nextAvail.toFixed(2);
+      if (frozenInp) frozenInp.value = nextFrozen.toFixed(2);
+    }
+
+    const label = walletType === 'frozen' ? 'Frozen' : 'Available';
+    const signStr = delta >= 0 ? `+${formatMoney(delta)}` : `-${formatMoney(Math.abs(delta))}`;
+    showToast(`Live ${label} ${signStr} for ${userRow.phone}: ${formatMoney(prevVal)} → ${formatMoney(nextVal)}`, 'success');
+    await refreshAllData(false);
+    return true;
+  } catch (err) {
+    showToast('Real-time balance update error: ' + (err.message || 'Unknown'), 'error');
+    return false;
+  }
+}
+
+async function quickBumpBalance(delta) {
+  const phoneKey = document.getElementById('edit-user-phone-key')?.value;
+  const walletType = document.getElementById('edit-live-bal-type')?.value || 'available';
+  if (!phoneKey) return;
+  await applyRealtimeBalanceDelta(phoneKey, delta, walletType);
+}
+
+async function applyCustomLiveModalDelta(sign) {
+  const phoneKey = document.getElementById('edit-user-phone-key')?.value;
+  const amtEl = document.getElementById('edit-live-delta-amount');
+  const walletType = document.getElementById('edit-live-bal-type')?.value || 'available';
+  const amt = parseFloat(amtEl?.value || '') || 0;
+  if (!phoneKey) return;
+  if (amt <= 0) {
+    showToast('Enter a positive amount to add or minus.', 'error');
+    amtEl?.focus();
+    return;
+  }
+  const ok = await applyRealtimeBalanceDelta(phoneKey, (sign >= 0 ? 1 : -1) * amt, walletType);
+  if (ok && amtEl) amtEl.value = '';
 }
 
 async function handleSaveUserForm(e) {
@@ -1172,6 +1368,12 @@ async function handleSaveUserForm(e) {
   const newName = document.getElementById('edit-user-name').value.trim() || 'Member';
   const newPlainPass = document.getElementById('edit-user-password').value.trim();
 
+  const prevFrozen = Number(rawOpt.frozen_balance) || 0;
+  const frozenInp = document.getElementById('edit-user-frozen-balance');
+  const nextFrozen = frozenInp ? Math.max(0, parseFloat(frozenInp.value) || 0) : prevFrozen;
+  const frozenReduction = Math.max(0, Number((prevFrozen - nextFrozen).toFixed(2)));
+  const nextRechargeFrozen = Math.max(0, Math.min(nextFrozen, Number(rawOpt.recharge_frozen_balance || 0) - frozenReduction));
+
   const updatedMeta = Object.assign({}, rawOpt, {
     nagad_name: existingMeta.nagadName || newName,
     nagad_phone: document.getElementById('edit-user-nagad-phone').value.trim(),
@@ -1179,12 +1381,14 @@ async function handleSaveUserForm(e) {
     usdt_address: document.getElementById('edit-user-usdt-address').value.trim(),
     real_name: newName,
     fund_password: document.getElementById('edit-user-fundpass').value.trim(),
-    account_status: document.getElementById('edit-user-status').value || 'active'
+    account_status: document.getElementById('edit-user-status').value || 'active',
+    frozen_balance: Number(nextFrozen.toFixed(2)),
+    recharge_frozen_balance: Number(nextRechargeFrozen.toFixed(2))
   });
 
   const payload = {
     name: newName,
-    balance: parseFloat(document.getElementById('edit-user-balance').value) || 0,
+    balance: Math.max(0, parseFloat(document.getElementById('edit-user-balance').value) || 0),
     package_level: document.getElementById('edit-user-level').value || 'LV0',
     superior_id: document.getElementById('edit-user-superior').value.trim() || '11',
     plain_password: newPlainPass,
@@ -1243,10 +1447,67 @@ async function deleteEditedUser() {
 }
 
 // ============================================================================
-// MANUAL RECHARGE / CREDIT MODAL
+// REAL-TIME BALANCE ADJUST MODAL (+ ADD / - MINUS)
 // ============================================================================
-function openManualAdjustModal() {
+function setManualAdjustOp(op) {
+  const isSub = op === 'subtract';
+  const hiddenOp = document.getElementById('manual-operation');
+  if (hiddenOp) hiddenOp.value = isSub ? 'subtract' : 'add';
+
+  const addBtn = document.getElementById('manual-op-add-btn');
+  const subBtn = document.getElementById('manual-op-sub-btn');
+  const submitBtn = document.getElementById('manual-adjust-submit-btn');
+
+  if (addBtn) {
+    addBtn.className = !isSub
+      ? 'py-2 rounded-lg text-xs font-bold border border-emerald-600 bg-emerald-600 text-white transition cursor-pointer'
+      : 'py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition cursor-pointer';
+  }
+  if (subBtn) {
+    subBtn.className = isSub
+      ? 'py-2 rounded-lg text-xs font-bold border border-rose-600 bg-rose-600 text-white transition cursor-pointer'
+      : 'py-2 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-rose-50 hover:text-rose-600 transition cursor-pointer';
+  }
+  if (submitBtn) {
+    submitBtn.className = isSub
+      ? 'px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white cursor-pointer'
+      : 'px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white cursor-pointer';
+    submitBtn.textContent = isSub ? '- Minus Balance Live' : '+ Add Balance Live';
+  }
+}
+
+function updateManualAdjustUserPreview() {
+  const rawPhone = document.getElementById('manual-user-phone')?.value || '';
+  const preview = document.getElementById('manual-user-preview');
+  if (!preview) return;
+  const norm = normalizePhone(rawPhone);
+  if (!norm) {
+    preview.classList.add('hidden');
+    preview.innerHTML = '';
+    return;
+  }
+  const u = usersByPhone.get(norm) || allUsers.find(x => normalizePhone(x.phone || x.account_number) === norm);
+  if (!u) {
+    preview.classList.remove('hidden');
+    preview.innerHTML = `<span class="text-slate-400">No user found for ${escapeHtml(norm)}</span>`;
+    return;
+  }
+  const meta = parseUserMeta(u);
+  preview.classList.remove('hidden');
+  preview.innerHTML = `
+    <span class="font-semibold text-slate-800 truncate">${escapeHtml(meta.realName)} (${escapeHtml(u.package_level || 'LV0')})</span>
+    <span class="font-mono shrink-0 text-emerald-700 font-bold">Avail: ${formatMoney(u.balance)} <span class="text-sky-700">· Frozen: ${formatMoney(meta.frozenBalance)}</span></span>
+  `;
+}
+
+function openManualAdjustModal(prefillPhone = '') {
   const modal = document.getElementById('manual-adjust-modal');
+  const phoneInp = document.getElementById('manual-user-phone');
+  const amtInp = document.getElementById('manual-amount');
+  setManualAdjustOp('add');
+  if (phoneInp) phoneInp.value = prefillPhone ? String(prefillPhone) : '';
+  if (amtInp) amtInp.value = '';
+  updateManualAdjustUserPreview();
   if (modal) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -1265,61 +1526,28 @@ async function handleManualAdjustSubmit(e) {
   e.preventDefault();
   const rawPhone = document.getElementById('manual-user-phone').value.trim();
   const normPhone = normalizePhone(rawPhone);
+  const op = document.getElementById('manual-operation')?.value === 'subtract' ? 'subtract' : 'add';
+  const walletType = document.getElementById('manual-wallet-type')?.value || 'available';
   const amount = parseFloat(document.getElementById('manual-amount').value) || 0;
-  const method = document.getElementById('manual-method').value;
+  const method = document.getElementById('manual-method')?.value || 'Admin Real-Time Credit';
 
   if (!normPhone || amount <= 0) {
     showToast('Please enter a valid user phone and positive amount.', 'error');
     return;
   }
 
-  try {
-    const { data: userRow, error: findErr } = await supabaseClient
-      .from('users')
-      .select('*')
-      .eq('phone', normPhone)
-      .maybeSingle();
+  const signedDelta = op === 'subtract' ? -Math.abs(amount) : Math.abs(amount);
+  const isRechargeMethod = op === 'add' && (method.includes('bKash') || method.includes('Nagad') || method.includes('USDT'));
+  const ok = await applyRealtimeBalanceDelta(normPhone, signedDelta, walletType, {
+    logRechargeTx: isRechargeMethod,
+    isRechargeCredit: isRechargeMethod,
+    method: method
+  });
 
-    if (findErr || !userRow) {
-      showToast(`User ${normPhone} not found in database.`, 'error');
-      return;
-    }
-
-    const nextBalance = (Number(userRow.balance) || 0) + amount;
-    const now = new Date();
-    const orderId = 'ADM' + Date.now();
-
-    const { error: uErr } = await supabaseClient
-      .from('users')
-      .update({ balance: nextBalance, updated_at: now.toISOString() })
-      .eq('phone', normPhone);
-
-    if (uErr) {
-      showToast('Failed to update balance: ' + uErr.message, 'error');
-      return;
-    }
-
-    await supabaseClient.from('transactions').insert({
-      phone: normPhone,
-      type: 'deposit',
-      amount: amount,
-      actual: amount,
-      ratio: '100%',
-      status: 'অনুমোদিত',
-      method: method,
-      order_id: orderId,
-      out_trade_no: orderId,
-      date: getTodayDateString(),
-      time: now.toTimeString().split(' ')[0],
-      created_at: now.toISOString()
-    });
-
-    showToast(`Credited ${formatMoney(amount)} to ${normPhone}.`, 'success');
-    document.getElementById('manual-adjust-form').reset();
+  if (ok) {
+    document.getElementById('manual-adjust-form')?.reset();
+    setManualAdjustOp('add');
     closeManualAdjustModal();
-    await refreshAllData(false);
-  } catch (err) {
-    showToast('Manual recharge error: ' + (err.message || 'Unknown'), 'error');
   }
 }
 
@@ -1798,6 +2026,9 @@ window.renderUsersTable = renderUsersTable;
 window.openEditUserModal = openEditUserModal;
 window.closeEditUserModal = closeEditUserModal;
 window.quickBumpBalance = quickBumpBalance;
+window.applyCustomLiveModalDelta = applyCustomLiveModalDelta;
+window.setManualAdjustOp = setManualAdjustOp;
+window.updateManualAdjustUserPreview = updateManualAdjustUserPreview;
 window.deleteEditedUser = deleteEditedUser;
 window.openManualAdjustModal = openManualAdjustModal;
 window.closeManualAdjustModal = closeManualAdjustModal;

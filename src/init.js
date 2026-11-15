@@ -1,57 +1,17 @@
-import { initializeApp } from 'firebase/app';
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  collection,
-  query,
-  where,
-  orderBy,
-  limit,
-  serverTimestamp,
-  updateDoc
-} from 'firebase/firestore';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { createClient } from '@supabase/supabase-js';
+import PromoBanner from './PromoBanner.jsx';
 
 // Expose createClient globally on window.supabase
 try {
   window.supabase = { createClient };
 } catch (e) {}
 
-// 1. Initialize Firebase (Offline-safe, bundled locally)
+// Cloud Firestore is not used (Supabase handles all live cloud persistence)
 try {
-  const firebaseConfig = {
-    projectId: 'gen-lang-client-0381908388',
-    appId: '1:652121147346:web:4ad600d95688f307572a0b',
-    apiKey: 'AIzaSyBqcvXcnfavlIsX4LGO7XGn2qXIg1DOkTQ',
-    authDomain: 'gen-lang-client-0381908388.firebaseapp.com',
-    firestoreDatabaseId: 'ai-studio-codelivepreview-0cfd9c5a-a191-4651-bfc9-466b30db192b',
-    storageBucket: 'gen-lang-client-0381908388.firebasestorage.app',
-    messagingSenderId: '652121147346'
-  };
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-  window.aloFirebase = {
-    app,
-    db,
-    doc,
-    setDoc,
-    getDoc,
-    getDocs,
-    collection,
-    query,
-    where,
-    orderBy,
-    limit,
-    serverTimestamp,
-    updateDoc
-  };
-  window.dispatchEvent(new CustomEvent('alo-firebase-ready', { detail: { db } }));
-} catch (t) {
-  console.warn('Firebase init warning:', t);
-}
+  window.aloFirebase = null;
+} catch (e) {}
 
 // 2. Initialize Supabase (Live Cloud Database & Realtime Sync)
 const defaultProject = 'scbpjqsxntqdzwnqyjmi';
@@ -109,3 +69,16 @@ window.connectCustomSupabase = function(customUrl, customKey) {
   initSupabaseInstance(customUrl, customKey);
   console.log('🔄 Connected to custom Supabase project:', customUrl);
 };
+
+function mountInvitePromoBanner() {
+  const container = document.getElementById('invite-promo-banner-root');
+  if (!container || container.dataset.mounted === 'true') return;
+  container.dataset.mounted = 'true';
+  createRoot(container).render(React.createElement(PromoBanner));
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', mountInvitePromoBanner, { once: true });
+} else {
+  mountInvitePromoBanner();
+}
