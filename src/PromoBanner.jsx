@@ -1,4 +1,72 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+const BANNER_COPY = {
+  bn: {
+    headingHighlight: "দলীয়",
+    headingRest: " উপহার",
+    packageTitle: "অবস্থান ক্রয় করলে এককালীন",
+    packageItems: [
+      { label: "প্রথম পর্যায়", value: "৬%" },
+      { label: "দ্বিতীয় পর্যায়", value: "২%" },
+      { label: "তৃতীয় পর্যায়", value: "১%" },
+    ],
+    dailyTitle: "দৈনিক কাজের উপর উপহার",
+    dailyItems: [
+      { label: "প্রথম পর্যায়", value: "৩%" },
+      { label: "দ্বিতীয় পর্যায়", value: "২%" },
+      { label: "তৃতীয় পর্যায়", value: "১%" },
+    ],
+  },
+  en: {
+    headingHighlight: "Team",
+    headingRest: " Bonus",
+    packageTitle: "One-Time on Package Purchase",
+    packageItems: [
+      { label: "Level 1", value: "6%" },
+      { label: "Level 2", value: "2%" },
+      { label: "Level 3", value: "1%" },
+    ],
+    dailyTitle: "Bonus on Daily Tasks",
+    dailyItems: [
+      { label: "Level 1", value: "3%" },
+      { label: "Level 2", value: "2%" },
+      { label: "Level 3", value: "1%" },
+    ],
+  },
+  ar: {
+    headingHighlight: "مكافأة",
+    headingRest: " الفريق",
+    packageTitle: "مكافأة لمرة واحدة عند شراء الباقة",
+    packageItems: [
+      { label: "المستوى 1", value: "6%" },
+      { label: "المستوى 2", value: "2%" },
+      { label: "المستوى 3", value: "1%" },
+    ],
+    dailyTitle: "مكافأة المهام اليومية",
+    dailyItems: [
+      { label: "المستوى 1", value: "3%" },
+      { label: "المستوى 2", value: "2%" },
+      { label: "المستوى 3", value: "1%" },
+    ],
+  },
+};
+
+function resolveBannerLang() {
+  try {
+    if (window.aloI18n && typeof window.aloI18n.getLanguage === "function") {
+      const l = window.aloI18n.getLanguage();
+      if (l === "bn" || l === "ar" || l === "en") return l;
+    }
+    const isManual = localStorage.getItem("alo_lang_manual") === "1";
+    const stored = localStorage.getItem("alo_lang") || localStorage.getItem("lang");
+    if (isManual && (stored === "bn" || stored === "ar" || stored === "en")) {
+      return stored;
+    }
+    const docLang = document.documentElement && document.documentElement.lang;
+    if (docLang === "bn" || docLang === "ar" || docLang === "en") return docLang;
+  } catch (e) {}
+  return "en";
+}
 
 const Star = ({ color, size, style }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" style={{ position: "absolute", filter: "drop-shadow(0 4px 6px #0006)", pointerEvents: "none", ...style }}>
@@ -31,7 +99,7 @@ const Section = ({ title, dot, items, colors }) => (
     </div>
     <div style={{ display: "flex", gap: 8 }}>
       {items.map((it, i) => (
-        <div key={it.label} style={{ flex: 1, textAlign: "center", padding: 4 }}>
+        <div key={i} style={{ flex: 1, textAlign: "center", padding: 4 }}>
           <div style={{ fontSize: 12, color: "#9fb3d9" }}>{it.label}</div>
           <div style={{ fontSize: 30, fontWeight: 700, color: colors[i] }}>{it.value}</div>
         </div>
@@ -41,8 +109,42 @@ const Section = ({ title, dot, items, colors }) => (
 );
 
 export default function PromoBanner() {
+  const [lang, setLang] = useState(resolveBannerLang);
+
+  useEffect(() => {
+    const syncLang = () => setLang(resolveBannerLang());
+    syncLang();
+
+    const handleLangChanged = (e) => {
+      const next = e && e.detail && e.detail.lang;
+      if (next === "bn" || next === "ar" || next === "en") {
+        setLang(next);
+      } else {
+        syncLang();
+      }
+    };
+
+    window.addEventListener("alo-language-changed", handleLangChanged);
+    window.addEventListener("DOMContentLoaded", syncLang);
+
+    const observer = new MutationObserver(() => syncLang());
+    if (document.documentElement) {
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+    }
+
+    return () => {
+      window.removeEventListener("alo-language-changed", handleLangChanged);
+      window.removeEventListener("DOMContentLoaded", syncLang);
+      observer.disconnect();
+    };
+  }, []);
+
+  const copy = BANNER_COPY[lang] || BANNER_COPY.en;
+
   return (
     <div
+      data-no-translate="true"
+      dir={lang === "ar" ? "rtl" : "ltr"}
       style={{
         position: "relative",
         width: "100%",
@@ -79,30 +181,23 @@ export default function PromoBanner() {
           PW NEW MEDIA
         </span>
         <div style={{ fontSize: 28, lineHeight: 1.25, marginTop: 8, fontWeight: 700 }}>
-          <span style={{ color: "#f7bd3a" }}>দলীয়</span> উপহার
+          <span style={{ color: "#f7bd3a" }}>{copy.headingHighlight}</span>
+          {copy.headingRest}
         </div>
       </div>
 
       <Section
-        title="অবস্থান ক্রয় করলে এককালীন"
+        title={copy.packageTitle}
         dot="#f7bd3a"
         colors={["#6db3ff", "#6db3ff", "#6db3ff"]}
-        items={[
-          { label: "প্রথম পর্যায়", value: "৬%" },
-          { label: "দ্বিতীয় পর্যায়", value: "২%" },
-          { label: "তৃতীয় পর্যায়", value: "১%" },
-        ]}
+        items={copy.packageItems}
       />
 
       <Section
-        title="দৈনিক কাজের উপর উপহার"
+        title={copy.dailyTitle}
         dot="#19b88a"
         colors={["#19b88a", "#5fe0b8", "#5fe0b8"]}
-        items={[
-          { label: "প্রথম পর্যায়", value: "৩%" },
-          { label: "দ্বিতীয় পর্যায়", value: "২%" },
-          { label: "তৃতীয় পর্যায়", value: "১%" },
-        ]}
+        items={copy.dailyItems}
       />
     </div>
   );

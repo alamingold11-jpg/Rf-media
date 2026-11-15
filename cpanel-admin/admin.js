@@ -748,6 +748,11 @@ async function handleRechargeAction(txId, targetState) {
     : (targetState === 'rejected' ? 'অসফল (Failed)' : 'মুলতবি (Pending)');
 
   const amt = Number(tx.amount) || 0;
+  const actualAmt = Number(tx.actual) || 0;
+  if (targetState === 'approved' && amt <= 0 && actualAmt <= 0) {
+    showToast('Cannot approve 0.00 USDT order before USDT is received on-chain.', 'error');
+    return;
+  }
   const normPhone = normalizePhone(tx.phone);
   const orderKey = String(tx.order_id || tx.out_trade_no || '').trim();
   const txUpdatePayload = {

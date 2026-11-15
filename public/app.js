@@ -5467,8 +5467,8 @@ function parseDepositCreatedMs(tx) {
 
 function getDepositStatusPriority(statusStr) {
   const s = String(statusStr || '').toLowerCase();
-  if (s.includes('অনুমোদিত') || s.includes('সফল') || s.includes('approv') || s.includes('complet') || s.includes('success') || s.includes('গৃহীত')) return 3;
   if (s.includes('অসফল') || s.includes('বাতিল') || s.includes('fail') || s.includes('reject') || s.includes('expir')) return 2;
+  if (s.includes('অনুমোদিত') || s.includes('সফল') || s.includes('approv') || s.includes('complet') || s.includes('success') || s.includes('গৃহীত')) return 3;
   return 1;
 }
 
@@ -5523,18 +5523,19 @@ function normalizeAndDedupeDeposits(rawList, nowMs) {
   const newlyExpired = [];
   map.forEach(function(tx) {
     const createdMs = parseDepositCreatedMs(tx);
-    const stLower = String(tx.status || '').toLowerCase();
-    const isApproved = stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet') || stLower.includes('success') || stLower.includes('গৃহীত');
-    const isAlreadyFailed = !isApproved && (stLower.includes('অসফল') || stLower.includes('বাতিল') || stLower.includes('fail') || stLower.includes('reject') || stLower.includes('expir'));
     const elapsed = nowMs - createdMs;
+    const stLower = String(tx.status || '').toLowerCase();
+    const isAlreadyFailed = stLower.includes('অসফল') || stLower.includes('বাতিল') || stLower.includes('fail') || stLower.includes('reject') || stLower.includes('expir');
+    const amtNum = Number(tx.amount || 0);
+    let actualNum = Number(tx.actual || 0);
+    const hasPositiveAmount = amtNum > 0 || actualNum > 0;
+    const isApproved = !isAlreadyFailed && hasPositiveAmount && (stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet') || stLower.includes('success') || stLower.includes('গৃহীত'));
     const isTimedOut = !isApproved && !isAlreadyFailed && elapsed >= RECHARGE_PENDING_TIMEOUT_MS;
 
     let state = 'pending';
     let remainingMs = Math.max(0, RECHARGE_PENDING_TIMEOUT_MS - elapsed);
     let statusText = tx.status || 'মুলতবি (Pending)';
     let ratioStr = '0.0%';
-    const amtNum = Number(tx.amount || 0);
-    let actualNum = Number(tx.actual || 0);
 
     if (isApproved) {
       state = 'approved';
@@ -8894,7 +8895,8 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
       if (!depErr && Array.isArray(depList)) {
         const approvedDepSum = depList.reduce(function(sum, r) {
           const st = String(r.status || '').toLowerCase();
-          if (st.includes('অনুমোদিত') || st.includes('সফল') || st.includes('approv') || st.includes('complet') || st.includes('success')) {
+          const isFail = st.includes('অসফল') || st.includes('বাতিল') || st.includes('fail') || st.includes('reject') || st.includes('expir');
+          if (!isFail && (st.includes('অনুমোদিত') || st.includes('সফল') || st.includes('approv') || st.includes('complet') || st.includes('success'))) {
             return sum + (Number(r.amount) || 0);
           }
           return sum;
@@ -11507,7 +11509,8 @@ function initApp() {
                   const existingTx = Array.isArray(existingRows) ? existingRows[0] : null;
 
                   const stLower = String((existingTx && existingTx.status) || '').toLowerCase();
-                  if (stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet') || stLower.includes('success')) {
+                  const isRejectedTx = stLower.includes('অসফল') || stLower.includes('বাতিল') || stLower.includes('fail') || stLower.includes('reject') || stLower.includes('expir');
+                  if (!isRejectedTx && (stLower.includes('অনুমোদিত') || stLower.includes('সফল') || stLower.includes('approv') || stLower.includes('complet') || stLower.includes('success'))) {
                     alreadyApprovedOnServer = true;
                   } else if (existingTx && existingTx.id) {
                     await window.aloSupabase
@@ -12276,8 +12279,8 @@ function renderUsdtDepositCardsHtml(container, records) {
     const amt = usdtVal.toFixed(2);
     const shortTx = item.txHash ? item.txHash.slice(0, 6) + '...' + item.txHash.slice(-4) : '';
     const stLower = String(item.status || '').toLowerCase();
-    const isRejected = stLower.includes('বাতিল') || stLower.includes('reject');
-    const isPending = !isRejected && !(stLower.includes('অনুমোদিত') || stLower.includes('approv') || stLower.includes('credit') || stLower.includes('সফল'));
+    const isRejected = stLower.includes('অসফল') || stLower.includes('বাতিল') || stLower.includes('fail') || stLower.includes('reject') || stLower.includes('expir');
+    const isPending = !isRejected && !(usdtVal > 0 && (stLower.includes('অনুমোদিত') || stLower.includes('approv') || stLower.includes('credit') || stLower.includes('সফল')));
     const statusLabel = isRejected
       ? tLang(lang, 'বাতিল', 'Rejected', 'مرفوض')
       : (isPending ? tLang(lang, 'মুলতবি', 'Pending', 'قيد الانتظار') : tLang(lang, 'গৃহীত', 'Credited', 'تمت الإضافة'));
