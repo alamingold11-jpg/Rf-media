@@ -66,15 +66,20 @@ export default async function handler(req, res) {
       if (supabase) {
         // Find phone from transactions if not present in callback attach
         let targetPhone = phone;
-        if (!targetPhone && outTradeNo) {
+        let matchedTxId = null;
+        if (outTradeNo) {
           try {
             const { data: txRecords } = await supabase
               .from('transactions')
-              .select('phone, amount')
-              .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`)
+              .select('id, phone, amount')
+              .eq('type', 'deposit')
+              .ilike('method', `%${outTradeNo}%`)
               .limit(1);
-            if (Array.isArray(txRecords) && txRecords[0] && txRecords[0].phone) {
-              targetPhone = txRecords[0].phone;
+            if (Array.isArray(txRecords) && txRecords[0]) {
+              matchedTxId = txRecords[0].id;
+              if (!targetPhone && txRecords[0].phone) {
+                targetPhone = txRecords[0].phone;
+              }
             }
           } catch (lookupErr) {
             console.warn('[WPay Callback] Transaction phone lookup warning:', lookupErr.message);
@@ -84,17 +89,24 @@ export default async function handler(req, res) {
         // Update transaction in Supabase
         const txUpdatePayload = {
           status: 'অনুমোদিত',
-          ratio: '100%',
-          updated_at: new Date().toISOString()
+          ratio: '100%'
         };
         if (amount > 0) {
           txUpdatePayload.actual = amount;
         }
         try {
-          await supabase
-            .from('transactions')
-            .update(txUpdatePayload)
-            .or(`out_trade_no.eq.${outTradeNo},order_id.eq.${outTradeNo}`);
+          if (matchedTxId) {
+            await supabase
+              .from('transactions')
+              .update(txUpdatePayload)
+              .eq('id', matchedTxId);
+          } else if (outTradeNo) {
+            await supabase
+              .from('transactions')
+              .update(txUpdatePayload)
+              .eq('type', 'deposit')
+              .ilike('method', `%${outTradeNo}%`);
+          }
         } catch (txUpErr) {
           console.warn('[WPay Callback] Transaction update warning:', txUpErr.message);
         }

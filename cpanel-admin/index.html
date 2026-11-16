@@ -517,6 +517,23 @@
                 </div>
               </div>
 
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-slate-100">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">Bangladesh Real OTP (+880)</label>
+                  <select id="pc-bd-real-otp-enabled"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+                    <option value="true">Enabled (Real SMS via cPanel)</option>
+                    <option value="false">Disabled (Testing Fallback)</option>
+                  </select>
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-medium text-slate-600 mb-1.5">cPanel OTP Endpoint URL</label>
+                  <input id="pc-cpanel-otp-url" type="text" placeholder="https://imcagro.top/send-api/send-otp"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                  <p class="mt-1 text-[11px] text-slate-500">আপনার cPanel OTP এন্ডপয়েন্ট URL (যেমন <code>https://imcagro.top/send-api/send-otp</code>)। সার্ভার থেকেই কলব্যাক করে OTP পাঠানো হবে।</p>
+                </div>
+              </div>
+
               <div class="pt-3 border-t border-slate-100 flex justify-end">
                 <button type="submit" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
                   Save Rules
@@ -529,8 +546,8 @@
           <div class="bg-white rounded-xl p-5 shadow-xs">
             <div class="border-b border-slate-100 pb-3.5 mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <h3 class="text-sm font-bold text-slate-900">Positions &amp; Daily Tasks (দৈনিক কর্ম, এমাউন্ট, দাম ও ভাষা)</h3>
-                <p class="text-xs text-slate-500">Set daily task quota, per-task amount, package price, and tier name per language for LV0–LV6. Changes sync live to Hall, Positions &amp; Tasks.</p>
+                <h3 class="text-sm font-bold text-slate-900">Positions &amp; Daily Tasks (দৈনিক কর্ম, এমাউন্ট, দাম, মেয়াদ ও ভাষা)</h3>
+                <p class="text-xs text-slate-500">Set daily task quota, per-task amount, package price, validity days, and tier name per language for LV0–LV6. Changes sync live to Hall, Positions &amp; Tasks.</p>
               </div>
               <button type="button" onclick="resetPackageConfigsToDefault()"
                 class="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 cursor-pointer">
@@ -747,8 +764,8 @@
         </div>
 
         <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
-          <button type="button" onclick="deleteEditedUser()"
-            class="px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer">
+          <button type="button" id="edit-user-delete-btn" onclick="deleteEditedUser()"
+            class="px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer">
             Delete Account
           </button>
           <div class="flex items-center gap-2">

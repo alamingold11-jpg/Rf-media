@@ -64,10 +64,12 @@ function normalizeBdPhone(raw) {
     const supabase = getSupabaseAdminClient();
     if (supabase) {
       try {
+        const gwMethod = payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]';
         const { data: existingOrder } = await supabase
           .from('transactions')
           .select('id')
-          .eq('order_id', orderId)
+          .eq('type', 'deposit')
+          .ilike('method', `%${orderId}%`)
           .limit(1)
           .maybeSingle();
 
@@ -79,9 +81,7 @@ function normalizeBdPhone(raw) {
             actual: 0,
             ratio: '0%',
             status: 'মুলতবি (Pending)',
-            method: payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]',
-            order_id: orderId,
-            out_trade_no: orderId,
+            method: `${gwMethod} · #${orderId}`,
             date: new Date().toISOString().split('T')[0],
             time: new Date().toTimeString().split(' ')[0],
             created_at: new Date().toISOString()

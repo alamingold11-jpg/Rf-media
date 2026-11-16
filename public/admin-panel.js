@@ -292,6 +292,18 @@ function initSupabaseClient() {
   return supabaseClient;
 }
 
+let _isRefreshingData = false;
+let _pendingRefreshAfterCurrent = false;
+let _realtimeRefreshTimer = null;
+
+function scheduleRealtimeRefresh() {
+  if (_realtimeRefreshTimer) clearTimeout(_realtimeRefreshTimer);
+  _realtimeRefreshTimer = setTimeout(() => {
+    _realtimeRefreshTimer = null;
+    if (isAuthenticated()) refreshAllData(false);
+  }, 1500);
+}
+
 function setupRealtimeSubscriptions() {
   if (!supabaseClient) return;
   if (realtimeChannel) {
@@ -300,15 +312,9 @@ function setupRealtimeSubscriptions() {
   try {
     realtimeChannel = supabaseClient
       .channel('admin-live-feed')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        refreshAllData(false);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, () => {
-        refreshAllData(false);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, () => {
-        refreshAllData(false);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, scheduleRealtimeRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'deposits' }, scheduleRealtimeRefresh)
       .subscribe();
   } catch (e) {}
 }
@@ -319,23 +325,27 @@ function setupRealtimeSubscriptions() {
 async function refreshAllData(showFeedback = false) {
   if (!supabaseClient) initSupabaseClient();
   if (!supabaseClient) return;
+  if (_isRefreshingData) {
+    _pendingRefreshAfterCurrent = true;
+    return;
+  }
 
+  _isRefreshingData = true;
   const icon = document.getElementById('refresh-icon');
   if (icon) icon.classList.add('animate-spin');
 
   try {
-    // 1. Fetch users
-    const { data: usersData, error: usersErr } = await supabaseClient
-      .from('users')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5000);
+    const [usersRes, txRes, depRes] = await Promise.all([
+      Promise.resolve(supabaseClient.from('users').select('*').order('created_at', { ascending: false }).limit(2000)).catch(err => ({ data: null, error: err })),
+      Promise.resolve(supabaseClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(2000)).catch(err => ({ data: null, error: err })),
+      Promise.resolve(supabaseClient.from('deposits').select('*').order('created_at', { ascending: false }).limit(500)).catch(() => ({ data: null, error: null }))
+    ]);
 
-    if (usersErr) {
-      console.error('Users fetch error:', usersErr);
-      showToast('Failed to fetch users: ' + usersErr.message, 'error');
+    if (usersRes.error) {
+      console.error('Users fetch error:', usersRes.error);
+      showToast('Failed to fetch users: ' + usersRes.error.message, 'error');
     } else {
-      const rawUsers = Array.isArray(usersData) ? usersData : [];
+      const rawUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
       const sysConfigRow = rawUsers.find(u => String(u.phone) === 'SYSTEM_CONFIG');
       hydratePlatformControlsForm(sysConfigRow);
 
@@ -347,31 +357,16 @@ async function refreshAllData(showFeedback = false) {
       });
     }
 
-    // 2. Fetch transactions
-    const { data: txData, error: txErr } = await supabaseClient
-      .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5000);
-
-    if (txErr) {
-      console.error('Transactions fetch error:', txErr);
-      showToast('Failed to fetch transactions: ' + txErr.message, 'error');
+    if (txRes.error) {
+      console.error('Transactions fetch error:', txRes.error);
+      showToast('Failed to fetch transactions: ' + txRes.error.message, 'error');
     } else {
-      allTransactions = Array.isArray(txData) ? txData : [];
+      allTransactions = Array.isArray(txRes.data) ? txRes.data : [];
     }
 
-    // 3. Optionally fetch deposits table (USDT on-chain automated deposits if RLS allows)
-    try {
-      const { data: depData, error: depErr } = await supabaseClient
-        .from('deposits')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1000);
-      if (!depErr && Array.isArray(depData)) {
-        allExtraDeposits = depData;
-      }
-    } catch (e) {}
+    if (depRes && !depRes.error && Array.isArray(depRes.data)) {
+      allExtraDeposits = depRes.data;
+    }
 
     // Update sync timestamp
     const syncEl = document.getElementById('last-sync-time');
@@ -384,6 +379,11 @@ async function refreshAllData(showFeedback = false) {
     if (showFeedback) showToast('Sync error: ' + (err.message || 'Unknown'), 'error');
   } finally {
     if (icon) icon.classList.remove('animate-spin');
+    _isRefreshingData = false;
+    if (_pendingRefreshAfterCurrent) {
+      _pendingRefreshAfterCurrent = false;
+      setTimeout(() => { if (isAuthenticated()) refreshAllData(false); }, 600);
+    }
   }
 }
 
@@ -1235,6 +1235,7 @@ function openEditUserModal(phoneKey) {
   document.getElementById('edit-user-nagad-phone').value = meta.nagadPhone || '';
   document.getElementById('edit-user-usdt-address').value = meta.usdtAddress || '';
 
+  resetEditUserDeleteButton();
   const modal = document.getElementById('edit-user-modal');
   if (modal) {
     modal.classList.remove('hidden');
@@ -1242,7 +1243,21 @@ function openEditUserModal(phoneKey) {
   }
 }
 
+function resetEditUserDeleteButton() {
+  const btn = document.getElementById('edit-user-delete-btn');
+  if (!btn) return;
+  if (btn._confirmTimer) {
+    clearTimeout(btn._confirmTimer);
+    btn._confirmTimer = null;
+  }
+  btn.dataset.confirmPending = '';
+  btn.disabled = false;
+  btn.textContent = 'Delete Account';
+  btn.className = 'px-3.5 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer';
+}
+
 function closeEditUserModal() {
+  resetEditUserDeleteButton();
   const modal = document.getElementById('edit-user-modal');
   if (modal) {
     modal.classList.add('hidden');
@@ -1542,25 +1557,125 @@ async function handleSaveUserForm(e) {
 }
 
 async function deleteEditedUser() {
-  const phoneKey = document.getElementById('edit-user-phone-key').value;
+  const phoneKey = String(document.getElementById('edit-user-phone-key')?.value || '').trim();
   if (!phoneKey) return;
-  if (!confirm(`Permanently delete user account ${phoneKey}? This cannot be undone.`)) return;
+  if (phoneKey === 'SYSTEM_CONFIG') {
+    showToast('System configuration record cannot be deleted.', 'error');
+    return;
+  }
+
+  const delBtn = document.getElementById('edit-user-delete-btn');
+  if (delBtn && delBtn.dataset.confirmPending !== '1') {
+    delBtn.dataset.confirmPending = '1';
+    delBtn.textContent = 'Click Again to Confirm Delete';
+    delBtn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm transition cursor-pointer';
+    if (delBtn._confirmTimer) clearTimeout(delBtn._confirmTimer);
+    delBtn._confirmTimer = setTimeout(function() {
+      resetEditUserDeleteButton();
+    }, 4500);
+    return;
+  }
+
+  if (delBtn) {
+    if (delBtn._confirmTimer) clearTimeout(delBtn._confirmTimer);
+    delBtn.disabled = true;
+    delBtn.textContent = 'Deleting...';
+  }
+
+  const norm = normalizePhone(phoneKey);
+  const existing = usersByPhone.get(norm) || allUsers.find(x => String(x.phone) === phoneKey || String(x.account_number) === phoneKey);
+  const keySet = new Set([phoneKey]);
+  [phoneKey, norm, existing && existing.phone, existing && existing.account_number].forEach(function(val) {
+    const raw = String(val || '').trim();
+    if (!raw) return;
+    keySet.add(raw);
+    const n = normalizePhone(raw);
+    if (n) {
+      keySet.add(n);
+      if (/^1[3-9]\d{8}$/.test(n)) {
+        keySet.add('0' + n);
+        keySet.add('880' + n);
+        keySet.add('+880' + n);
+      }
+    }
+  });
+  const phoneVariants = Array.from(keySet).filter(Boolean);
 
   try {
-    const { error } = await supabaseClient
+    // 1. Delete primary user record(s) from Supabase users table
+    const { data: deletedUsers, error: delErr } = await supabaseClient
       .from('users')
       .delete()
-      .eq('phone', phoneKey);
+      .in('phone', phoneVariants)
+      .select('phone');
 
-    if (error) {
-      showToast('Delete failed: ' + error.message, 'error');
+    if (delErr) {
+      resetEditUserDeleteButton();
+      showToast('Delete failed: ' + delErr.message, 'error');
       return;
     }
 
-    showToast(`Account ${phoneKey} deleted.`, 'success');
+    // Fallback: also delete by account_number in case phone column differed
+    await supabaseClient
+      .from('users')
+      .delete()
+      .in('account_number', phoneVariants);
+
+    // 2. Remove related transactions and team records from server
+    await supabaseClient
+      .from('transactions')
+      .delete()
+      .in('phone', phoneVariants);
+
+    await supabaseClient
+      .from('team')
+      .delete()
+      .in('member_phone', phoneVariants);
+
+    const teamSupKeys = Array.from(new Set(phoneVariants.concat([
+      existing && existing.invite_code ? String(existing.invite_code).trim() : '',
+      existing && existing.member_id ? String(existing.member_id).trim() : ''
+    ].filter(Boolean))));
+
+    await supabaseClient
+      .from('team')
+      .delete()
+      .in('superior_phone', teamSupKeys);
+
+    await supabaseClient
+      .from('users')
+      .update({ superior_id: '11' })
+      .in('superior_id', teamSupKeys);
+
+    if (existing && existing.member_id) {
+      await supabaseClient
+        .from('team')
+        .delete()
+        .eq('member_id', String(existing.member_id));
+    }
+
+    // 3. Verify deletion on server
+    const { data: verifyRemaining } = await supabaseClient
+      .from('users')
+      .select('phone')
+      .in('phone', phoneVariants);
+
+    if (Array.isArray(verifyRemaining) && verifyRemaining.length > 0) {
+      resetEditUserDeleteButton();
+      showToast('Server blocked deletion of this account (check RLS policy).', 'error');
+      return;
+    }
+
+    allUsers = allUsers.filter(u => !phoneVariants.includes(String(u.phone)) && !phoneVariants.includes(String(u.account_number)));
+    phoneVariants.forEach(k => usersByPhone.delete(k));
+    if (norm) usersByPhone.delete(norm);
+
+    const countRemoved = Array.isArray(deletedUsers) ? deletedUsers.length : 1;
+    showToast(`Account ${phoneKey} permanently deleted from server (${countRemoved} removed).`, 'success');
     closeEditUserModal();
     await refreshAllData(false);
   } catch (err) {
+    resetEditUserDeleteButton();
     showToast('Error deleting user: ' + (err.message || 'Unknown'), 'error');
   }
 }
@@ -1778,19 +1893,21 @@ const DEFAULT_PLATFORM_CONTROLS = {
   usdtRate: 125,
   usdtAddress: '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16',
   telegramUrl: 'https://t.me/PW_Official_Manager_BD',
-  managerId: '#PW-MANAGER-8802'
+  managerId: '#PW-MANAGER-8802',
+  bdRealOtpEnabled: true,
+  cpanelOtpUrl: 'https://imcagro.top/send-api/send-otp'
 };
 
 const PACKAGE_LEVEL_KEYS = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
 
 const DEFAULT_PACKAGE_CONFIGS = {
-  LV0: { count: 5, reward: 20, price: 0, nameBn: 'ফ্রি স্তর', nameEn: 'Free Tier', nameAr: 'المستوى المجاني' },
-  LV1: { count: 6, reward: 30, price: 3500, nameBn: 'বেসিক প্যাকেজ', nameEn: 'Basic Package', nameAr: 'الباقة الأساسية' },
-  LV2: { count: 12, reward: 40, price: 7500, nameBn: 'স্ট্যান্ডার্ড প্যাকেজ', nameEn: 'Standard Package', nameAr: 'الباقة القياسية' },
-  LV3: { count: 15, reward: 50, price: 36000, nameBn: 'সিলভার প্যাকেজ', nameEn: 'Silver Package', nameAr: 'الباقة الفضية' },
-  LV4: { count: 25, reward: 60, price: 84000, nameBn: 'গোল্ড প্যাকেজ', nameEn: 'Gold Package', nameAr: 'الباقة الذهبية' },
-  LV5: { count: 35, reward: 70, price: 150000, nameBn: 'প্রিমিয়াম প্যাকেজ', nameEn: 'Premium Package', nameAr: 'الباقة المميزة' },
-  LV6: { count: 50, reward: 100, price: 300000, nameBn: 'এলিট প্যাকেজ', nameEn: 'Elite Package', nameAr: 'باقة النخبة' }
+  LV0: { count: 5, reward: 20, price: 0, validityDays: 5, nameBn: 'LV0', nameEn: 'LV0', nameAr: 'LV0' },
+  LV1: { count: 6, reward: 30, price: 3500, validityDays: 30, nameBn: 'LV1', nameEn: 'LV1', nameAr: 'LV1' },
+  LV2: { count: 12, reward: 40, price: 7500, validityDays: 30, nameBn: 'LV2', nameEn: 'LV2', nameAr: 'LV2' },
+  LV3: { count: 15, reward: 50, price: 36000, validityDays: 30, nameBn: 'LV3', nameEn: 'LV3', nameAr: 'LV3' },
+  LV4: { count: 25, reward: 60, price: 84000, validityDays: 30, nameBn: 'LV4', nameEn: 'LV4', nameAr: 'LV4' },
+  LV5: { count: 35, reward: 70, price: 150000, validityDays: 30, nameBn: 'LV5', nameEn: 'LV5', nameAr: 'LV5' },
+  LV6: { count: 50, reward: 100, price: 300000, validityDays: 30, nameBn: 'LV6', nameEn: 'LV6', nameAr: 'LV6' }
 };
 
 let latestSystemConfig = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, {
@@ -1805,6 +1922,8 @@ function cloneDefaultPackages() {
   return out;
 }
 
+const LEGACY_ADMIN_PKG_RE = /^(ফ্রি স্তর|বেসিক প্যাকেজ|স্ট্যান্ডার্ড প্যাকেজ|সিলভার প্যাকেজ|গোল্ড প্যাকেজ|প্রিমিয়াম প্যাকেজ|এলিট প্যাকেজ|Free Tier|Basic Package|Standard Package|Silver Package|Gold Package|Premium Package|Elite Package|المستوى المجاني|الباقة الأساسية|الباقة القياسية|الباقة الفضية|الباقة الذهبية|الباقة المميزة|باقة النخبة|(এলিট|Elite|إيليت|एलीट)\s*LV[0-6])$/i;
+
 function normalizePackagesMap(rawPackages) {
   const out = cloneDefaultPackages();
   if (!rawPackages || typeof rawPackages !== 'object') return out;
@@ -1815,13 +1934,18 @@ function normalizePackagesMap(rawPackages) {
     const parsedCount = parseInt(src.count, 10);
     const parsedReward = parseFloat(src.reward);
     const parsedPrice = parseFloat(src.price);
+    const parsedValidity = parseInt(src.validityDays, 10);
+    const rawBn = String(src.nameBn || '').trim();
+    const rawEn = String(src.nameEn || '').trim();
+    const rawAr = String(src.nameAr || '').trim();
     out[lvl] = {
       count: Number.isFinite(parsedCount) && parsedCount >= 1 ? parsedCount : def.count,
       reward: Number.isFinite(parsedReward) && parsedReward >= 0 ? parsedReward : def.reward,
       price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : def.price,
-      nameBn: String(src.nameBn || '').trim() || def.nameBn,
-      nameEn: String(src.nameEn || '').trim() || def.nameEn,
-      nameAr: String(src.nameAr || '').trim() || def.nameAr
+      validityDays: Number.isFinite(parsedValidity) && parsedValidity >= 1 ? parsedValidity : def.validityDays,
+      nameBn: (rawBn && !LEGACY_ADMIN_PKG_RE.test(rawBn)) ? rawBn : def.nameBn,
+      nameEn: (rawEn && !LEGACY_ADMIN_PKG_RE.test(rawEn)) ? rawEn : def.nameEn,
+      nameAr: (rawAr && !LEGACY_ADMIN_PKG_RE.test(rawAr)) ? rawAr : def.nameAr
     };
   });
   return out;
@@ -1864,10 +1988,12 @@ function renderPackageConfigEditor(packagesObj) {
           <div class="text-xs font-medium text-slate-500">
             দৈনিক আয় (Daily Income):
             <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">৳${dailyIncome.toLocaleString('en-US', { minimumFractionDigits: dailyIncome % 1 ? 2 : 0, maximumFractionDigits: 2 })}</span>
+            <span class="mx-1.5 text-slate-300">|</span>
+            মেয়াদ: <span class="font-mono font-bold text-sky-700" data-pkg-validity-preview="${lvl}">${p.validityDays} দিন</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <label class="block text-[11px] font-medium text-slate-600 mb-1">দৈনিক কর্ম (Daily Tasks)</label>
             <input type="number" min="1" step="1" required
@@ -1885,6 +2011,12 @@ function renderPackageConfigEditor(packagesObj) {
             <input type="number" min="0" step="1" required
               data-pkg-level="${lvl}" data-pkg-field="price" value="${p.price}"
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">মেয়াদ / দিন (Validity Days)</label>
+            <input type="number" min="1" step="1" required
+              data-pkg-level="${lvl}" data-pkg-field="validityDays" value="${p.validityDays}"
+              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-sky-700 focus:outline-none focus:border-slate-400" />
           </div>
         </div>
 
@@ -1918,12 +2050,18 @@ function renderPackageConfigEditor(packagesObj) {
       if (!lvl) return;
       const countInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="count"]`);
       const rewardInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="reward"]`);
+      const valInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="validityDays"]`);
       const incEl = container.querySelector(`[data-pkg-income="${lvl}"]`);
+      const valPrevEl = container.querySelector(`[data-pkg-validity-preview="${lvl}"]`);
       if (incEl && countInp && rewardInp) {
         const c = Math.max(0, parseInt(countInp.value || '0', 10) || 0);
         const r = Math.max(0, parseFloat(rewardInp.value || '0') || 0);
         const inc = Number((c * r).toFixed(2));
         incEl.textContent = `৳${inc.toLocaleString('en-US', { minimumFractionDigits: inc % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+      }
+      if (valPrevEl && valInp) {
+        const v = Math.max(1, parseInt(valInp.value || '1', 10) || 1);
+        valPrevEl.textContent = `${v} দিন`;
       }
     });
   });
@@ -1942,10 +2080,12 @@ function collectPackagesFromForm() {
     const countVal = parseInt(getVal('count'), 10);
     const rewardVal = parseFloat(getVal('reward'));
     const priceVal = parseFloat(getVal('price'));
+    const validityVal = parseInt(getVal('validityDays'), 10);
     out[lvl] = {
       count: Number.isFinite(countVal) && countVal >= 1 ? countVal : def.count,
       reward: Number.isFinite(rewardVal) && rewardVal >= 0 ? rewardVal : def.reward,
       price: Number.isFinite(priceVal) && priceVal >= 0 ? priceVal : def.price,
+      validityDays: Number.isFinite(validityVal) && validityVal >= 1 ? validityVal : def.validityDays,
       nameBn: String(getVal('nameBn')).trim() || def.nameBn,
       nameEn: String(getVal('nameEn')).trim() || def.nameEn,
       nameAr: String(getVal('nameAr')).trim() || def.nameAr
@@ -1981,6 +2121,8 @@ function hydratePlatformControlsForm(sysRow) {
   setVal('pc-usdt-address', cfg.usdtAddress);
   setVal('pc-telegram-url', cfg.telegramUrl);
   setVal('pc-manager-id', cfg.managerId);
+  setVal('pc-bd-real-otp-enabled', cfg.bdRealOtpEnabled === false ? 'false' : 'true');
+  setVal('pc-cpanel-otp-url', cfg.cpanelOtpUrl || '');
 
   renderPackageConfigEditor(normalizedPkgs);
   syncEditUserPackageOptions(normalizedPkgs);
@@ -2016,6 +2158,7 @@ async function saveSystemConfigPayload(configObj, successMsg) {
 
 async function handlePlatformControlsSave(e) {
   e.preventDefault();
+  const rawOtpUrl = (document.getElementById('pc-cpanel-otp-url')?.value || '').trim().replace(/\/+$/, '');
   const configObj = Object.assign({}, latestSystemConfig, {
     withdrawEnabled: document.getElementById('pc-withdraw-enabled').value !== 'false',
     minWithdraw: parseFloat(document.getElementById('pc-min-withdraw').value) || 700,
@@ -2025,6 +2168,8 @@ async function handlePlatformControlsSave(e) {
     usdtAddress: document.getElementById('pc-usdt-address').value.trim(),
     telegramUrl: document.getElementById('pc-telegram-url').value.trim(),
     managerId: document.getElementById('pc-manager-id').value.trim(),
+    bdRealOtpEnabled: (document.getElementById('pc-bd-real-otp-enabled')?.value || 'true') !== 'false',
+    cpanelOtpUrl: rawOtpUrl,
     packages: normalizePackagesMap(latestSystemConfig.packages)
   });
 
@@ -2105,8 +2250,11 @@ async function enterAdminShell(username) {
 
   if (autoRefreshTimer) clearInterval(autoRefreshTimer);
   autoRefreshTimer = setInterval(() => {
-    if (isAuthenticated()) refreshAllData(false);
-  }, 15000);
+    if (document.hidden || !isAuthenticated()) return;
+    const editModalOpen = !document.getElementById('edit-user-modal')?.classList.contains('hidden');
+    if (editModalOpen) return;
+    refreshAllData(false);
+  }, 45000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

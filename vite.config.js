@@ -14,8 +14,12 @@ function apiDepositPlugin() {
     configureServer(server) {
       try {
         const loaded = loadEnv(server.config.mode || 'development', process.cwd(), '');
-        if (loaded && loaded.GEMINI_API_KEY && !process.env.GEMINI_API_KEY) {
-          process.env.GEMINI_API_KEY = loaded.GEMINI_API_KEY;
+        if (loaded) {
+          ['GEMINI_API_KEY', 'CPANEL_OTP_URL', 'BD_SMS_PROVIDER', 'BD_SMS_API_KEY', 'BD_SMS_SENDER_ID', 'BD_SMS_BRAND_NAME', 'OTP_SECRET'].forEach((k) => {
+            if (loaded[k] && !process.env[k]) {
+              process.env[k] = loaded[k];
+            }
+          });
         }
       } catch (e) {}
       server.middlewares.use(async (req, res, next) => {
@@ -28,7 +32,7 @@ function apiDepositPlugin() {
           req.url = '/admin.html';
           return next();
         }
-        if (url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify' || url.pathname === '/api/verify-like' || url.pathname.startsWith('/api/crypto')) {
+        if (url.pathname === '/api/otp' || url.pathname === '/api/deposit' || url.pathname === '/api/create-payment' || url.pathname === '/api/notify' || url.pathname === '/api/verify-like' || url.pathname.startsWith('/api/crypto')) {
           let bodyStr = '';
           req.on('data', chunk => { bodyStr += chunk; });
           req.on('end', async () => {
@@ -41,6 +45,7 @@ function apiDepositPlugin() {
                 req.body = {};
               }
             }
+            req.query = Object.fromEntries(url.searchParams.entries());
 
             // Express/Vercel-like response helpers
             res.status = (code) => {
@@ -58,7 +63,10 @@ function apiDepositPlugin() {
             };
 
             try {
-              if (url.pathname.startsWith('/api/crypto')) {
+              if (url.pathname === '/api/otp') {
+                const otpHandler = await loadApiHandler('api/otp.js');
+                await otpHandler(req, res);
+              } else if (url.pathname.startsWith('/api/crypto')) {
                 const cryptoHandler = await loadApiHandler('api/crypto.js');
                 await cryptoHandler(req, res);
               } else if (url.pathname === '/api/verify-like') {
