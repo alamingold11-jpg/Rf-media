@@ -29,56 +29,56 @@ const FOREIGN_TIKTOK_LINKS = [
   'https://www.tiktok.com/@manta_nice/video/7395507386808585518',
   'https://www.tiktok.com/@usimmango/video/7334835348058443051',
   'https://www.tiktok.com/@mlfnf1/video/7252699176692092162',
-  'https://www.tiktok.com/@gloomy1655/video/7706297152342969633',
   'https://www.tiktok.com/@base_iwakuni/video/7708186845162573064',
-  'https://www.tiktok.com/@kenshirorealstarofficial/video/7223701954105445658',
-  'https://www.tiktok.com/@generalmelbourne/video/7229232477217279233',
+  'https://www.tiktok.com/@kenleefastestman/video/7223701954105445658',
   'https://www.tiktok.com/@markoterzo/video/6762207861918420230',
   'https://www.tiktok.com/@surveyorjono/video/7060687520815762689',
   'https://www.tiktok.com/@tradegrurufx/video/7693639257948212500',
   'https://www.tiktok.com/@nickelback/video/7179767058995907883',
   'https://www.tiktok.com/@oyu295/video/7707135326900276500',
-  'https://www.tiktok.com/@x_road5/video/7101690910668262661',
   'https://www.tiktok.com/@bourr_/video/7706954205495414049',
-  'https://www.tiktok.com/@nmallmann/video/7230935056871673093',
+  'https://www.tiktok.com/@nicqli/video/7230935056871673093',
   'https://www.tiktok.com/@crvlwanek/video/7057703711862377775',
   'https://www.tiktok.com/@shajane08/video/7220082710830681371',
-  'https://www.tiktok.com/@dedlur/video/7089035811911519494',
   'https://www.tiktok.com/@youssefhafezzzzz/video/7176270700481678597',
-  'https://www.tiktok.com/@AhoTik/video/7622822514258906382',
-  'https://www.tiktok.com/@khanshaba80/video/7391752875363388680',
+  'https://www.tiktok.com/@614lyfe/video/7622822514258906382',
   'https://www.tiktok.com/@yfgfatso1/video/7583103667151064351',
   'https://www.tiktok.com/@tuyetsandogiadung/video/7343460465663659265',
   'https://www.tiktok.com/@bluehandcoding/video/7181530353239117099',
-  'https://www.tiktok.com/@kiwizin/video/7098324082344594694',
-  'https://www.tiktok.com/@pyatsplusom/video/7534621487643249950',
-  'https://www.tiktok.com/@gue_rapii/video/7631517860430433544',
-  'https://www.tiktok.com/@aiplanet_/video/7387105639341853984',
-  'https://www.tiktok.com/@mitocode/video/7675874113726057749',
+  'https://www.tiktok.com/@easysinger/video/7534621487643249950',
   'https://www.tiktok.com/@puruser875/video/7629440309088275725',
-  'https://www.tiktok.com/@hisham_harki01/video/7377781219846622465',
+  'https://www.tiktok.com/@mothermothermusic/video/6950329609929886982',
+  'https://www.tiktok.com/@hankgreen1/video/6947088027114016006',
+  'https://www.tiktok.com/@gue_rapii/video/7631517860430433544',
+  'https://www.tiktok.com/@mitocode/video/7675874113726057749',
   'https://www.tiktok.com/@mkfnx/video/7055123487484022021',
-  'https://www.tiktok.com/@adoptmeauto/video/7437174781415361847',
-  'https://www.tiktok.com/@living_stories/video/7414036946999217454',
+  'https://www.tiktok.com/@gmasternight/video/7414036946999217454',
   'https://www.tiktok.com/@ivan_agentesia/video/7691368777002339636',
   'https://www.tiktok.com/@gowricodes/video/7671100171840687373',
-  'https://www.tiktok.com/@buildmeri/video/7702524516211313972',
   'https://www.tiktok.com/@lolagdrr/video/7385976830605462817',
-  'https://www.tiktok.com/@akrm.hassan12/video/7285516703012752645',
-  'https://www.tiktok.com/@djiethiam/video/7546157052394081542',
-  'https://www.tiktok.com/@pzxepitsu/video/7448729279182933256',
-  'https://www.tiktok.com/@aiwrrld/video/7314946361072323882',
-  'https://www.tiktok.com/@razin0707/video/7359166688367054081',
-  'https://www.tiktok.com/@analisis.clinicos/video/7102988102024613126',
-  'https://www.tiktok.com/@eray_aus_wien1/video/7132911788969987333',
-  'https://www.tiktok.com/@einfuehlsam/video/7107970578451123461',
-  'https://www.tiktok.com/@ale.dev/video/7067717451126934789',
-  'https://www.tiktok.com/@annelisethearchaeologist/video/7436133360868822318',
-  'https://www.tiktok.com/@orsonhitchman/video/7573287862410464528',
-  'https://www.tiktok.com/@its_lehuy_without_love/video/7682078510046858517',
-  'https://www.tiktok.com/@sakouhico/video/7329438112189271329',
-  'https://www.tiktok.com/@informatic4_with_cesar/video/6981126811413499141',
-  'https://www.tiktok.com/@jirmy09/video/7498631851557358866'
+  'https://www.tiktok.com/@tatemcrae/video/6917688976925052165',
+  'https://www.tiktok.com/@helena_paparizou/video/7077867249138208006',
+  'https://www.tiktok.com/@nocohailstormfc/video/7107678490224332075',
+  'https://www.tiktok.com/@lord_salvaton/video/7197427851803626794',
+  'https://www.tiktok.com/@toosii/video/7186094846795451691',
+  'https://www.tiktok.com/@maudegarrett/video/6915582437653220613',
+  'https://www.tiktok.com/@kingkarim_kamar/video/7103938557307325702',
+  'https://www.tiktok.com/@bbciplayer/video/7301731432672644353',
+  'https://www.tiktok.com/@aranetacity/video/7343423351785917702',
+  'https://www.tiktok.com/@degraftmensah/video/7313826114273611040',
+  'https://www.tiktok.com/@juantumminelli/video/7477275444601965829',
+  'https://www.tiktok.com/@cangrejohistorico/video/7465052326701616390',
+  'https://www.tiktok.com/@00aka/video/6831198465473744134',
+  'https://www.tiktok.com/@danpovenmire/video/6901346217259764998',
+  'https://www.tiktok.com/@ranzandniana1314/video/194951213564514304',
+  'https://www.tiktok.com/@clmnsbrock/video/6751193601423707398',
+  'https://www.tiktok.com/@umihito/video/6910860023283420418',
+  'https://www.tiktok.com/@umihito/video/6903065889940262146',
+  'https://www.tiktok.com/@ianzogby/video/6814778331347569925',
+  'https://www.tiktok.com/@lityway/video/6982680092010974470',
+  'https://www.tiktok.com/@herranwalt/video/6763704856772480262',
+  'https://www.tiktok.com/@khaby.lame/video/6987049782137081093',
+  'https://www.tiktok.com/@khaby.lame/video/6968446123560209670'
 ];
 
 const YOUTUBE_TASK_LINKS = [
@@ -165,86 +165,86 @@ const YOUTUBE_TASK_LINKS = [
 ];
 
 const FACEBOOK_TASK_LINKS = [
-  'https://www.facebook.com/reel/2203177703598084',
-  'https://www.facebook.com/reel/1501494295226819',
-  'https://www.facebook.com/reel/1671497441289656',
-  'https://www.facebook.com/reel/1168931585831969',
-  'https://www.facebook.com/reel/1449632483255993',
-  'https://www.facebook.com/reel/1650351660121219',
-  'https://www.facebook.com/reel/29635470136058384',
-  'https://www.facebook.com/reel/1419985986790098',
-  'https://www.facebook.com/reel/1124736090258351',
-  'https://www.facebook.com/reel/1439888257776149',
-  'https://www.facebook.com/reel/2727300851036789',
-  'https://www.facebook.com/reel/5734599993432741',
-  'https://www.facebook.com/reel/1191207510233294',
-  'https://www.facebook.com/reel/28569113052768238',
-  'https://www.facebook.com/reel/2691442327980202',
-  'https://www.facebook.com/reel/2026513061318309',
-  'https://www.facebook.com/reel/1728662758698316',
-  'https://www.facebook.com/reel/1636818060908325',
-  'https://www.facebook.com/reel/1906207500373543',
-  'https://www.facebook.com/reel/980976057963215',
-  'https://www.facebook.com/reel/1337727005059854',
-  'https://www.facebook.com/reel/1057986020646017',
-  'https://www.facebook.com/reel/2071704250148102',
-  'https://www.facebook.com/reel/1402315225031000',
-  'https://www.facebook.com/reel/1917423539424419',
-  'https://www.facebook.com/reel/1633368415235669',
-  'https://www.facebook.com/reel/41011562105097634',
-  'https://www.facebook.com/reel/1819169572631593',
-  'https://www.facebook.com/reel/1524808097374754',
-  'https://www.facebook.com/reel/1139151768854905',
-  'https://www.facebook.com/reel/1476220258902346',
-  'https://www.facebook.com/reel/1440158394377422',
-  'https://www.facebook.com/reel/1685286063212824',
-  'https://www.facebook.com/reel/1444227754588380',
-  'https://www.facebook.com/reel/2266008050934939',
-  'https://www.facebook.com/reel/1928746565202154',
-  'https://www.facebook.com/reel/1455569770061133',
-  'https://www.facebook.com/reel/1455345890053427',
-  'https://www.facebook.com/reel/29188245670830779',
   'https://www.facebook.com/reel/4162122390744473',
-  'https://www.facebook.com/reel/1500153348843009',
-  'https://www.facebook.com/reel/923195004093883',
-  'https://www.facebook.com/reel/1767927020984450',
-  'https://www.facebook.com/reel/1470547115045830',
   'https://www.facebook.com/reel/1075181705122806',
   'https://www.facebook.com/reel/2476708762809103',
-  'https://www.facebook.com/reel/2356559064884989',
-  'https://www.facebook.com/reel/1188070930839839',
-  'https://www.facebook.com/reel/1755731675533834',
-  'https://www.facebook.com/reel/1681710957022850',
-  'https://www.facebook.com/reel/1682176696895752',
-  'https://www.facebook.com/reel/1456854319279675',
   'https://www.facebook.com/reel/2205749283671148',
-  'https://www.facebook.com/reel/1787253573405408',
-  'https://www.facebook.com/reel/1587257396488789',
-  'https://www.facebook.com/reel/1130264876540510',
-  'https://www.facebook.com/reel/1693158952387757',
-  'https://www.facebook.com/reel/1470379245238147',
-  'https://www.facebook.com/reel/1523595089594740',
-  'https://www.facebook.com/reel/1031573893292087',
-  'https://www.facebook.com/reel/1091101007249797',
-  'https://www.facebook.com/reel/2333922697419885',
-  'https://www.facebook.com/reel/2608842612897403',
-  'https://www.facebook.com/reel/2560408697799460',
-  'https://www.facebook.com/reel/2211074296484640',
-  'https://www.facebook.com/reel/2142092976437655',
-  'https://www.facebook.com/reel/1677533147061403',
-  'https://www.facebook.com/reel/1702071101438937',
-  'https://www.facebook.com/reel/1127588616917294',
-  'https://www.facebook.com/reel/1628663692340161',
-  'https://www.facebook.com/reel/2967195960321368',
-  'https://www.facebook.com/reel/2253608271917925',
-  'https://www.facebook.com/reel/3028441390854207',
-  'https://www.facebook.com/reel/3429711723865110',
-  'https://www.facebook.com/reel/1187133400408831',
-  'https://www.facebook.com/reel/1751377459261200',
-  'https://www.facebook.com/reel/1154048753871324',
-  'https://www.facebook.com/reel/1446969077583458',
-  'https://www.facebook.com/reel/1143875881724891',
-  'https://www.facebook.com/reel/1181711120845866'
+  'https://www.facebook.com/reel/1138699278750491',
+  'https://www.facebook.com/reel/1501258815224847',
+  'https://www.facebook.com/reel/1659676638983554',
+  'https://www.facebook.com/reel/1142995184981203',
+  'https://www.facebook.com/reel/3131178023941407',
+  'https://www.facebook.com/reel/1115605007778034',
+  'https://www.facebook.com/reel/1121832147497104',
+  'https://www.facebook.com/reel/1004505308686569',
+  'https://www.facebook.com/reel/1586859269911090',
+  'https://www.facebook.com/reel/1028454220271183',
+  'https://www.facebook.com/reel/1173920965055466',
+  'https://www.facebook.com/reel/1475915387845181',
+  'https://www.facebook.com/reel/1164328582606033',
+  'https://www.facebook.com/reel/4439824956333467',
+  'https://www.facebook.com/reel/2475765829498648',
+  'https://www.facebook.com/reel/1593759649191300',
+  'https://www.facebook.com/reel/1136250069125374',
+  'https://www.facebook.com/reel/985904170771025',
+  'https://www.facebook.com/reel/3034841853533710',
+  'https://www.facebook.com/reel/1446245467613966',
+  'https://www.facebook.com/reel/1436847184093679',
+  'https://www.facebook.com/reel/733927845592586',
+  'https://www.facebook.com/reel/893009892226771',
+  'https://www.facebook.com/reel/1159384003238104',
+  'https://www.facebook.com/reel/1455578125942446',
+  'https://www.facebook.com/reel/2203993523881287',
+  'https://www.facebook.com/reel/2190951905125703',
+  'https://www.facebook.com/reel/2641765512952516',
+  'https://www.facebook.com/reel/1107738815416658',
+  'https://www.facebook.com/reel/1670624467759641',
+  'https://www.facebook.com/reel/1499602338691219',
+  'https://www.facebook.com/reel/1168612958947591',
+  'https://www.facebook.com/reel/1146711955010038',
+  'https://www.facebook.com/reel/2258565038358585',
+  'https://www.facebook.com/reel/1867253207822060',
+  'https://www.facebook.com/reel/893169670488861',
+  'https://www.facebook.com/reel/1655460682628036',
+  'https://www.facebook.com/reel/1440862744144810',
+  'https://www.facebook.com/reel/1133282522556036',
+  'https://www.facebook.com/reel/1380541715149124',
+  'https://www.facebook.com/reel/1693700715741843',
+  'https://www.facebook.com/reel/2631107090686972',
+  'https://www.facebook.com/reel/4474285029553375',
+  'https://www.facebook.com/reel/1168285119057382',
+  'https://www.facebook.com/reel/2184479692151550',
+  'https://www.facebook.com/reel/2288226321576986',
+  'https://www.facebook.com/reel/1652793289859205',
+  'https://www.facebook.com/reel/1943984979901727',
+  'https://www.facebook.com/reel/1493094466025555',
+  'https://www.facebook.com/reel/3367596946780238',
+  'https://www.facebook.com/reel/1471709858229142',
+  'https://www.facebook.com/reel/1476140428034879',
+  'https://www.facebook.com/reel/1183144130733658',
+  'https://www.facebook.com/reel/1582317103940257',
+  'https://www.facebook.com/reel/1157607626773004',
+  'https://www.facebook.com/reel/1505329171485778',
+  'https://www.facebook.com/reel/1498955725382176',
+  'https://www.facebook.com/reel/2336410107138896',
+  'https://www.facebook.com/reel/4530516633832106',
+  'https://www.facebook.com/reel/1147209754518894',
+  'https://www.facebook.com/reel/4489993407915861',
+  'https://www.facebook.com/reel/1717512160033924',
+  'https://www.facebook.com/reel/2229447360970497',
+  'https://www.facebook.com/reel/29064262166570747',
+  'https://www.facebook.com/reel/1434586952168116',
+  'https://www.facebook.com/reel/2573758463108899',
+  'https://www.facebook.com/reel/2277099159531058',
+  'https://www.facebook.com/reel/1853608545660309',
+  'https://www.facebook.com/reel/4197864060511810',
+  'https://www.facebook.com/reel/1166708212706596',
+  'https://www.facebook.com/reel/2445344335530649',
+  'https://www.facebook.com/reel/1778253873249233',
+  'https://www.facebook.com/reel/29813600611571304',
+  'https://www.facebook.com/reel/1689157336122093',
+  'https://www.facebook.com/reel/1459633079473567',
+  'https://www.facebook.com/reel/1465722141638280'
 ];
 
 function isLegacyPlaceholderTaskUrl(url) {
@@ -389,14 +389,29 @@ function mapSupabaseUser(d) {
     bonusSpins: Number(opt.bonus_spins) || 0,
     spinHistory: Array.isArray(opt.spin_history) ? opt.spin_history : [],
     country: (function() {
-      const rawC = String(opt.country || (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))).toUpperCase();
+      const dialMatch = opt.dial_code && opt.dial_code !== '+880' && typeof COUNTRY_DATABASE !== 'undefined'
+        ? COUNTRY_DATABASE.find(function(c) { return c.dialCode === opt.dial_code; })
+        : null;
+      const rawC = String(
+        opt.country ||
+        (dialMatch && dialMatch.code) ||
+        (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))
+      ).toUpperCase();
       return rawC || 'BD';
     })(),
     currency: (function() {
-      const rawC = String(opt.country || (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))).toUpperCase();
+      const dialMatch = opt.dial_code && opt.dial_code !== '+880' && typeof COUNTRY_DATABASE !== 'undefined'
+        ? COUNTRY_DATABASE.find(function(c) { return c.dialCode === opt.dial_code; })
+        : null;
+      const rawC = String(
+        opt.country ||
+        (dialMatch && dialMatch.code) ||
+        (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))
+      ).toUpperCase();
       return rawC === 'BD' ? 'BDT' : 'USD';
     })(),
     dialCode: opt.dial_code || '',
+    commissionDust: Number(opt.commission_dust) || 0,
     language: mappedLang,
     languageManual: isManualLang,
     bkashName: d.bkash_name || d.bkashName || '',
@@ -877,10 +892,32 @@ function initSupabaseLiveSync(user) {
               renderLuckySpinPanel();
             }
             const invitePanel = document.getElementById('invite-panel');
-            if (invitePanel && !invitePanel.hidden && typeof renderInviteVipSalaryCards === 'function') {
-              renderInviteVipSalaryCards();
+            if (invitePanel && !invitePanel.hidden) {
+              if (typeof renderInvitePage === 'function') renderInvitePage();
+              else if (typeof renderInviteVipSalaryCards === 'function') renderInviteVipSalaryCards();
             }
           }, 150);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team',
+          filter: `superior_phone=eq.${normPhone}`
+        },
+        function() {
+          if (typeof _realTeamCache !== 'undefined') _realTeamCache.delete(normPhone);
+          const teamPanel = document.getElementById('team-report-panel');
+          if (teamPanel && !teamPanel.hidden) {
+            if (typeof updateTeamReportMetrics === 'function') updateTeamReportMetrics(true);
+            if (typeof renderFreshTeamView === 'function') renderFreshTeamView(true);
+          }
+          const invitePanel = document.getElementById('invite-panel');
+          if (invitePanel && !invitePanel.hidden) {
+            if (typeof renderInvitePage === 'function') renderInvitePage();
+          }
         }
       )
       .subscribe();
@@ -1029,6 +1066,9 @@ async function dbSaveUser(account) {
         country: account.country || baseOpt.country || 'BD',
         currency: (account.country || baseOpt.country || 'BD') === 'BD' ? 'BDT' : 'USD',
         dial_code: account.dialCode || baseOpt.dial_code || '+880',
+        commission_dust: typeof account.commissionDust === 'number'
+          ? Number(account.commissionDust.toFixed(6))
+          : (Number(baseOpt.commission_dust) || 0),
         superior_phone: account.superiorPhone || baseOpt.superior_phone || '',
         language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || baseOpt.language || 'en'),
         language_manual: Boolean(account.languageManual || (account.profileData && account.profileData.languageManual) || baseOpt.language_manual)
@@ -1082,13 +1122,14 @@ async function dbFindInviter(codeOrPhone) {
         orParts.push(`invite_code.ilike.${safeRaw}`);
         orParts.push(`member_id.eq.${safeRaw}`);
       }
-      if (norm) {
-        orParts.push(`phone.eq.${norm}`);
-        orParts.push(`account_number.eq.${norm}`);
-        if (/^1[3-9]\d{8}$/.test(norm)) {
-          orParts.push(`phone.eq.0${norm}`);
+      const phoneVariants = expandPhoneLookupKeys([safeRaw, norm]);
+      phoneVariants.forEach(function(pv) {
+        const cleanPv = String(pv || '').replace(/[,()"'\\]/g, '').trim();
+        if (cleanPv && cleanPv.length >= 7) {
+          orParts.push(`phone.eq.${cleanPv}`);
+          orParts.push(`account_number.eq.${cleanPv}`);
         }
-      }
+      });
       if (orParts.length > 0) {
         const { data } = await window.aloSupabase
           .from('users')
@@ -1321,6 +1362,15 @@ function expandPhoneLookupKeys(phoneList) {
     const s = String(raw || '').trim();
     if (!s) return;
     out.add(s);
+    const digits = s.replace(/\D/g, '');
+    if (digits) {
+      out.add(digits);
+      const strippedZero = digits.replace(/^0+/, '');
+      if (strippedZero) out.add(strippedZero);
+      if (digits.length >= 7 && !s.startsWith('+')) {
+        out.add('+' + digits);
+      }
+    }
     const norm = normalizeBdPhone(s);
     if (norm) {
       out.add(norm);
@@ -1328,6 +1378,8 @@ function expandPhoneLookupKeys(phoneList) {
         out.add('0' + norm);
         out.add('880' + norm);
         out.add('+880' + norm);
+      } else if (norm.length >= 7) {
+        out.add('+' + norm);
       }
     }
   });
@@ -1382,12 +1434,13 @@ const _realTeamCache = new Map();
 const _realTeamInFlight = new Map();
 
 // Comprehensive real team aggregation: Combines database, hierarchy graph, and live balances/deposits/withdrawals across Tiers 1, 2, 3
-async function dbGetRealTeam(userPhone) {
+async function dbGetRealTeam(userPhone, options) {
+  const opts = (options && typeof options === 'object') ? options : {};
   const normPhone = normalizeBdPhone(userPhone);
   if (!normPhone) return { all: [], tier1: [], tier2: [], tier3: [] };
 
   const cached = _realTeamCache.get(normPhone);
-  if (cached && (Date.now() - cached.ts) < 8000) {
+  if (!opts.force && cached && (Date.now() - cached.ts) < 8000) {
     return cached.data;
   }
   if (_realTeamInFlight.has(normPhone)) {
@@ -1446,8 +1499,8 @@ async function _computeDbGetRealTeam(normPhone) {
       if (nextTier < prev.tier) prev.tier = nextTier;
       if (data.inviteCode && !prev.inviteCode) prev.inviteCode = data.inviteCode;
       if (data.currency) prev.currency = data.currency;
-      if (data.memberId && !String(prev.memberId || '').startsWith('AL')) {
-        // keep existing
+      if (data.fromUsersTable && data.memberId) {
+        prev.memberId = data.memberId;
       } else if (data.memberId && prev.memberId === 'AL' + p.slice(-6)) {
         prev.memberId = data.memberId;
       }
@@ -1497,7 +1550,8 @@ async function _computeDbGetRealTeam(normPhone) {
   const ownerCreatedMs = (activeUser && activeUserPhone === normPhone && activeUser.createdAt)
     ? new Date(activeUser.createdAt).getTime()
     : NaN;
-  const minValidTeamTs = !isNaN(ownerCreatedMs) ? (ownerCreatedMs - 60000) : null;
+  // 15-minute tolerance safely accommodates device clock skew while excluding ancient pre-recreation orphan rows
+  const minValidTeamTs = !isNaN(ownerCreatedMs) ? (ownerCreatedMs - 15 * 60 * 1000) : null;
   function isAfterOwnerCreation(isoOrDate) {
     if (minValidTeamTs === null || !isoOrDate) return true;
     const t = new Date(isoOrDate).getTime();
@@ -1524,13 +1578,55 @@ async function _computeDbGetRealTeam(normPhone) {
     });
   }
 
+  async function enrichTeamOnlyMembersFromUsers() {
+    if (!window.aloSupabase) return;
+    const teamOnlyKeys = Array.from(memberMap.values())
+      .filter(function(m) { return !m._fromUsersTable; })
+      .map(function(m) { return m.rawPhone; });
+    const existingPhones = expandPhoneLookupKeys(teamOnlyKeys);
+    if (existingPhones.length === 0) return;
+    const { data: memberProfiles } = await window.aloSupabase
+      .from('users')
+      .select('*')
+      .in('phone', existingPhones)
+      .limit(2000);
+    if (Array.isArray(memberProfiles)) {
+      memberProfiles.forEach(function(u) {
+        const p = normalizeBdPhone(u.phone || u.account_number);
+        const cur = memberMap.get(p);
+        if (cur) {
+          const mapped = mapSupabaseUser(u);
+          upsertMember(p, {
+            fromUsersTable: true,
+            memberId: mapped.memberId,
+            inviteCode: mapped.inviteCode || '',
+            currency: mapped.currency || 'BDT',
+            tier: cur.tier,
+            level: mapped.packageLevel || 'LV0',
+            purchasedPackages: mapped.purchasedPackages || [],
+            balance: Number(mapped.balance) || 0,
+            rechargeAmount: Number(mapped.rechargeAmount || 0),
+            cashoutAmount: Number(mapped.cashoutAmount || 0),
+            todayIncome: Number(mapped.todayIncome || 0),
+            totalIncome: Number(mapped.totalIncome || mapped.lifetimeEarnings || 0),
+            joinedAt: mapped.createdAt
+          });
+        }
+      });
+    }
+  }
+
   // 1.5 Query Supabase users table recursively for Tier 1 -> Tier 2 -> Tier 3
   if (window.aloSupabase) {
     try {
+      // Enrich team-table members FIRST so Tier 1 inviteCode/memberId/currency are available before Tier 2/3 recursion
+      await enrichTeamOnlyMembersFromUsers();
+
       const user = activeUser;
       const myInviteCode = (user && activeUserPhone === normPhone && user.inviteCode) ? String(user.inviteCode).trim() : '';
       const myMemberId = (user && activeUserPhone === normPhone && user.memberId) ? String(user.memberId).trim() : '';
       const myRawPhone = (user && activeUserPhone === normPhone) ? String(user.phone || user.accountNumber || '').trim() : '';
+      const myUniqueRefSet = new Set([myInviteCode, myMemberId].filter(Boolean).map(function(v) { return v.toUpperCase(); }));
 
       // Tier 1 lookup in Supabase users (include phone format variants + invite_code + member_id)
       const t1KeySet = new Set(expandPhoneLookupKeys([normPhone, myRawPhone, userPhone]));
@@ -1542,13 +1638,16 @@ async function _computeDbGetRealTeam(normPhone) {
         const { data: tier1Users, error: u1Err } = await window.aloSupabase
           .from('users')
           .select('*')
-          .in('superior_id', t1Keys);
+          .in('superior_id', t1Keys)
+          .limit(2000);
 
+        const t2LookupKeys = new Set();
         if (!u1Err && Array.isArray(tier1Users)) {
-          const t2LookupKeys = new Set();
           tier1Users.forEach(function(u) {
             const mapped = mapSupabaseUser(u);
-            if (!isAfterOwnerCreation(mapped && mapped.createdAt)) return;
+            const supUpper = String(u.superior_id || '').trim().toUpperCase();
+            // Always trust unique invite_code / member_id matches regardless of device clock skew
+            if (!myUniqueRefSet.has(supUpper) && !isAfterOwnerCreation(mapped && mapped.createdAt)) return;
             const p = normalizeBdPhone(u.phone || u.account_number);
             if (p && p !== normPhone) {
               expandPhoneLookupKeys([p, u.phone, u.account_number]).forEach(function(k) { t2LookupKeys.add(k); });
@@ -1571,132 +1670,99 @@ async function _computeDbGetRealTeam(normPhone) {
               });
             }
           });
+        }
 
-          // Include any Tier 1 phones already found from `team` table
-          Array.from(memberMap.values()).forEach(function(m) {
-            if (m.tier === 1) {
-              expandPhoneLookupKeys([m.rawPhone]).forEach(function(k) { t2LookupKeys.add(k); });
-              if (m.inviteCode) t2LookupKeys.add(m.inviteCode);
-              if (m.memberId) t2LookupKeys.add(m.memberId);
-            }
-          });
+        // Include any Tier 1 members already discovered from `team` table
+        Array.from(memberMap.values()).forEach(function(m) {
+          if (m.tier === 1) {
+            expandPhoneLookupKeys([m.rawPhone]).forEach(function(k) { t2LookupKeys.add(k); });
+            if (m.inviteCode) t2LookupKeys.add(m.inviteCode);
+            if (m.memberId) t2LookupKeys.add(m.memberId);
+          }
+        });
 
-          // Tier 2 lookup in Supabase users
-          if (t2LookupKeys.size > 0) {
-            const { data: tier2Users, error: u2Err } = await window.aloSupabase
-              .from('users')
-              .select('*')
-              .in('superior_id', Array.from(t2LookupKeys));
+        // Tier 2 lookup in Supabase users
+        const t3LookupKeys = new Set();
+        if (t2LookupKeys.size > 0) {
+          const { data: tier2Users, error: u2Err } = await window.aloSupabase
+            .from('users')
+            .select('*')
+            .in('superior_id', Array.from(t2LookupKeys))
+            .limit(2000);
 
-            if (!u2Err && Array.isArray(tier2Users)) {
-              const t3LookupKeys = new Set();
-              tier2Users.forEach(function(u) {
-                const mapped = mapSupabaseUser(u);
-                if (!isAfterOwnerCreation(mapped && mapped.createdAt)) return;
-                const p = normalizeBdPhone(u.phone || u.account_number);
-                if (p && p !== normPhone) {
-                  expandPhoneLookupKeys([p, u.phone, u.account_number]).forEach(function(k) { t3LookupKeys.add(k); });
-                  if (u.invite_code) t3LookupKeys.add(String(u.invite_code).trim());
-                  if (u.member_id) t3LookupKeys.add(String(u.member_id).trim());
-                  upsertMember(p, {
-                    fromUsersTable: true,
-                    memberId: mapped.memberId || ('AL' + p.slice(-6)),
-                    inviteCode: mapped.inviteCode || '',
-                    currency: mapped.currency || 'BDT',
-                    tier: 2,
-                    level: mapped.packageLevel || 'LV0',
-                    purchasedPackages: mapped.purchasedPackages || [],
-                    balance: Number(mapped.balance) || 0,
-                    rechargeAmount: Number(mapped.rechargeAmount || 0),
-                    cashoutAmount: Number(mapped.cashoutAmount || 0),
-                    todayIncome: Number(mapped.todayIncome || 0),
-                    totalIncome: Number(mapped.totalIncome || mapped.lifetimeEarnings || 0),
-                    joinedAt: mapped.createdAt || new Date().toISOString()
-                  });
-                }
-              });
-
-              Array.from(memberMap.values()).forEach(function(m) {
-                if (m.tier === 2) {
-                  expandPhoneLookupKeys([m.rawPhone]).forEach(function(k) { t3LookupKeys.add(k); });
-                  if (m.inviteCode) t3LookupKeys.add(m.inviteCode);
-                  if (m.memberId) t3LookupKeys.add(m.memberId);
-                }
-              });
-
-              // Tier 3 lookup in Supabase users
-              if (t3LookupKeys.size > 0) {
-                const { data: tier3Users, error: u3Err } = await window.aloSupabase
-                  .from('users')
-                  .select('*')
-                  .in('superior_id', Array.from(t3LookupKeys));
-
-                if (!u3Err && Array.isArray(tier3Users)) {
-                  tier3Users.forEach(function(u) {
-                    const mapped = mapSupabaseUser(u);
-                    if (!isAfterOwnerCreation(mapped && mapped.createdAt)) return;
-                    const p = normalizeBdPhone(u.phone || u.account_number);
-                    if (p && p !== normPhone) {
-                      upsertMember(p, {
-                        fromUsersTable: true,
-                        memberId: mapped.memberId || ('AL' + p.slice(-6)),
-                        inviteCode: mapped.inviteCode || '',
-                        currency: mapped.currency || 'BDT',
-                        tier: 3,
-                        level: mapped.packageLevel || 'LV0',
-                        purchasedPackages: mapped.purchasedPackages || [],
-                        balance: Number(mapped.balance) || 0,
-                        rechargeAmount: Number(mapped.rechargeAmount || 0),
-                        cashoutAmount: Number(mapped.cashoutAmount || 0),
-                        todayIncome: Number(mapped.todayIncome || 0),
-                        totalIncome: Number(mapped.totalIncome || mapped.lifetimeEarnings || 0),
-                        joinedAt: mapped.createdAt || new Date().toISOString()
-                      });
-                    }
-                  });
-                }
+          if (!u2Err && Array.isArray(tier2Users)) {
+            tier2Users.forEach(function(u) {
+              const mapped = mapSupabaseUser(u);
+              const p = normalizeBdPhone(u.phone || u.account_number);
+              if (p && p !== normPhone) {
+                expandPhoneLookupKeys([p, u.phone, u.account_number]).forEach(function(k) { t3LookupKeys.add(k); });
+                if (u.invite_code) t3LookupKeys.add(String(u.invite_code).trim());
+                if (u.member_id) t3LookupKeys.add(String(u.member_id).trim());
+                upsertMember(p, {
+                  fromUsersTable: true,
+                  memberId: mapped.memberId || ('AL' + p.slice(-6)),
+                  inviteCode: mapped.inviteCode || '',
+                  currency: mapped.currency || 'BDT',
+                  tier: 2,
+                  level: mapped.packageLevel || 'LV0',
+                  purchasedPackages: mapped.purchasedPackages || [],
+                  balance: Number(mapped.balance) || 0,
+                  rechargeAmount: Number(mapped.rechargeAmount || 0),
+                  cashoutAmount: Number(mapped.cashoutAmount || 0),
+                  todayIncome: Number(mapped.todayIncome || 0),
+                  totalIncome: Number(mapped.totalIncome || mapped.lifetimeEarnings || 0),
+                  joinedAt: mapped.createdAt || new Date().toISOString()
+                });
               }
-            }
+            });
+          }
+        }
+
+        // Include any Tier 2 members already discovered from `team` table
+        Array.from(memberMap.values()).forEach(function(m) {
+          if (m.tier === 2) {
+            expandPhoneLookupKeys([m.rawPhone]).forEach(function(k) { t3LookupKeys.add(k); });
+            if (m.inviteCode) t3LookupKeys.add(m.inviteCode);
+            if (m.memberId) t3LookupKeys.add(m.memberId);
+          }
+        });
+
+        // Tier 3 lookup in Supabase users
+        if (t3LookupKeys.size > 0) {
+          const { data: tier3Users, error: u3Err } = await window.aloSupabase
+            .from('users')
+            .select('*')
+            .in('superior_id', Array.from(t3LookupKeys))
+            .limit(2000);
+
+          if (!u3Err && Array.isArray(tier3Users)) {
+            tier3Users.forEach(function(u) {
+              const mapped = mapSupabaseUser(u);
+              const p = normalizeBdPhone(u.phone || u.account_number);
+              if (p && p !== normPhone) {
+                upsertMember(p, {
+                  fromUsersTable: true,
+                  memberId: mapped.memberId || ('AL' + p.slice(-6)),
+                  inviteCode: mapped.inviteCode || '',
+                  currency: mapped.currency || 'BDT',
+                  tier: 3,
+                  level: mapped.packageLevel || 'LV0',
+                  purchasedPackages: mapped.purchasedPackages || [],
+                  balance: Number(mapped.balance) || 0,
+                  rechargeAmount: Number(mapped.rechargeAmount || 0),
+                  cashoutAmount: Number(mapped.cashoutAmount || 0),
+                  todayIncome: Number(mapped.todayIncome || 0),
+                  totalIncome: Number(mapped.totalIncome || mapped.lifetimeEarnings || 0),
+                  joinedAt: mapped.createdAt || new Date().toISOString()
+                });
+              }
+            });
           }
         }
       }
 
-      // Also refresh live `users` stats ONLY for members discovered purely via `team` table (skip already-fetched users)
-      const teamOnlyKeys = Array.from(memberMap.values())
-        .filter(function(m) { return !m._fromUsersTable; })
-        .map(function(m) { return m.rawPhone; });
-      const existingPhones = expandPhoneLookupKeys(teamOnlyKeys);
-      if (existingPhones.length > 0) {
-        const { data: memberProfiles } = await window.aloSupabase
-          .from('users')
-          .select('*')
-          .in('phone', existingPhones)
-          .limit(1000);
-        if (Array.isArray(memberProfiles)) {
-          memberProfiles.forEach(function(u) {
-            const p = normalizeBdPhone(u.phone || u.account_number);
-            const cur = memberMap.get(p);
-            if (cur) {
-              const mapped = mapSupabaseUser(u);
-              upsertMember(p, {
-                fromUsersTable: true,
-                memberId: mapped.memberId,
-                inviteCode: mapped.inviteCode || '',
-                currency: mapped.currency || 'BDT',
-                tier: cur.tier,
-                level: mapped.packageLevel || 'LV0',
-                purchasedPackages: mapped.purchasedPackages || [],
-                balance: Number(mapped.balance) || 0,
-                rechargeAmount: Number(mapped.rechargeAmount || 0),
-                cashoutAmount: Number(mapped.cashoutAmount || 0),
-                todayIncome: Number(mapped.todayIncome || 0),
-                totalIncome: Number(mapped.totalIncome || mapped.lifetimeEarnings || 0),
-                joinedAt: mapped.createdAt
-              });
-            }
-          });
-        }
-      }
+      // Final pass for any remaining un-enriched team-only members (e.g. Tier 3 only in `team`)
+      await enrichTeamOnlyMembersFromUsers();
     } catch (uErr) {
       console.warn('Supabase multi-tier users referral query notice:', uErr);
     }
@@ -1864,7 +1930,7 @@ async function dbRecordTransaction(tx) {
 async function dbGetTransactions(phone, type) {
   const normPhone = normalizeBdPhone(phone);
   const rawPhone = String(phone || '').trim();
-  const phoneCandidates = Array.from(new Set([normPhone, rawPhone].filter(Boolean)));
+  const phoneCandidates = expandPhoneLookupKeys([normPhone, rawPhone]);
   if (phoneCandidates.length === 0) return [];
 
   // Supabase
@@ -2379,13 +2445,13 @@ function renderInvitePage() {
     const phone = (user && (user.phone || user.accountNumber)) || '';
     const expectedNormPhone = normalizeBdPhone(phone);
     const ownerCreatedMs = (user && user.createdAt) ? new Date(user.createdAt).getTime() : NaN;
-    const minValidTxTs = !isNaN(ownerCreatedMs) ? (ownerCreatedMs - 60000) : null;
+    const minValidTxTs = !isNaN(ownerCreatedMs) ? (ownerCreatedMs - 15 * 60 * 1000) : null;
     if (!phone) {
       renderInviteVipSalaryCards();
       return;
     }
     Promise.all([
-      dbGetRealTeam(phone),
+      dbGetRealTeam(phone, { force: true }),
       dbGetTransactions(phone, 'commission').catch(function() { return []; })
     ]).then(function(results) {
       const activeAfter = getCurrentUser();
@@ -2422,7 +2488,7 @@ function renderInvitePage() {
         const pkgRate = PACKAGE_COMMISSION_RATES[tierNum] || 0;
         const taskRate = DAILY_TASK_COMMISSION_RATES[tierNum] || 0;
 
-        // Package spend in member currency -> viewer currency
+        // Package spend in member currency -> viewer currency (exact conversion so fractional USD/USDT sums accurately)
         let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
         if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
           const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
@@ -2434,8 +2500,8 @@ function renderInvitePage() {
             return sum + (memberIsUsd ? convertBetweenCurrencies(bdtPrice, 'BDT', 'USD') : bdtPrice);
           }, 0);
         }
-        const pkgSpend = convertBetweenCurrencies(pkgSpendRaw, m.currency || 'BDT', viewerCurr);
-        const pkgSpendToday = convertBetweenCurrencies(Number(m.packageSpendToday) || 0, m.currency || 'BDT', viewerCurr);
+        const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, m.currency || 'BDT', viewerCurr);
+        const pkgSpendToday = convertBetweenCurrenciesExact(Number(m.packageSpendToday) || 0, m.currency || 'BDT', viewerCurr);
 
         // Paid task earnings in member currency -> viewer currency (avoid falling back to totalIncome when tx history loaded)
         const memberHasPaidLvl = String(m.level || 'LV0').toUpperCase() !== 'LV0' ||
@@ -2444,14 +2510,18 @@ function renderInvitePage() {
           ? (Number(m.taskEarningsTotal) || 0)
           : (Number(m.taskEarningsTotal) || (memberHasPaidLvl ? (Number(m.totalIncome) || 0) : 0));
         const taskEarnTodayRaw = Number(m.taskEarningsToday) || 0;
-        const taskEarn = convertBetweenCurrencies(taskEarnRaw, m.currency || 'BDT', viewerCurr);
-        const taskEarnToday = convertBetweenCurrencies(taskEarnTodayRaw, m.currency || 'BDT', viewerCurr);
+        const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, m.currency || 'BDT', viewerCurr);
+        const taskEarnToday = convertBetweenCurrenciesExact(taskEarnTodayRaw, m.currency || 'BDT', viewerCurr);
 
-        teamPkgCommTotal += Math.round(pkgSpend * pkgRate * 100) / 100;
-        teamPkgCommToday += Math.round(pkgSpendToday * pkgRate * 100) / 100;
-        teamTaskCommTotal += Math.round(taskEarn * taskRate * 100) / 100;
-        teamTaskCommToday += Math.round(taskEarnToday * taskRate * 100) / 100;
+        teamPkgCommTotal += pkgSpend * pkgRate;
+        teamPkgCommToday += pkgSpendToday * pkgRate;
+        teamTaskCommTotal += taskEarn * taskRate;
+        teamTaskCommToday += taskEarnToday * taskRate;
       });
+      teamPkgCommTotal = Math.round(teamPkgCommTotal * 100) / 100;
+      teamPkgCommToday = Math.round(teamPkgCommToday * 100) / 100;
+      teamTaskCommTotal = Math.round(teamTaskCommTotal * 100) / 100;
+      teamTaskCommToday = Math.round(teamTaskCommToday * 100) / 100;
 
       // 2. Authoritative team commission ledger transactions (exclude Lucky Spin prizes & pre-creation rows!)
       let txPkgTotal = 0;
@@ -2975,6 +3045,8 @@ function openDashboardPanel(panelName) {
     bottomNav.style.setProperty('pointer-events', 'auto', 'important');
     if (nextPanel === 'package-detail') {
       document.body.style.backgroundColor = '#030d24';
+    } else if (nextPanel === 'profile') {
+      document.body.style.backgroundColor = '#050f28';
     } else {
       document.body.style.backgroundColor = '';
     }
@@ -3127,7 +3199,7 @@ function openDashboardPanel(panelName) {
         if (ind) { ind.classList.remove('bg-transparent'); ind.classList.add('bg-[#38bdf8]'); }
       }
       if (typeof renderFreshTeamView === 'function') {
-        renderFreshTeamView();
+        renderFreshTeamView(true);
       }
     } else {
       // Default: Always show Team Report
@@ -3148,10 +3220,10 @@ function openDashboardPanel(panelName) {
         if (ind) { ind.classList.remove('bg-[#38bdf8]'); ind.classList.add('bg-transparent'); }
       }
       if (typeof updateTeamReportMetrics === 'function') {
-        updateTeamReportMetrics();
+        updateTeamReportMetrics(true);
       }
       if (typeof renderFreshTeamView === 'function') {
-        renderFreshTeamView();
+        renderFreshTeamView(true);
       }
     }
   }
@@ -3207,7 +3279,7 @@ function toUserCurrencyAmount(baseBdtAmount, user) {
 }
 window.toUserCurrencyAmount = toUserCurrencyAmount;
 
-function convertBetweenCurrencies(amount, fromCurrOrUser, toCurrOrUser) {
+function convertBetweenCurrenciesExact(amount, fromCurrOrUser, toCurrOrUser) {
   const num = Number(amount || 0);
   if (!num) return 0;
   const fromIsUsd = typeof fromCurrOrUser === 'string'
@@ -3217,8 +3289,22 @@ function convertBetweenCurrencies(amount, fromCurrOrUser, toCurrOrUser) {
     ? String(toCurrOrUser).toUpperCase() === 'USD'
     : isUsdOnlyUser(toCurrOrUser);
   if (fromIsUsd === toIsUsd) return num;
-  if (fromIsUsd && !toIsUsd) return Number((num * BDT_PER_USD).toFixed(2));
-  return Number((num / BDT_PER_USD).toFixed(2));
+  if (fromIsUsd && !toIsUsd) return num * BDT_PER_USD;
+  return num / BDT_PER_USD;
+}
+window.convertBetweenCurrenciesExact = convertBetweenCurrenciesExact;
+
+function convertBetweenCurrencies(amount, fromCurrOrUser, toCurrOrUser) {
+  const exact = convertBetweenCurrenciesExact(amount, fromCurrOrUser, toCurrOrUser);
+  if (!exact) return 0;
+  const fromIsUsd = typeof fromCurrOrUser === 'string'
+    ? String(fromCurrOrUser).toUpperCase() === 'USD'
+    : isUsdOnlyUser(fromCurrOrUser);
+  const toIsUsd = typeof toCurrOrUser === 'string'
+    ? String(toCurrOrUser).toUpperCase() === 'USD'
+    : isUsdOnlyUser(toCurrOrUser);
+  if (fromIsUsd === toIsUsd) return exact;
+  return Number(exact.toFixed(2));
 }
 window.convertBetweenCurrencies = convertBetweenCurrencies;
 
@@ -3557,106 +3643,244 @@ function normalizeBdPhone(phoneStr, countryCode) {
 // UI Language defaults to English and preserves selected registration language
 // =========================================================================
 const COUNTRY_DATABASE = [
-  // Primary & Popular Regions
+  // Default Primary (Bangladesh - BDT)
   { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameAr: 'بنغلاديش', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, placeholder: '' },
-  { code: 'EG', nameBn: 'মিশর', nameEn: 'Egypt', nameAr: 'مصر', flag: '🇪🇬', dialCode: '+20', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'SA', nameBn: 'সৌদি আরব', nameEn: 'Saudi Arabia', nameAr: 'المملكة العربية السعودية', flag: '🇸🇦', dialCode: '+966', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'AE', nameBn: 'সংযুক্ত আরব আমিরাত (UAE)', nameEn: 'United Arab Emirates', nameAr: 'الإمارات العربية المتحدة', flag: '🇦🇪', dialCode: '+971', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IN', nameBn: 'ভারত', nameEn: 'India', nameAr: 'الهند', flag: '🇮🇳', dialCode: '+91', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'PK', nameBn: 'পাকিস্তান', nameEn: 'Pakistan', nameAr: 'باكستان', flag: '🇵🇰', dialCode: '+92', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'US', nameBn: 'যুক্তরাষ্ট্র', nameEn: 'United States', nameAr: 'الولايات المتحدة', flag: '🇺🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'GB', nameBn: 'যুক্তরাজ্য', nameEn: 'United Kingdom', nameAr: 'المملكة المتحدة', flag: '🇬🇧', dialCode: '+44', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
 
-  // Middle East & North Africa
-  { code: 'QA', nameBn: 'কাতার', nameEn: 'Qatar', nameAr: 'قطر', flag: '🇶🇦', dialCode: '+974', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'KW', nameBn: 'কুয়েত', nameEn: 'Kuwait', nameAr: 'الكويت', flag: '🇰🇼', dialCode: '+965', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'OM', nameBn: 'ওমান', nameEn: 'Oman', nameAr: 'عُمان', flag: '🇴🇲', dialCode: '+968', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'BH', nameBn: 'বাহরাইন', nameEn: 'Bahrain', nameAr: 'البحرين', flag: '🇧🇭', dialCode: '+973', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'JO', nameBn: 'জর্ডান', nameEn: 'Jordan', nameAr: 'الأردن', flag: '🇯🇴', dialCode: '+962', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'LB', nameBn: 'লেবানন', nameEn: 'Lebanon', nameAr: 'لبنان', flag: '🇱🇧', dialCode: '+961', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IQ', nameBn: 'ইরাক', nameEn: 'Iraq', nameAr: 'العراق', flag: '🇮🇶', dialCode: '+964', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'SY', nameBn: 'সিরিয়া', nameEn: 'Syria', nameAr: 'سوريا', flag: '🇸🇾', dialCode: '+963', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'PS', nameBn: 'ফিলিস্তিন', nameEn: 'Palestine', nameAr: 'فلسطين', flag: '🇵🇸', dialCode: '+970', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'YE', nameBn: 'ইয়েমেন', nameEn: 'Yemen', nameAr: 'اليمن', flag: '🇾🇪', dialCode: '+967', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'MA', nameBn: 'মরক্কো', nameEn: 'Morocco', nameAr: 'المغرب', flag: '🇲🇦', dialCode: '+212', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'DZ', nameBn: 'আলজেরিয়া', nameEn: 'Algeria', nameAr: 'الجزائر', flag: '🇩🇿', dialCode: '+213', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'TN', nameBn: 'তিউনিসিয়া', nameEn: 'Tunisia', nameAr: 'تونس', flag: '🇹🇳', dialCode: '+216', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'LY', nameBn: 'লিবিয়া', nameEn: 'Libya', nameAr: 'ليبيا', flag: '🇱🇾', dialCode: '+218', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'SD', nameBn: 'সুদান', nameEn: 'Sudan', nameAr: 'السودان', flag: '🇸🇩', dialCode: '+249', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'TR', nameBn: 'তুরস্ক', nameEn: 'Turkey', nameAr: 'تركيا', flag: '🇹🇷', dialCode: '+90', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IR', nameBn: 'ইরান', nameEn: 'Iran', nameAr: 'إيران', flag: '🇮🇷', dialCode: '+98', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-
-  // South, Central & East Asia
-  { code: 'NP', nameBn: 'নেপাল', nameEn: 'Nepal', nameAr: 'نيبال', flag: '🇳🇵', dialCode: '+977', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'LK', nameBn: 'শ্রীলঙ্কা', nameEn: 'Sri Lanka', nameAr: 'سريلانكا', flag: '🇱🇰', dialCode: '+94', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'MV', nameBn: 'মালদ্বীপ', nameEn: 'Maldives', nameAr: 'المالديف', flag: '🇲🇻', dialCode: '+960', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'BT', nameBn: 'ভুটান', nameEn: 'Bhutan', nameAr: 'بوتان', flag: '🇧🇹', dialCode: '+975', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  // Complete World Countries (USD) — Alphabetical A-Z
   { code: 'AF', nameBn: 'আফগানিস্তান', nameEn: 'Afghanistan', nameAr: 'أفغانستان', flag: '🇦🇫', dialCode: '+93', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'MY', nameBn: 'মালয়েশিয়া', nameEn: 'Malaysia', nameAr: 'ماليزيا', flag: '🇲🇾', dialCode: '+60', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'SG', nameBn: 'সিঙ্গাপুর', nameEn: 'Singapore', nameAr: 'سنغافورة', flag: '🇸🇬', dialCode: '+65', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'ID', nameBn: 'ইন্দোনেশিয়া', nameEn: 'Indonesia', nameAr: 'إندونيسيا', flag: '🇮🇩', dialCode: '+62', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'TH', nameBn: 'থাইল্যান্ড', nameEn: 'Thailand', nameAr: 'تايلاند', flag: '🇹🇭', dialCode: '+66', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'VN', nameBn: 'ভিয়েতনাম', nameEn: 'Vietnam', nameAr: 'فيتنام', flag: '🇻🇳', dialCode: '+84', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'PH', nameBn: 'ফিলিপাইন', nameEn: 'Philippines', nameAr: 'الفلبين', flag: '🇵🇭', dialCode: '+63', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'MM', nameBn: 'মিয়ানমার', nameEn: 'Myanmar', nameAr: 'ميانمار', flag: '🇲🇲', dialCode: '+95', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'KH', nameBn: 'কম্বোডিয়া', nameEn: 'Cambodia', nameAr: 'كمبوديا', flag: '🇰🇭', dialCode: '+855', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'BN', nameBn: 'ব্রুনেই', nameEn: 'Brunei', nameAr: 'بروناي', flag: '🇧🇳', dialCode: '+673', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'JP', nameBn: 'জাপান', nameEn: 'Japan', nameAr: 'اليابان', flag: '🇯🇵', dialCode: '+81', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'KR', nameBn: 'দক্ষিণ কোরিয়া', nameEn: 'South Korea', nameAr: 'كوريا الجنوبية', flag: '🇰🇷', dialCode: '+82', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CN', nameBn: 'চীন', nameEn: 'China', nameAr: 'الصين', flag: '🇨🇳', dialCode: '+86', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'HK', nameBn: 'হংকং', nameEn: 'Hong Kong', nameAr: 'هونغ كونغ', flag: '🇭🇰', dialCode: '+852', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'TW', nameBn: 'তাইওয়ান', nameEn: 'Taiwan', nameAr: 'تايوان', flag: '🇹🇼', dialCode: '+886', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'KZ', nameBn: 'কাজাখস্তান', nameEn: 'Kazakhstan', nameAr: 'كازاخستان', flag: '🇰🇿', dialCode: '+7', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'UZ', nameBn: 'উজবেকিস্তান', nameEn: 'Uzbekistan', nameAr: 'أوزبكستان', flag: '🇺🇿', dialCode: '+998', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-
-  // Europe
-  { code: 'DE', nameBn: 'জার্মানি', nameEn: 'Germany', nameAr: 'ألمانيا', flag: '🇩🇪', dialCode: '+49', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IT', nameBn: 'ইতালি', nameEn: 'Italy', nameAr: 'إيطاليا', flag: '🇮🇹', dialCode: '+39', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'FR', nameBn: 'ফ্রান্স', nameEn: 'France', nameAr: 'فرنسا', flag: '🇫🇷', dialCode: '+33', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'ES', nameBn: 'স্পেন', nameEn: 'Spain', nameAr: 'إسبانيا', flag: '🇪🇸', dialCode: '+34', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'PT', nameBn: 'পর্তুগাল', nameEn: 'Portugal', nameAr: 'البرتغال', flag: '🇵🇹', dialCode: '+351', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'NL', nameBn: 'নেদারল্যান্ডস', nameEn: 'Netherlands', nameAr: 'هولندا', flag: '🇳🇱', dialCode: '+31', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'BE', nameBn: 'বেলজিয়াম', nameEn: 'Belgium', nameAr: 'بلجيكا', flag: '🇧🇪', dialCode: '+32', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CH', nameBn: 'সুইজারল্যান্ড', nameEn: 'Switzerland', nameAr: 'سويسرا', flag: '🇨🇭', dialCode: '+41', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'AT', nameBn: 'অস্ট্রিয়া', nameEn: 'Austria', nameAr: 'النمسا', flag: '🇦🇹', dialCode: '+43', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'SE', nameBn: 'সুইডেন', nameEn: 'Sweden', nameAr: 'السويد', flag: '🇸🇪', dialCode: '+46', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'NO', nameBn: 'নরওয়ে', nameEn: 'Norway', nameAr: 'النرويج', flag: '🇳🇴', dialCode: '+47', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'DK', nameBn: 'ডেনমার্ক', nameEn: 'Denmark', nameAr: 'الدنمارك', flag: '🇩🇰', dialCode: '+45', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'FI', nameBn: 'ফিনল্যান্ড', nameEn: 'Finland', nameAr: 'فنلندا', flag: '🇫🇮', dialCode: '+358', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'IE', nameBn: 'আয়ারল্যান্ড', nameEn: 'Ireland', nameAr: 'أيرلندا', flag: '🇮🇪', dialCode: '+353', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'PL', nameBn: 'পোল্যান্ড', nameEn: 'Poland', nameAr: 'بولندا', flag: '🇵🇱', dialCode: '+48', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'GR', nameBn: 'গ্রিস', nameEn: 'Greece', nameAr: 'اليونان', flag: '🇬🇷', dialCode: '+30', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'RO', nameBn: 'রোমানিয়া', nameEn: 'Romania', nameAr: 'رومانيا', flag: '🇷🇴', dialCode: '+40', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CZ', nameBn: 'চেক প্রজাতন্ত্র', nameEn: 'Czechia', nameAr: 'التشيك', flag: '🇨🇿', dialCode: '+420', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'HU', nameBn: 'হাঙ্গেরি', nameEn: 'Hungary', nameAr: 'المجر', flag: '🇭🇺', dialCode: '+36', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'RU', nameBn: 'রাশিয়া', nameEn: 'Russia', nameAr: 'روسيا', flag: '🇷🇺', dialCode: '+7', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'UA', nameBn: 'ইউক্রেন', nameEn: 'Ukraine', nameAr: 'أوكرانيا', flag: '🇺🇦', dialCode: '+380', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-
-  // Americas & Oceania
-  { code: 'CA', nameBn: 'কানাডা', nameEn: 'Canada', nameAr: 'كندا', flag: '🇨🇦', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'AU', nameBn: 'অস্ট্রেলিয়া', nameEn: 'Australia', nameAr: 'أستراليا', flag: '🇦🇺', dialCode: '+61', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'NZ', nameBn: 'নিউজিল্যান্ড', nameEn: 'New Zealand', nameAr: 'نيوزيلندا', flag: '🇳🇿', dialCode: '+64', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'BR', nameBn: 'ব্রাজিল', nameEn: 'Brazil', nameAr: 'البرازيل', flag: '🇧🇷', dialCode: '+55', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'MX', nameBn: 'মেক্সিকো', nameEn: 'Mexico', nameAr: 'المكسيك', flag: '🇲🇽', dialCode: '+52', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AX', nameBn: 'আলান্ড দ্বীপপুঞ্জ', nameEn: 'Åland Islands', nameAr: 'جزر أولاند', flag: '🇦🇽', dialCode: '+358', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AL', nameBn: 'আলবেনিয়া', nameEn: 'Albania', nameAr: 'ألبانيا', flag: '🇦🇱', dialCode: '+355', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DZ', nameBn: 'আলজেরিয়া', nameEn: 'Algeria', nameAr: 'الجزائر', flag: '🇩🇿', dialCode: '+213', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AS', nameBn: 'আমেরিকান সামোয়া', nameEn: 'American Samoa', nameAr: 'ساموا الأمريكية', flag: '🇦🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AD', nameBn: 'অ্যান্ডোরা', nameEn: 'Andorra', nameAr: 'أندورا', flag: '🇦🇩', dialCode: '+376', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AO', nameBn: 'অ্যাঙ্গোলা', nameEn: 'Angola', nameAr: 'أنغولا', flag: '🇦🇴', dialCode: '+244', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AI', nameBn: 'অ্যাঙ্গুইলা', nameEn: 'Anguilla', nameAr: 'أنغويلا', flag: '🇦🇮', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AG', nameBn: 'অ্যান্টিগুয়া ও বারবুডা', nameEn: 'Antigua & Barbuda', nameAr: 'أنتيغوا وباربودا', flag: '🇦🇬', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
   { code: 'AR', nameBn: 'আর্জেন্টিনা', nameEn: 'Argentina', nameAr: 'الأرجنتين', flag: '🇦🇷', dialCode: '+54', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CO', nameBn: 'কলম্বিয়া', nameEn: 'Colombia', nameAr: 'كولومبيا', flag: '🇨🇴', dialCode: '+57', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AM', nameBn: 'আর্মেনিয়া', nameEn: 'Armenia', nameAr: 'أرمينيا', flag: '🇦🇲', dialCode: '+374', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AW', nameBn: 'আরুবা', nameEn: 'Aruba', nameAr: 'أروبا', flag: '🇦🇼', dialCode: '+297', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AU', nameBn: 'অস্ট্রেলিয়া', nameEn: 'Australia', nameAr: 'أستراليا', flag: '🇦🇺', dialCode: '+61', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AT', nameBn: 'অস্ট্রিয়া', nameEn: 'Austria', nameAr: 'النمسا', flag: '🇦🇹', dialCode: '+43', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AZ', nameBn: 'আজারবাইজান', nameEn: 'Azerbaijan', nameAr: 'أذربيجان', flag: '🇦🇿', dialCode: '+994', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BS', nameBn: 'বাহামা', nameEn: 'Bahamas', nameAr: 'جزر البهاما', flag: '🇧🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BH', nameBn: 'বাহরাইন', nameEn: 'Bahrain', nameAr: 'البحرين', flag: '🇧🇭', dialCode: '+973', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BB', nameBn: 'বার্বাডোস', nameEn: 'Barbados', nameAr: 'بربادوس', flag: '🇧🇧', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BY', nameBn: 'বেলারুশ', nameEn: 'Belarus', nameAr: 'بيلاروسيا', flag: '🇧🇾', dialCode: '+375', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BE', nameBn: 'বেলজিয়াম', nameEn: 'Belgium', nameAr: 'بلجيكا', flag: '🇧🇪', dialCode: '+32', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BZ', nameBn: 'বেলিজ', nameEn: 'Belize', nameAr: 'بليز', flag: '🇧🇿', dialCode: '+501', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BJ', nameBn: 'বেনিন', nameEn: 'Benin', nameAr: 'بنين', flag: '🇧🇯', dialCode: '+229', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BM', nameBn: 'বারমুডা', nameEn: 'Bermuda', nameAr: 'برمودا', flag: '🇧🇲', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BT', nameBn: 'ভুটান', nameEn: 'Bhutan', nameAr: 'بوتان', flag: '🇧🇹', dialCode: '+975', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BO', nameBn: 'বলিভিয়া', nameEn: 'Bolivia', nameAr: 'بوليفيا', flag: '🇧🇴', dialCode: '+591', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BA', nameBn: 'বসনিয়া ও হার্জেগোভিনা', nameEn: 'Bosnia & Herzegovina', nameAr: 'البوسنة والهرسك', flag: '🇧🇦', dialCode: '+387', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BW', nameBn: 'বতসোয়ানা', nameEn: 'Botswana', nameAr: 'بوتسوانا', flag: '🇧🇼', dialCode: '+267', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BR', nameBn: 'ব্রাজিল', nameEn: 'Brazil', nameAr: 'البرازيل', flag: '🇧🇷', dialCode: '+55', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BN', nameBn: 'ব্রুনেই', nameEn: 'Brunei', nameAr: 'بروناي', flag: '🇧🇳', dialCode: '+673', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BG', nameBn: 'বুলগেরিয়া', nameEn: 'Bulgaria', nameAr: 'بلغاريا', flag: '🇧🇬', dialCode: '+359', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BF', nameBn: 'বুরকিনা ফাসো', nameEn: 'Burkina Faso', nameAr: 'بوركينا فاسو', flag: '🇧🇫', dialCode: '+226', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'BI', nameBn: 'বুরুন্ডি', nameEn: 'Burundi', nameAr: 'بوروندي', flag: '🇧🇮', dialCode: '+257', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KH', nameBn: 'কম্বোডিয়া', nameEn: 'Cambodia', nameAr: 'كمبوديا', flag: '🇰🇭', dialCode: '+855', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CM', nameBn: 'ক্যামেরুন', nameEn: 'Cameroon', nameAr: 'الكاميرون', flag: '🇨🇲', dialCode: '+237', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CA', nameBn: 'কানাডা', nameEn: 'Canada', nameAr: 'كندا', flag: '🇨🇦', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CV', nameBn: 'কেপ ভার্দে', nameEn: 'Cape Verde', nameAr: 'الرأس الأخضر', flag: '🇨🇻', dialCode: '+238', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KY', nameBn: 'কেম্যান দ্বীপপুঞ্জ', nameEn: 'Cayman Islands', nameAr: 'جزر كايمان', flag: '🇰🇾', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CF', nameBn: 'মধ্য আফ্রিকান প্রজাতন্ত্র', nameEn: 'Central African Republic', nameAr: 'جمهورية أفريقيا الوسطى', flag: '🇨🇫', dialCode: '+236', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TD', nameBn: 'চাদ', nameEn: 'Chad', nameAr: 'تشاد', flag: '🇹🇩', dialCode: '+235', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
   { code: 'CL', nameBn: 'চিলি', nameEn: 'Chile', nameAr: 'تشيلي', flag: '🇨🇱', dialCode: '+56', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'PE', nameBn: 'পেরু', nameEn: 'Peru', nameAr: 'بيرو', flag: '🇵🇪', dialCode: '+51', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-
-  // Africa
-  { code: 'ZA', nameBn: 'দক্ষিণ আফ্রিকা', nameEn: 'South Africa', nameAr: 'جنوب أفريقيا', flag: '🇿🇦', dialCode: '+27', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'NG', nameBn: 'নাইজেরিয়া', nameEn: 'Nigeria', nameAr: 'نيجيريا', flag: '🇳🇬', dialCode: '+234', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'KE', nameBn: 'কেনিয়া', nameEn: 'Kenya', nameAr: 'كينيا', flag: '🇰🇪', dialCode: '+254', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'GH', nameBn: 'ঘানা', nameEn: 'Ghana', nameAr: 'غانا', flag: '🇬🇭', dialCode: '+233', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CN', nameBn: 'চীন', nameEn: 'China', nameAr: 'الصين', flag: '🇨🇳', dialCode: '+86', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CO', nameBn: 'কলম্বিয়া', nameEn: 'Colombia', nameAr: 'كولومبيا', flag: '🇨🇴', dialCode: '+57', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KM', nameBn: 'কোমোরোস', nameEn: 'Comoros', nameAr: 'جزر القمر', flag: '🇰🇲', dialCode: '+269', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CG', nameBn: 'কঙ্গো', nameEn: 'Congo', nameAr: 'الكونغو', flag: '🇨🇬', dialCode: '+242', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CD', nameBn: 'গণতান্ত্রিক কঙ্গো প্রজাতন্ত্র', nameEn: 'Congo (DRC)', nameAr: 'الكونغو الديمقراطية', flag: '🇨🇩', dialCode: '+243', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CR', nameBn: 'কোস্টারিকা', nameEn: 'Costa Rica', nameAr: 'كوستاريكا', flag: '🇨🇷', dialCode: '+506', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CI', nameBn: 'আইভরি কোস্ট', nameEn: 'Côte d’Ivoire', nameAr: 'ساحل العاج', aliases: 'ivory coast', flag: '🇨🇮', dialCode: '+225', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HR', nameBn: 'ক্রোয়েশিয়া', nameEn: 'Croatia', nameAr: 'كرواتيا', flag: '🇭🇷', dialCode: '+385', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CU', nameBn: 'কিউবা', nameEn: 'Cuba', nameAr: 'كوبا', flag: '🇨🇺', dialCode: '+53', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CY', nameBn: 'সাইপ্রাস', nameEn: 'Cyprus', nameAr: 'قبرص', flag: '🇨🇾', dialCode: '+357', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CZ', nameBn: 'চেক প্রজাতন্ত্র', nameEn: 'Czechia', nameAr: 'التشيك', aliases: 'czech republic', flag: '🇨🇿', dialCode: '+420', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DK', nameBn: 'ডেনমার্ক', nameEn: 'Denmark', nameAr: 'الدنمارك', flag: '🇩🇰', dialCode: '+45', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DJ', nameBn: 'জিবুতি', nameEn: 'Djibouti', nameAr: 'جيبوتي', flag: '🇩🇯', dialCode: '+253', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DM', nameBn: 'ডমিনিকা', nameEn: 'Dominica', nameAr: 'دومينيكا', flag: '🇩🇲', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DO', nameBn: 'ডমিনিকান প্রজাতন্ত্র', nameEn: 'Dominican Republic', nameAr: 'جمهورية الدومينيكان', flag: '🇩🇴', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'EC', nameBn: 'ইকুয়েডর', nameEn: 'Ecuador', nameAr: 'الإكوادور', flag: '🇪🇨', dialCode: '+593', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'EG', nameBn: 'মিশর', nameEn: 'Egypt', nameAr: 'مصر', flag: '🇪🇬', dialCode: '+20', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SV', nameBn: 'এল সালভাদর', nameEn: 'El Salvador', nameAr: 'السلفادور', flag: '🇸🇻', dialCode: '+503', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GQ', nameBn: 'নিরক্ষীয় গিনি', nameEn: 'Equatorial Guinea', nameAr: 'غينيا الاستوائية', flag: '🇬🇶', dialCode: '+240', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ER', nameBn: 'ইরিত্রিয়া', nameEn: 'Eritrea', nameAr: 'إريتريا', flag: '🇪🇷', dialCode: '+291', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'EE', nameBn: 'এস্তোনিয়া', nameEn: 'Estonia', nameAr: 'إستونيا', flag: '🇪🇪', dialCode: '+372', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SZ', nameBn: 'ইসোয়াতিনি', nameEn: 'Eswatini', nameAr: 'إسواتيني', flag: '🇸🇿', dialCode: '+268', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
   { code: 'ET', nameBn: 'ইথিওপিয়া', nameEn: 'Ethiopia', nameAr: 'إثيوبيا', flag: '🇪🇹', dialCode: '+251', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'TZ', nameBn: 'তানজানিয়া', nameEn: 'Tanzania', nameAr: 'تنزانيا', flag: '🇹🇿', dialCode: '+255', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'UG', nameBn: 'উগান্ডা', nameEn: 'Uganda', nameAr: 'أوغندا', flag: '🇺🇬', dialCode: '+256', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'FJ', nameBn: 'ফিজি', nameEn: 'Fiji', nameAr: 'فيجي', flag: '🇫🇯', dialCode: '+679', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'FI', nameBn: 'ফিনল্যান্ড', nameEn: 'Finland', nameAr: 'فنلندا', flag: '🇫🇮', dialCode: '+358', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'FR', nameBn: 'ফ্রান্স', nameEn: 'France', nameAr: 'فرنسا', flag: '🇫🇷', dialCode: '+33', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GA', nameBn: 'গ্যাবন', nameEn: 'Gabon', nameAr: 'الغابون', flag: '🇬🇦', dialCode: '+241', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GM', nameBn: 'গাম্বিয়া', nameEn: 'Gambia', nameAr: 'غامبيا', flag: '🇬🇲', dialCode: '+220', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GE', nameBn: 'জর্জিয়া', nameEn: 'Georgia', nameAr: 'جورجيا', flag: '🇬🇪', dialCode: '+995', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'DE', nameBn: 'জার্মানি', nameEn: 'Germany', nameAr: 'ألمانيا', flag: '🇩🇪', dialCode: '+49', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GH', nameBn: 'ঘানা', nameEn: 'Ghana', nameAr: 'غانا', flag: '🇬🇭', dialCode: '+233', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GI', nameBn: 'জিব্রাল্টার', nameEn: 'Gibraltar', nameAr: 'جبل طارق', flag: '🇬🇮', dialCode: '+350', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GR', nameBn: 'গ্রিস', nameEn: 'Greece', nameAr: 'اليونان', flag: '🇬🇷', dialCode: '+30', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GL', nameBn: 'গ্রিনল্যান্ড', nameEn: 'Greenland', nameAr: 'غرينلاند', flag: '🇬🇱', dialCode: '+299', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GD', nameBn: 'গ্রেনাডা', nameEn: 'Grenada', nameAr: 'غرينادا', flag: '🇬🇩', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GT', nameBn: 'গুয়াতেমালা', nameEn: 'Guatemala', nameAr: 'غواتيمالا', flag: '🇬🇹', dialCode: '+502', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GN', nameBn: 'গিনি', nameEn: 'Guinea', nameAr: 'غينيا', flag: '🇬🇳', dialCode: '+224', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GW', nameBn: 'গিনি-বিসাউ', nameEn: 'Guinea-Bissau', nameAr: 'غينيا بيساو', flag: '🇬🇼', dialCode: '+245', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GY', nameBn: 'গায়ানা', nameEn: 'Guyana', nameAr: 'غيانا', flag: '🇬🇾', dialCode: '+592', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HT', nameBn: 'হাইতি', nameEn: 'Haiti', nameAr: 'هايتي', flag: '🇭🇹', dialCode: '+509', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HN', nameBn: 'হন্ডুরাস', nameEn: 'Honduras', nameAr: 'هندوراس', flag: '🇭🇳', dialCode: '+504', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HK', nameBn: 'হংকং', nameEn: 'Hong Kong', nameAr: 'هونغ كونغ', flag: '🇭🇰', dialCode: '+852', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'HU', nameBn: 'হাঙ্গেরি', nameEn: 'Hungary', nameAr: 'المجر', flag: '🇭🇺', dialCode: '+36', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IS', nameBn: 'আইসল্যান্ড', nameEn: 'Iceland', nameAr: 'آيسلندا', flag: '🇮🇸', dialCode: '+354', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IN', nameBn: 'ভারত', nameEn: 'India', nameAr: 'الهند', aliases: 'ইন্ডিয়া', flag: '🇮🇳', dialCode: '+91', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ID', nameBn: 'ইন্দোনেশিয়া', nameEn: 'Indonesia', nameAr: 'إندونيسيا', flag: '🇮🇩', dialCode: '+62', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IR', nameBn: 'ইরান', nameEn: 'Iran', nameAr: 'إيران', flag: '🇮🇷', dialCode: '+98', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IQ', nameBn: 'ইরাক', nameEn: 'Iraq', nameAr: 'العراق', flag: '🇮🇶', dialCode: '+964', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IE', nameBn: 'আয়ারল্যান্ড', nameEn: 'Ireland', nameAr: 'أيرلندا', flag: '🇮🇪', dialCode: '+353', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IL', nameBn: 'ইসরায়েল', nameEn: 'Israel', nameAr: 'إسرائيل', flag: '🇮🇱', dialCode: '+972', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'IT', nameBn: 'ইতালি', nameEn: 'Italy', nameAr: 'إيطاليا', flag: '🇮🇹', dialCode: '+39', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'JM', nameBn: 'জ্যামাইকা', nameEn: 'Jamaica', nameAr: 'جامايكا', flag: '🇯🇲', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'JP', nameBn: 'জাপান', nameEn: 'Japan', nameAr: 'اليابان', flag: '🇯🇵', dialCode: '+81', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'JO', nameBn: 'জর্ডান', nameEn: 'Jordan', nameAr: 'الأردن', flag: '🇯🇴', dialCode: '+962', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KZ', nameBn: 'কাজাখস্তান', nameEn: 'Kazakhstan', nameAr: 'كازاخستان', flag: '🇰🇿', dialCode: '+7', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KE', nameBn: 'কেনিয়া', nameEn: 'Kenya', nameAr: 'كينيا', flag: '🇰🇪', dialCode: '+254', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KW', nameBn: 'কুয়েত', nameEn: 'Kuwait', nameAr: 'الكويت', flag: '🇰🇼', dialCode: '+965', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KG', nameBn: 'কিরগিজস্তান', nameEn: 'Kyrgyzstan', nameAr: 'قيرغيزستان', flag: '🇰🇬', dialCode: '+996', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LA', nameBn: 'লাওস', nameEn: 'Laos', nameAr: 'لاوس', flag: '🇱🇦', dialCode: '+856', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LV', nameBn: 'লাটভিয়া', nameEn: 'Latvia', nameAr: 'لاتفيا', flag: '🇱🇻', dialCode: '+371', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LB', nameBn: 'লেবানন', nameEn: 'Lebanon', nameAr: 'لبنان', flag: '🇱🇧', dialCode: '+961', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LS', nameBn: 'লেসোথো', nameEn: 'Lesotho', nameAr: 'ليسوتو', flag: '🇱🇸', dialCode: '+266', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LR', nameBn: 'লাইবেরিয়া', nameEn: 'Liberia', nameAr: 'ليبيريا', flag: '🇱🇷', dialCode: '+231', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LY', nameBn: 'লিবিয়া', nameEn: 'Libya', nameAr: 'ليبيا', flag: '🇱🇾', dialCode: '+218', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LI', nameBn: 'লিখটেনস্টাইন', nameEn: 'Liechtenstein', nameAr: 'ليختنشتاين', flag: '🇱🇮', dialCode: '+423', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LT', nameBn: 'লিথুয়ানিয়া', nameEn: 'Lithuania', nameAr: 'ليتوانيا', flag: '🇱🇹', dialCode: '+370', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LU', nameBn: 'লুক্সেমবার্গ', nameEn: 'Luxembourg', nameAr: 'لوكسمبورغ', flag: '🇱🇺', dialCode: '+352', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MO', nameBn: 'ম্যাকাও', nameEn: 'Macao', nameAr: 'ماكاو', flag: '🇲🇴', dialCode: '+853', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MG', nameBn: 'মাদাগাস্কার', nameEn: 'Madagascar', nameAr: 'مدغشقر', flag: '🇲🇬', dialCode: '+261', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MW', nameBn: 'মালাউই', nameEn: 'Malawi', nameAr: 'مالاوي', flag: '🇲🇼', dialCode: '+265', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MY', nameBn: 'মালয়েশিয়া', nameEn: 'Malaysia', nameAr: 'ماليزيا', flag: '🇲🇾', dialCode: '+60', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MV', nameBn: 'মালদ্বীপ', nameEn: 'Maldives', nameAr: 'المالديف', flag: '🇲🇻', dialCode: '+960', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ML', nameBn: 'মালি', nameEn: 'Mali', nameAr: 'مالي', flag: '🇲🇱', dialCode: '+223', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MT', nameBn: 'মাল্টা', nameEn: 'Malta', nameAr: 'مالطا', flag: '🇲🇹', dialCode: '+356', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MR', nameBn: 'মৌরিতানিয়া', nameEn: 'Mauritania', nameAr: 'موريتانيا', flag: '🇲🇷', dialCode: '+222', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MU', nameBn: 'মরিশাস', nameEn: 'Mauritius', nameAr: 'موريشيوس', flag: '🇲🇺', dialCode: '+230', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MX', nameBn: 'মেক্সিকো', nameEn: 'Mexico', nameAr: 'المكسيك', flag: '🇲🇽', dialCode: '+52', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MD', nameBn: 'মলদোভা', nameEn: 'Moldova', nameAr: 'مولدوفا', flag: '🇲🇩', dialCode: '+373', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MC', nameBn: 'মোনাকো', nameEn: 'Monaco', nameAr: 'موناكو', flag: '🇲🇨', dialCode: '+377', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MN', nameBn: 'মঙ্গোলিয়া', nameEn: 'Mongolia', nameAr: 'منغوليا', flag: '🇲🇳', dialCode: '+976', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ME', nameBn: 'মন্টিনিগ্রো', nameEn: 'Montenegro', nameAr: 'الجبل الأسود', flag: '🇲🇪', dialCode: '+382', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MA', nameBn: 'মরক্কো', nameEn: 'Morocco', nameAr: 'المغرب', flag: '🇲🇦', dialCode: '+212', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MZ', nameBn: 'মোজাম্বিক', nameEn: 'Mozambique', nameAr: 'موزمبيق', flag: '🇲🇿', dialCode: '+258', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MM', nameBn: 'মিয়ানমার', nameEn: 'Myanmar', nameAr: 'ميانمار', aliases: 'burma', flag: '🇲🇲', dialCode: '+95', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NA', nameBn: 'নামিবিয়া', nameEn: 'Namibia', nameAr: 'ناميبيا', flag: '🇳🇦', dialCode: '+264', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NP', nameBn: 'নেপাল', nameEn: 'Nepal', nameAr: 'نيبال', flag: '🇳🇵', dialCode: '+977', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NL', nameBn: 'নেদারল্যান্ডস', nameEn: 'Netherlands', nameAr: 'هولندا', aliases: 'holland', flag: '🇳🇱', dialCode: '+31', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NZ', nameBn: 'নিউজিল্যান্ড', nameEn: 'New Zealand', nameAr: 'نيوزيلندا', flag: '🇳🇿', dialCode: '+64', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NI', nameBn: 'নিকারাগুয়া', nameEn: 'Nicaragua', nameAr: 'نيكاراغوا', flag: '🇳🇮', dialCode: '+505', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NE', nameBn: 'নাইজার', nameEn: 'Niger', nameAr: 'النيجر', flag: '🇳🇪', dialCode: '+227', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NG', nameBn: 'নাইজেরিয়া', nameEn: 'Nigeria', nameAr: 'نيجيريا', flag: '🇳🇬', dialCode: '+234', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'MK', nameBn: 'উত্তর মেসিডোনিয়া', nameEn: 'North Macedonia', nameAr: 'مقدونيا الشمالية', flag: '🇲🇰', dialCode: '+389', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'NO', nameBn: 'নরওয়ে', nameEn: 'Norway', nameAr: 'النرويج', flag: '🇳🇴', dialCode: '+47', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'OM', nameBn: 'ওমান', nameEn: 'Oman', nameAr: 'عُمان', flag: '🇴🇲', dialCode: '+968', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PK', nameBn: 'পাকিস্তান', nameEn: 'Pakistan', nameAr: 'باكستان', flag: '🇵🇰', dialCode: '+92', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PS', nameBn: 'ফিলিস্তিন', nameEn: 'Palestine', nameAr: 'فلسطين', flag: '🇵🇸', dialCode: '+970', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PA', nameBn: 'পানামা', nameEn: 'Panama', nameAr: 'بنما', flag: '🇵🇦', dialCode: '+507', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PG', nameBn: 'পাপুয়া নিউগিনি', nameEn: 'Papua New Guinea', nameAr: 'بابوا غينيا الجديدة', flag: '🇵🇬', dialCode: '+675', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PY', nameBn: 'প্যারাগুয়ে', nameEn: 'Paraguay', nameAr: 'باراغواي', flag: '🇵🇾', dialCode: '+595', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PE', nameBn: 'পেরু', nameEn: 'Peru', nameAr: 'بيرو', flag: '🇵🇪', dialCode: '+51', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PH', nameBn: 'ফিলিপাইন', nameEn: 'Philippines', nameAr: 'الفلبين', flag: '🇵🇭', dialCode: '+63', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PL', nameBn: 'পোল্যান্ড', nameEn: 'Poland', nameAr: 'بولندا', flag: '🇵🇱', dialCode: '+48', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PT', nameBn: 'পর্তুগাল', nameEn: 'Portugal', nameAr: 'البرتغال', flag: '🇵🇹', dialCode: '+351', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'PR', nameBn: 'পুয়ের্তো রিকো', nameEn: 'Puerto Rico', nameAr: 'بورتوريكو', flag: '🇵🇷', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'QA', nameBn: 'কাতার', nameEn: 'Qatar', nameAr: 'قطر', flag: '🇶🇦', dialCode: '+974', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'RO', nameBn: 'রোমানিয়া', nameEn: 'Romania', nameAr: 'رومانيا', flag: '🇷🇴', dialCode: '+40', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'RU', nameBn: 'রাশিয়া', nameEn: 'Russia', nameAr: 'روسيا', flag: '🇷🇺', dialCode: '+7', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'RW', nameBn: 'রুয়ান্ডা', nameEn: 'Rwanda', nameAr: 'رواندا', flag: '🇷🇼', dialCode: '+250', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SA', nameBn: 'সৌদি আরব', nameEn: 'Saudi Arabia', nameAr: 'المملكة العربية السعودية', aliases: 'ksa', flag: '🇸🇦', dialCode: '+966', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
   { code: 'SN', nameBn: 'সেনেগাল', nameEn: 'Senegal', nameAr: 'السنغال', flag: '🇸🇳', dialCode: '+221', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CI', nameBn: 'আইভরি কোস্ট', nameEn: 'Ivory Coast', nameAr: 'ساحل العاج', flag: '🇨🇮', dialCode: '+225', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
-  { code: 'CM', nameBn: 'ক্যামেরুন', nameEn: 'Cameroon', nameAr: 'الكاميرون', flag: '🇨🇲', dialCode: '+237', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' }
+  { code: 'RS', nameBn: 'সার্বিয়া', nameEn: 'Serbia', nameAr: 'صربيا', flag: '🇷🇸', dialCode: '+381', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SC', nameBn: 'সেশেলস', nameEn: 'Seychelles', nameAr: 'سيشل', flag: '🇸🇨', dialCode: '+248', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SL', nameBn: 'সিয়েরা লিওন', nameEn: 'Sierra Leone', nameAr: 'سيراليون', flag: '🇸🇱', dialCode: '+232', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SG', nameBn: 'সিঙ্গাপুর', nameEn: 'Singapore', nameAr: 'سنغافورة', flag: '🇸🇬', dialCode: '+65', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SK', nameBn: 'স্লোভাকিয়া', nameEn: 'Slovakia', nameAr: 'سلوفاكيا', flag: '🇸🇰', dialCode: '+421', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SI', nameBn: 'স্লোভেনিয়া', nameEn: 'Slovenia', nameAr: 'سلوفينيا', flag: '🇸🇮', dialCode: '+386', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SO', nameBn: 'সোমালিয়া', nameEn: 'Somalia', nameAr: 'الصومال', flag: '🇸🇴', dialCode: '+252', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ZA', nameBn: 'দক্ষিণ আফ্রিকা', nameEn: 'South Africa', nameAr: 'جنوب أفريقيا', flag: '🇿🇦', dialCode: '+27', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'KR', nameBn: 'দক্ষিণ কোরিয়া', nameEn: 'South Korea', nameAr: 'كوريا الجنوبية', flag: '🇰🇷', dialCode: '+82', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SS', nameBn: 'দক্ষিণ সুদান', nameEn: 'South Sudan', nameAr: 'جنوب السودان', flag: '🇸🇸', dialCode: '+211', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ES', nameBn: 'স্পেন', nameEn: 'Spain', nameAr: 'إسبانيا', flag: '🇪🇸', dialCode: '+34', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'LK', nameBn: 'শ্রীলঙ্কা', nameEn: 'Sri Lanka', nameAr: 'سريلانكا', flag: '🇱🇰', dialCode: '+94', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SD', nameBn: 'সুদান', nameEn: 'Sudan', nameAr: 'السودان', flag: '🇸🇩', dialCode: '+249', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SR', nameBn: 'সুরিনাম', nameEn: 'Suriname', nameAr: 'سورينام', flag: '🇸🇷', dialCode: '+597', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SE', nameBn: 'সুইডেন', nameEn: 'Sweden', nameAr: 'السويد', flag: '🇸🇪', dialCode: '+46', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'CH', nameBn: 'সুইজারল্যান্ড', nameEn: 'Switzerland', nameAr: 'سويسرا', flag: '🇨🇭', dialCode: '+41', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'SY', nameBn: 'সিরিয়া', nameEn: 'Syria', nameAr: 'سوريا', flag: '🇸🇾', dialCode: '+963', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TW', nameBn: 'তাইওয়ান', nameEn: 'Taiwan', nameAr: 'تايوان', flag: '🇹🇼', dialCode: '+886', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TJ', nameBn: 'তাজিকিস্তান', nameEn: 'Tajikistan', nameAr: 'طاجيكستان', flag: '🇹🇯', dialCode: '+992', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TZ', nameBn: 'তানজানিয়া', nameEn: 'Tanzania', nameAr: 'تنزانيا', flag: '🇹🇿', dialCode: '+255', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TH', nameBn: 'থাইল্যান্ড', nameEn: 'Thailand', nameAr: 'تايلاند', flag: '🇹🇭', dialCode: '+66', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TL', nameBn: 'পূর্ব তিমুর', nameEn: 'Timor-Leste', nameAr: 'تيمور الشرقية', flag: '🇹🇱', dialCode: '+670', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TG', nameBn: 'টোগো', nameEn: 'Togo', nameAr: 'توغو', flag: '🇹🇬', dialCode: '+228', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TT', nameBn: 'ত্রিনিদাদ ও টোবাগো', nameEn: 'Trinidad & Tobago', nameAr: 'ترينيداد وتوباغو', flag: '🇹🇹', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TN', nameBn: 'তিউনিসিয়া', nameEn: 'Tunisia', nameAr: 'تونس', flag: '🇹🇳', dialCode: '+216', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TR', nameBn: 'তুরস্ক', nameEn: 'Turkey', nameAr: 'تركيا', aliases: 'turkiye', flag: '🇹🇷', dialCode: '+90', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'TM', nameBn: 'তুর্কমেনিস্তান', nameEn: 'Turkmenistan', nameAr: 'تركمانستان', flag: '🇹🇲', dialCode: '+993', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UG', nameBn: 'উগান্ডা', nameEn: 'Uganda', nameAr: 'أوغندا', flag: '🇺🇬', dialCode: '+256', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UA', nameBn: 'ইউক্রেন', nameEn: 'Ukraine', nameAr: 'أوكرانيا', flag: '🇺🇦', dialCode: '+380', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'AE', nameBn: 'সংযুক্ত আরব আমিরাত', nameEn: 'United Arab Emirates', nameAr: 'الإمارات العربية المتحدة', aliases: 'uae dubai', flag: '🇦🇪', dialCode: '+971', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'GB', nameBn: 'যুক্তরাজ্য', nameEn: 'United Kingdom', nameAr: 'المملكة المتحدة', aliases: 'uk britain england', flag: '🇬🇧', dialCode: '+44', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'US', nameBn: 'যুক্তরাষ্ট্র', nameEn: 'USA / United States', nameAr: 'الولايات المتحدة', aliases: 'america us usa united states', flag: '🇺🇸', dialCode: '+1', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UY', nameBn: 'উরুগুয়ে', nameEn: 'Uruguay', nameAr: 'أوروغواي', flag: '🇺🇾', dialCode: '+598', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'UZ', nameBn: 'উজবেকিস্তান', nameEn: 'Uzbekistan', nameAr: 'أوزبكستان', flag: '🇺🇿', dialCode: '+998', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'VE', nameBn: 'ভেনেজুয়েলা', nameEn: 'Venezuela', nameAr: 'فنزويلا', flag: '🇻🇪', dialCode: '+58', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'VN', nameBn: 'ভিয়েতনাম', nameEn: 'Vietnam', nameAr: 'فيتنام', flag: '🇻🇳', dialCode: '+84', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'YE', nameBn: 'ইয়েমেন', nameEn: 'Yemen', nameAr: 'اليمن', flag: '🇾🇪', dialCode: '+967', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ZM', nameBn: 'জাম্বিয়া', nameEn: 'Zambia', nameAr: 'زامبيا', flag: '🇿🇲', dialCode: '+260', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
+  { code: 'ZW', nameBn: 'জিম্বাবুয়ে', nameEn: 'Zimbabwe', nameAr: 'زيمبابوي', flag: '🇿🇼', dialCode: '+263', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' }
 ];
 
 let currentRegistrationCountry = COUNTRY_DATABASE[0]; // Default Bangladesh
+let currentLoginCountry = COUNTRY_DATABASE[0];        // Default Bangladesh
+let currentCountryPickerMode = 'register';            // 'login' | 'register'
+
+function getCountryDisplayName(item, langOverride) {
+  if (!item) return '';
+  const currentLang = normalizeAppLang(langOverride || (window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
+  if (currentLang === 'bn') return item.nameBn || item.nameEn;
+  if (currentLang === 'ar') return item.nameAr || item.nameEn;
+  return item.nameEn;
+}
+
+function getCountryFlagUrl(isoCode, size) {
+  const lower = String(isoCode || 'bd').trim().toLowerCase();
+  return `https://flagcdn.com/w${size || 40}/${lower}.png`;
+}
+
+function syncCountryTriggerUi(mode, country, langOverride) {
+  if (!country) return;
+  const prefix = mode === 'login' ? 'login' : 'register';
+  const displayName = getCountryDisplayName(country, langOverride);
+  const flagImg = document.getElementById(`${prefix}-country-flag-img`);
+  const flagFallback = document.getElementById(`${prefix}-country-flag-fallback`);
+  const nameEl = document.getElementById(`${prefix}-country-name-display`);
+  const codeEl = document.getElementById(`${prefix}-country-code-display`);
+
+  if (flagImg) {
+    flagImg.src = getCountryFlagUrl(country.code, 40);
+    flagImg.srcset = `${getCountryFlagUrl(country.code, 80)} 2x`;
+    flagImg.alt = country.nameEn || '';
+    flagImg.style.display = '';
+  }
+  if (flagFallback) {
+    flagFallback.textContent = country.flag || '🌐';
+    flagFallback.style.display = 'none';
+  }
+  if (nameEl) {
+    nameEl.textContent = displayName;
+  }
+  if (codeEl) {
+    codeEl.textContent = country.dialCode;
+  }
+}
 
 function getCountryByCode(code) {
   if (!code) return COUNTRY_DATABASE[0];
@@ -3665,8 +3889,12 @@ function getCountryByCode(code) {
   const upper = clean.toUpperCase();
   const digits = clean.replace(/\D/g, '');
 
+  // Priority 1: exact ISO code match (prevents +1 / +7 / +358 ambiguity)
+  const exactIso = COUNTRY_DATABASE.find(function(c) { return c.code === upper; });
+  if (exactIso) return exactIso;
+
+  // Priority 2: exact dial code or name match
   return COUNTRY_DATABASE.find(function(c) {
-    if (c.code === upper) return true;
     if (c.dialCode === clean) return true;
     if (digits && c.dialCode.replace(/\D/g, '') === digits) return true;
     if (c.nameBn === clean || c.nameBn.toLowerCase() === lower) return true;
@@ -3675,6 +3903,9 @@ function getCountryByCode(code) {
     if (lower === 'egypt' || lower === 'মিশর' || lower === 'مصر' || lower === 'eg') return c.code === 'EG';
     if (lower === 'india' || lower === 'ইন্ডিয়া' || lower === 'ভারত' || lower === 'ind' || lower === 'in') return c.code === 'IN';
     if (lower === 'bangladesh' || lower === 'বাংলাদেশ' || lower === 'bd') return c.code === 'BD';
+    if (lower === 'usa' || lower === 'united states' || lower === 'united states of america') return c.code === 'US';
+    if (lower === 'uk' || lower === 'united kingdom') return c.code === 'GB';
+    if (lower === 'uae' || lower === 'united arab emirates') return c.code === 'AE';
     return false;
   }) || COUNTRY_DATABASE[0];
 }
@@ -3683,7 +3914,7 @@ function populateAllCountrySelects(langOverride) {
   const currentLang = normalizeAppLang(langOverride || (window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
   const buildOptions = function(selectedVal, bgClass) {
     return COUNTRY_DATABASE.map(function(item) {
-      const displayName = currentLang === 'bn' ? item.nameBn : (currentLang === 'ar' ? (item.nameAr || item.nameEn) : item.nameEn);
+      const displayName = getCountryDisplayName(item, currentLang);
       const selAttr = item.code === selectedVal ? ' selected' : '';
       return `<option value="${item.code}" class="${bgClass} text-white"${selAttr}>${item.flag} ${displayName} (${item.dialCode})</option>`;
     }).join('');
@@ -3691,17 +3922,23 @@ function populateAllCountrySelects(langOverride) {
 
   const loginSelect = document.getElementById('login-country-select');
   if (loginSelect) {
-    const prevLogin = loginSelect.value || 'BD';
-    loginSelect.innerHTML = buildOptions(prevLogin, 'bg-[#141e3c]');
-    loginSelect.value = getCountryByCode(prevLogin).code;
+    const prevLogin = loginSelect.value || (currentLoginCountry && currentLoginCountry.code) || 'BD';
+    const resolvedLogin = getCountryByCode(prevLogin);
+    currentLoginCountry = resolvedLogin;
+    loginSelect.innerHTML = buildOptions(resolvedLogin.code, 'bg-[#141e3c]');
+    loginSelect.value = resolvedLogin.code;
   }
+  syncCountryTriggerUi('login', currentLoginCountry, currentLang);
 
   const regSelect = document.getElementById('register-country-select');
   if (regSelect) {
     const prevReg = regSelect.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
-    regSelect.innerHTML = buildOptions(prevReg, 'bg-[#07173d]');
-    regSelect.value = getCountryByCode(prevReg).code;
+    const resolvedReg = getCountryByCode(prevReg);
+    currentRegistrationCountry = resolvedReg;
+    regSelect.innerHTML = buildOptions(resolvedReg.code, 'bg-[#07173d]');
+    regSelect.value = resolvedReg.code;
   }
+  syncCountryTriggerUi('register', currentRegistrationCountry, currentLang);
 }
 window.populateAllCountrySelects = populateAllCountrySelects;
 
@@ -3710,11 +3947,12 @@ function selectRegistrationCountry(code) {
   if (!country) return;
   currentRegistrationCountry = country;
 
-  // 1. Update dropdown
+  // 1. Update hidden native dropdown & visible trigger button
   const selectEl = document.getElementById('register-country-select');
   if (selectEl && selectEl.value !== country.code) {
     selectEl.value = country.code;
   }
+  syncCountryTriggerUi('register', country);
 
   // 2. Update Hidden Form Data
   const codeInput = document.getElementById('register-country-code');
@@ -3776,18 +4014,28 @@ function selectRegistrationCountry(code) {
 function selectLoginCountry(code) {
   const country = getCountryByCode(code);
   if (!country) return;
+  currentLoginCountry = country;
 
   const loginSelect = document.getElementById('login-country-select');
   if (loginSelect && loginSelect.value !== country.code) {
     loginSelect.value = country.code;
   }
+  syncCountryTriggerUi('login', country);
+
   const prefixEl = document.getElementById('login-phone-prefix');
   if (prefixEl) {
     prefixEl.textContent = country.dialCode;
+    prefixEl.setAttribute('aria-label', `Country: ${country.nameEn}, Dial Code: ${country.dialCode}`);
   }
   const emailInp = document.getElementById('login-email');
   if (emailInp) {
     emailInp.maxLength = country.phoneLen || 15;
+  }
+
+  const cModal = document.getElementById('country-picker-modal');
+  if (cModal && !cModal.classList.contains('hidden')) {
+    const searchEl = document.getElementById('country-picker-search');
+    renderCountryList(searchEl ? searchEl.value : '');
   }
 }
 
@@ -3796,10 +4044,10 @@ window.selectRegistrationCountry = selectRegistrationCountry;
 window.selectLoginCountry = selectLoginCountry;
 window.getCountryByCode = getCountryByCode;
 
-// Initialize full country dropdowns immediately
+// Initialize full country dropdowns & visible fresh triggers immediately
 populateAllCountrySelects();
 
-// Immediate global event delegation for country dropdown (change only, no duplicate input spam)
+// Immediate global event delegation for hidden country dropdowns (backward compatibility)
 document.addEventListener('change', function(e) {
   if (e.target && e.target.id === 'login-country-select') {
     selectLoginCountry(e.target.value);
@@ -3816,33 +4064,42 @@ document.addEventListener('input', function(e) {
   }
 });
 
-// Immediate global click delegation for country selection
+// Single clean global click delegation for country selection in both Login & Register modes
 document.addEventListener('click', function(e) {
   const countryListItem = e.target.closest('.country-list-item, [data-country-code]');
   if (countryListItem && countryListItem.dataset.countryCode) {
     e.preventDefault();
-    selectRegistrationCountry(countryListItem.dataset.countryCode);
+    const chosenCode = countryListItem.dataset.countryCode;
+    if (currentCountryPickerMode === 'login') {
+      selectLoginCountry(chosenCode);
+    } else {
+      selectRegistrationCountry(chosenCode);
+    }
     closeCountryPickerModal();
   }
 });
 
-function openCountryPickerModal() {
+function openCountryPickerModal(mode) {
   const modal = document.getElementById('country-picker-modal');
   if (!modal) return;
+  currentCountryPickerMode = (mode === 'login') ? 'login' : 'register';
   const currentLang = normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
   const titleEl = document.getElementById('country-picker-title');
   if (titleEl) {
-    titleEl.textContent = tLang(currentLang, 'দেশ ও ফোন কোড নির্বাচন করুন', 'Select Country & Dial Code', 'اختر الدولة ورمز الهاتف');
+    titleEl.textContent = tLang(currentLang, 'দেশ নির্বাচন করুন', 'Select country', 'اختر الدولة');
   }
   const searchEl = document.getElementById('country-picker-search');
   if (searchEl) {
     searchEl.value = '';
-    searchEl.placeholder = tLang(currentLang, 'দেশ বা কোড খুঁজুন (+880, Pakistan...)', 'Search country or code (+1, UK, Egypt...)', 'ابحث عن الدولة أو الرمز...');
+    searchEl.placeholder = tLang(currentLang, 'দেশ বা কোড খুঁজুন', 'Search country or code', 'ابحث عن الدولة أو الرمز');
   }
   modal.classList.remove('hidden');
   modal.classList.add('flex');
   renderCountryList('');
+  const listEl = document.getElementById('country-list-container');
+  if (listEl) listEl.scrollTop = 0;
 }
+window.openCountryPickerModal = openCountryPickerModal;
 
 function closeCountryPickerModal() {
   const modal = document.getElementById('country-picker-modal');
@@ -3850,6 +4107,7 @@ function closeCountryPickerModal() {
   modal.classList.add('hidden');
   modal.classList.remove('flex');
 }
+window.closeCountryPickerModal = closeCountryPickerModal;
 
 function renderCountryList(filterQuery) {
   const container = document.getElementById('country-list-container');
@@ -3857,45 +4115,64 @@ function renderCountryList(filterQuery) {
 
   const currentLang = normalizeAppLang((window.aloI18n ? window.aloI18n.getLanguage() : '') || localStorage.getItem('alo_lang') || 'en');
   const q = String(filterQuery || '').trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, '');
+  const activeCountry = currentCountryPickerMode === 'login' ? currentLoginCountry : currentRegistrationCountry;
+  const activeCode = activeCountry ? activeCountry.code : 'BD';
 
-  const filtered = q ? COUNTRY_DATABASE.filter(function(item) {
-    return (
-      item.nameEn.toLowerCase().includes(q) ||
-      item.nameBn.toLowerCase().includes(q) ||
-      (item.nameAr && item.nameAr.toLowerCase().includes(q)) ||
-      item.dialCode.toLowerCase().includes(q) ||
-      item.dialCode.replace('+', '').includes(q) ||
-      item.code.toLowerCase().includes(q)
-    );
-  }) : COUNTRY_DATABASE;
+  const sortByDisplayName = function(a, b) {
+    return getCountryDisplayName(a, currentLang).localeCompare(getCountryDisplayName(b, currentLang), currentLang === 'en' ? 'en' : undefined, { sensitivity: 'base' });
+  };
 
-  if (filtered.length === 0) {
-    container.innerHTML = `<p class="text-center text-xs text-slate-400 py-6">${tLang(currentLang, 'কোনো দেশ পাওয়া যায়নি', 'No matching country found', 'لم يتم العثور على دولة مطابقة')}</p>`;
+  let orderedList;
+  if (q) {
+    orderedList = COUNTRY_DATABASE.filter(function(item) {
+      return (
+        item.nameEn.toLowerCase().includes(q) ||
+        item.nameBn.toLowerCase().includes(q) ||
+        (item.nameAr && item.nameAr.toLowerCase().includes(q)) ||
+        (item.aliases && item.aliases.toLowerCase().includes(q)) ||
+        item.dialCode.toLowerCase().includes(q) ||
+        (qDigits && item.dialCode.replace('+', '').includes(qDigits)) ||
+        item.code.toLowerCase().includes(q)
+      );
+    }).sort(function(a, b) {
+      const aName = getCountryDisplayName(a, currentLang).toLowerCase();
+      const bName = getCountryDisplayName(b, currentLang).toLowerCase();
+      const aExact = a.code.toLowerCase() === q || a.dialCode === q || (qDigits && a.dialCode.replace('+', '') === qDigits);
+      const bExact = b.code.toLowerCase() === q || b.dialCode === q || (qDigits && b.dialCode.replace('+', '') === qDigits);
+      if (aExact !== bExact) return aExact ? -1 : 1;
+      const aStarts = aName.startsWith(q) || a.nameEn.toLowerCase().startsWith(q);
+      const bStarts = bName.startsWith(q) || b.nameEn.toLowerCase().startsWith(q);
+      if (aStarts !== bStarts) return aStarts ? -1 : 1;
+      return sortByDisplayName(a, b);
+    });
+  } else {
+    const pinned = COUNTRY_DATABASE.find(function(c) { return c.code === activeCode; });
+    const rest = COUNTRY_DATABASE.filter(function(c) { return c.code !== activeCode; }).sort(sortByDisplayName);
+    orderedList = pinned ? [pinned].concat(rest) : rest;
+  }
+
+  if (orderedList.length === 0) {
+    container.innerHTML = `<p class="text-center text-sm text-[#89a5d1] py-10">${tLang(currentLang, 'কোনো দেশ পাওয়া যায়নি', 'No matching country found', 'لم يتم العثور على دولة مطابقة')}</p>`;
     return;
   }
 
-  container.innerHTML = filtered.map(function(item) {
-    const isSelected = currentRegistrationCountry && currentRegistrationCountry.code === item.code;
-    const displayName = currentLang === 'bn' ? item.nameBn : (currentLang === 'ar' ? (item.nameAr || item.nameEn) : item.nameEn);
+  container.innerHTML = orderedList.map(function(item) {
+    const isSelected = activeCode === item.code;
+    const displayName = getCountryDisplayName(item, currentLang);
+    const flagUrl1x = getCountryFlagUrl(item.code, 40);
+    const flagUrl2x = getCountryFlagUrl(item.code, 80);
     return `
-      <button type="button" class="country-list-item w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-[#0c245c] transition text-left cursor-pointer ${isSelected ? 'bg-[#0f2e73] border border-[#35c6e7]/50 shadow-md' : 'bg-[#061842] border border-[#14326d]'}" data-country-code="${item.code}">
-        <div class="flex items-center gap-3">
-          <span class="text-xl">${item.flag}</span>
-          <span class="text-base font-semibold text-white ${isSelected ? 'text-[#35c6e7]' : ''}">${displayName}</span>
-          <span class="text-xs font-mono font-bold text-[#35c6e7] bg-[#0c245c] px-2 py-0.5 rounded-md border border-[#1b3e85]">${item.dialCode}</span>
-        </div>
-        ${isSelected ? '<span class="w-6 h-6 rounded-full bg-[#35c6e7] text-[#061842] flex items-center justify-center text-xs font-black shadow">✓</span>' : ''}
+      <button type="button" class="country-list-item w-full flex items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors cursor-pointer ${isSelected ? 'bg-[#163273]' : 'bg-transparent hover:bg-[#102459] active:bg-[#163273]'}" data-country-code="${item.code}">
+        <span class="flex items-center gap-4 min-w-0">
+          <img src="${flagUrl1x}" srcset="${flagUrl2x} 2x" alt="" loading="lazy" class="w-7 h-[20px] rounded-[4px] object-cover shrink-0 shadow-[0_1px_3px_rgba(0,0,0,0.35)] bg-[#14285c]" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='inline-flex';">
+          <span style="display:none" class="w-7 h-[20px] items-center justify-center text-lg leading-none shrink-0">${item.flag}</span>
+          <span class="text-[15.5px] leading-snug truncate ${isSelected ? 'font-semibold text-white' : 'font-medium text-[#eef4ff]'}">${displayName}</span>
+        </span>
+        <span class="text-[15px] tabular-nums shrink-0 ${isSelected ? 'font-semibold text-[#35c6e7]' : 'font-medium text-[#95b4e0]'}">${item.dialCode}</span>
       </button>
     `;
   }).join('');
-
-  container.querySelectorAll('.country-list-item').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      const code = this.dataset.countryCode;
-      selectRegistrationCountry(code);
-      closeCountryPickerModal();
-    });
-  });
 }
 
 function getUserCurrency(user) {
@@ -4049,9 +4326,9 @@ if (loginForm) {
           message.textContent = wrongCountryMsg;
           message.className = 'min-h-5 text-center text-xs sm:text-sm font-semibold text-rose-400 mt-2';
         }
-        const countrySelectEl = document.getElementById('login-country-select');
-        if (countrySelectEl) {
-          countrySelectEl.focus();
+        const countryTriggerEl = document.getElementById('login-country-trigger') || document.getElementById('login-country-select');
+        if (countryTriggerEl) {
+          countryTriggerEl.focus();
         }
         return;
       }
@@ -5793,7 +6070,8 @@ function handlePackagePurchase(level, triggerBtn) {
       if (level !== 'LV0' && price > 0 && typeof distributeTeamCommission === 'function') {
         distributeTeamCommission(freshUser.phone || freshUser.accountNumber, price, {
           kind: 'package',
-          packageLevel: level
+          packageLevel: level,
+          currency: getUserCurrency(freshUser)
         }).catch(function() {});
       }
 
@@ -6015,7 +6293,10 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
   }
 
   const memberProfile = await dbGetUser(normPhone).catch(function() { return null; });
-  const memberCurr = (memberProfile && memberProfile.currency) || 'BDT';
+  const activeSelfProfile = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  const activeSelfMatch = activeSelfProfile && normalizeBdPhone(activeSelfProfile.phone || activeSelfProfile.accountNumber) === normPhone;
+  const memberCurr = opts.currency ||
+    (memberProfile ? getUserCurrency(memberProfile) : (activeSelfMatch ? getUserCurrency(activeSelfProfile) : 'BDT'));
 
   // Deduplicate by resolved superior phone & lowest tier (so multi-row team entries for same upline never double-credit)
   const tierSortedRows = teamRows.slice().sort(function(a, b) {
@@ -6040,13 +6321,29 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
       }
 
       if (supUser && supPhone && supPhone !== normPhone && !creditedPhones.has(supPhone)) {
-        const supCurr = supUser.currency || (isBangladeshUser(supUser) ? 'BDT' : 'USD');
-        // Convert base amount into recipient's currency BEFORE rounding so sub-cent USD amounts never drop to 0 for BDT uplines
-        const baseInSupCurr = convertBetweenCurrencies(amt, memberCurr, supCurr);
-        const commission = Math.round(baseInSupCurr * rate * 100) / 100;
-        if (commission <= 0) continue;
+        const supCurr = getUserCurrency(supUser);
+        // Convert unrounded base amount into recipient currency and carry sub-cent fractional dust so USD/USDT daily task commissions never drop to $0.00
+        const baseInSupCurrExact = convertBetweenCurrenciesExact(amt, memberCurr, supCurr);
+        const rawComm = baseInSupCurrExact * rate;
+        if (rawComm <= 0) continue;
 
         creditedPhones.add(supPhone);
+        const prevDust = Number(supUser.commissionDust) || 0;
+        const combined = rawComm + prevDust;
+        const commission = Math.floor((combined + 1e-9) * 100) / 100;
+        const nextDust = Number(Math.max(0, combined - commission).toFixed(6));
+        supUser.commissionDust = nextDust;
+
+        if (commission <= 0) {
+          await dbSaveUser(supUser);
+          const activeSignedInDust = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+          if (activeSignedInDust && normalizeBdPhone(activeSignedInDust.phone || activeSignedInDust.accountNumber) === supPhone) {
+            activeSignedInDust.commissionDust = nextDust;
+            localStorage.setItem('aloSignedInUser', JSON.stringify(activeSignedInDust));
+          }
+          continue;
+        }
+
         supUser.balance = Number(((Number(supUser.balance) || 0) + commission).toFixed(2));
         supUser.totalIncome = Number(((Number(supUser.totalIncome) || 0) + commission).toFixed(2));
         supUser.lifetimeEarnings = Number(((Number(supUser.lifetimeEarnings) || 0) + commission).toFixed(2));
@@ -6063,6 +6360,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
           activeSignedInUser.totalIncome = supUser.totalIncome;
           activeSignedInUser.lifetimeEarnings = supUser.lifetimeEarnings;
           activeSignedInUser.todayIncome = supUser.todayIncome;
+          activeSignedInUser.commissionDust = supUser.commissionDust;
           localStorage.setItem('my_pass_available_bal', supUser.balance.toFixed(2));
           localStorage.setItem('aloSignedInUser', JSON.stringify(activeSignedInUser));
           if (typeof updateUserDetails === 'function') updateUserDetails(activeSignedInUser);
@@ -6089,7 +6387,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
           time: `${hours}:${mins}`,
           newBalance: supUser.balance
         });
-        console.log(`[Commission:${kind}] Tier ${tier} (${(rate * 100)}%) credited ${commission} ${supCurr} to ${supPhone}`);
+        console.log(`[Commission:${kind}] Tier ${tier} (${(rate * 100)}%) credited ${commission} ${supCurr} (dust=${nextDust}) to ${supPhone}`);
       }
     }
   }
@@ -9455,7 +9753,8 @@ function checkPendingReviews() {
         if (paidReward > 0 && typeof distributeTeamCommission === 'function') {
           distributeTeamCommission(curPhone, paidReward, {
             kind: 'task',
-            taskCount: completedInBatch
+            taskCount: completedInBatch,
+            currency: getUserCurrency(user)
           }).catch(function() {});
         }
       }
@@ -9549,7 +9848,7 @@ function maskTeamPhone(raw) {
   if (!raw) return '01*******00';
   let digits = String(raw).trim().replace(/\D/g, '');
   if (digits.startsWith('880')) digits = digits.slice(3);
-  if (!digits.startsWith('0') && digits.length === 10) digits = '0' + digits;
+  if (!digits.startsWith('0') && /^1[3-9]\d{8}$/.test(digits)) digits = '0' + digits;
   if (digits.length >= 4) {
     const first2 = digits.slice(0, 2);
     const last2 = digits.slice(-2);
@@ -9563,7 +9862,7 @@ function maskAccountPhone3(raw) {
   if (!raw) return '017*****000';
   let digits = String(raw).trim().replace(/\D/g, '');
   if (digits.startsWith('880')) digits = digits.slice(3);
-  if (!digits.startsWith('0') && digits.length === 10) digits = '0' + digits;
+  if (!digits.startsWith('0') && /^1[3-9]\d{8}$/.test(digits)) digits = '0' + digits;
   if (digits.length >= 6) {
     const first3 = digits.slice(0, 3);
     const last3 = digits.slice(-3);
@@ -9584,7 +9883,7 @@ function formatMemberDate(isoStr) {
   }
 }
 
-async function renderFreshTeamView() {
+async function renderFreshTeamView(forceRefresh) {
   const container = document.getElementById('team-fresh-accordion-container');
   if (!container) return;
 
@@ -9603,7 +9902,7 @@ async function renderFreshTeamView() {
     `;
   }
 
-  const teamData = await dbGetRealTeam(phone);
+  const teamData = await dbGetRealTeam(phone, { force: Boolean(forceRefresh) });
   cachedTeamReportData = teamData;
 
   const tier1 = teamData.tier1 || [];
@@ -9793,19 +10092,21 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
   let rawDeposit = Number((memberAcc && memberAcc.rechargeAmount) ?? (member && member.rechargeAmount) ?? 0);
 
   // Also sum approved deposits from Supabase transactions for accuracy
-  if (window.aloSupabase && normP) {
+  const txLookupPhones = expandPhoneLookupKeys([rawPhone, normP]);
+  if (window.aloSupabase && txLookupPhones.length > 0) {
     try {
       const { data: depList, error: depErr } = await window.aloSupabase
         .from('transactions')
-        .select('amount, status')
-        .or(`phone.eq.${normP},account_number.eq.${normP}`)
+        .select('amount, actual, status')
+        .in('phone', txLookupPhones)
         .eq('type', 'deposit');
       if (!depErr && Array.isArray(depList)) {
         const approvedDepSum = depList.reduce(function(sum, r) {
           const st = String(r.status || '').toLowerCase();
           const isFail = st.includes('অসফল') || st.includes('বাতিল') || st.includes('fail') || st.includes('reject') || st.includes('expir');
           if (!isFail && (st.includes('অনুমোদিত') || st.includes('সফল') || st.includes('approv') || st.includes('complet') || st.includes('success'))) {
-            return sum + (Number(r.amount) || 0);
+            const actualVal = Number(r.actual) || 0;
+            return sum + (actualVal > 0 ? actualVal : (Number(r.amount) || 0));
           }
           return sum;
         }, 0);
@@ -9816,12 +10117,12 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
 
   // Withdrawals calculation from Supabase transactions
   let rawWithdrawals = Number((memberAcc && memberAcc.cashoutAmount) ?? (member && member.cashoutAmount) ?? 0);
-  if (window.aloSupabase && normP) {
+  if (window.aloSupabase && txLookupPhones.length > 0) {
     try {
       const { data: wList, error: wErr } = await window.aloSupabase
         .from('transactions')
         .select('amount, status')
-        .or(`phone.eq.${normP},account_number.eq.${normP}`)
+        .in('phone', txLookupPhones)
         .eq('type', 'withdraw');
       if (!wErr && Array.isArray(wList)) {
         const dbW = wList.reduce(function(sum, r) {
@@ -9876,14 +10177,15 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
   let friendsCount = 0;
   if (window.aloSupabase && normP) {
     try {
+      const supLookupPhones = expandPhoneLookupKeys([normP, rawPhone]);
       const { count: tCount } = await window.aloSupabase
         .from('team')
         .select('*', { count: 'exact', head: true })
-        .eq('superior_phone', normP)
+        .in('superior_phone', supLookupPhones)
         .eq('tier', 1);
       if (typeof tCount === 'number') friendsCount = tCount;
 
-      const supKeys = [normP];
+      const supKeys = supLookupPhones.slice();
       if (memberAcc && memberAcc.inviteCode) supKeys.push(String(memberAcc.inviteCode));
       if (memberAcc && memberAcc.memberId) supKeys.push(String(memberAcc.memberId));
       const { count: uCount } = await window.aloSupabase
@@ -9932,14 +10234,14 @@ window.closeTeamMemberDetailModal = closeTeamMemberDetailModal;
 
 let currentTeamTierTab = '1';
 
-async function updateTeamReportMetrics() {
+async function updateTeamReportMetrics(forceRefresh) {
   const user = getCurrentUser();
   const phone = user && (user.phone || user.accountNumber);
   if (!phone) return;
   const expectedNormPhone = normalizeBdPhone(phone);
 
   const viewerCurr = getUserCurrency(user);
-  const teamData = await dbGetRealTeam(phone);
+  const teamData = await dbGetRealTeam(phone, { force: Boolean(forceRefresh) });
   const activeAfter = getCurrentUser();
   const activeNormAfter = activeAfter ? normalizeBdPhone(activeAfter.phone || activeAfter.accountNumber) : '';
   if (expectedNormPhone && activeNormAfter !== expectedNormPhone) return;
@@ -10031,7 +10333,7 @@ function updateActiveTierMetrics(cachedTeamData) {
   const rechargeSum = targetList.reduce(function(sum, m) {
     return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'BDT', viewerCurr);
   }, 0);
-  const rebateSum = targetList.reduce(function(sum, m) {
+  const rebateSumRaw = targetList.reduce(function(sum, m) {
     let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
     if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
       const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
@@ -10043,17 +10345,16 @@ function updateActiveTierMetrics(cachedTeamData) {
         return acc + (memberIsUsd ? convertBetweenCurrencies(bdtPrice, 'BDT', 'USD') : bdtPrice);
       }, 0);
     }
-    const pkgSpend = convertBetweenCurrencies(pkgSpendRaw, m.currency || 'BDT', viewerCurr);
+    const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, m.currency || 'BDT', viewerCurr);
     const memberHasPaidLvl = String(m.level || 'LV0').toUpperCase() !== 'LV0' ||
       (Array.isArray(m.purchasedPackages) && m.purchasedPackages.some(function(p) { return String(p || '').toUpperCase() !== 'LV0'; }));
     const taskEarnRaw = m._hasTxLoaded
       ? (Number(m.taskEarningsTotal) || 0)
       : (Number(m.taskEarningsTotal) || (memberHasPaidLvl ? (Number(m.totalIncome) || 0) : 0));
-    const taskEarn = convertBetweenCurrencies(taskEarnRaw, m.currency || 'BDT', viewerCurr);
-    const pkgComm = Math.round(pkgSpend * pkgRate * 100) / 100;
-    const taskComm = Math.round(taskEarn * taskRate * 100) / 100;
-    return sum + pkgComm + taskComm;
+    const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, m.currency || 'BDT', viewerCurr);
+    return sum + (pkgSpend * pkgRate) + (taskEarn * taskRate);
   }, 0);
+  const rebateSum = Math.round(rebateSumRaw * 100) / 100;
 
   if (mEl) mEl.textContent = String(count);
   if (rEl) rEl.textContent = rechargeSum.toFixed(2);
@@ -10153,11 +10454,19 @@ document.addEventListener('click', function(event) {
     return;
   }
 
-  // Open Country & Currency Selector Modal
-  const countryPickerTrigger = event.target.closest('#register-country-selector-btn, #register-phone-prefix');
-  if (countryPickerTrigger) {
+  // Open Country Selector Modal (Login mode)
+  const loginCountryTrigger = event.target.closest('#login-country-trigger, #login-phone-prefix');
+  if (loginCountryTrigger) {
     event.preventDefault();
-    openCountryPickerModal();
+    openCountryPickerModal('login');
+    return;
+  }
+
+  // Open Country Selector Modal (Register mode)
+  const regCountryTrigger = event.target.closest('#register-country-selector-btn, #register-phone-prefix');
+  if (regCountryTrigger) {
+    event.preventDefault();
+    openCountryPickerModal('register');
     return;
   }
 
@@ -10177,7 +10486,11 @@ document.addEventListener('click', function(event) {
   const countryChip = event.target.closest('.country-quick-chip');
   if (countryChip && countryChip.dataset.countryCode) {
     event.preventDefault();
-    selectRegistrationCountry(countryChip.dataset.countryCode);
+    if (currentCountryPickerMode === 'login') {
+      selectLoginCountry(countryChip.dataset.countryCode);
+    } else {
+      selectRegistrationCountry(countryChip.dataset.countryCode);
+    }
     closeCountryPickerModal();
     return;
   }
@@ -10333,12 +10646,12 @@ document.addEventListener('click', function(event) {
       if (reportContent) reportContent.classList.add('hidden');
       if (membersContent) membersContent.classList.remove('hidden');
       if (headerTitle) headerTitle.textContent = tLang(l, 'আমার দল', 'My Team', 'فريقي');
-      renderFreshTeamView();
+      renderFreshTeamView(true);
     } else {
       if (reportContent) reportContent.classList.remove('hidden');
       if (membersContent) membersContent.classList.add('hidden');
       if (headerTitle) headerTitle.textContent = tLang(l, 'দলের রিপোর্ট', 'Team Report', 'تقرير الفريق');
-      updateTeamReportMetrics();
+      updateTeamReportMetrics(true);
     }
     return;
   }
@@ -12600,43 +12913,8 @@ function initApp() {
     }
   } catch(e) {}
 
-  // Bind country selection dropdown on register form
-  const countrySelect = document.getElementById('register-country-select');
-  if (countrySelect) {
-    function onCountryChange() {
-      if (countrySelect.value) {
-        selectRegistrationCountry(countrySelect.value);
-      }
-    }
-    countrySelect.addEventListener('change', onCountryChange);
-    countrySelect.addEventListener('input', onCountryChange);
-  }
-
-  // Clicking phone prefix also opens country selector / modal
-  const regPrefix = document.getElementById('register-phone-prefix');
-  if (regPrefix) {
-    regPrefix.addEventListener('click', function() {
-      const select = document.getElementById('register-country-select');
-      if (select) {
-        select.focus();
-        if (typeof select.showPicker === 'function') {
-          try { select.showPicker(); return; } catch(e) {}
-        }
-      }
-      openCountryPickerModal();
-    });
-  }
-
-  const closeCountryBtn = document.getElementById('close-country-picker-btn');
-  if (closeCountryBtn) {
-    closeCountryBtn.addEventListener('click', closeCountryPickerModal);
-  }
-  const countryModal = document.getElementById('country-picker-modal');
-  if (countryModal) {
-    countryModal.addEventListener('click', function(e) {
-      if (e.target === countryModal) closeCountryPickerModal();
-    });
-  }
+  // Ensure visible Login & Register country trigger UI stays synced on startup
+  populateAllCountrySelects();
 
   // Initialize USDT BEP20 Auto-Approve Deposit gateway listeners
   if (typeof initUsdtDeposit === 'function') {
@@ -14761,9 +15039,13 @@ window.addEventListener('alo-language-changed', function(e) {
       renderLuckySpinPanel();
     }
   }
+  if (typeof populateAllCountrySelects === 'function') {
+    populateAllCountrySelects();
+  }
   const cModal = document.getElementById('country-picker-modal');
   if (cModal && !cModal.classList.contains('hidden')) {
-    if (typeof renderCountryList === 'function') renderCountryList();
+    const searchEl = document.getElementById('country-picker-search');
+    if (typeof renderCountryList === 'function') renderCountryList(searchEl ? searchEl.value : '');
   }
 });
 
