@@ -318,7 +318,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `অভিনন্দন! আপনার ${verifiedUsdt} USDT (৳ ${verifiedBdt.toLocaleString('en-US')}) ডিপোজিট সফলভাবে ব্লকচেইনে ভেরিফাই ও ব্যালেন্সে যুক্ত হয়েছে!`,
+      message: `অভিনন্দন! আপনার ${verifiedUsdt} USDT ($${verifiedUsdt.toFixed(2)} USD) ডিপোজিট সফলভাবে ব্লকচেইনে ভেরিফাই ও ব্যালেন্সে যুক্ত হয়েছে!`,
       messageEn: `Congratulations! Your ${verifiedUsdt} USDT deposit has been verified on-chain and credited to your balance.`,
       deposit: {
         txHash: cleanTxHash,

@@ -111,7 +111,7 @@ export default async function handler(req, res) {
           console.warn('[WPay Callback] Transaction update warning:', txUpErr.message);
         }
 
-        // Credit deposit into frozen_balance & recharge_frozen_balance in 'users' table (only LV1+ task earnings are withdrawable)
+        // Credit deposit directly into available balance (only package purchases freeze balance)
         if (targetPhone) {
           try {
             const { data: uData } = await supabase
@@ -129,30 +129,29 @@ export default async function handler(req, res) {
                   opt = Object.assign({}, uData.bkash_optional);
                 }
               }
-              const prevFrozen = parseFloat(opt.frozen_balance || 0);
-              const prevRechargeFrozen = parseFloat(opt.recharge_frozen_balance || 0);
+              const prevBal = parseFloat(uData.balance || 0);
+              const nextBal = Number((prevBal + amount).toFixed(2));
               const prevRechargeAmt = parseFloat(opt.recharge_amount || 0);
-              opt.frozen_balance = Number((prevFrozen + amount).toFixed(2));
-              opt.recharge_frozen_balance = Number((prevRechargeFrozen + amount).toFixed(2));
               opt.recharge_amount = Number((prevRechargeAmt + amount).toFixed(2));
               await supabase
                 .from('users')
                 .update({
+                  balance: nextBal,
                   bkash_optional: JSON.stringify(opt),
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', uData.id);
-              console.log(`[WPay Callback] User ${targetPhone} frozen recharge updated: ${prevFrozen} -> ${opt.frozen_balance}`);
+              console.log(`[WPay Callback] User ${targetPhone} available balance updated: ${prevBal} -> ${nextBal}`);
             }
           } catch (userErr) {
             console.warn('[WPay Callback] Users table update warning:', userErr.message);
           }
 
-          // Also track recharge in 'profiles' table if it exists (without inflating withdrawable balance)
+          // Also credit available balance in 'profiles' table if it exists
           try {
             const { data: userProfile } = await supabase
               .from('profiles')
-              .select('id, frozen_balance')
+              .select('id, balance')
               .eq('phone', targetPhone)
               .maybeSingle();
 
@@ -160,7 +159,7 @@ export default async function handler(req, res) {
               await supabase
                 .from('profiles')
                 .update({
-                  frozen_balance: (parseFloat(userProfile.frozen_balance || 0) + amount),
+                  balance: Number((parseFloat(userProfile.balance || 0) + amount).toFixed(2)),
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', userProfile.id);

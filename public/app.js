@@ -3018,6 +3018,11 @@ function openDashboardPanel(panelName) {
   if (panelName === "manager" || panelName === "customer-service") {
     panelName = "customer-service";
   }
+  if (panelName === "bkash-setup" || panelName === "nagad-setup") {
+    panelName = "usdt-setup";
+  } else if (panelName === "bd-recharge") {
+    panelName = "usdt-deposit";
+  }
   if (panelName === "my-team" || panelName === "team-members") {
     panelName = "team-report";
     window._autoSelectTeamTab = "members";
@@ -3257,7 +3262,8 @@ function isBangladeshUser(user) {
 window.isBangladeshUser = isBangladeshUser;
 
 function isUsdOnlyUser(user) {
-  return !isBangladeshUser(user);
+  // All countries including Bangladesh operate uniformly in USD / USDT
+  return true;
 }
 window.isUsdOnlyUser = isUsdOnlyUser;
 
@@ -3315,9 +3321,9 @@ function updateUserDetails(user) {
   const isBd = isBangladeshUser(user);
   const countryObj = getCountryByCode(user.country || (isBd ? 'BD' : 'US'));
   user.country = isBd ? 'BD' : countryObj.code;
-  user.currency = isBd ? 'BDT' : 'USD';
-  user.currencySymbol = isBd ? '৳' : '$';
-  user.currencyName = isBd ? 'Taka' : 'USD';
+  user.currency = 'USD';
+  user.currencySymbol = '$';
+  user.currencyName = 'USD';
   user.dialCode = isBd ? '+880' : (user.dialCode || countryObj.dialCode || '');
   const isManualLang = Boolean(user.languageManual || localStorage.getItem('alo_lang_manual') === '1');
   user.languageManual = isManualLang;
@@ -3366,12 +3372,12 @@ function updateUserDetails(user) {
   const userName = document.getElementById('dashboard-user-name');
   if (userName) userName.textContent = (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو' || user.name === 'सदस्य') ? defaultMemberName : user.name;
 
-  // Country & Currency Information (Bangladesh -> BDT ৳; All other countries -> USD $)
+  // Country & Currency Information (All countries including Bangladesh -> USD / USDT $)
   const userCountryName = currentLang === 'bn'
     ? (isBd ? 'বাংলাদেশ' : (countryObj.nameBn || countryObj.nameEn))
     : (currentLang === 'ar' ? (countryObj.nameAr || countryObj.nameEn) : countryObj.nameEn);
-  const userCurrCode = isBd ? 'BDT' : 'USD';
-  const userCurrSym = isBd ? '৳' : '$';
+  const userCurrCode = 'USD';
+  const userCurrSym = '$';
   const userFlag = isBd ? '🇧🇩' : (countryObj.flag || '🌍');
 
   const countryBadge = document.getElementById('profile-country-badge');
@@ -3400,64 +3406,61 @@ window.updateUserDetails = updateUserDetails;
 
 function updatePaymentAndWithdrawalForUser(user) {
   if (!user) user = getCurrentUser();
-  const isBd = isBangladeshUser(user);
-  const isUsd = !isBd;
-  const curr = isBd ? 'BDT' : 'USD';
-  const sym = isBd ? '৳' : '$';
+  // Unified global USDT / USD website: Bangladesh & all countries use USDT only (no bKash / Nagad)
+  const isUsd = true;
+  const showLocalBdGateways = false;
+  const curr = 'USD';
+  const sym = '$';
 
-  // 1. Payment Method Panel rows (Recharge options)
+  // 1. Payment Method Panel rows (USDT only)
   document.querySelectorAll('.payment-method-row').forEach(function(row) {
     const method = row.dataset.paymentMethod;
     if (method === 'usdt') {
       row.style.display = '';
     } else {
-      // BKASH, Nagad, BKAsh-2 are visible for Bangladesh only!
-      row.style.display = isBd ? '' : 'none';
+      row.style.display = showLocalBdGateways ? '' : 'none';
     }
   });
 
-  // 2. Inline Recharge Drawer & Modal Recharge Payment Badges
+  // 2. Inline Recharge Drawer & Modal Recharge Payment Badges (USDT only)
   document.querySelectorAll('.bd-only-payment-method').forEach(function(badge) {
-    badge.style.display = isBd ? '' : 'none';
+    badge.style.display = showLocalBdGateways ? '' : 'none';
   });
   const inlineGrid = document.getElementById('inline-recharge-methods-grid');
   if (inlineGrid) {
-    inlineGrid.className = isBd ? 'grid grid-cols-3 gap-2 text-center text-[10px]' : 'grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto';
+    inlineGrid.className = 'grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto';
   }
   const modalGrid = document.getElementById('modal-deposit-methods-grid');
   if (modalGrid) {
-    modalGrid.className = isBd ? 'grid grid-cols-3 gap-2 text-center text-[10px]' : 'grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto';
+    modalGrid.className = 'grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto';
   }
 
-  // 3. Withdrawal Sheet Method Picker Options
+  // 3. Withdrawal Sheet Method Picker Options (USDT only)
   document.querySelectorAll('.withdraw-picker-option').forEach(function(opt) {
     const key = opt.dataset.methodKey;
     if (key === 'USDT') {
       opt.style.display = '';
     } else {
-      // BKASH, NAGAD are visible for Bangladesh only!
-      opt.style.display = isBd ? '' : 'none';
+      opt.style.display = showLocalBdGateways ? '' : 'none';
     }
   });
 
-  // 4. Withdrawal Label in Sheet
-  if (!isBd && (!userSelectedWithdrawMethod || userSelectedWithdrawMethod === 'BKASH' || userSelectedWithdrawMethod === 'NAGAD')) {
-    userSelectedWithdrawMethod = 'USDT';
-  }
+  // 4. Withdrawal Label in Sheet (always USDT)
+  userSelectedWithdrawMethod = 'USDT';
   updateWithdrawalMethodLabelDisplay();
   renderWithdrawMethodPickerOptions();
 
-  // 5. Withdrawal Hint Text (hide BDT withdrawal timeline for non-BD)
+  // 5. Withdrawal Hint Text (hide BDT withdrawal timeline globally)
   const bdtWithdrawHint = document.querySelector('#my-pass-withdraw-sheet .space-y-1 div:nth-child(2)');
   if (bdtWithdrawHint && (bdtWithdrawHint.textContent.includes('48-96') || bdtWithdrawHint.textContent.includes('উত্তোলন'))) {
-    bdtWithdrawHint.style.display = isBd ? '' : 'none';
+    bdtWithdrawHint.style.display = 'none';
   }
 
-  // 6. Personal Info Rows (bKash & Nagad hidden for non-BD)
+  // 6. Personal Info Rows (bKash & Nagad removed for all countries including Bangladesh)
   const personalBkash = document.getElementById('personal-bkash-row');
-  if (personalBkash) personalBkash.style.display = isBd ? '' : 'none';
+  if (personalBkash) personalBkash.style.display = 'none';
   const personalNagad = document.getElementById('personal-nagad-row');
-  if (personalNagad) personalNagad.style.display = isBd ? '' : 'none';
+  if (personalNagad) personalNagad.style.display = 'none';
 
   // 7. Dynamic Currency Text & Symbol Elements
   document.querySelectorAll('.user-currency-text').forEach(function(el) {
@@ -3470,8 +3473,7 @@ function updatePaymentAndWithdrawalForUser(user) {
   // 7b. USDT Exchange Rate Banner Label
   const usdtRateLabel = document.getElementById('usdt-network-rate-label');
   if (usdtRateLabel) {
-    const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
-    usdtRateLabel.textContent = isUsd ? '1 USDT ≈ $1.00 USD' : `1 USDT ≈ ৳${activeRate} BDT`;
+    usdtRateLabel.textContent = isUsd ? '1 USDT ≈ $1.00 USD' : '1 USDT ≈ $1.00 USD';
   }
 
   // 8. 9 Earnings Cards Labels in Profile
@@ -3643,8 +3645,8 @@ function normalizeBdPhone(phoneStr, countryCode) {
 // UI Language defaults to English and preserves selected registration language
 // =========================================================================
 const COUNTRY_DATABASE = [
-  // Default Primary (Bangladesh - BDT)
-  { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameAr: 'بنغلاديش', flag: '🇧🇩', dialCode: '+880', currency: 'BDT', symbol: '৳', currencyName: 'টাকা', phoneLen: 11, placeholder: '' },
+  // Default Primary (Bangladesh - USD / USDT)
+  { code: 'BD', nameBn: 'বাংলাদেশ', nameEn: 'Bangladesh', nameAr: 'بنغلاديش', flag: '🇧🇩', dialCode: '+880', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 11, placeholder: '' },
 
   // Complete World Countries (USD) — Alphabetical A-Z
   { code: 'AF', nameBn: 'আফগানিস্তান', nameEn: 'Afghanistan', nameAr: 'أفغانستان', flag: '🇦🇫', dialCode: '+93', currency: 'USD', symbol: '$', currencyName: 'USD', phoneLen: 15, placeholder: '' },
@@ -4374,9 +4376,9 @@ if (loginForm) {
         country: resolvedCountry.code,
         countryName: isAccBd ? 'বাংলাদেশ' : resolvedCountry.nameEn,
         countryNameEn: isAccBd ? 'Bangladesh' : resolvedCountry.nameEn,
-        currency: isAccBd ? 'BDT' : 'USD',
-        currencySymbol: isAccBd ? '৳' : '$',
-        currencyName: isAccBd ? 'Taka' : 'USD',
+        currency: 'USD',
+        currencySymbol: '$',
+        currencyName: 'USD',
         dialCode: isAccBd ? '+880' : (account.dialCode || resolvedCountry.dialCode || ''),
         language: targetUserLang,
         languageManual: targetLangManual
@@ -4745,7 +4747,7 @@ if (registerForm) {
     const password = (passwordEl?.value || '').trim();
     const confirmVal = (confirmation?.value || '').trim();
 
-    // Country & Currency Selection: BD -> BDT; All other countries -> USD-only
+    // Country & Currency Selection: All countries (including BD) run uniformly on USD / USDT
     // Language follows whichever language is selected on the Registration Page (English default)
     const selectEl = document.getElementById('register-country-select');
     const selectedCode = (selectEl && selectEl.value) || document.getElementById('register-country-code')?.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
@@ -4759,9 +4761,9 @@ if (registerForm) {
       : 'en';
     const countryName = isBd ? 'বাংলাদেশ' : country.nameEn;
     const countryNameEn = country.nameEn;
-    const currencyCode = isBd ? 'BDT' : 'USD';
-    const currencySymbol = isBd ? '৳' : '$';
-    const currencyName = isBd ? 'Taka' : 'USD';
+    const currencyCode = 'USD';
+    const currencySymbol = '$';
+    const currencyName = 'USD';
     const dialCode = country.dialCode || '+880';
 
     if (!password) {
@@ -5241,8 +5243,8 @@ function getCurrentUser() {
     user.phone = user.accountNumber;
   }
 
-  // Strictly enforce currency based on country (BD -> BDT, non-BD -> USD),
-  // while always preserving user's chosen/registered UI language (default 'en')!
+  // Enforce uniform USD / USDT currency across all countries (including Bangladesh)
+  // while preserving user's chosen/registered UI language (default 'en')
   const isBd = isBangladeshUser(user);
   const isManualLang = Boolean(user.languageManual || localStorage.getItem('alo_lang_manual') === '1');
   user.languageManual = isManualLang;
@@ -5252,18 +5254,16 @@ function getCurrentUser() {
   if (!isBd) {
     const cObj = getCountryByCode(user.country || 'US');
     user.country = cObj.code === 'BD' ? 'US' : cObj.code;
-    user.currency = 'USD';
-    user.currencySymbol = '$';
-    user.currencyName = 'USD';
     user.dialCode = user.dialCode || cObj.dialCode || '';
     user.countryName = cObj.nameEn;
   } else {
     user.country = 'BD';
-    user.currency = 'BDT';
-    user.currencySymbol = '৳';
-    user.currencyName = 'Taka';
     user.dialCode = '+880';
+    user.countryName = 'Bangladesh';
   }
+  user.currency = 'USD';
+  user.currencySymbol = '$';
+  user.currencyName = 'USD';
   if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو' || user.name === 'सदस्य') {
     user.name = tLang(user.language, 'সদস্য', 'Member', 'عضو');
   }
@@ -5857,21 +5857,12 @@ function renderPackageDetailPage(level) {
 
   const step4El = document.getElementById('page-pkg-earn-step4');
   if (step4El) {
-    if (isUsd) {
-      step4El.textContent = tLang(
-        lang,
-        'কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি USDT (BEP20 / Binance)-এ উত্তোলন করতে পারবেন।',
-        'No hidden charges or complex terms. You can withdraw your daily earnings immediately via USDT (BEP20 / Binance).',
-        'لا توجد رسوم خفية أو شروط معقدة. يمكنك سحب أرباحك اليومية فوراً عبر USDT (BEP20 / Binance).'
-      );
-    } else {
-      step4El.textContent = tLang(
-        lang,
-        'কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি সাথে সাথে বিকাশ, নগদ অথবা Binance-এ উত্তোলন করতে পারবেন।',
-        'No hidden charges or complex terms. You can withdraw your daily earnings immediately via bKash, Nagad, or Binance.',
-        'لا توجد رسوم خفية أو شروط معقدة. يمكنك سحب أرباحك اليومية فوراً عبر bKash أو Nagad أو Binance.'
-      );
-    }
+    step4El.textContent = tLang(
+      lang,
+      'কোনো লুকানো চার্জ বা জটিল শর্ত নেই। প্রতিদিনের উপার্জিত টাকা আপনি USDT (BEP20 / Binance)-এ উত্তোলন করতে পারবেন।',
+      'No hidden charges or complex terms. You can withdraw your daily earnings immediately via USDT (BEP20 / Binance).',
+      'لا توجد رسوم خفية أو شروط معقدة. يمكنك سحب أرباحك اليومية فوراً عبر USDT (BEP20 / Binance).'
+    );
   }
 }
 
@@ -6296,7 +6287,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
   const activeSelfProfile = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   const activeSelfMatch = activeSelfProfile && normalizeBdPhone(activeSelfProfile.phone || activeSelfProfile.accountNumber) === normPhone;
   const memberCurr = opts.currency ||
-    (memberProfile ? getUserCurrency(memberProfile) : (activeSelfMatch ? getUserCurrency(activeSelfProfile) : 'BDT'));
+    (memberProfile ? getUserCurrency(memberProfile) : (activeSelfMatch ? getUserCurrency(activeSelfProfile) : 'USD'));
 
   // Deduplicate by resolved superior phone & lowest tier (so multi-row team entries for same upline never double-credit)
   const tierSortedRows = teamRows.slice().sort(function(a, b) {
@@ -6441,7 +6432,7 @@ async function confirmDeposit() {
   const mins = String(now.getMinutes()).padStart(2, '0');
   const orderId = 'DEP' + Date.now() + Math.floor(100 + Math.random() * 900);
   const depPhone = user.phone || user.accountNumber;
-  const depMethod = isUsd ? 'USDT (BEP20)' : 'বিকাশ (bKash)';
+  const depMethod = 'USDT (BEP20)';
 
   if (typeof upsertLocalDepositOrder === 'function') {
     upsertLocalDepositOrder(depPhone, {
@@ -6557,7 +6548,7 @@ window.showToast = showToastNotification;
 // ==========================================
 // PAYMENT METHOD SYSTEM (Screenshots Match)
 // ==========================================
-let selectedPaymentMethod = 'bkash';
+let selectedPaymentMethod = 'usdt';
 let previousDashboardPanel = 'my-pass';
 
 // ==========================================
@@ -7125,58 +7116,25 @@ function closeWithdrawSheet() {
   }
 }
 
-let userSelectedWithdrawMethod = null; // null | 'BKASH' | 'NAGAD' | 'USDT'
-let pendingPickerMethod = 'BKASH';
+let userSelectedWithdrawMethod = 'USDT'; // Unified global USDT (BEP20)
+let pendingPickerMethod = 'USDT';
 
 function updateWithdrawalMethodLabelDisplay() {
   const withdrawLabel = document.getElementById('withdraw-selected-method-label');
   if (!withdrawLabel) return;
 
   const lang = getActiveLang();
-  const selectTxt = tLang(lang, 'পছন্দ করুন', 'Select Method', 'اختر الوسيلة');
-  const bkash = getSavedBkashAccount();
-  const nagad = getSavedNagadAccount();
+  const selectTxt = tLang(lang, 'USDT সেট করুন', 'Set USDT Wallet', 'إعداد محفظة USDT');
   const usdt = getSavedUsdtAccount();
+  userSelectedWithdrawMethod = 'USDT';
 
-  if (!userSelectedWithdrawMethod) {
-    if (bkash && bkash.phone) {
-      userSelectedWithdrawMethod = 'BKASH';
-    } else if (nagad && nagad.phone) {
-      userSelectedWithdrawMethod = 'NAGAD';
-    } else if (usdt && usdt.address) {
-      userSelectedWithdrawMethod = 'USDT';
-    } else {
-      withdrawLabel.textContent = selectTxt;
-      withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
-      return;
-    }
-  }
-
-  if (userSelectedWithdrawMethod === 'BKASH') {
-    if (bkash && bkash.phone) {
-      withdrawLabel.textContent = (lang === 'bn' ? 'বিকাশ' : 'bKash') + ` (${bkash.phone})`;
-      withdrawLabel.className = 'text-[#38bdf8] font-bold font-mono';
-    } else {
-      withdrawLabel.textContent = selectTxt;
-      withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
-    }
-  } else if (userSelectedWithdrawMethod === 'NAGAD') {
-    if (nagad && nagad.phone) {
-      withdrawLabel.textContent = (lang === 'bn' ? 'নগদ' : 'Nagad') + ` (${nagad.phone})`;
-      withdrawLabel.className = 'text-[#f7941d] font-bold font-mono';
-    } else {
-      withdrawLabel.textContent = selectTxt;
-      withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
-    }
-  } else if (userSelectedWithdrawMethod === 'USDT') {
-    if (usdt && usdt.address) {
-      const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
-      withdrawLabel.textContent = `USDT (${shortAddr})`;
-      withdrawLabel.className = 'text-[#26a17b] font-bold font-mono';
-    } else {
-      withdrawLabel.textContent = selectTxt;
-      withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
-    }
+  if (usdt && usdt.address) {
+    const shortAddr = usdt.address.length > 12 ? (usdt.address.slice(0, 6) + '...' + usdt.address.slice(-4)) : usdt.address;
+    withdrawLabel.textContent = `USDT (${shortAddr})`;
+    withdrawLabel.className = 'text-[#26a17b] font-bold font-mono';
+  } else {
+    withdrawLabel.textContent = selectTxt;
+    withdrawLabel.className = 'text-slate-300 font-semibold font-[\'Hind_Siliguri\']';
   }
 }
 window.updateWithdrawalMethodLabelDisplay = updateWithdrawalMethodLabelDisplay;
@@ -8269,46 +8227,34 @@ function reconcileUserFrozenBuckets(user) {
   if (!user || (!user.phone && !user.accountNumber)) return false;
   let changed = false;
 
-  const missions = readAcceptedMissions();
-  const completedLv0Sum = missions.reduce(function(sum, m) {
-    if (m && m.status === 'complete' && m.rewardCredited && String(m.level || 'LV0').toUpperCase() === 'LV0') {
-      let rew = Number(m.reward);
-      if (!rew || isNaN(rew)) {
-        rew = toUserCurrencyAmount(packageTaskSettings.LV0 ? packageTaskSettings.LV0.reward : 20, user);
-      } else if (isUsdOnlyUser(user) && m.currency !== 'USD') {
-        rew = toUserCurrencyAmount(rew, user);
-      }
-      return sum + rew;
-    }
-    return sum;
-  }, 0);
+  // Policy: Free (LV0) task earnings & unspent deposits are NEVER frozen.
+  // Balance only becomes frozen when purchasing a VIP package.
+  // Automatically release any legacy lv0FrozenBalance or unspent rechargeFrozenBalance back into available balance.
+  const curFrozen = Number(user.frozenBalance) || 0;
+  const legacyLv0Frozen = Number(user.lv0FrozenBalance) || 0;
+  const legacyRechargeFrozen = Number(user.rechargeFrozenBalance) || 0;
 
-  const prevLv0Frozen = Number(user.lv0FrozenBalance) || 0;
-  const adminUnfrozen = Number(user.adminUnfrozenBalance) || 0;
-  const accountedLv0 = prevLv0Frozen + adminUnfrozen;
-  if (completedLv0Sum > accountedLv0 + 0.001) {
-    const unmigratedLv0 = Number((completedLv0Sum - accountedLv0).toFixed(2));
-    const curAvail = Number(user.balance) || 0;
-    const moveAmt = Math.min(curAvail, unmigratedLv0);
-    if (moveAmt > 0) {
-      user.balance = Number(Math.max(0, curAvail - moveAmt).toFixed(2));
-      user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + moveAmt).toFixed(2));
+  if (legacyLv0Frozen > 0) {
+    const releaseLv0 = Number(Math.min(curFrozen, legacyLv0Frozen).toFixed(2));
+    if (releaseLv0 > 0) {
+      user.frozenBalance = Number(Math.max(0, (Number(user.frozenBalance) || 0) - releaseLv0).toFixed(2));
+      user.balance = Number(((Number(user.balance) || 0) + releaseLv0).toFixed(2));
     }
-    user.lv0FrozenBalance = Number(Math.max(0, completedLv0Sum - adminUnfrozen).toFixed(2));
+    user.lv0FrozenBalance = 0;
     changed = true;
   }
 
-  if (user.rechargeFrozenBalance === null || user.rechargeFrozenBalance === undefined) {
-    let movedRecharge = 0;
-    const uLvl = String(user.packageLevel || 'LV0').toUpperCase();
-    const curAvail = Number(user.balance) || 0;
-    const curRecharge = Number(user.rechargeAmount) || 0;
-    if (uLvl === 'LV0' && curRecharge > 0 && curAvail > 0) {
-      movedRecharge = Number(Math.min(curAvail, curRecharge).toFixed(2));
-      user.balance = Number(Math.max(0, curAvail - movedRecharge).toFixed(2));
-      user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + movedRecharge).toFixed(2));
+  if (legacyRechargeFrozen > 0) {
+    const remFrozen = Number(user.frozenBalance) || 0;
+    const releaseRecharge = Number(Math.min(remFrozen, legacyRechargeFrozen).toFixed(2));
+    if (releaseRecharge > 0) {
+      user.frozenBalance = Number(Math.max(0, remFrozen - releaseRecharge).toFixed(2));
+      user.balance = Number(((Number(user.balance) || 0) + releaseRecharge).toFixed(2));
     }
-    user.rechargeFrozenBalance = movedRecharge;
+    user.rechargeFrozenBalance = 0;
+    changed = true;
+  } else if (user.rechargeFrozenBalance === null || user.rechargeFrozenBalance === undefined) {
+    user.rechargeFrozenBalance = 0;
     changed = true;
   }
 
@@ -9712,13 +9658,8 @@ function checkPendingReviews() {
       const lang = getActiveLang(user);
       if (user) {
         if (totalReward > 0) {
-          if (lv0Reward > 0) {
-            user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + lv0Reward).toFixed(2));
-            user.lv0FrozenBalance = Number(((Number(user.lv0FrozenBalance) || 0) + lv0Reward).toFixed(2));
-          }
-          if (paidReward > 0) {
-            user.balance = Number(((Number(user.balance) || 0) + paidReward).toFixed(2));
-          }
+          // Both free (LV0) and paid (LV1+) task earnings go straight into Available Balance & USDT (never frozen)
+          user.balance = Number(((Number(user.balance) || 0) + totalReward).toFixed(2));
           user.todayIncome = Number(((Number(user.todayIncome) || 0) + totalReward).toFixed(2));
           user.totalIncome = Number(((Number(user.totalIncome) || 0) + totalReward).toFixed(2));
           user.lifetimeEarnings = Number(((Number(user.lifetimeEarnings) || 0) + totalReward).toFixed(2));
@@ -9726,8 +9667,8 @@ function checkPendingReviews() {
 
           const dNow = new Date();
           const methodDesc = lv0Reward > 0 && paidReward === 0
-            ? (isUsd ? `LV0 Free Task Reward (Frozen, ${completedInBatch} tasks)` : `LV0 ফ্রি টাস্ক পুরস্কার (বরফ/হিমায়িত, ${completedInBatch} টি কাজ)`)
-            : (isUsd ? `Task Reward (${completedInBatch} tasks)` : `টাস্ক পুরস্কার (${completedInBatch} টি কাজ)`);
+            ? `LV0 Free Task Reward (${completedInBatch} tasks)`
+            : `Task Reward (${completedInBatch} tasks)`;
           dbRecordTransaction({
             phone: curPhone,
             type: 'mission',
@@ -9761,19 +9702,12 @@ function checkPendingReviews() {
         }
       }
       if (completedInBatch > 0 && typeof showToastNotification === 'function') {
-        const toastMsg = lv0Reward > 0 && paidReward === 0
-          ? tLang(
-              lang,
-              `✓ লাইক যাচাই সফল! ফ্রি (LV0) কাজের ${completedInBatch}টি পুরস্কার হিমায়িত (বরফ) ব্যালেন্সে যোগ হয়েছে। শুধুমাত্র LV1+ কাজের টাকা উপলব্ধ থাকে।`,
-              `✓ Like verified! Reward for ${completedInBatch} free (LV0) task(s) added to Frozen balance. Only LV1+ task earnings are available.`,
-              `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة مجانية (LV0) إلى الرصيد المجمد. أرباح LV1+ فقط متاحة.`
-            )
-          : tLang(
-              lang,
-              `✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার উপলব্ধ ব্যালেন্সে যোগ হয়েছে।`,
-              `✓ Like verified! Reward for ${completedInBatch} task(s) added to Available balance.`,
-              `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة إلى رصيدك المتاح.`
-            );
+        const toastMsg = tLang(
+          lang,
+          `✓ লাইক যাচাই সফল! ${completedInBatch}টি কাজের পুরস্কার আপনার ব্যালেন্স (USDT)-এ যোগ হয়েছে।`,
+          `✓ Like verified! Reward for ${completedInBatch} task(s) added to your Balance (USDT).`,
+          `✓ تم التحقق من الإعجاب! تمت إضافة مكافأة ${completedInBatch} مهمة إلى رصيدك (USDT).`
+        );
         showToastNotification(toastMsg);
       }
       if (failedInBatch > 0 && typeof showToastNotification === 'function') {
@@ -10751,24 +10685,8 @@ document.addEventListener('click', function(event) {
     paymentMethodRow.classList.add('bg-[#0b1f52]', 'ring-1', 'ring-[#35c6e7]/40');
     selectedPaymentMethod = method;
 
-    if (method === 'usdt') {
-      previousDashboardPanel = 'payment-method';
-      openDashboardPanel('usdt-deposit');
-      return;
-    }
-
-    if (method === 'bkash' || method === 'bkash-2') {
-      openBdRechargePage('BKASH');
-      return;
-    }
-
-    if (method === 'nagad') {
-      openBdRechargePage('NAGAD');
-      return;
-    }
-
-    const l = getActiveLang();
-    showToastNotification(tLang(l, `পছন্দ: ${methodName}`, `Selected: ${methodName}`, `تم الاختيار: ${methodName}`));
+    previousDashboardPanel = 'payment-method';
+    openDashboardPanel('usdt-deposit');
     return;
   }
 
@@ -11010,40 +10928,15 @@ document.addEventListener('click', function(event) {
     const label = document.getElementById('withdraw-selected-method-label');
     const selectedMethod = label ? label.textContent.trim() : '';
 
-    if (!userSelectedWithdrawMethod || !selectedMethod || selectedMethod === 'পছন্দ করুন' || selectedMethod === 'Select Method' || selectedMethod === 'اختر الطريقة' || selectedMethod.includes('সেট নেই') || selectedMethod.includes('Not Bound') || selectedMethod.includes('غير مضبوط')) {
-      showToastNotification(tLang(lPre, '⚠️ অনুগ্রহ করে প্রথমে প্রত্যাহার পদ্ধতি পছন্দ করুন', '⚠️ Please select a withdrawal method first', '⚠️ يرجى اختيار طريقة السحب أولاً'));
-      openMethodPicker();
-      return;
-    }
-
-    const bkash = getSavedBkashAccount();
-    const nagad = getSavedNagadAccount();
     const usdt = getSavedUsdtAccount();
+    userSelectedWithdrawMethod = 'USDT';
 
-    if (userSelectedWithdrawMethod === 'USDT' || selectedMethod.includes('USDT')) {
-      if (!usdt || !usdt.address) {
-        showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে USDT (BEP20) সেট করতে হবে', '⚠️ Please set up USDT (BEP20) before withdrawing', '⚠️ يرجى إعداد USDT (BEP20) قبل السحب'));
-        closeWithdrawSheet();
-        previousDashboardPanel = 'my-pass';
-        openDashboardPanel('usdt-setup');
-        return;
-      }
-    } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ') || selectedMethod.includes('Nagad')) {
-      if (!nagad || !nagad.phone) {
-        showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে নগদ সেট করতে হবে', '⚠️ Please set up Nagad before withdrawing', '⚠️ يرجى إعداد Nagad قبل السحب'));
-        closeWithdrawSheet();
-        previousDashboardPanel = 'my-pass';
-        openDashboardPanel('nagad-setup');
-        return;
-      }
-    } else {
-      if (!bkash || !bkash.phone) {
-        showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে বিকাশ সেট করতে হবে', '⚠️ Please set up bKash before withdrawing', '⚠️ يرجى إعداد bKash قبل السحب'));
-        closeWithdrawSheet();
-        previousDashboardPanel = 'my-pass';
-        openDashboardPanel('bkash-setup');
-        return;
-      }
+    if (!usdt || !usdt.address) {
+      showToastNotification(tLang(lPre, '⚠️ উত্তোলন করার পূর্বে USDT (BEP20) সেট করতে হবে', '⚠️ Please set up USDT (BEP20) before withdrawing', '⚠️ يرجى إعداد USDT (BEP20) قبل السحب'));
+      closeWithdrawSheet();
+      previousDashboardPanel = 'my-pass';
+      openDashboardPanel('usdt-setup');
+      return;
     }
 
     const amtInp = document.getElementById('withdraw-sheet-amount');
@@ -11125,9 +11018,9 @@ document.addEventListener('click', function(event) {
         if (amt > liveBal) {
           const insMsg = tLang(
             lang,
-            `⚠️ অপর্যাপ্ত উপলব্ধ ব্যালেন্স! উপলব্ধ: ${formatBanglaNumber(liveBal.toFixed(2))} ${curr} (হিমায়িত/বরফ: ${formatBanglaNumber(liveFrozen.toFixed(2))} ${curr} — LV0 ফ্রি কাজ ও রিচার্জ ব্যালেন্স বরফ থাকে, শুধু LV1+ কাজের টাকা উত্তোলনযোগ্য)।`,
-            `⚠️ Insufficient available balance! Available: ${liveBal.toFixed(2)} ${curr} (Frozen: ${liveFrozen.toFixed(2)} ${curr} — LV0 free task & recharge balances stay frozen; only LV1+ task earnings are withdrawable).`,
-            `⚠️ الرصيد المتاح غير كافٍ! المتاح: ${liveBal.toFixed(2)} ${curr} (المجمد: ${liveFrozen.toFixed(2)} ${curr} — أرباح LV0 المجانية ورصيد الشحن يظلان مجمدين؛ أرباح المهام من LV1+ فقط متاحة).`
+            `⚠️ অপর্যাপ্ত উপলব্ধ ব্যালেন্স! উপলব্ধ: $${liveBal.toFixed(2)} ${curr} (প্যাকেজ হিমায়িত: $${liveFrozen.toFixed(2)} ${curr})।`,
+            `⚠️ Insufficient available balance! Available: $${liveBal.toFixed(2)} ${curr} (Frozen/Package: $${liveFrozen.toFixed(2)} ${curr}).`,
+            `⚠️ الرصيد المتاح غير كافٍ! المتاح: $${liveBal.toFixed(2)} ${curr} (المجمد/الباقة: $${liveFrozen.toFixed(2)} ${curr}).`
           );
           showToastNotification(insMsg);
           if (amtInp) amtInp.focus();
@@ -11144,18 +11037,7 @@ document.addEventListener('click', function(event) {
         const dateStr = now.toISOString().split('T')[0];
         const hours = String(now.getHours()).padStart(2, '0');
         const mins = String(now.getMinutes()).padStart(2, '0');
-        let payoutMethodLabel = lang !== 'bn' ? 'bKash' : 'বিকাশ (bKash)';
-        if (userSelectedWithdrawMethod === 'USDT' || selectedMethod.includes('USDT')) {
-          payoutMethodLabel = (usdt && usdt.address) ? `USDT BEP20 (${usdt.address})` : 'USDT (BEP20)';
-        } else if (userSelectedWithdrawMethod === 'NAGAD' || selectedMethod.includes('নগদ') || selectedMethod.includes('Nagad')) {
-          payoutMethodLabel = (nagad && nagad.phone)
-            ? (lang !== 'bn' ? `Nagad (${nagad.phone})` : `নগদ (${nagad.phone})`)
-            : (lang !== 'bn' ? 'Nagad' : 'নগদ (Nagad)');
-        } else {
-          payoutMethodLabel = (bkash && bkash.phone)
-            ? (lang !== 'bn' ? `bKash (${bkash.phone})` : `বিকাশ (${bkash.phone})`)
-            : (lang !== 'bn' ? 'bKash' : 'বিকাশ (bKash)');
-        }
+        const payoutMethodLabel = (usdt && usdt.address) ? `USDT BEP20 (${usdt.address})` : 'USDT (BEP20)';
 
         const wdNetPct = Number((window.aloPlatformConfig && window.aloPlatformConfig.withdrawNetPercent) || 50);
         const wdNetAmt = amt * (wdNetPct / 100);
@@ -12857,10 +12739,10 @@ function initApp() {
                 await hydrateSessionFromSupabase();
               } else if (creditedAmt > 0) {
                 const liveU = await dbGetUser(currentUser.phone || currentUser.accountNumber) || currentUser;
-                liveU.frozenBalance = Number(((Number(liveU.frozenBalance) || 0) + creditedAmt).toFixed(2));
-                liveU.rechargeFrozenBalance = Number(((Number(liveU.rechargeFrozenBalance) || 0) + creditedAmt).toFixed(2));
+                liveU.balance = Number(((Number(liveU.balance) || 0) + creditedAmt).toFixed(2));
                 liveU.rechargeAmount = Number(((Number(liveU.rechargeAmount) || 0) + creditedAmt).toFixed(2));
                 const mergedU = Object.assign({}, currentUser, liveU);
+                localStorage.setItem('my_pass_available_bal', (Number(mergedU.balance) || 0).toFixed(2));
                 if (typeof saveUser === 'function') saveUser(mergedU);
                 if (typeof dbSaveUser === 'function') await dbSaveUser(mergedU);
                 updateUserDetails(mergedU);
@@ -12875,13 +12757,13 @@ function initApp() {
               if (creditedAmt > 0 && typeof showToastNotification === 'function') {
                 const sym = getUserCurrencySymbol(currentUser);
                 const lToast = getActiveLang(currentUser);
-                const msgAmt = isUsdOnlyUser(currentUser) ? `${sym}${creditedAmt.toFixed(2)} USD` : `${sym} ${creditedAmt.toLocaleString('en-US')}`;
+                const msgAmt = `${sym}${creditedAmt.toFixed(2)} USD`;
                 showToastNotification(
                   tLang(
                     lToast,
-                    `🎉 পেমেন্ট সফল! ${msgAmt} রিচার্জ হিমায়িত (বরফ) ব্যালেন্সে যোগ হয়েছে — প্যাকেজ কিনতে ব্যবহার করুন!`,
-                    `🎉 Payment successful! ${msgAmt} recharge added to Frozen balance — use it to activate a VIP package!`,
-                    `🎉 تم الدفع بنجاح! تمت إضافة ${msgAmt} إلى الرصيد المجمد — استخدمه لتفعيل باقة VIP!`
+                    `🎉 পেমেন্ট সফল! ${msgAmt} আপনার ব্যালেন্সে যোগ হয়েছে!`,
+                    `🎉 Payment successful! ${msgAmt} added to your balance!`,
+                    `🎉 تم الدفع بنجاح! تمت إضافة ${msgAmt} إلى رصيدك!`
                   )
                 );
               }
@@ -13787,10 +13669,11 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
             const creditAmt = isUsd ? Number(newUsdt.toFixed(2)) : Number((newUsdt * activeRate).toFixed(2));
 
             if (user) {
-              user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + creditAmt).toFixed(2));
-              user.rechargeFrozenBalance = Number(((Number(user.rechargeFrozenBalance) || 0) + creditAmt).toFixed(2));
+              // Credit USDT deposit directly into Balance (only freezes upon purchasing a VIP package)
+              user.balance = Number(((Number(user.balance) || 0) + creditAmt).toFixed(2));
               user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmt).toFixed(2));
               user.claimedUsdtOnchain = rawBalance;
+              localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
               if (typeof saveUser === 'function') saveUser(user);
               if (typeof dbSaveUser === 'function') await dbSaveUser(user);
               if (typeof updateUserDetails === 'function') updateUserDetails(user);
@@ -14256,11 +14139,11 @@ function initUsdtDeposit() {
           const isUsd = isUsdOnlyUser(user);
           const creditAmount = isUsd ? Number(usdtAmount.toFixed(2)) : (Number(depositData.bdtAmount) || 0);
 
-          // 1. Credit Recharged Funds to Frozen Balance (withdrawals require LV1+ task earnings)
-          user.frozenBalance = Number(((Number(user.frozenBalance) || 0) + creditAmount).toFixed(2));
-          user.rechargeFrozenBalance = Number(((Number(user.rechargeFrozenBalance) || 0) + creditAmount).toFixed(2));
+          // 1. Credit Recharged USDT Funds directly to Balance (only freezes upon purchasing a VIP package)
+          user.balance = Number(((Number(user.balance) || 0) + creditAmount).toFixed(2));
           user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmount).toFixed(2));
 
+          localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
           localStorage.setItem('aloSignedInUser', JSON.stringify(user));
           if (typeof dbSaveUser === 'function') {
             dbSaveUser(user);

@@ -995,9 +995,9 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
             <!-- Hidden Country & Currency Form Data (Default Bangladesh) -->
             <input type="hidden" id="register-country-code" name="country_code" value="BD">
             <input type="hidden" id="register-country-name" name="country_name" value="Bangladesh">
-            <input type="hidden" id="register-currency-code" name="currency_code" value="BDT">
-            <input type="hidden" id="register-currency-symbol" name="currency_symbol" value="৳">
-            <input type="hidden" id="register-currency-name" name="currency_name" value="Taka">
+            <input type="hidden" id="register-currency-code" name="currency_code" value="USD">
+            <input type="hidden" id="register-currency-symbol" name="currency_symbol" value="$">
+            <input type="hidden" id="register-currency-name" name="currency_name" value="USD">
             <input type="hidden" id="register-dial-code" name="dial_code" value="+880">
 
             <div class="phone-register-row">
@@ -1106,7 +1106,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                       <span id="profile-invite-code" class="notranslate font-bold text-white tracking-wider font-mono text-[13px] sm:text-sm" data-no-translate="true">728207</span>
                     </div>
                     <div class="flex items-center gap-1.5 flex-nowrap whitespace-nowrap pt-0.5">
-                      <span id="profile-country-badge" class="rounded-md px-2 py-0.5 bg-[#0b245c] border border-[#35c6e7]/40 text-[#35c6e7] text-[10px] sm:text-[11px] font-bold shadow-sm inline-flex items-center gap-1 shrink-0">🇧🇩 বাংলাদেশ · BDT (৳)</span>
+                      <span id="profile-country-badge" class="rounded-md px-2 py-0.5 bg-[#0b245c] border border-[#35c6e7]/40 text-[#35c6e7] text-[10px] sm:text-[11px] font-bold shadow-sm inline-flex items-center gap-1 shrink-0">🇧🇩 বাংলাদেশ · USD ($)</span>
                     </div>
                   </div>
                 </div>
@@ -1129,12 +1129,12 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                       <div class="flex items-baseline gap-1">
                         <span class="text-sm font-semibold text-slate-700">ভারসাম্য:</span>
                         <span id="profile-balance-value" class="text-2xl font-black text-[#1877f2] ml-1">0.00</span>
-                        <span id="profile-balance-currency" class="text-xs font-bold text-slate-600 ml-1">BDT</span>
+                        <span id="profile-balance-currency" class="text-xs font-bold text-slate-600 ml-1">USD</span>
                       </div>
                       <div class="flex items-baseline gap-1 mt-0.5">
                         <span class="text-sm font-semibold text-slate-600">USDT:</span>
                         <span class="text-xl font-black text-[#10b981] ml-1">$<span id="profile-usdt-value">0.00</span></span>
-                        <span id="profile-usd-rate-badge" class="text-[10px] font-semibold text-slate-500 ml-1.5">(রেট: ১$ = ১২৬৳)</span>
+                        <span id="profile-usd-rate-badge" class="text-[10px] font-semibold text-slate-500 ml-1.5">($1.00 = 1.00 USDT)</span>
                       </div>
                     </div>
                     <button type="button" class="rounded-lg px-4 py-2.5 text-sm font-bold text-white shadow-md transition cursor-pointer active:scale-95 hover:bg-[#166fe5]" style="background: #1877f2;" data-panel="my-pass">
@@ -1173,47 +1173,47 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
               <!-- 3x3 Grid of 9 Income Cards -->
               <div class="px-4 pt-4">
                 <div class="grid grid-cols-3 divide-x divide-y divide-[#13285c] border border-[#13285c] overflow-hidden shadow-lg" style="background: #08173d;">
-                  <!-- Cell 1: ব্যক্তিগত ভারসাম্য(BDT) -->
+                  <!-- Cell 1: ব্যক্তিগত ভারসাম্য(USD) -->
                   <div class="p-3.5 text-center">
                     <p id="personal-earnings-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="personal-earnings-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>ব্যক্তিগত ভারসাম্য</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>ব্যক্তিগত ভারসাম্য</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
-                  <!-- Cell 2: গতকালের উপার্জন(BDT) -->
+                  <!-- Cell 2: গতকালের উপার্জন(USD) -->
                   <div class="p-3.5 text-center">
                     <p id="yesterday-earnings-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="yesterday-earnings-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>গতকালের উপার্জন</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>গতকালের উপার্জন</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
-                  <!-- Cell 3: আজ উপার্জন(BDT) -->
+                  <!-- Cell 3: আজ উপার্জন(USD) -->
                   <div class="p-3.5 text-center" aria-live="polite">
                     <p id="today-earnings-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="today-earnings-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>আজ উপার্জন</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>আজ উপার্জন</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
-                  <!-- Cell 4: এই সপ্তাহে আয়(BDT) -->
+                  <!-- Cell 4: এই সপ্তাহে আয়(USD) -->
                   <div class="p-3.5 text-center">
                     <p id="weekly-earnings-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="weekly-earnings-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>এই সপ্তাহে আয়</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>এই সপ্তাহে আয়</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
-                  <!-- Cell 5: এই মাসে আয়(BDT) -->
+                  <!-- Cell 5: এই মাসে আয়(USD) -->
                   <div class="p-3.5 text-center">
                     <p id="monthly-earnings-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="monthly-earnings-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>এই মাসে আয়</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>এই মাসে আয়</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
-                  <!-- Cell 6: গত মাসে আয়(BDT) -->
+                  <!-- Cell 6: গত মাসে আয়(USD) -->
                   <div class="p-3.5 text-center">
                     <p id="last-month-earnings-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="last-month-earnings-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>গত মাসে আয়</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>গত মাসে আয়</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
-                  <!-- Cell 7: মোট রাজস্ব(BDT) -->
+                  <!-- Cell 7: মোট রাজস্ব(USD) -->
                   <div class="p-3.5 text-center">
                     <p id="total-revenue-value" class="font-bold text-lg md:text-xl text-[#38bdf8] font-sans tracking-tight">0.00</p>
                     <span id="total-revenue-usd" class="text-[11px] font-semibold text-[#10b981] block font-mono">$0.00</span>
-                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>মোট রাজস্ব</span>(<span class="user-currency-text">BDT</span>)</p>
+                    <p class="mt-0.5 text-[11px] leading-4 text-[#94a3b8]"><span>মোট রাজস্ব</span>(<span class="user-currency-text">USD</span>)</p>
                   </div>
                   <!-- Cell 8: কাজটি আজই সম্পূর্ণ করুন(এক) -->
                   <div class="p-3.5 text-center">
@@ -2516,7 +2516,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
 
               <!-- Main Balance in Cyan -->
               <h2 class="text-4xl font-bold tracking-wide select-all" style="color: #38bdf8; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;" id="my-pass-balance-value">0.00</h2>
-              <p class="text-xs font-semibold text-[#10b981] mt-1" id="my-pass-usd-subtext">≈ $0.00 USD (রেট: ১$ = ১২৬৳)</p>
+              <p class="text-xs font-semibold text-[#10b981] mt-1" id="my-pass-usd-subtext">≈ $0.00 USD</p>
 
               <!-- Status Row: বরফে পরিণত করা & উপলব্ধ -->
               <div class="mt-3 flex items-center justify-center gap-6 text-xs text-white">
@@ -2655,7 +2655,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 <!-- Yellow/Gold Hint Text (Exact copy from user screenshot) -->
                 <div class="px-4 pt-3.5 pb-2.5 space-y-1 text-xs font-normal" style="color: #f59e0b;">
                   <div>মাসিক উত্তোলন 0 frecuencia</div>
-                  <div>BDT উত্তোলন 48-96 ঘণ্টার মধ্যে আসে</div>
+                  <div style="display: none;">BDT উত্তোলন 48-96 ঘণ্টার মধ্যে আসে</div>
                   <div>USDT প্রত্যাহার 12 ঘণ্টার মধ্যে আসে</div>
                 </div>
 
@@ -2803,9 +2803,9 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 </span>
                 <div class="min-w-0 flex-1">
                   <span class="block text-sm font-semibold">দেশ ও কারেন্সি</span>
-                  <span id="personal-country-text" class="text-xs text-slate-300">বাংলাদেশ (Bangladeshi Taka)</span>
+                  <span id="personal-country-text" class="text-xs text-slate-300">বাংলাদেশ (USD)</span>
                 </div>
-                <span id="personal-currency-badge" class="personal-status-badge text-[#35c6e7] bg-[#35c6e7]/15 border border-[#35c6e7]/30 font-bold">BDT · ৳</span>
+                <span id="personal-currency-badge" class="personal-status-badge text-[#35c6e7] bg-[#35c6e7]/15 border border-[#35c6e7]/30 font-bold">USD · $</span>
               </div>
               <button type="button" class="personal-info-row flex w-full items-center gap-3 border-b px-4 py-4 text-left cursor-pointer transition hover:bg-[#0c1f4d]/50" style="border-color: var(--color-profile-border);" data-profile-edit="account" id="personal-account-row">
                 <span class="personal-info-icon" style="--icon-color: var(--color-profile-blue-text);">
@@ -2829,7 +2829,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 <span class="min-w-0 flex-1 text-sm font-semibold">USDT (BEP20)</span>
                 <span class="personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium" id="personal-usdt-status-badge">USDT সেট নেই</span>
               </button>
-              <button type="button" class="personal-info-row flex w-full items-center gap-3 border-b px-4 py-4 text-left cursor-pointer transition hover:bg-[#0c1f4d]/50" style="border-color: var(--color-profile-border);" data-profile-edit="bkash" id="personal-bkash-row">
+              <button type="button" class="personal-info-row flex w-full items-center gap-3 border-b px-4 py-4 text-left cursor-pointer transition hover:bg-[#0c1f4d]/50" style="display: none; border-color: var(--color-profile-border);" data-profile-edit="bkash" id="personal-bkash-row" hidden>
                 <span class="personal-info-icon" style="--icon-color: var(--color-vip-frame);">
                   <svg viewBox="0 0 40 40" aria-hidden="true">
                     <rect width="40" height="40" rx="5" fill="#D4145A"></rect>
@@ -2839,7 +2839,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 <span class="min-w-0 flex-1 text-sm font-semibold">বিকাশ অ্যাকাউন্ট</span>
                 <span class="personal-status-badge text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium" id="personal-bkash-status-badge">বিকাশ সেট নেই</span>
               </button>
-              <button type="button" class="personal-info-row flex w-full items-center gap-3 border-b px-4 py-4 text-left cursor-pointer transition hover:bg-[#0c1f4d]/50" style="border-color: var(--color-profile-border);" data-profile-edit="nagad" id="personal-nagad-row">
+              <button type="button" class="personal-info-row flex w-full items-center gap-3 border-b px-4 py-4 text-left cursor-pointer transition hover:bg-[#0c1f4d]/50" style="display: none; border-color: var(--color-profile-border);" data-profile-edit="nagad" id="personal-nagad-row" hidden>
                 <span class="personal-info-icon" style="--icon-color: #f7941d;">
                   <svg viewBox="0 0 40 40" aria-hidden="true" class="w-full h-full">
                     <rect width="40" height="40" rx="5" fill="#f7941d"></rect>
@@ -3249,7 +3249,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
             </div>
 
             <div class="px-4 mt-3 text-xs text-slate-300/80 leading-relaxed relative z-10">
-              <p>• আপনার জাতীয় পরিচয়পত্র বা ব্যাংক অ্যাকাউন্টে থাকা আসল নাম দিন। এই নাম বিকাশ ও নগদ উভয় অ্যাকাউন্টে এককালীন স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে।</p>
+              <p>• আপনার জাতীয় পরিচয়পত্র বা ওয়ালেটে থাকা আসল নাম দিন। এই নাম আপনার USDT অ্যাকাউন্ট ও প্রোফাইলে এককালীন স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে।</p>
             </div>
 
             <!-- Submit Button: Glowing Blue "সংরক্ষণ" -->
@@ -3420,7 +3420,7 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
               </div>
               <div class="text-center">
                 <p class="text-slate-400 text-[11px]">প্যাকেজ ব্যালেন্স:</p>
-                <p class="font-bold text-[#34d399] text-sm"><span id="records-balance-display">০.০০</span> <span class="user-currency-text">BDT</span></p>
+                <p class="font-bold text-[#34d399] text-sm"><span id="records-balance-display">0.00</span> <span class="user-currency-text">USD</span></p>
               </div>
               <button type="button" id="records-open-deposit-btn" class="px-3 py-1.5 rounded-lg bg-[#10b981] hover:bg-[#059669] text-white font-bold text-xs transition cursor-pointer active:scale-95 shadow">
                 + রিচার্জ
@@ -3450,14 +3450,14 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                   </div>
                 </div>
                 <div>
-                  <label for="custom-deposit-amount" class="block text-slate-300 font-semibold mb-1 text-[11px]">অথবা নির্দিষ্ট পরিমাণ (<span class="user-currency-text">BDT</span>):</label>
+                  <label for="custom-deposit-amount" class="block text-slate-300 font-semibold mb-1 text-[11px]">অথবা নির্দিষ্ট পরিমাণ (<span class="user-currency-text">USD</span>):</label>
                   <input type="number" id="custom-deposit-amount" placeholder="টাকার পরিমাণ লিখুন" class="w-full bg-[#050f28] border border-[#162e66] rounded-lg p-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#35c6e7]">
                 </div>
                 <div>
                   <label class="block text-slate-300 font-semibold mb-1 text-[11px]">পেমেন্ট মেথড:</label>
-                  <div class="grid grid-cols-3 gap-2 text-center text-[10px]" id="inline-recharge-methods-grid">
-                    <span class="bd-only-payment-method py-1 px-1 rounded bg-[#e2136e]/20 text-[#e2136e] font-bold border border-[#e2136e]/40">বিকাশ (bKash)</span>
-                    <span class="bd-only-payment-method py-1 px-1 rounded bg-[#f7931e]/20 text-[#f7931e] font-bold border border-[#f7931e]/40">নগদ (Nagad)</span>
+                  <div class="grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto" id="inline-recharge-methods-grid">
+                    <span class="bd-only-payment-method py-1 px-1 rounded bg-[#e2136e]/20 text-[#e2136e] font-bold border border-[#e2136e]/40" style="display: none;">বিকাশ (bKash)</span>
+                    <span class="bd-only-payment-method py-1 px-1 rounded bg-[#f7931e]/20 text-[#f7931e] font-bold border border-[#f7931e]/40" style="display: none;">নগদ (Nagad)</span>
                     <span class="py-1 px-1 rounded bg-[#26a17b]/20 text-[#26a17b] font-bold border border-[#26a17b]/40" id="inline-usdt-method-badge">USDT (Crypto)</span>
                   </div>
                 </div>
@@ -4115,8 +4115,8 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
             <!-- Payment Methods List -->
             <div class="divide-y divide-[#0e214f]/80 bg-[#06143b] border-b border-[#0e214f] shadow-xl relative z-10">
               
-              <!-- 1. BKASH -->
-              <div class="payment-method-row flex items-center justify-between px-4 py-3.5 hover:bg-[#0b1d4c] active:bg-[#0e2763] transition cursor-pointer select-none" data-payment-method="bkash">
+              <!-- 1. BKASH (Removed — USDT-only global platform) -->
+              <div class="payment-method-row flex items-center justify-between px-4 py-3.5 hover:bg-[#0b1d4c] active:bg-[#0e2763] transition cursor-pointer select-none" data-payment-method="bkash" style="display: none;">
                 <div class="flex items-center gap-3.5 min-w-0">
                   <div class="w-10 h-10 rounded-full bg-[#e2136e] flex items-center justify-center shrink-0 shadow-md">
                     <svg viewBox="0 0 100 100" class="w-6 h-6 fill-white">
@@ -4140,8 +4140,8 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 </div>
               </div>
 
-              <!-- 2. Nagad (Clean without red highlight box) -->
-              <div class="payment-method-row flex items-center justify-between px-4 py-3.5 hover:bg-[#0b1d4c] active:bg-[#0e2763] transition cursor-pointer select-none" data-payment-method="nagad">
+              <!-- 2. Nagad (Removed — USDT-only global platform) -->
+              <div class="payment-method-row flex items-center justify-between px-4 py-3.5 hover:bg-[#0b1d4c] active:bg-[#0e2763] transition cursor-pointer select-none" data-payment-method="nagad" style="display: none;">
                 <div class="flex items-center gap-3.5 min-w-0">
                   <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md p-1">
                     <svg viewBox="0 0 64 64" class="w-7 h-7">
@@ -4163,8 +4163,8 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
                 </div>
               </div>
 
-              <!-- 3. BKAsh-2 -->
-              <div class="payment-method-row flex items-center justify-between px-4 py-3.5 hover:bg-[#0b1d4c] active:bg-[#0e2763] transition cursor-pointer select-none" data-payment-method="bkash-2">
+              <!-- 3. BKAsh-2 (Removed — USDT-only global platform) -->
+              <div class="payment-method-row flex items-center justify-between px-4 py-3.5 hover:bg-[#0b1d4c] active:bg-[#0e2763] transition cursor-pointer select-none" data-payment-method="bkash-2" style="display: none;">
                 <div class="flex items-center gap-3.5 min-w-0">
                   <div class="w-10 h-10 rounded-full bg-[#e2136e] flex items-center justify-center shrink-0 shadow-md">
                     <svg viewBox="0 0 100 100" class="w-6 h-6 fill-white">
@@ -5312,9 +5312,9 @@ html.landing-active,html.landing-active body{background:#071b50!important;color:
 
         <div>
           <label class="block text-slate-300 font-semibold mb-1 text-xs">পেমেন্ট মেথড:</label>
-          <div class="grid grid-cols-3 gap-2 text-center text-[10px]" id="modal-deposit-methods-grid">
-            <span class="bd-only-payment-method py-1.5 px-2 rounded-lg bg-[#e2136e]/20 text-[#e2136e] font-bold border border-[#e2136e]/40">বিকাশ (bKash)</span>
-            <span class="bd-only-payment-method py-1.5 px-2 rounded-lg bg-[#f7931e]/20 text-[#f7931e] font-bold border border-[#f7931e]/40">নগদ (Nagad)</span>
+          <div class="grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto" id="modal-deposit-methods-grid">
+            <span class="bd-only-payment-method py-1.5 px-2 rounded-lg bg-[#e2136e]/20 text-[#e2136e] font-bold border border-[#e2136e]/40" style="display: none;">বিকাশ (bKash)</span>
+            <span class="bd-only-payment-method py-1.5 px-2 rounded-lg bg-[#f7931e]/20 text-[#f7931e] font-bold border border-[#f7931e]/40" style="display: none;">নগদ (Nagad)</span>
             <span class="py-1.5 px-2 rounded-lg bg-[#26a17b]/20 text-[#26a17b] font-bold border border-[#26a17b]/40" id="modal-usdt-method-badge">USDT (Crypto)</span>
           </div>
         </div>
