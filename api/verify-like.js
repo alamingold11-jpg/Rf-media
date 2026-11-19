@@ -49,6 +49,10 @@ export default async function handler(req, res) {
   }
 
   const expectedPlatform = String(body.platform || 'Social Media').trim();
+  const platformLower = expectedPlatform.toLowerCase();
+  const isYouTubeTask = platformLower.includes('youtube') || platformLower.includes('shorts');
+  const isTikTokTask = platformLower.includes('tiktok');
+  const isFacebookTask = platformLower.includes('facebook') || platformLower.includes('fb');
 
   const ai = new GoogleGenAI({
     apiKey,
@@ -59,18 +63,54 @@ export default async function handler(req, res) {
     }
   });
 
-  const promptText = `You are a strict automated screenshot moderator verifying ONLY whether the user clicked "Like" on a ${expectedPlatform} post/video screenshot.
+  let platformRules = '';
+  if (isYouTubeTask) {
+    platformRules = `YOUTUBE / YOUTUBE SHORTS VERIFICATION RULES (READ CAREFULLY):
+- First confirm the screenshot shows a real YouTube or YouTube Shorts video screen (e.g., YouTube logo, youtube.com / m.youtube.com URL bar, Shorts right-side action bar with Like/Comment/Share & Subscribe button, or YouTube watch page).
+- YouTube uses TWO valid Like icon styles depending on App vs Mobile Web (m.youtube.com/shorts) vs Desktop:
+  1) HEART icon (commonly shown on m.youtube.com/shorts mobile web & newer YouTube Shorts right action bar above the like count and Comment icon):
+     - LIKED (isLiked = true): A SOLID FILLED WHITE heart (completely opaque solid white interior, NOT hollow), or a solid filled red/pink/blue heart.
+     - NOT LIKED (isLiked = false): A HOLLOW / OUTLINED heart (thin border stroke only, with empty/transparent center showing the video behind it).
+  2) THUMBS-UP icon (shown on YouTube App Shorts right action bar or below standard YouTube videos):
+     - LIKED (isLiked = true): A SOLID FILLED thumbs-up — solid WHITE on dark mode / Shorts overlay, OR solid BLUE, OR solid BLACK/DARK on light mode (completely filled interior).
+     - NOT LIKED (isLiked = false): A HOLLOW / OUTLINED thumbs-up (thin outline only with empty/transparent interior).
+- CRITICAL: Unlike TikTok (where liked hearts turn red), on YouTube Shorts and YouTube Dark Mode the ACTIVE LIKED icon is SOLID WHITE! Do NOT mark isLiked = false just because the filled heart or thumbs-up is white.
+- If the screenshot is clearly a YouTube / YouTube Shorts video and the Like icon (heart OR thumbs-up) is solidly filled (solid white, blue, dark, or red), return isLiked = true.
+- Return isLiked = false ONLY if:
+  - The Like icon is clearly a hollow unfilled outline (transparent center), OR
+  - No Like icon is visible, OR
+  - It is NOT a YouTube / YouTube Shorts video screen (e.g., blank screen, random photo, selfie, chat screen, or home feed without an open video).
+- Subscribe / Follow is optional — ONLY verify the Like icon state.`;
+  } else if (isTikTokTask) {
+    platformRules = `TIKTOK VERIFICATION RULES:
+- Confirm this is a real TikTok video/reel screen.
+- Check ONLY the Like heart icon on the right action bar:
+  - LIKED (isLiked = true): The heart icon MUST be filled/colored RED or PINK (active liked state).
+  - NOT LIKED (isLiked = false): A white, grey, or hollow/outlined heart means NOT liked.
+- Return isLiked = false if the heart is not red/pink, or if it is a blank screen, random photo, chat screen, or no active Like heart is visible.
+- Follow is optional — ONLY verify whether the Like heart is actively colored red/pink.`;
+  } else if (isFacebookTask) {
+    platformRules = `FACEBOOK VERIFICATION RULES:
+- Confirm this is a real Facebook post, video, or Reels screen.
+- Check ONLY the Like / Reaction button:
+  - LIKED (isLiked = true): The thumbs-up "Like" icon/text MUST be colored/highlighted BLUE (or an active colored Facebook reaction like red Love heart / Care / Haha).
+  - NOT LIKED (isLiked = false): A plain grey or hollow white outline thumbs-up means NOT liked.
+- Return isLiked = false if the Like icon is uncolored/inactive, or if it is a blank screen, random photo, chat screen, or no active Like icon is visible.
+- Follow is optional — ONLY verify whether the Like/reaction button is actively pressed.`;
+  } else {
+    platformRules = `SOCIAL MEDIA VERIFICATION RULES:
+- Confirm this is an authentic social media post/video/reel/shorts screen (${expectedPlatform}).
+- Check ONLY the Like button state:
+  - TikTok: Heart icon on the right action bar MUST be filled RED or PINK (white/grey heart = false).
+  - Facebook: Thumbs-up "Like" button (or reaction like Love/Care) MUST be colored BLUE or active colored reaction (plain grey/white outline = false).
+  - YouTube / YouTube Shorts: The Like icon (either a HEART on m.youtube.com/shorts or a THUMBS-UP on YouTube app/web) MUST be SOLID/FILLED — including SOLID WHITE on dark mode/Shorts, solid blue, or solid dark on light mode (only a hollow unfilled outline = false).
+- Return isLiked = false if the Like icon is unliked/hollow, missing, or if it is a blank screen, random photo, selfie, or chat screen.
+- Follow/subscribe is optional — ONLY verify whether the LIKE icon itself is clearly active/pressed.`;
+  }
 
-Inspect the uploaded screenshot carefully:
-1. Check if this is an authentic social media post/video/reel/shorts screen (especially ${expectedPlatform}: TikTok, Facebook, or YouTube).
-2. Check ONLY the Like button state:
-   - TikTok: The heart icon on the right action bar MUST be filled/colored RED or PINK (active liked state). An empty white/grey heart outline means NOT liked (isLiked = false).
-   - Facebook: The thumbs-up "Like" button (or active Facebook reaction like Love/Care) MUST be colored/highlighted BLUE or active ("Liked"). A plain grey/white outline thumbs-up means NOT liked (isLiked = false).
-   - YouTube: The thumbs-up "Like" icon MUST be solid/filled (solid white on dark mode, solid dark/blue on light mode) rather than a hollow thin outline.
-3. Return isLiked = false if:
-   - The Like/heart icon is unliked / empty outline.
-   - It is a random photo, selfie, wallpaper, blank screen, chat screen, or cropped screenshot where no active Like icon is visible.
-   - Follow/subscribe is optional — ONLY verify whether the LIKE icon itself is clearly active/pressed.
+  const promptText = `You are a precise automated screenshot verifier checking ONLY whether the user clicked "Like" on a ${expectedPlatform} video/post screenshot.
+
+${platformRules}
 
 Respond strictly using the JSON schema.`;
 
@@ -91,14 +131,14 @@ Respond strictly using the JSON schema.`;
           ]
         },
         config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
             properties: {
               isLiked: {
                 type: Type.BOOLEAN,
-                description: 'True only if the screenshot clearly shows an active/filled Like icon on a social media video/post.'
+                description: 'True if the screenshot clearly shows an active/filled Like icon for the expected platform.'
               },
               detectedPlatform: {
                 type: Type.STRING,

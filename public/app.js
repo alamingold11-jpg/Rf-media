@@ -9095,13 +9095,13 @@ function compressMissionScreenshot(file) {
       const image = new Image();
       image.onerror = function() { reject(new Error(errOpen)); };
       image.onload = function() {
-        const maxSide = 900;
+        const maxSide = 1080;
         const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
         const canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.round(image.width * scale));
         canvas.height = Math.max(1, Math.round(image.height * scale));
         canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.72));
+        resolve(canvas.toDataURL('image/jpeg', 0.80));
       };
       image.src = reader.result;
     };
@@ -9566,6 +9566,7 @@ async function verifyMissionScreenshotLike(missionId) {
 
     if (resp.ok && data && data.success) {
       freshTarget.likeVerifyStatus = data.isLiked ? 'valid' : 'invalid';
+      freshTarget.likeVerifyVersion = 2;
       freshTarget.likeVerifyReason = data.reasonBn || (data.isLiked ? 'স্ক্রিনশটে লাইক শনাক্ত হয়েছে' : 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি');
       freshTarget.likeVerifyReasonEn = data.reasonEn || (data.isLiked ? 'Active Like confirmed' : 'Valid Like not found in screenshot');
       freshTarget.likeVerifyReasonAr = data.reasonAr || (data.isLiked ? 'تم تأكيد الإعجاب بنجاح' : 'لم يتم العثور على إعجاب صالح في لقطة الشاشة');
@@ -9642,7 +9643,8 @@ function checkPendingReviews() {
           m.reviewEndsAt = subTime + 15 * 60 * 1000;
         }
 
-        const needsVerification = !m.likeVerifyStatus || m.likeVerifyStatus === 'pending' || (m.likeVerifyStatus === 'error' && (Number(m.likeVerifyAttempts) || 0) < 3);
+        const isLegacyYoutubeInvalid = String(m.platform || '').toLowerCase().includes('youtube') && m.likeVerifyStatus === 'invalid' && (Number(m.likeVerifyVersion) || 0) < 2;
+        const needsVerification = !m.likeVerifyStatus || m.likeVerifyStatus === 'pending' || isLegacyYoutubeInvalid || (m.likeVerifyStatus === 'error' && (Number(m.likeVerifyAttempts) || 0) < 3);
 
         if (now < m.reviewEndsAt) {
           if (needsVerification && m.screenshot && !window._likeVerifyInFlight[m.id]) {
