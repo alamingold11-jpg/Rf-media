@@ -6116,14 +6116,22 @@ function updateRecordsPanelPackages() {
   }
 
   const labels = {
-    dailyTasks: tLang(lang, 'দৈনিক কাজ:', 'Daily Tasks:', 'المهام اليومية:'),
-    perTask: tLang(lang, 'প্রতি কাজ:', 'Per Task:', 'لكل مهمة:'),
-    dailyIncome: tLang(lang, 'দৈনিক আয়:', 'Daily Income:', 'الدخل اليومي:'),
+    dailyTasks: tLang(lang, 'দৈনিক কাজ', 'Daily Tasks', 'المهام اليومية'),
+    perTask: tLang(lang, 'প্রতি কাজ', 'Per Task', 'لكل مهمة'),
+    validTime: tLang(lang, 'মেয়াদ', 'Valid Time', 'الصلاحية'),
+    dailyIncome: tLang(lang, 'দৈনিক আয়', 'Daily Income', 'الدخل اليومي'),
     btnCurrent: tLang(lang, 'বর্তমান স্তর', 'Current Tier', 'المستوى الحالي'),
     btnPurchased: tLang(lang, 'ক্রয় করা হয়েছে ✓', 'Purchased ✓', 'تم الشراء ✓'),
-    btnBuy: tLang(lang, 'প্যাকেজ ক্রয় করুন', 'Buy Package', 'شراء الباقة'),
+    btnBuy: tLang(lang, 'আনলক করুন', 'Unlock now', 'فتح الآن'),
     freeText: tLang(lang, 'ফ্রি', 'Free', 'مجاني'),
     tasksUnit: lang === 'bn' ? 'টি' : ''
+  };
+
+  const formatDurationOnly = function(days, activeLang) {
+    const d = Math.max(1, parseInt(days, 10) || 1);
+    if (activeLang === 'bn') return `${formatBanglaNumber(d)} দিন`;
+    if (activeLang === 'ar') return `${d} ${d >= 3 && d <= 10 ? 'أيام' : 'يوماً'}`;
+    return `${d} ${d === 1 ? 'Day' : 'Days'}`;
   };
 
   const lv0Trial = getLv0TrialStatus(user);
@@ -6139,64 +6147,63 @@ function updateRecordsPanelPackages() {
     const validityDays = Math.max(1, parseInt(pkg.validityDays, 10) || (level === 'LV0' ? 5 : 30));
     const isLv0ExpiredCard = (level === 'LV0' && lv0Trial.isExpired);
 
-    // 1. Update Validity Badge text (live synced from Admin Panel)
-    const validityBadgeEl = card.querySelector('.package-validity-badge');
-    const validityTextEl = card.querySelector('.package-validity-badge .package-validity-text, .package-validity-badge span:last-child');
+    // 1. Update Card Title (LV0 - LV6)
+    const titleEl = card.querySelector('.vip-card-title');
+    if (titleEl) {
+      titleEl.textContent = pkgName || level;
+    }
+
+    // 2. Update Labels
+    const lblTasks = card.querySelector('.vip-label-tasks');
+    const lblPerTask = card.querySelector('.vip-label-pertask');
+    const lblValidity = card.querySelector('.vip-label-validity');
+    const lblIncome = card.querySelector('.vip-label-income');
+    if (lblTasks) lblTasks.textContent = labels.dailyTasks;
+    if (lblPerTask) lblPerTask.textContent = labels.perTask;
+    if (lblValidity) lblValidity.textContent = labels.validTime;
+    if (lblIncome) lblIncome.textContent = labels.dailyIncome;
+
+    // 3. Update Values (Tasks, Per Task, Validity, Daily Income)
+    const valTasks = card.querySelector('.vip-val-tasks');
+    const valPerTask = card.querySelector('.vip-val-pertask');
+    const valIncome = card.querySelector('.vip-val-income');
+    const validityTextEl = card.querySelector('.package-validity-text');
+
+    if (valTasks) {
+      valTasks.textContent = `${formatNumber(pkg.count, user)}${labels.tasksUnit}`;
+    }
+    if (valPerTask) {
+      valPerTask.textContent = isUsd ? `${sym}${formatMoney(pkgReward, user)} ${curr}` : `${formatMoney(pkgReward, user)} ${curr}`;
+    }
     if (validityTextEl) {
-      validityTextEl.textContent = formatValidityLabel(validityDays, lang);
+      validityTextEl.textContent = formatDurationOnly(validityDays, lang);
     }
-    if (validityBadgeEl && level === 'LV0') {
-      validityBadgeEl.className = 'package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-sky-500/20 text-[#38bdf8] select-none';
-    }
-
-    // 1b. Update Package Label per active language (LV0 - LV6)
-    const levelTitleP = card.querySelector('p.text-xs.font-semibold');
-    if (levelTitleP) {
-      levelTitleP.textContent = pkgName || level;
+    if (valIncome) {
+      valIncome.textContent = isUsd ? `${sym}${formatMoney(pkgDaily, user)} ${curr}` : `${formatMoney(pkgDaily, user)} ${curr}`;
     }
 
-    // 2. Update Price
-    const priceEl = card.querySelector('h3');
-    if (priceEl) {
-      if (pkg.price === 0) {
-        priceEl.textContent = isUsd ? `$0.00 ${curr} (${labels.freeText})` : `${formatNumber(0, user)} ${curr} (${labels.freeText})`;
-      } else {
-        priceEl.textContent = isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${formatNumber(pkgPrice, user)} ${curr}`;
-      }
-    }
+    // 4. Update Centered CTA Button (Price + Action matching layout)
+    const priceLabel = pkg.price === 0
+      ? (isUsd ? `$0.00 ${labels.freeText}` : `${formatNumber(0, user)} ${labels.freeText}`)
+      : (isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${formatNumber(pkgPrice, user)} ${curr}`);
 
-    // 3. Update Metrics Grid
-    const metricSpans = card.querySelectorAll('.text-slate-400, .text-slate-300');
-    if (metricSpans.length >= 3) {
-      metricSpans[0].textContent = labels.dailyTasks;
-      metricSpans[1].textContent = labels.perTask;
-      metricSpans[2].textContent = labels.dailyIncome;
-    }
-    const metricValues = card.querySelectorAll('strong');
-    if (metricValues.length >= 3) {
-      metricValues[0].textContent = `${formatNumber(pkg.count, user)}${labels.tasksUnit}`;
-      metricValues[1].textContent = isUsd ? `${sym}${formatMoney(pkgReward, user)} ${curr}` : `${formatMoney(pkgReward, user)} ${curr}`;
-      metricValues[2].textContent = isUsd ? `${sym}${formatMoney(pkgDaily, user)} ${curr}` : `${formatMoney(pkgDaily, user)} ${curr}`;
-    }
-
-    // 4. Update Button
     const btn = card.querySelector('[data-buy-package]');
     if (btn) {
       const isCurrent = (level === userLevel);
       const isPurchased = (user && user.purchasedPackages && user.purchasedPackages.includes(level));
 
       if (isCurrent) {
-        btn.textContent = labels.btnCurrent;
+        btn.textContent = `${priceLabel} · ${labels.btnCurrent}`;
         btn.disabled = true;
-        btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-slate-700/60 text-slate-300 cursor-default';
+        btn.className = 'package-card-btn vip-card-cta vip-card-cta--current';
       } else if (isPurchased) {
         btn.textContent = labels.btnPurchased;
         btn.disabled = true;
-        btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-emerald-700/60 text-emerald-200 cursor-default';
+        btn.className = 'package-card-btn vip-card-cta vip-card-cta--purchased';
       } else {
-        btn.textContent = labels.btnBuy;
+        btn.textContent = `${priceLabel} · ${labels.btnBuy}`;
         btn.disabled = false;
-        btn.className = 'package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold shadow bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95 cursor-pointer';
+        btn.className = 'package-card-btn vip-card-cta vip-card-cta--buy';
       }
     }
 

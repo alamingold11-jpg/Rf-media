@@ -653,6 +653,58 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #profile-nav-options .profile-nav-group-label{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#7f8fb0}
 .no-scrollbar::-webkit-scrollbar{display:none}
 .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none}
+/* VIP Panel: Site-Palette Glass Cards + Moving TikTok/Facebook/YouTube Reels Backdrop */
+#records-panel{position:relative;isolation:isolate;z-index:1;background:#040c22}
+#records-panel[hidden] .vip-reels-backdrop{display:none!important}
+#records-panel .vip-reels-backdrop{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,430px);z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(circle at 50% 15%,#0b1e4d 0%,#040c22 72%)}
+#records-panel .vip-reels-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:0 8px;height:100%;width:100%;opacity:.82}
+#records-panel .vip-reels-col{position:relative;height:100%;overflow:hidden}
+#records-panel .vip-reels-track{display:flex;flex-direction:column;gap:10px;will-change:transform}
+#records-panel .vip-reels-col--up .vip-reels-track{animation:vip-reel-scroll-up 28s linear infinite}
+#records-panel .vip-reels-col--down .vip-reels-track{animation:vip-reel-scroll-down 34s linear infinite}
+#records-panel .vip-reels-col--up-fast .vip-reels-track{animation:vip-reel-scroll-up 24s linear infinite}
+@keyframes vip-reel-scroll-up{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(0,-50%,0)}}
+@keyframes vip-reel-scroll-down{0%{transform:translate3d(0,-50%,0)}100%{transform:translate3d(0,0,0)}}
+#records-panel .vip-reel-tile{position:relative;aspect-ratio:9/15;border-radius:12px;overflow:hidden;border:1px solid rgba(56,189,248,.22);padding:8px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 0 24px rgba(2,8,24,.55)}
+#records-panel .vip-reel-tile::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 22%,rgba(255,255,255,.16) 0%,transparent 48%),linear-gradient(180deg,rgba(3,10,28,.12) 0%,rgba(3,10,28,.62) 100%);pointer-events:none}
+#records-panel .vip-reel-tile--tt{background:linear-gradient(160deg,#082047 0%,#0c173d 48%,#2b1036 100%);border-color:rgba(37,244,238,.28)}
+#records-panel .vip-reel-tile--fb{background:linear-gradient(160deg,#0c2f7a 0%,#081c4d 52%,#0b2b68 100%);border-color:rgba(56,189,248,.34)}
+#records-panel .vip-reel-tile--yt{background:linear-gradient(160deg,#30102d 0%,#0c1942 52%,#0a1e52 100%);border-color:rgba(248,113,113,.28)}
+#records-panel .vip-reel-head{position:relative;z-index:1;display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;letter-spacing:.03em;color:rgba(238,244,255,.9)}
+#records-panel .vip-reel-head svg{width:13px;height:13px;flex:none}
+#records-panel .vip-reel-center{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;margin:auto 0;padding-top:4px}
+#records-panel .vip-reel-play{width:28px;height:28px;border-radius:9999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);display:flex;align-items:center;justify-content:center;margin:0 auto;color:#fff}
+#records-panel .vip-reel-play svg{width:11px;height:11px;margin-left:1.5px}
+#records-panel .vip-reel-actions{position:absolute;right:0;bottom:-12px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.68}
+#records-panel .vip-reel-actions span{width:11px;height:11px;border-radius:9999px;background:rgba(226,238,255,.26);border:1px solid rgba(255,255,255,.22);display:block}
+#records-panel .vip-reel-foot{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px}
+#records-panel .vip-reel-handle{font-size:8.5px;font-weight:700;color:rgba(226,238,255,.84);letter-spacing:.01em}
+#records-panel .vip-reel-bar{height:2.5px;width:100%;border-radius:9999px;background:rgba(255,255,255,.15);overflow:hidden}
+#records-panel .vip-reel-bar i{display:block;height:100%;width:58%;border-radius:9999px;background:linear-gradient(90deg,#1877f2,#38bdf8)}
+#records-panel .vip-reel-tile--tt .vip-reel-bar i{background:linear-gradient(90deg,#25f4ee,#fe2c55)}
+#records-panel .vip-reel-tile--yt .vip-reel-bar i{background:linear-gradient(90deg,#ef4444,#38bdf8)}
+#records-panel .vip-reels-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,12,34,.52) 0%,rgba(5,15,42,.58) 50%,rgba(4,12,34,.72) 100%)}
+#records-panel .vip-panel-foreground{position:relative;z-index:2}
+#records-panel .vip-reel-card{position:relative;overflow:hidden;border-radius:16px;padding:16px 18px 18px;background:rgba(4,13,36,.87);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.25px solid rgba(56,189,248,.56);box-shadow:0 10px 28px rgba(2,9,28,.62),inset 0 1px 0 rgba(125,211,252,.18);color:#ffffff;transition:border-color .2s ease,transform .18s ease,box-shadow .2s ease;cursor:pointer}
+#records-panel .vip-reel-card:hover{border-color:rgba(56,189,248,.88);box-shadow:0 12px 30px rgba(24,119,242,.3),inset 0 1px 0 rgba(125,211,252,.25)}
+#records-panel .vip-reel-card:active{transform:scale(.992)}
+#records-panel .vip-card-title{text-align:center;font-size:20px;font-weight:800;letter-spacing:.04em;color:#ffffff;line-height:1.25;padding-bottom:10px;margin:0 0 12px;border-bottom:1.5px dotted rgba(56,189,248,.48);text-shadow:0 1px 10px rgba(56,189,248,.28)}
+#records-panel .vip-card-rows{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+#records-panel .vip-card-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;line-height:1.35}
+#records-panel .vip-card-row:last-child{background:linear-gradient(90deg,rgba(24,119,242,.22),rgba(56,189,248,.16));border:1px solid rgba(56,189,248,.36);border-radius:10px;padding:7px 11px;margin-top:2px}
+#records-panel .vip-card-label{color:#dbeafe;font-weight:600;font-size:14px}
+#records-panel .vip-label-tasks,#records-panel .vip-label-income{color:#ffffff;font-weight:700;font-size:14.5px}
+#records-panel .vip-card-val{color:#ffffff;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;text-align:right;text-shadow:0 1px 4px rgba(2,8,24,.65)}
+#records-panel .vip-val-tasks{color:#7dd3fc;font-weight:800;font-size:16.5px;text-shadow:0 0 12px rgba(125,211,252,.38)}
+#records-panel .vip-card-val--accent{color:#38bdf8;font-weight:900;font-size:17.5px;letter-spacing:.01em;text-shadow:0 0 14px rgba(56,189,248,.55)}
+#records-panel .vip-card-cta-wrap{display:flex;justify-content:center}
+#records-panel .vip-card-cta{min-height:44px;min-width:78%;max-width:100%;padding:10px 22px;border-radius:9999px;font-size:14.5px;font-weight:800;letter-spacing:.015em;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s ease,filter .18s ease,box-shadow .18s ease;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(2,10,30,.35)}
+#records-panel .vip-card-cta--buy{background:linear-gradient(90deg,#1877f2 0%,#229ef5 55%,#38bdf8 100%);color:#ffffff;border:1px solid rgba(186,230,253,.45);box-shadow:0 6px 18px rgba(24,119,242,.46);cursor:pointer}
+#records-panel .vip-card-cta--buy:hover{filter:brightness(1.07);box-shadow:0 8px 22px rgba(56,189,248,.46)}
+#records-panel .vip-card-cta--buy:active{transform:scale(.97)}
+#records-panel .vip-card-cta--current{background:rgba(15,38,88,.9);color:#e0f2fe;border:1px solid rgba(56,189,248,.45);cursor:default}
+#records-panel .vip-card-cta--purchased{background:rgba(12,56,98,.9);color:#bae6fd;border:1px solid rgba(56,189,248,.55);cursor:default}
+@media (prefers-reduced-motion:reduce){#records-panel .vip-reels-track{animation:none!important}#records-panel .vip-reel-card,#records-panel .vip-card-cta{transition:none}}
 </style>
   <script type="module" src="/src/init.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-DNTUc__U.css">
@@ -3010,279 +3062,411 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
               </div>
             </div>
           </div>
-          <section id="records-panel" class="dashboard-panel space-y-4" aria-label="প্যাকেজসমূহ" hidden>
-            <!-- User Status & Balance Header in Packages -->
-            <div class="p-3 rounded-xl bg-[#0c1f4d] border border-[#1b3b80] flex items-center justify-between text-xs shadow-md">
-              <div>
-                <p class="text-slate-400 text-[11px]">আপনার বর্তমান স্তর:</p>
-                <p class="font-bold text-[#38bdf8] text-sm" id="records-current-level-display">LV0</p>
+          <section id="records-panel" class="dashboard-panel -mx-4 -mt-4 -mb-4 px-4 pt-3.5 pb-24 min-h-[100dvh]" aria-label="প্যাকেজসমূহ" hidden>
+            <!-- Animated Moving TikTok, Facebook Reels & YouTube Shorts Backdrop -->
+            <div class="vip-reels-backdrop" aria-hidden="true">
+              <div class="vip-reels-grid">
+                <!-- Column 1 (Scrolls Up) -->
+                <div class="vip-reels-col vip-reels-col--up">
+                  <div class="vip-reels-track">
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.tiktok · 84K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.reels · 52K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.shorts · 110K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.live · 63K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <!-- Duplicate set for seamless loop -->
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.tiktok · 84K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.reels · 52K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.shorts · 110K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.live · 63K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Column 2 (Scrolls Down) -->
+                <div class="vip-reels-col vip-reels-col--down">
+                  <div class="vip-reels-track">
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.fb · 91K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.media · 142K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.viral · 218K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.trend · 77K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <!-- Duplicate set for seamless loop -->
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.fb · 91K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.media · 142K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.viral · 218K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.trend · 77K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Column 3 (Scrolls Up Faster) -->
+                <div class="vip-reels-col vip-reels-col--up-fast">
+                  <div class="vip-reels-track">
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.studio · 129K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.clips · 95K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.watch · 68K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.pro · 164K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <!-- Duplicate set for seamless loop -->
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.studio · 129K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--tt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64c.298 0 .593.046.87.14V9.4a6.33 6.33 0 00-1-.08A6.34 6.34 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1.04-.1z"/></svg><span>TikTok</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.clips · 95K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--fb">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/></svg><span>Reels</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.watch · 68K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                    <div class="vip-reel-tile vip-reel-tile--yt">
+                      <div class="vip-reel-head"><svg viewBox="0 0 24 24" fill="#ef4444"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2 31.4 31.4 0 000 12a31.4 31.4 0 00.5 5.8 3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1A31.4 31.4 0 0024 12a31.4 31.4 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg><span>Shorts</span></div>
+                      <div class="vip-reel-center"><div class="vip-reel-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="vip-reel-actions"><span></span><span></span><span></span></div></div>
+                      <div class="vip-reel-foot"><span class="vip-reel-handle">@pw.pro · 164K</span><div class="vip-reel-bar"><i></i></div></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="text-center">
-                <p class="text-slate-400 text-[11px]">প্যাকেজ ব্যালেন্স:</p>
-                <p class="font-bold text-[#34d399] text-sm"><span id="records-balance-display">0.00</span> <span class="user-currency-text">USD</span></p>
-              </div>
-              <button type="button" id="records-open-deposit-btn" class="px-3 py-1.5 rounded-lg bg-[#10b981] hover:bg-[#059669] text-white font-bold text-xs transition cursor-pointer active:scale-95 shadow">
-                + রিচার্জ
-              </button>
+              <div class="vip-reels-scrim"></div>
             </div>
 
-            <!-- In-Page Animated Recharge Drawer (Hidden by default; unique IDs to prevent modal collision) -->
-            <div id="inline-recharge-drawer" class="hidden rounded-2xl border border-[#123b8d] shadow-2xl overflow-hidden transition-all duration-300" style="background: linear-gradient(135deg, #071b50 0%, #0c2364 100%);">
-              <div class="p-4 space-y-3.5">
-                <div class="flex items-center justify-between border-b border-[#123b8d]/70 pb-2.5">
-                  <h3 class="text-xs font-bold text-white flex items-center gap-2">
-                    <span>ব্যালেন্স রিচার্জ (USDT)</span>
-                  </h3>
-                  <button type="button" id="close-inline-recharge-btn" class="text-slate-400 hover:text-white p-1 text-xs cursor-pointer">
-                    ✕ বন্ধ করুন
+            <!-- Foreground Content Stack -->
+            <div class="vip-panel-foreground space-y-4">
+              <!-- User Status & Balance Header in Packages -->
+              <div class="p-3.5 rounded-2xl bg-[#06153c]/82 backdrop-blur-md border border-[#38bdf8]/35 flex items-center justify-between text-xs shadow-[0_8px_24px_rgba(3,10,28,0.5)]">
+                <div>
+                  <p class="text-[#9fb7df] text-[11px]">আপনার বর্তমান স্তর:</p>
+                  <p class="font-bold text-[#38bdf8] text-sm" id="records-current-level-display">LV0</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-[#9fb7df] text-[11px]">প্যাকেজ ব্যালেন্স:</p>
+                  <p class="font-bold text-white text-sm"><span id="records-balance-display">0.00</span> <span class="user-currency-text text-[#38bdf8]">USD</span></p>
+                </div>
+                <button type="button" id="records-open-deposit-btn" class="min-h-[38px] px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#1877f2] to-[#38bdf8] hover:brightness-110 text-white font-bold text-xs transition cursor-pointer active:scale-95 shadow-md shadow-[#1877f2]/35">
+                  + রিচার্জ
+                </button>
+              </div>
+
+              <!-- In-Page Animated Recharge Drawer (Hidden by default; unique IDs to prevent modal collision) -->
+              <div id="inline-recharge-drawer" class="hidden rounded-2xl border border-[#38bdf8]/40 shadow-2xl overflow-hidden transition-all duration-300 backdrop-blur-md" style="background: linear-gradient(135deg, rgba(7,27,80,0.94) 0%, rgba(12,35,100,0.94) 100%);">
+                <div class="p-4 space-y-3.5">
+                  <div class="flex items-center justify-between border-b border-[#123b8d]/70 pb-2.5">
+                    <h3 class="text-xs font-bold text-white flex items-center gap-2">
+                      <span>ব্যালেন্স রিচার্জ (USDT)</span>
+                    </h3>
+                    <button type="button" id="close-inline-recharge-btn" class="text-slate-400 hover:text-white p-1 text-xs cursor-pointer">
+                      ✕ বন্ধ করুন
+                    </button>
+                  </div>
+                  <div>
+                    <label class="block text-slate-300 font-semibold mb-1 text-[11px]">রিচার্জের পরিমাণ নির্বাচন করুন (USD):</label>
+                    <div class="grid grid-cols-3 gap-2">
+                      <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="10">+$10</button>
+                      <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="28">+$28 (LV1)</button>
+                      <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="60">+$60 (LV2)</button>
+                      <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="100">+$100</button>
+                      <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="286">+$286 (LV3)</button>
+                      <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="667">+$667 (LV4)</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label for="inline-custom-deposit-amount" class="block text-slate-300 font-semibold mb-1 text-[11px]">অথবা নির্দিষ্ট পরিমাণ (<span class="user-currency-text">USD</span>):</label>
+                    <input type="number" id="inline-custom-deposit-amount" placeholder="পরিমাণ লিখুন ($ USD)" class="w-full bg-[#050f28] border border-[#162e66] rounded-lg p-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#35c6e7]">
+                  </div>
+                  <div>
+                    <label class="block text-slate-300 font-semibold mb-1 text-[11px]">পেমেন্ট মেথড:</label>
+                    <div class="grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto" id="inline-recharge-methods-grid">
+                      <span class="bd-only-payment-method py-1 px-1 rounded bg-[#e2136e]/20 text-[#e2136e] font-bold border border-[#e2136e]/40" style="display: none;">বিকাশ (bKash)</span>
+                      <span class="bd-only-payment-method py-1 px-1 rounded bg-[#f7931e]/20 text-[#f7931e] font-bold border border-[#f7931e]/40" style="display: none;">নগদ (Nagad)</span>
+                      <span class="py-1 px-1 rounded bg-[#26a17b]/20 text-[#26a17b] font-bold border border-[#26a17b]/40" id="inline-usdt-method-badge">USDT (BEP20)</span>
+                    </div>
+                  </div>
+                  <p id="inline-deposit-status-message" class="text-center font-bold text-xs min-h-4 text-[#38bdf8]"></p>
+                  <button type="button" id="inline-confirm-deposit-btn" class="w-full py-2.5 rounded-full bg-gradient-to-r from-[#1877f2] to-[#38bdf8] hover:brightness-110 text-white text-xs font-bold transition cursor-pointer active:scale-95 shadow">
+                    রিচার্জ সম্পন্ন করুন
                   </button>
                 </div>
-                <div>
-                  <label class="block text-slate-300 font-semibold mb-1 text-[11px]">রিচার্জের পরিমাণ নির্বাচন করুন (USD):</label>
-                  <div class="grid grid-cols-3 gap-2">
-                    <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="10">+$10</button>
-                    <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="28">+$28 (LV1)</button>
-                    <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="60">+$60 (LV2)</button>
-                    <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="100">+$100</button>
-                    <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="286">+$286 (LV3)</button>
-                    <button type="button" class="quick-deposit-amt py-2 px-1 rounded-lg bg-[#0e2a66] hover:bg-[#133785] border border-[#1b3e85] text-white font-bold text-xs transition cursor-pointer text-center" data-amount="667">+$667 (LV4)</button>
+              </div>
+
+              <!-- VIP Package Cards Stack -->
+              <div class="vip-cards-stack space-y-4">
+                <!-- LV0: Free Package -->
+                <article class="vip-reel-card" data-record-package="LV0">
+                  <h3 class="vip-card-title">LV0</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">5টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.16 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV0"><span class="package-validity-text">৫ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$0.80 USD</strong>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label for="inline-custom-deposit-amount" class="block text-slate-300 font-semibold mb-1 text-[11px]">অথবা নির্দিষ্ট পরিমাণ (<span class="user-currency-text">USD</span>):</label>
-                  <input type="number" id="inline-custom-deposit-amount" placeholder="পরিমাণ লিখুন ($ USD)" class="w-full bg-[#050f28] border border-[#162e66] rounded-lg p-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#35c6e7]">
-                </div>
-                <div>
-                  <label class="block text-slate-300 font-semibold mb-1 text-[11px]">পেমেন্ট মেথড:</label>
-                  <div class="grid grid-cols-1 gap-2 text-center text-[10px] max-w-[200px] mx-auto" id="inline-recharge-methods-grid">
-                    <span class="bd-only-payment-method py-1 px-1 rounded bg-[#e2136e]/20 text-[#e2136e] font-bold border border-[#e2136e]/40" style="display: none;">বিকাশ (bKash)</span>
-                    <span class="bd-only-payment-method py-1 px-1 rounded bg-[#f7931e]/20 text-[#f7931e] font-bold border border-[#f7931e]/40" style="display: none;">নগদ (Nagad)</span>
-                    <span class="py-1 px-1 rounded bg-[#26a17b]/20 text-[#26a17b] font-bold border border-[#26a17b]/40" id="inline-usdt-method-badge">USDT (BEP20)</span>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--current" data-buy-package="LV0">
+                      $0.00 ফ্রি · বর্তমান স্তর
+                    </button>
                   </div>
-                </div>
-                <p id="inline-deposit-status-message" class="text-center font-bold text-xs min-h-4 text-[#38bdf8]"></p>
-                <button type="button" id="inline-confirm-deposit-btn" class="w-full py-2.5 rounded-lg bg-[#10b981] hover:bg-[#059669] text-white text-xs font-bold transition cursor-pointer active:scale-95 shadow">
-                  রিচার্জ সম্পন্ন করুন
-                </button>
+                </article>
+
+                <!-- LV1 -->
+                <article class="vip-reel-card" data-record-package="LV1">
+                  <h3 class="vip-card-title">LV1</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">6টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.24 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV1"><span class="package-validity-text">৩০ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$1.44 USD</strong>
+                    </div>
+                  </div>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--buy" data-buy-package="LV1">
+                      $27.78 USD · আনলক করুন
+                    </button>
+                  </div>
+                </article>
+
+                <!-- LV2 -->
+                <article class="vip-reel-card" data-record-package="LV2">
+                  <h3 class="vip-card-title">LV2</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">12টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.32 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV2"><span class="package-validity-text">৩০ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$3.84 USD</strong>
+                    </div>
+                  </div>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--buy" data-buy-package="LV2">
+                      $59.52 USD · আনলক করুন
+                    </button>
+                  </div>
+                </article>
+
+                <!-- LV3 -->
+                <article class="vip-reel-card" data-record-package="LV3">
+                  <h3 class="vip-card-title">LV3</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">15টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.40 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV3"><span class="package-validity-text">৩০ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$6.00 USD</strong>
+                    </div>
+                  </div>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--buy" data-buy-package="LV3">
+                      $285.71 USD · আনলক করুন
+                    </button>
+                  </div>
+                </article>
+
+                <!-- LV4 -->
+                <article class="vip-reel-card" data-record-package="LV4">
+                  <h3 class="vip-card-title">LV4</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">25টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.48 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV4"><span class="package-validity-text">৩০ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$12.00 USD</strong>
+                    </div>
+                  </div>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--buy" data-buy-package="LV4">
+                      $666.67 USD · আনলক করুন
+                    </button>
+                  </div>
+                </article>
+
+                <!-- LV5 -->
+                <article class="vip-reel-card" data-record-package="LV5">
+                  <h3 class="vip-card-title">LV5</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">35টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.56 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV5"><span class="package-validity-text">৩০ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$19.60 USD</strong>
+                    </div>
+                  </div>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--buy" data-buy-package="LV5">
+                      $1,190.48 USD · আনলক করুন
+                    </button>
+                  </div>
+                </article>
+
+                <!-- LV6 -->
+                <article class="vip-reel-card" data-record-package="LV6">
+                  <h3 class="vip-card-title">LV6</h3>
+                  <div class="vip-card-rows">
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-tasks">দৈনিক কাজ</span>
+                      <strong class="vip-card-val vip-val-tasks">50টি</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-pertask">প্রতি কাজ</span>
+                      <strong class="vip-card-val vip-val-pertask">$0.79 USD</strong>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-validity">মেয়াদ</span>
+                      <span class="vip-card-val package-validity-badge" data-validity-level="LV6"><span class="package-validity-text">৩০ দিন</span></span>
+                    </div>
+                    <div class="vip-card-row">
+                      <span class="vip-card-label vip-label-income">দৈনিক আয়</span>
+                      <strong class="vip-card-val vip-card-val--accent vip-val-income">$39.50 USD</strong>
+                    </div>
+                  </div>
+                  <div class="vip-card-cta-wrap">
+                    <button type="button" class="package-card-btn vip-card-cta vip-card-cta--buy" data-buy-package="LV6">
+                      $2,380.95 USD · আনলক করুন
+                    </button>
+                  </div>
+                </article>
               </div>
             </div>
-
-            <!-- LV0: Free Package -->
-            <article class="dashboard-card overflow-hidden p-4 relative" data-record-package="LV0" style="border-color: #1e3a8a; background: linear-gradient(120deg, #0e2764, #08173d); color: var(--color-primary-contrast); box-shadow: 0 8px 24px rgba(14,39,100,0.3);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-sky-500/20 text-[#38bdf8] select-none" data-validity-level="LV0">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৫ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV0</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$0.00 USD (ফ্রি)</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer" data-buy-package="LV0">
-                  বর্তমান স্তর
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 20%, transparent);">
-                <div>
-                  <span class="text-slate-400">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">5</strong>
-                </div>
-                <div>
-                  <span class="text-slate-400">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.16</strong>
-                </div>
-                <div>
-                  <span class="text-slate-400">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$0.80</strong>
-                </div>
-              </div>
-            </article>
-
-            <!-- LV1 -->
-            <article class="dashboard-card overflow-hidden p-4" data-record-package="LV1" style="border-color: var(--color-vip-card-blue); background: linear-gradient(120deg, var(--color-vip-card-blue), var(--color-profile-blue)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-profile-blue) 28%, transparent);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-white/15 text-sky-100 select-none" data-validity-level="LV1">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৩০ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV1</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$27.78 USD</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95" data-buy-package="LV1">
-                  প্যাকেজ ক্রয় করুন
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 28%, transparent);">
-                <div>
-                  <span class="text-slate-300">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">6</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.24</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$1.44</strong>
-                </div>
-              </div>
-            </article>
-
-            <!-- LV2 -->
-            <article class="dashboard-card overflow-hidden p-4" data-record-package="LV2" style="border-color: var(--color-vip-card-sand); background: linear-gradient(120deg, var(--color-vip-card-sand), var(--color-vip-muted)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-vip-muted) 24%, transparent);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-white/15 text-sky-100 select-none" data-validity-level="LV2">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৩০ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV2</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$59.52 USD</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95" data-buy-package="LV2">
-                  প্যাকেজ ক্রয় করুন
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 28%, transparent);">
-                <div>
-                  <span class="text-slate-300">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">12</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.32</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$3.84</strong>
-                </div>
-              </div>
-            </article>
-
-            <!-- LV3 -->
-            <article class="dashboard-card overflow-hidden p-4" data-record-package="LV3" style="border-color: var(--color-vip-frame); background: linear-gradient(120deg, var(--color-vip-frame), var(--color-primary)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-vip-frame) 30%, transparent);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-white/15 text-sky-100 select-none" data-validity-level="LV3">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৩০ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV3</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$285.71 USD</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95" data-buy-package="LV3">
-                  প্যাকেজ ক্রয় করুন
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 28%, transparent);">
-                <div>
-                  <span class="text-slate-300">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">15</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.40</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$6.00</strong>
-                </div>
-              </div>
-            </article>
-
-            <!-- LV4 -->
-            <article class="dashboard-card overflow-hidden p-4" data-record-package="LV4" style="border-color: var(--color-profile-blue-text); background: linear-gradient(120deg, var(--color-profile-blue), var(--color-profile-bg)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-profile-blue-text) 26%, transparent);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-white/15 text-sky-100 select-none" data-validity-level="LV4">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৩০ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV4</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$666.67 USD</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95" data-buy-package="LV4">
-                  প্যাকেজ ক্রয় করুন
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 28%, transparent);">
-                <div>
-                  <span class="text-slate-300">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">25</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.48</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$12.00</strong>
-                </div>
-              </div>
-            </article>
-
-            <!-- LV5 -->
-            <article class="dashboard-card overflow-hidden p-4" data-record-package="LV5" style="border-color: var(--color-vip-card-purple); background: linear-gradient(120deg, var(--color-vip-card-purple), var(--color-profile-blue)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-vip-card-purple) 28%, transparent);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-white/15 text-sky-100 select-none" data-validity-level="LV5">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৩০ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV5</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$1,190.48 USD</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95" data-buy-package="LV5">
-                  প্যাকেজ ক্রয় করুন
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 28%, transparent);">
-                <div>
-                  <span class="text-slate-300">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">35</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.56</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$19.60</strong>
-                </div>
-              </div>
-            </article>
-
-            <!-- LV6 -->
-            <article class="dashboard-card overflow-hidden p-4" data-record-package="LV6" style="border-color: var(--color-profile-cyan); background: linear-gradient(120deg, var(--color-profile-cyan), var(--color-profile-blue)); color: var(--color-primary-contrast); box-shadow: 0 8px 24px color-mix(in srgb, var(--color-profile-cyan) 26%, transparent);">
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <span class="package-validity-badge inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10.5px] font-semibold bg-white/15 text-sky-100 select-none" data-validity-level="LV6">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 opacity-85 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" /></svg>
-                    <span class="package-validity-text">মেয়াদ: ৩০ দিন</span>
-                  </span>
-                  <p class="text-xs font-semibold opacity-80 mt-1">LV6</p>
-                  <h3 class="mt-0.5 text-xl font-bold font-mono">$2,380.95 USD</h3>
-                </div>
-                <button type="button" class="package-card-btn rounded-[var(--radius-round)] px-3 py-1.5 text-xs font-bold transition shadow cursor-pointer bg-[#1877f2] hover:bg-[#166fe5] text-white active:scale-95" data-buy-package="LV6">
-                  প্যাকেজ ক্রয় করুন
-                </button>
-              </div>
-              <div class="mt-3 flex items-center justify-between gap-3 border-t pt-2.5 text-xs" style="border-color: color-mix(in srgb, var(--color-primary-contrast) 28%, transparent);">
-                <div>
-                  <span class="text-slate-300">দৈনিক কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-white">50</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">প্রতি কাজ:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#38bdf8] font-mono">$0.79</strong>
-                </div>
-                <div>
-                  <span class="text-slate-300">দৈনিক আয়:</span>
-                  <strong class="ml-1 text-sm font-bold text-[#34d399] font-mono">$39.50</strong>
-                </div>
-              </div>
-            </article>
           </section>
 
           <!-- ========================================================= -->
