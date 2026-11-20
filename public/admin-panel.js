@@ -47,7 +47,7 @@ function escapeHtml(str) {
 
 function formatMoney(val) {
   const num = Number(val) || 0;
-  return '৳' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function getTodayDateString() {
@@ -577,7 +577,7 @@ function renderOverviewQueues() {
                 <span class="font-mono text-xs text-slate-600">${escapeHtml(tx.phone || '-')}</span>
               </div>
               <div class="text-xs text-slate-500 mt-0.5 truncate">
-                ${escapeHtml(meta.realName)} · ${escapeHtml(tx.method || 'bKash')}
+                ${escapeHtml(meta.realName)} · ${escapeHtml(tx.method || 'USDT (BEP20)')}
               </div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
@@ -797,31 +797,26 @@ async function handleRechargeAction(txId, targetState) {
 
       if (userRow) {
         const rawOpt = parseRawUserOpt(userRow);
-        const curFrozen = Number(rawOpt.frozen_balance) || 0;
-        const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
+        const curBal = Number(userRow.balance) || 0;
         const curRechargeAmt = Number(rawOpt.recharge_amount) || 0;
-        let nextFrozen = curFrozen;
-        let nextRechargeFrozen = curRechargeFrozen;
+        let nextBal = curBal;
         let nextRechargeAmt = curRechargeAmt;
         if (prevState !== 'approved' && targetState === 'approved') {
-          nextFrozen = Number((curFrozen + amt).toFixed(2));
-          nextRechargeFrozen = Number((curRechargeFrozen + amt).toFixed(2));
+          nextBal = Number((curBal + amt).toFixed(2));
           nextRechargeAmt = Number((curRechargeAmt + amt).toFixed(2));
-          balanceNote = ` (+${formatMoney(amt)} credited to Frozen balance)`;
+          balanceNote = ` (+${formatMoney(amt)} credited to Available balance)`;
         } else if (prevState === 'approved' && targetState !== 'approved') {
-          nextFrozen = Math.max(0, Number((curFrozen - amt).toFixed(2)));
-          nextRechargeFrozen = Math.max(0, Number((curRechargeFrozen - amt).toFixed(2)));
+          nextBal = Math.max(0, Number((curBal - amt).toFixed(2)));
           nextRechargeAmt = Math.max(0, Number((curRechargeAmt - amt).toFixed(2)));
-          balanceNote = ` (-${formatMoney(amt)} reverted from Frozen balance)`;
+          balanceNote = ` (-${formatMoney(amt)} reverted from Available balance)`;
         }
 
-        if (nextFrozen !== curFrozen || nextRechargeFrozen !== curRechargeFrozen || nextRechargeAmt !== curRechargeAmt) {
-          rawOpt.frozen_balance = nextFrozen;
-          rawOpt.recharge_frozen_balance = nextRechargeFrozen;
+        if (nextBal !== curBal || nextRechargeAmt !== curRechargeAmt) {
           rawOpt.recharge_amount = nextRechargeAmt;
           await supabaseClient
             .from('users')
             .update({
+              balance: nextBal,
               bkash_optional: JSON.stringify(rawOpt),
               updated_at: new Date().toISOString()
             })
@@ -853,7 +848,7 @@ function setWithdrawFilter(filter) {
 
 function getUserPayoutSummary(tx, u) {
   const meta = parseUserMeta(u);
-  const methodStr = String(tx.method || 'bKash');
+  const methodStr = String(tx.method || 'USDT (BEP20)');
   let targetWallet = '';
   let holderName = meta.realName;
 
@@ -1910,8 +1905,129 @@ const DEFAULT_PACKAGE_CONFIGS = {
   LV6: { count: 50, reward: 100, price: 300000, validityDays: 30, nameBn: 'LV6', nameEn: 'LV6', nameAr: 'LV6' }
 };
 
+const DEFAULT_SALARY_PAGE_CONFIG = {
+  titleBn: 'আপনার অর্জন, আপনার সম্মান',
+  titleEn: 'Your Achievement, Your Honor',
+  titleAr: 'إنجازك هو فخرك',
+  subtitleBn: 'নির্ধারিত লক্ষ্য পূরণ করে পদমর্যাদা ও মাসিক বেতন অর্জন করুন।',
+  subtitleEn: 'Reach the target milestones to unlock ranks and monthly salary.',
+  subtitleAr: 'حقق الأهداف المطلوبة لفتح الرتب والحصول على راتب شهري.',
+  activeLabelBn: 'সক্রিয় A-লেভেল সদস্য (প্যাকেজ ক্রয়কৃত):',
+  activeLabelEn: 'Active A-Level Members (Paid):',
+  activeLabelAr: 'أعضاء المستوى A النشطون (باقة مدفوعة):',
+  unitBn: 'জন',
+  unitEn: 'Members',
+  unitAr: 'عضو',
+  badgeLockedBn: '🔒 মাসিক বেতন',
+  badgeLockedEn: '🔒 Monthly Salary',
+  badgeLockedAr: '🔒 الراتب الشهري',
+  badgeClaimBn: 'গ্রহণ করুন',
+  badgeClaimEn: 'Claim',
+  badgeClaimAr: 'استلام',
+  badgeClaimedBn: 'গৃহীত ✓',
+  badgeClaimedEn: 'Claimed ✓',
+  badgeClaimedAr: 'تم الاستلام ✓',
+  modalNoteBn: 'আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। শুধু ফ্রি রেফার করলে গণ্য হবে না — A-লেভেলের সদস্যরা প্যাকেজ (LV1+) ক্রয় করলেই সক্রিয় হবে এবং বেতন অগ্রগতি বাড়বে।',
+  modalNoteEn: 'Invite friends using your link. Free signups do not count — A-Level members become active once they purchase a VIP package (LV1+).',
+  modalNoteAr: 'ادعُ أصدقاءك عبر رابط الدعوة. التسجيل المجاني لا يُحتسب — يصبح أعضاء المستوى A نشطين بعد شراء باقة مدفوعة (LV1+).',
+  tiers: [
+    { id: 'অবস্থান ১', enabled: true, nameBn: 'অবস্থান ১', nameEn: 'Position 1', nameAr: 'المركز 1', req: 3, salaryUsd: 8.00, descBn: 'আপনার প্রথম ৩ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 3 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 3 أعضاء نشطين أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ২', enabled: true, nameBn: 'অবস্থান ২', nameEn: 'Position 2', nameAr: 'المركز 2', req: 5, salaryUsd: 15.00, descBn: 'আপনার প্রথম ৫ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 5 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 5 أعضاء نشطين أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৩', enabled: true, nameBn: 'অবস্থান ৩', nameEn: 'Position 3', nameAr: 'المركز 3', req: 8, salaryUsd: 20.00, descBn: 'আপনার প্রথম ৮ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 8 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 8 أعضاء نشطين أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৪', enabled: true, nameBn: 'অবস্থান ৪', nameEn: 'Position 4', nameAr: 'المركز 4', req: 15, salaryUsd: 25.00, descBn: 'আপনার প্রথম ১৫ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 15 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 15 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৫', enabled: true, nameBn: 'অবস্থান ৫', nameEn: 'Position 5', nameAr: 'المركز 5', req: 25, salaryUsd: 32.00, descBn: 'আপনার প্রথম ২৫ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 25 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 25 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৬', enabled: true, nameBn: 'অবস্থান ৬', nameEn: 'Position 6', nameAr: 'المركز 6', req: 40, salaryUsd: 45.00, descBn: 'আপনার প্রথম ৪০ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 40 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 40 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৭', enabled: true, nameBn: 'অবস্থান ৭', nameEn: 'Position 7', nameAr: 'المركز 7', req: 70, salaryUsd: 55.00, descBn: 'আপনার প্রথম ৭০ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 70 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 70 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৮', enabled: true, nameBn: 'অবস্থান ৮', nameEn: 'Position 8', nameAr: 'المركز 8', req: 100, salaryUsd: 80.00, descBn: 'আপনার প্রথম ১০০ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 100 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 100 عضو نشط أو أكثر في المستوى A.' }
+  ]
+};
+
+const ADMIN_SALARY_ICON_SVGS = [
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><circle cx="22" cy="14" r="8" fill="#1877f2"/><path d="M6 42c0-10 7-16 16-16s16 6 16 16z" fill="#1877f2"/><polygon points="38,26 40.6,31.4 46.4,32.2 42.2,36.2 43.2,42 38,39.2 32.8,42 33.8,36.2 29.6,32.2 35.4,31.4" fill="#eab308"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><polygon points="13,30 7,45 16,42 20,47 25,31" fill="#0f3d91"/><polygon points="35,30 41,45 32,42 28,47 23,31" fill="#1877f2"/><circle cx="24" cy="18" r="15" fill="#1877f2"/><circle cx="24" cy="18" r="10.5" fill="#0f3d91"/><polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="#e2e8f0"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><path d="M5 36V13l11 11 8-15 8 15 11-11v23z" fill="#1877f2"/><rect x="5" y="38" width="38" height="7" rx="2.5" fill="#1877f2"/><circle cx="5" cy="12" r="3" fill="#eab308"/><circle cx="24" cy="8" r="3" fill="#eab308"/><circle cx="43" cy="12" r="3" fill="#eab308"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><polygon points="11,8 37,8 46,19 24,45 2,19" fill="#38bdf8"/><path d="M2 19h44M17 19l7-11 7 11-7 26z" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" fill="none"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><g transform="rotate(40 24 24)"><path d="M24 2c8 6 11 16 9 30H15C13 18 16 8 24 2z" fill="#e2e8f0"/><circle cx="24" cy="16" r="4.5" fill="#1877f2"/><path d="M15 24l-7 10 7-2zM33 24l7 10-7-2z" fill="#1877f2"/><path d="M19 32h10l-5 13z" fill="#eab308"/></g></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><path d="M24 3l17 6v13c0 11-7 19-17 23C14 41 7 33 7 22V9z" fill="#1877f2"/><path d="M24 8l12 4.5V22c0 8-5 14-12 17.5C17 36 12 30 12 22v-9.5z" fill="#0f3d91"/><polygon points="24,15 26.4,20.3 32,21 27.8,24.8 29,30.5 24,27.6 19,30.5 20.2,24.8 16,21 21.6,20.3" fill="#e2e8f0"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><path d="M14 6h20v13c0 7-4.5 12-10 12s-10-5-10-12z" fill="#eab308"/><path d="M14 10H6c0 8 3 12 9 13M34 10h8c0 8-3 12-9 13" stroke="#d97706" stroke-width="3" fill="none"/><rect x="21" y="31" width="6" height="8" fill="#b45309"/><rect x="14" y="39" width="20" height="6" rx="2" fill="#eab308"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-8 h-8"><polygon points="12,30 7,46 16,42 21,47 26,31" fill="#0f3d91"/><polygon points="36,30 41,46 32,42 27,47 22,31" fill="#1877f2"/><circle cx="24" cy="18" r="16" fill="#eab308"/><circle cx="24" cy="18" r="11" fill="#0f3d91"/><polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="#eab308"/></svg>`
+];
+
+let salaryEditorLang = 'bn';
+let salaryEditorDraft = null;
+let salaryEditorDirty = false;
+
+function cloneDefaultSalaryPage() {
+  return JSON.parse(JSON.stringify(DEFAULT_SALARY_PAGE_CONFIG));
+}
+
+function normalizeAdminSalaryPageConfig(raw) {
+  const src = (raw && typeof raw === 'object') ? raw : {};
+  const strOr = (v, fb) => (typeof v === 'string' && v.trim().length > 0) ? v.trim() : fb;
+  const rawTiers = Array.isArray(src.tiers) && src.tiers.length > 0 ? src.tiers : DEFAULT_SALARY_PAGE_CONFIG.tiers;
+  const tiers = rawTiers.map((t, idx) => {
+    const def = DEFAULT_SALARY_PAGE_CONFIG.tiers[idx] || {
+      id: `অবস্থান ${idx + 1}`,
+      enabled: true,
+      nameBn: `অবস্থান ${idx + 1}`,
+      nameEn: `Position ${idx + 1}`,
+      nameAr: `المركز ${idx + 1}`,
+      req: Math.max(1, (idx + 1) * 10),
+      salaryUsd: 10.00,
+      descBn: `আপনার প্রথম ${(idx + 1) * 10} জন বা তার বেশি A-লেভেল সক্রিয় সদস্য থাকলে যোগ্য হবেন।`,
+      descEn: `Qualify with ${(idx + 1) * 10} or more active A-Level members.`,
+      descAr: `تتأهل عند استيفاء عدد الأعضاء النشطين المطلوب.`
+    };
+    const item = (t && typeof t === 'object') ? t : {};
+    const parsedReq = parseInt(item.req, 10);
+    const parsedUsd = parseFloat(item.salaryUsd !== undefined ? item.salaryUsd : item.salary);
+    const nameBn = strOr(item.nameBn, def.nameBn);
+    return {
+      id: strOr(item.id, def.id || nameBn),
+      enabled: item.enabled !== false,
+      nameBn: nameBn,
+      nameEn: strOr(item.nameEn, def.nameEn),
+      nameAr: strOr(item.nameAr, def.nameAr),
+      req: Number.isFinite(parsedReq) && parsedReq >= 1 ? parsedReq : def.req,
+      salaryUsd: Number.isFinite(parsedUsd) && parsedUsd >= 0 ? Number(parsedUsd.toFixed(2)) : def.salaryUsd,
+      descBn: strOr(item.descBn, def.descBn),
+      descEn: strOr(item.descEn, def.descEn),
+      descAr: strOr(item.descAr, def.descAr)
+    };
+  });
+
+  return {
+    titleBn: strOr(src.titleBn, DEFAULT_SALARY_PAGE_CONFIG.titleBn),
+    titleEn: strOr(src.titleEn, DEFAULT_SALARY_PAGE_CONFIG.titleEn),
+    titleAr: strOr(src.titleAr, DEFAULT_SALARY_PAGE_CONFIG.titleAr),
+    subtitleBn: strOr(src.subtitleBn, DEFAULT_SALARY_PAGE_CONFIG.subtitleBn),
+    subtitleEn: strOr(src.subtitleEn, DEFAULT_SALARY_PAGE_CONFIG.subtitleEn),
+    subtitleAr: strOr(src.subtitleAr, DEFAULT_SALARY_PAGE_CONFIG.subtitleAr),
+    activeLabelBn: strOr(src.activeLabelBn, DEFAULT_SALARY_PAGE_CONFIG.activeLabelBn),
+    activeLabelEn: strOr(src.activeLabelEn, DEFAULT_SALARY_PAGE_CONFIG.activeLabelEn),
+    activeLabelAr: strOr(src.activeLabelAr, DEFAULT_SALARY_PAGE_CONFIG.activeLabelAr),
+    unitBn: strOr(src.unitBn, DEFAULT_SALARY_PAGE_CONFIG.unitBn),
+    unitEn: strOr(src.unitEn, DEFAULT_SALARY_PAGE_CONFIG.unitEn),
+    unitAr: strOr(src.unitAr, DEFAULT_SALARY_PAGE_CONFIG.unitAr),
+    badgeLockedBn: strOr(src.badgeLockedBn, DEFAULT_SALARY_PAGE_CONFIG.badgeLockedBn),
+    badgeLockedEn: strOr(src.badgeLockedEn, DEFAULT_SALARY_PAGE_CONFIG.badgeLockedEn),
+    badgeLockedAr: strOr(src.badgeLockedAr, DEFAULT_SALARY_PAGE_CONFIG.badgeLockedAr),
+    badgeClaimBn: strOr(src.badgeClaimBn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimBn),
+    badgeClaimEn: strOr(src.badgeClaimEn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimEn),
+    badgeClaimAr: strOr(src.badgeClaimAr, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimAr),
+    badgeClaimedBn: strOr(src.badgeClaimedBn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimedBn),
+    badgeClaimedEn: strOr(src.badgeClaimedEn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimedEn),
+    badgeClaimedAr: strOr(src.badgeClaimedAr, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimedAr),
+    modalNoteBn: strOr(src.modalNoteBn, DEFAULT_SALARY_PAGE_CONFIG.modalNoteBn),
+    modalNoteEn: strOr(src.modalNoteEn, DEFAULT_SALARY_PAGE_CONFIG.modalNoteEn),
+    modalNoteAr: strOr(src.modalNoteAr, DEFAULT_SALARY_PAGE_CONFIG.modalNoteAr),
+    tiers: tiers
+  };
+}
+
 let latestSystemConfig = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, {
-  packages: cloneDefaultPackages()
+  packages: cloneDefaultPackages(),
+  salaryPage: cloneDefaultSalaryPage()
 });
 
 function cloneDefaultPackages() {
@@ -1956,11 +2072,13 @@ function syncEditUserPackageOptions(packagesObj) {
   if (!selectEl) return;
   const currentVal = selectEl.value;
   const pkgs = normalizePackagesMap(packagesObj);
+  const rate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
   PACKAGE_LEVEL_KEYS.forEach(lvl => {
     const opt = selectEl.querySelector(`option[value="${lvl}"]`);
     if (!opt) return;
     const pkg = pkgs[lvl];
-    const priceLabel = Number(pkg.price) === 0 ? 'Free' : `৳${Number(pkg.price).toLocaleString()}`;
+    const usdPrice = Number(pkg.price) === 0 ? 0 : Number((Number(pkg.price) / rate).toFixed(2));
+    const priceLabel = Number(pkg.price) === 0 ? 'Free' : `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
     opt.textContent = `${lvl} (${pkg.nameEn} - ${priceLabel})`;
   });
   if (currentVal) selectEl.value = currentVal;
@@ -1970,10 +2088,13 @@ function renderPackageConfigEditor(packagesObj) {
   const container = document.getElementById('package-configs-editor');
   if (!container) return;
   const pkgs = normalizePackagesMap(packagesObj);
+  const rate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
 
   container.innerHTML = PACKAGE_LEVEL_KEYS.map(lvl => {
     const p = pkgs[lvl];
     const dailyIncome = Number((p.count * p.reward).toFixed(2));
+    const dailyUsd = Number((dailyIncome / rate).toFixed(2));
+    const priceUsd = Number((Number(p.price || 0) / rate).toFixed(2));
     const badgeColor = lvl === 'LV0'
       ? 'bg-sky-50 text-sky-700 border-sky-200'
       : 'bg-slate-100 text-slate-800 border-slate-200';
@@ -1986,8 +2107,10 @@ function renderPackageConfigEditor(packagesObj) {
             <span class="text-xs font-semibold text-slate-700">${escapeHtml(p.nameBn)} · ${escapeHtml(p.nameEn)}</span>
           </div>
           <div class="text-xs font-medium text-slate-500">
-            দৈনিক আয় (Daily Income):
-            <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">৳${dailyIncome.toLocaleString('en-US', { minimumFractionDigits: dailyIncome % 1 ? 2 : 0, maximumFractionDigits: 2 })}</span>
+            দৈনিক আয় (Daily):
+            <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">$${dailyUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+            <span class="mx-1.5 text-slate-300">|</span>
+            দাম: <span class="font-mono font-bold text-slate-800" data-pkg-price-usd="${lvl}">$${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             <span class="mx-1.5 text-slate-300">|</span>
             মেয়াদ: <span class="font-mono font-bold text-sky-700" data-pkg-validity-preview="${lvl}">${p.validityDays} দিন</span>
           </div>
@@ -2001,13 +2124,13 @@ function renderPackageConfigEditor(packagesObj) {
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
           </div>
           <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রতি কাজের এমাউন্ট (Per-Task Amount ৳)</label>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রতি কাজের বেস (Base BDT ÷ ${rate} = USD)</label>
             <input type="number" min="0" step="0.01" required
               data-pkg-level="${lvl}" data-pkg-field="reward" value="${p.reward}"
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
           </div>
           <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্যাকেজ দাম (Package Price ৳)</label>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্যাকেজ দাম বেস (Base BDT ÷ ${rate} = USD)</label>
             <input type="number" min="0" step="1" required
               data-pkg-level="${lvl}" data-pkg-field="price" value="${p.price}"
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
@@ -2048,16 +2171,23 @@ function renderPackageConfigEditor(packagesObj) {
     inp.addEventListener('input', () => {
       const lvl = inp.dataset.pkgLevel;
       if (!lvl) return;
+      const curRate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
       const countInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="count"]`);
       const rewardInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="reward"]`);
+      const priceInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="price"]`);
       const valInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="validityDays"]`);
       const incEl = container.querySelector(`[data-pkg-income="${lvl}"]`);
+      const priceUsdEl = container.querySelector(`[data-pkg-price-usd="${lvl}"]`);
       const valPrevEl = container.querySelector(`[data-pkg-validity-preview="${lvl}"]`);
       if (incEl && countInp && rewardInp) {
         const c = Math.max(0, parseInt(countInp.value || '0', 10) || 0);
         const r = Math.max(0, parseFloat(rewardInp.value || '0') || 0);
-        const inc = Number((c * r).toFixed(2));
-        incEl.textContent = `৳${inc.toLocaleString('en-US', { minimumFractionDigits: inc % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+        const incUsd = Number(((c * r) / curRate).toFixed(2));
+        incEl.textContent = `$${incUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+      }
+      if (priceUsdEl && priceInp) {
+        const prUsd = Number((Math.max(0, parseFloat(priceInp.value || '0') || 0) / curRate).toFixed(2));
+        priceUsdEl.textContent = `$${prUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
       if (valPrevEl && valInp) {
         const v = Math.max(1, parseInt(valInp.value || '1', 10) || 1);
@@ -2099,6 +2229,317 @@ function resetPackageConfigsToDefault() {
   showToast('Default package values loaded in form. Click "Save Package & Task Settings" to apply live.', 'success');
 }
 
+function markSalaryEditorDirty(dirty) {
+  salaryEditorDirty = Boolean(dirty);
+  const badge = document.getElementById('salary-dirty-badge');
+  if (badge) badge.classList.toggle('hidden', !salaryEditorDirty);
+}
+
+function setSalaryEditorLang(lang) {
+  salaryEditorLang = (lang === 'en' || lang === 'ar') ? lang : 'bn';
+  document.querySelectorAll('.salary-lang-tab').forEach(btn => {
+    const active = btn.dataset.salaryLang === salaryEditorLang;
+    btn.className = active
+      ? 'salary-lang-tab px-3 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-xs cursor-pointer'
+      : 'salary-lang-tab px-3 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer';
+  });
+  document.querySelectorAll('[data-salary-lang-group]').forEach(group => {
+    group.classList.toggle('hidden', group.dataset.salaryLangGroup !== salaryEditorLang);
+  });
+  renderSalaryTiersEditor();
+  renderSalaryLivePreview();
+}
+
+function hydrateSalaryMetaInputs(cfg) {
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  setVal('sal-title-bn', cfg.titleBn);
+  setVal('sal-title-en', cfg.titleEn);
+  setVal('sal-title-ar', cfg.titleAr);
+  setVal('sal-subtitle-bn', cfg.subtitleBn);
+  setVal('sal-subtitle-en', cfg.subtitleEn);
+  setVal('sal-subtitle-ar', cfg.subtitleAr);
+  setVal('sal-active-label-bn', cfg.activeLabelBn);
+  setVal('sal-active-label-en', cfg.activeLabelEn);
+  setVal('sal-active-label-ar', cfg.activeLabelAr);
+  setVal('sal-unit-bn', cfg.unitBn);
+  setVal('sal-unit-en', cfg.unitEn);
+  setVal('sal-unit-ar', cfg.unitAr);
+  setVal('sal-locked-bn', cfg.badgeLockedBn);
+  setVal('sal-locked-en', cfg.badgeLockedEn);
+  setVal('sal-locked-ar', cfg.badgeLockedAr);
+  setVal('sal-claim-bn', cfg.badgeClaimBn);
+  setVal('sal-claim-en', cfg.badgeClaimEn);
+  setVal('sal-claim-ar', cfg.badgeClaimAr);
+  setVal('sal-claimed-bn', cfg.badgeClaimedBn);
+  setVal('sal-claimed-en', cfg.badgeClaimedEn);
+  setVal('sal-claimed-ar', cfg.badgeClaimedAr);
+  setVal('sal-modal-note-bn', cfg.modalNoteBn);
+  setVal('sal-modal-note-en', cfg.modalNoteEn);
+  setVal('sal-modal-note-ar', cfg.modalNoteAr);
+}
+
+function syncSalaryDraftMetaFromDom() {
+  if (!salaryEditorDraft) salaryEditorDraft = normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage);
+  const getVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  salaryEditorDraft.titleBn = getVal('sal-title-bn');
+  salaryEditorDraft.titleEn = getVal('sal-title-en');
+  salaryEditorDraft.titleAr = getVal('sal-title-ar');
+  salaryEditorDraft.subtitleBn = getVal('sal-subtitle-bn');
+  salaryEditorDraft.subtitleEn = getVal('sal-subtitle-en');
+  salaryEditorDraft.subtitleAr = getVal('sal-subtitle-ar');
+  salaryEditorDraft.activeLabelBn = getVal('sal-active-label-bn');
+  salaryEditorDraft.activeLabelEn = getVal('sal-active-label-en');
+  salaryEditorDraft.activeLabelAr = getVal('sal-active-label-ar');
+  salaryEditorDraft.unitBn = getVal('sal-unit-bn');
+  salaryEditorDraft.unitEn = getVal('sal-unit-en');
+  salaryEditorDraft.unitAr = getVal('sal-unit-ar');
+  salaryEditorDraft.badgeLockedBn = getVal('sal-locked-bn');
+  salaryEditorDraft.badgeLockedEn = getVal('sal-locked-en');
+  salaryEditorDraft.badgeLockedAr = getVal('sal-locked-ar');
+  salaryEditorDraft.badgeClaimBn = getVal('sal-claim-bn');
+  salaryEditorDraft.badgeClaimEn = getVal('sal-claim-en');
+  salaryEditorDraft.badgeClaimAr = getVal('sal-claim-ar');
+  salaryEditorDraft.badgeClaimedBn = getVal('sal-claimed-bn');
+  salaryEditorDraft.badgeClaimedEn = getVal('sal-claimed-en');
+  salaryEditorDraft.badgeClaimedAr = getVal('sal-claimed-ar');
+  salaryEditorDraft.modalNoteBn = getVal('sal-modal-note-bn');
+  salaryEditorDraft.modalNoteEn = getVal('sal-modal-note-en');
+  salaryEditorDraft.modalNoteAr = getVal('sal-modal-note-ar');
+}
+
+function renderSalaryTiersEditor() {
+  const container = document.getElementById('salary-tiers-editor');
+  if (!container) return;
+  if (!salaryEditorDraft) salaryEditorDraft = normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage);
+
+  const l = salaryEditorLang;
+  const nameKey = l === 'en' ? 'nameEn' : (l === 'ar' ? 'nameAr' : 'nameBn');
+  const descKey = l === 'en' ? 'descEn' : (l === 'ar' ? 'descAr' : 'descBn');
+  const nameLabel = l === 'en' ? 'Position Name (EN)' : (l === 'ar' ? 'اسم المنصب (AR)' : 'পদের নাম (বাংলা)');
+  const descLabel = l === 'en' ? 'Description (EN)' : (l === 'ar' ? 'الوصف (AR)' : 'বিবরণ লেখা (বাংলা)');
+
+  const countBadge = document.getElementById('nav-salary-tiers-count');
+  if (countBadge) {
+    const enabledCount = salaryEditorDraft.tiers.filter(t => t.enabled !== false).length;
+    countBadge.textContent = String(enabledCount);
+  }
+
+  container.innerHTML = salaryEditorDraft.tiers.map((tier, idx) => {
+    const iconSvg = ADMIN_SALARY_ICON_SVGS[idx % ADMIN_SALARY_ICON_SVGS.length];
+    const isEnabled = tier.enabled !== false;
+    return `
+      <div class="rounded-xl border ${isEnabled ? 'border-slate-200/90 bg-slate-50/70' : 'border-slate-200/50 bg-slate-100/60 opacity-70'} p-3.5 space-y-3" data-sal-tier-idx="${idx}">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-lg bg-[#0b1730] flex items-center justify-center shrink-0">${iconSvg}</div>
+            <div>
+              <div class="text-xs font-bold text-slate-900" data-sal-tier-title>#${idx + 1} · ${escapeHtml(tier[nameKey] || tier.nameBn)}</div>
+              <div class="text-[11px] font-mono text-slate-500" data-sal-tier-meta>Req: ${tier.req} members · <span class="text-emerald-700 font-semibold">$${Number(tier.salaryUsd || 0).toFixed(2)} USD</span></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700 cursor-pointer select-none">
+              <input type="checkbox" ${isEnabled ? 'checked' : ''} onchange="toggleSalaryTierEnabled(${idx}, this.checked)"
+                class="rounded border-slate-300 text-slate-900 focus:ring-slate-500 cursor-pointer" />
+              <span>${isEnabled ? 'Visible' : 'Hidden'}</span>
+            </label>
+            ${salaryEditorDraft.tiers.length > 1 ? `
+              <button type="button" onclick="removeSalaryTierRow(${idx})"
+                class="px-2 py-1 rounded-md bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white text-[11px] font-semibold transition cursor-pointer">
+                Delete
+              </button>` : ''}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">${nameLabel}</label>
+            <input type="text" required value="${escapeHtml(tier[nameKey] || '')}"
+              oninput="updateSalaryTierField(${idx}, '${nameKey}', this.value)"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রয়োজনীয় সদস্য (Req. Members)</label>
+            <input type="number" min="1" step="1" required value="${tier.req}"
+              oninput="updateSalaryTierField(${idx}, 'req', this.value)"
+              class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">মাসিক বেতন (Amount $ USD)</label>
+            <input type="number" min="0" step="0.01" required value="${Number(tier.salaryUsd || 0)}"
+              oninput="updateSalaryTierField(${idx}, 'salaryUsd', this.value)"
+              class="w-full px-3 py-1.5 bg-white border border-emerald-200 rounded-lg text-sm font-mono font-bold text-emerald-700 focus:outline-none focus:border-emerald-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-medium text-slate-600 mb-1">${descLabel}</label>
+          <input type="text" required value="${escapeHtml(tier[descKey] || '')}"
+            oninput="updateSalaryTierField(${idx}, '${descKey}', this.value)"
+            class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-slate-400" />
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSalaryLivePreview() {
+  const preview = document.getElementById('salary-live-preview');
+  if (!preview) return;
+  syncSalaryDraftMetaFromDom();
+  const cfg = normalizeAdminSalaryPageConfig(salaryEditorDraft);
+  const l = salaryEditorLang;
+  const pick = (bn, en, ar) => l === 'en' ? en : (l === 'ar' ? ar : bn);
+  const title = pick(cfg.titleBn, cfg.titleEn, cfg.titleAr);
+  const subtitle = pick(cfg.subtitleBn, cfg.subtitleEn, cfg.subtitleAr);
+  const activeLabel = pick(cfg.activeLabelBn, cfg.activeLabelEn, cfg.activeLabelAr);
+  const unitTxt = pick(cfg.unitBn, cfg.unitEn, cfg.unitAr);
+  const lockedLabel = pick(cfg.badgeLockedBn, cfg.badgeLockedEn, cfg.badgeLockedAr);
+  const visibleTiers = cfg.tiers.filter(t => t.enabled !== false);
+
+  preview.innerHTML = `
+    <div ${l === 'ar' ? 'dir="rtl"' : ''}>
+      <h3 class="text-center text-lg font-bold text-[#f3f4f6] leading-snug">${escapeHtml(title)}</h3>
+      <p class="text-center text-xs text-[#cbd5e1] mt-1 mb-3">${escapeHtml(subtitle)}</p>
+
+      <div class="mb-3 rounded-lg bg-[#0d1f47] border border-[#1d3b7a] px-3 py-2 flex items-center justify-between text-[11px]">
+        <span class="text-[#cbd5e1]">${escapeHtml(activeLabel)}</span>
+        <span class="font-mono font-bold text-[#38bdf8]">0 ${escapeHtml(unitTxt)}</span>
+      </div>
+
+      <div class="divide-y divide-slate-400/15">
+        ${visibleTiers.length === 0 ? `<div class="py-6 text-center text-xs text-slate-400">No visible positions enabled.</div>` : visibleTiers.map((t, idx) => {
+          const iconSvg = ADMIN_SALARY_ICON_SVGS[idx % ADMIN_SALARY_ICON_SVGS.length];
+          const posName = pick(t.nameBn, t.nameEn, t.nameAr);
+          const desc = pick(t.descBn, t.descEn, t.descAr).replace(/\{req\}/g, String(t.req));
+          return `
+            <div class="flex items-center gap-2.5 py-2.5">
+              <div class="w-9 h-9 flex items-center justify-center shrink-0">${iconSvg}</div>
+              <div class="w-16 shrink-0 text-xs font-bold text-[#f3f4f6] truncate">${escapeHtml(posName)}</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] leading-snug text-[#e2e8f0]">${escapeHtml(desc)}</div>
+                <div class="flex items-center gap-1.5 mt-1.5">
+                  <div class="flex-1 h-1.5 rounded-full bg-[#071638] overflow-hidden"><div class="h-full bg-[#1877f2]" style="width: 0%;"></div></div>
+                  <span class="text-[10px] font-bold text-slate-300">0%</span>
+                </div>
+                <div class="text-[10px] font-mono font-semibold text-[#38bdf8] mt-0.5">0 / ${t.req} ${escapeHtml(unitTxt)}</div>
+              </div>
+              <div class="w-20 shrink-0 rounded-lg bg-[#071638] py-1.5 px-1.5 text-center">
+                <div class="text-[9.5px] font-semibold text-[#cbd5e1] truncate">${escapeHtml(lockedLabel)}</div>
+                <div class="text-xs font-bold font-mono text-white mt-0.5">$${Number(t.salaryUsd || 0).toFixed(2)}</div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function updateSalaryTierField(idx, field, value) {
+  if (!salaryEditorDraft || !salaryEditorDraft.tiers[idx]) return;
+  const tier = salaryEditorDraft.tiers[idx];
+  if (field === 'req') {
+    const n = parseInt(value, 10);
+    tier.req = Number.isFinite(n) && n >= 1 ? n : 1;
+  } else if (field === 'salaryUsd') {
+    const n = parseFloat(value);
+    tier.salaryUsd = Number.isFinite(n) && n >= 0 ? Number(n.toFixed(2)) : 0;
+  } else {
+    tier[field] = String(value || '');
+  }
+  const card = document.querySelector(`[data-sal-tier-idx="${idx}"]`);
+  if (card) {
+    const l = salaryEditorLang;
+    const nameKey = l === 'en' ? 'nameEn' : (l === 'ar' ? 'nameAr' : 'nameBn');
+    const titleEl = card.querySelector('[data-sal-tier-title]');
+    if (titleEl) titleEl.textContent = `#${idx + 1} · ${tier[nameKey] || tier.nameBn}`;
+    const metaEl = card.querySelector('[data-sal-tier-meta]');
+    if (metaEl) metaEl.innerHTML = `Req: ${tier.req} members · <span class="text-emerald-700 font-semibold">$${Number(tier.salaryUsd || 0).toFixed(2)} USD</span>`;
+  }
+  markSalaryEditorDirty(true);
+  renderSalaryLivePreview();
+}
+
+function toggleSalaryTierEnabled(idx, checked) {
+  if (!salaryEditorDraft || !salaryEditorDraft.tiers[idx]) return;
+  salaryEditorDraft.tiers[idx].enabled = Boolean(checked);
+  markSalaryEditorDirty(true);
+  renderSalaryTiersEditor();
+  renderSalaryLivePreview();
+}
+
+function addSalaryTierRow() {
+  if (!salaryEditorDraft) salaryEditorDraft = normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage);
+  const nextNum = salaryEditorDraft.tiers.length + 1;
+  const lastTier = salaryEditorDraft.tiers[salaryEditorDraft.tiers.length - 1];
+  const nextReq = lastTier ? (Number(lastTier.req) + 25) : 10;
+  const nextUsd = lastTier ? Number((Number(lastTier.salaryUsd) + 20).toFixed(2)) : 10;
+  salaryEditorDraft.tiers.push({
+    id: `অবস্থান ${nextNum}`,
+    enabled: true,
+    nameBn: `অবস্থান ${nextNum}`,
+    nameEn: `Position ${nextNum}`,
+    nameAr: `المركز ${nextNum}`,
+    req: nextReq,
+    salaryUsd: nextUsd,
+    descBn: `আপনার প্রথম ${nextReq} জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।`,
+    descEn: `Qualify when you have ${nextReq} or more active A-Level members (with paid package).`,
+    descAr: `تتأهل عندما يكون لديك ${nextReq} عضوًا نشطًا أو أكثر في المستوى A.`
+  });
+  markSalaryEditorDirty(true);
+  renderSalaryTiersEditor();
+  renderSalaryLivePreview();
+  showToast(`Added Position #${nextNum}. Click "Save & Sync Live" to publish.`, 'success');
+}
+
+function removeSalaryTierRow(idx) {
+  if (!salaryEditorDraft || salaryEditorDraft.tiers.length <= 1) return;
+  salaryEditorDraft.tiers.splice(idx, 1);
+  markSalaryEditorDirty(true);
+  renderSalaryTiersEditor();
+  renderSalaryLivePreview();
+}
+
+function resetSalaryPageDefaults() {
+  salaryEditorDraft = cloneDefaultSalaryPage();
+  hydrateSalaryMetaInputs(salaryEditorDraft);
+  renderSalaryTiersEditor();
+  renderSalaryLivePreview();
+  markSalaryEditorDirty(true);
+  showToast('Default salary page settings loaded. Click "Save & Sync Live" to publish.', 'success');
+}
+
+function hydrateSalaryPageEditor(salaryObj, force) {
+  if (salaryEditorDirty && !force) return;
+  const normalized = normalizeAdminSalaryPageConfig(salaryObj);
+  salaryEditorDraft = JSON.parse(JSON.stringify(normalized));
+  hydrateSalaryMetaInputs(salaryEditorDraft);
+  renderSalaryTiersEditor();
+  renderSalaryLivePreview();
+  markSalaryEditorDirty(false);
+}
+
+async function handleSalaryPageSave(e) {
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  syncSalaryDraftMetaFromDom();
+  const normalizedSalary = normalizeAdminSalaryPageConfig(salaryEditorDraft);
+
+  const configObj = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, latestSystemConfig, {
+    packages: normalizePackagesMap(latestSystemConfig.packages),
+    salaryPage: normalizedSalary
+  });
+
+  const saved = await saveSystemConfigPayload(configObj, 'বেতন পেজ সফলভাবে সেভ ও লাইভ ওয়েবসাইটে রিয়েল টাইম সিঙ্ক হয়েছে!');
+  if (saved) {
+    try {
+      localStorage.setItem('alo_system_salary_cache', JSON.stringify(normalizedSalary));
+    } catch (err) {}
+    markSalaryEditorDirty(false);
+    hydrateSalaryPageEditor(normalizedSalary, true);
+  }
+}
+
 function hydratePlatformControlsForm(sysRow) {
   let parsed = {};
   if (sysRow && sysRow.bkash_optional) {
@@ -2109,7 +2550,11 @@ function hydratePlatformControlsForm(sysRow) {
     } catch (e) {}
   }
   const normalizedPkgs = normalizePackagesMap(parsed.packages);
-  const cfg = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, parsed, { packages: normalizedPkgs });
+  const normalizedSalary = normalizeAdminSalaryPageConfig(parsed.salaryPage);
+  const cfg = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, parsed, {
+    packages: normalizedPkgs,
+    salaryPage: normalizedSalary
+  });
   latestSystemConfig = cfg;
 
   const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
@@ -2126,6 +2571,7 @@ function hydratePlatformControlsForm(sysRow) {
 
   renderPackageConfigEditor(normalizedPkgs);
   syncEditUserPackageOptions(normalizedPkgs);
+  hydrateSalaryPageEditor(normalizedSalary, false);
 }
 
 async function saveSystemConfigPayload(configObj, successMsg) {
@@ -2170,7 +2616,8 @@ async function handlePlatformControlsSave(e) {
     managerId: document.getElementById('pc-manager-id').value.trim(),
     bdRealOtpEnabled: (document.getElementById('pc-bd-real-otp-enabled')?.value || 'true') !== 'false',
     cpanelOtpUrl: rawOtpUrl,
-    packages: normalizePackagesMap(latestSystemConfig.packages)
+    packages: normalizePackagesMap(latestSystemConfig.packages),
+    salaryPage: normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage)
   });
 
   await saveSystemConfigPayload(configObj, 'Platform rules saved and synced to live website.');
@@ -2180,7 +2627,8 @@ async function handlePackageControlsSave(e) {
   e.preventDefault();
   const packagesObj = collectPackagesFromForm();
   const configObj = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, latestSystemConfig, {
-    packages: packagesObj
+    packages: packagesObj,
+    salaryPage: normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage)
   });
 
   await saveSystemConfigPayload(configObj, 'Packages, daily tasks, amounts & language names saved live!');
@@ -2195,6 +2643,7 @@ const SECTION_TITLES = {
   withdrawals: 'Withdrawal Requests & Payouts',
   users: 'User Directory & Balance Control',
   commissions: 'Team Rebates & Commissions',
+  salary: 'Salary Page Control (বেতন পেজ)',
   platform: 'Platform Rules & Packages',
   settings: 'System & Connection Settings'
 };
@@ -2245,6 +2694,7 @@ async function enterAdminShell(username) {
 
   renderPackageConfigEditor(latestSystemConfig.packages);
   syncEditUserPackageOptions(latestSystemConfig.packages);
+  hydrateSalaryPageEditor(latestSystemConfig.salaryPage, true);
   initSupabaseClient();
   await refreshAllData(false);
 
@@ -2263,6 +2713,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('manual-adjust-form')?.addEventListener('submit', handleManualAdjustSubmit);
   document.getElementById('platform-controls-form')?.addEventListener('submit', handlePlatformControlsSave);
   document.getElementById('package-controls-form')?.addEventListener('submit', handlePackageControlsSave);
+  document.getElementById('salary-page-form')?.addEventListener('submit', handleSalaryPageSave);
+  document.querySelectorAll('.sal-meta-inp').forEach(el => {
+    el.addEventListener('input', () => {
+      markSalaryEditorDirty(true);
+      renderSalaryLivePreview();
+    });
+  });
   document.getElementById('settings-credentials-form')?.addEventListener('submit', handleCredentialsSave);
   document.getElementById('settings-db-form')?.addEventListener('submit', handleDbConfigSave);
 
@@ -2303,6 +2760,12 @@ window.deleteEditedUser = deleteEditedUser;
 window.openManualAdjustModal = openManualAdjustModal;
 window.closeManualAdjustModal = closeManualAdjustModal;
 window.renderCommissionsTable = renderCommissionsTable;
+window.setSalaryEditorLang = setSalaryEditorLang;
+window.updateSalaryTierField = updateSalaryTierField;
+window.toggleSalaryTierEnabled = toggleSalaryTierEnabled;
+window.addSalaryTierRow = addSalaryTierRow;
+window.removeSalaryTierRow = removeSalaryTierRow;
+window.resetSalaryPageDefaults = resetSalaryPageDefaults;
 window.resetPackageConfigsToDefault = resetPackageConfigsToDefault;
 window.resetDatabaseDefaults = resetDatabaseDefaults;
 window.exportCsv = exportCsv;

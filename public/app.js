@@ -297,7 +297,7 @@ function getPlatformSvg(platform, sizeClass) {
       <polygon points="9.6,15.5 15.8,12 9.6,8.5" fill="#FFFFFF"/>
     </svg>`;
   }
-  if (platform === 'FaceBook') {
+  if (String(platform || '').toLowerCase() === 'facebook') {
     return `<svg viewBox="0 0 24 24" class="${cls}" aria-hidden="true">
       <circle cx="12" cy="12" r="12" fill="#1877F2"/>
       <path fill="#FFFFFF" d="M15.12 12.35l.5-3.25h-3.12v-2.1c0-.9.25-1.52 1.55-1.52h1.66V2.57C15.42 2.53 14.43 2.45 13.3 2.45c-2.36 0-3.97 1.44-3.97 4.08v2.57H6.5v3.25h2.83V21.5a12.06 12.06 0 003.97 0V12.35h1.82z"/>
@@ -399,17 +399,7 @@ function mapSupabaseUser(d) {
       ).toUpperCase();
       return rawC || 'BD';
     })(),
-    currency: (function() {
-      const dialMatch = opt.dial_code && opt.dial_code !== '+880' && typeof COUNTRY_DATABASE !== 'undefined'
-        ? COUNTRY_DATABASE.find(function(c) { return c.dialCode === opt.dial_code; })
-        : null;
-      const rawC = String(
-        opt.country ||
-        (dialMatch && dialMatch.code) ||
-        (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))
-      ).toUpperCase();
-      return rawC === 'BD' ? 'BDT' : 'USD';
-    })(),
+    currency: 'USD',
     dialCode: opt.dial_code || '',
     commissionDust: Number(opt.commission_dust) || 0,
     language: mappedLang,
@@ -435,7 +425,8 @@ function mapSupabaseUser(d) {
     },
     accountStatus: opt.account_status || 'active',
     _rawOpt: opt,
-    createdAt: d.created_at || d.createdAt || new Date().toISOString()
+    createdAt: d.created_at || d.createdAt || opt.created_at || '',
+    updatedAt: d.updated_at || d.updatedAt || opt.updated_at || ''
   };
 }
 
@@ -654,6 +645,12 @@ function applyPlatformConfigData(rawOpt) {
       applyRemotePackageConfigs(parsed.packages);
     }
   }
+  if (parsed.salaryPage && typeof parsed.salaryPage === 'object') {
+    window.aloPlatformConfig.salaryPage = parsed.salaryPage;
+    if (typeof applyRemoteSalaryConfig === 'function') {
+      applyRemoteSalaryConfig(parsed.salaryPage);
+    }
+  }
 }
 
 let _loadingConfigPromise = null;
@@ -742,28 +739,32 @@ let _liveSyncPhone = '';
 let _liveUserDebounceTimer = null;
 let _liveTxDebounceTimer = null;
 
+function ensurePlatformConfigLiveChannel() {
+  if (!window.aloSupabase || supabaseConfigChannel) return;
+  try {
+    supabaseConfigChannel = window.aloSupabase
+      .channel('platform-config-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'users', filter: 'phone=eq.SYSTEM_CONFIG' },
+        function(payload) {
+          if (payload && payload.new && payload.new.bkash_optional) {
+            applyPlatformConfigData(payload.new.bkash_optional);
+          }
+        }
+      )
+      .subscribe();
+  } catch (e) {}
+}
+
 function initSupabaseLiveSync(user) {
+  ensurePlatformConfigLiveChannel();
   if (!user && typeof getCurrentUser === 'function') user = getCurrentUser();
   if (!user || !window.aloSupabase) return;
   const normPhone = normalizeBdPhone(user.phone || user.accountNumber);
   if (!normPhone) return;
 
   try {
-    // Subscribe to global SYSTEM_CONFIG changes only once (never leak duplicate channels)
-    if (!supabaseConfigChannel) {
-      supabaseConfigChannel = window.aloSupabase
-        .channel('platform-config-sync')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'users', filter: 'phone=eq.SYSTEM_CONFIG' },
-          function(payload) {
-            if (payload && payload.new && payload.new.bkash_optional) {
-              applyPlatformConfigData(payload.new.bkash_optional);
-            }
-          }
-        )
-        .subscribe();
-    }
 
     // Avoid tearing down and re-subscribing identical per-user channels repeatedly
     if (_liveSyncPhone === normPhone && supabaseLiveChannel && supabaseTxChannel) {
@@ -857,8 +858,8 @@ function initSupabaseLiveSync(user) {
             if (spinPanel && !spinPanel.hidden && typeof renderLuckySpinPanel === 'function') {
               renderLuckySpinPanel();
             }
-            const invitePanel = document.getElementById('invite-panel');
-            if (invitePanel && !invitePanel.hidden && typeof renderInviteVipSalaryCards === 'function') {
+            const empBenefitsPanel = document.getElementById('employee-benefits-panel');
+            if (empBenefitsPanel && !empBenefitsPanel.hidden && typeof renderInviteVipSalaryCards === 'function') {
               renderInviteVipSalaryCards();
             }
             const taskPanelLive = document.getElementById('platform-tasks-panel');
@@ -894,7 +895,15 @@ function initSupabaseLiveSync(user) {
             const invitePanel = document.getElementById('invite-panel');
             if (invitePanel && !invitePanel.hidden) {
               if (typeof renderInvitePage === 'function') renderInvitePage();
-              else if (typeof renderInviteVipSalaryCards === 'function') renderInviteVipSalaryCards();
+            }
+            const empBenefitsPanelTx = document.getElementById('employee-benefits-panel');
+            if (empBenefitsPanelTx && !empBenefitsPanelTx.hidden && typeof renderInviteVipSalaryCards === 'function') {
+              renderInviteVipSalaryCards();
+            }
+            const teamPanel = document.getElementById('team-report-panel');
+            if (teamPanel && !teamPanel.hidden) {
+              if (typeof updateTeamReportMetrics === 'function') updateTeamReportMetrics(true);
+              if (typeof renderFreshTeamView === 'function') renderFreshTeamView(true);
             }
           }, 150);
         }
@@ -918,6 +927,10 @@ function initSupabaseLiveSync(user) {
           if (invitePanel && !invitePanel.hidden) {
             if (typeof renderInvitePage === 'function') renderInvitePage();
           }
+          const empBenefitsPanelTeam = document.getElementById('employee-benefits-panel');
+          if (empBenefitsPanelTeam && !empBenefitsPanelTeam.hidden && typeof renderInviteVipSalaryCards === 'function') {
+            renderInviteVipSalaryCards();
+          }
         }
       )
       .subscribe();
@@ -929,6 +942,7 @@ window.initSupabaseLiveSync = initSupabaseLiveSync;
 
 window.addEventListener('alo-supabase-ready', function() {
   loadPlatformConfigFromSupabase();
+  ensurePlatformConfigLiveChannel();
   if (typeof getCurrentUser === 'function') {
     const user = getCurrentUser();
     if (user) {
@@ -997,7 +1011,7 @@ async function dbSaveUser(account) {
   if (window.aloSupabase) {
     try {
       let baseOpt = (account._rawOpt && typeof account._rawOpt === 'object') ? Object.assign({}, account._rawOpt) : {};
-      let preservedCreatedAt = account.createdAt || new Date().toISOString();
+      let preservedCreatedAt = account.createdAt || baseOpt.created_at || (account._isNewRegistration ? new Date().toISOString() : '');
       if (!account._isNewRegistration) {
         try {
           const { data: existingRow } = await window.aloSupabase
@@ -1015,10 +1029,16 @@ async function dbSaveUser(account) {
               : existingRow.bkash_optional;
             if (parsed && typeof parsed === 'object') {
               baseOpt = Object.assign({}, parsed, baseOpt);
+              if (!preservedCreatedAt && parsed.created_at) {
+                preservedCreatedAt = parsed.created_at;
+                account.createdAt = parsed.created_at;
+              }
             }
           }
         } catch (e) {}
       }
+      if (!preservedCreatedAt) preservedCreatedAt = new Date().toISOString();
+      const nowIso = new Date().toISOString();
 
       const purchasedPkgs = Array.isArray(account.purchasedPackages) && account.purchasedPackages.length > 0
         ? account.purchasedPackages
@@ -1064,17 +1084,20 @@ async function dbSaveUser(account) {
           ? account.spinHistory.slice(0, 25)
           : (Array.isArray(baseOpt.spin_history) ? baseOpt.spin_history : []),
         country: account.country || baseOpt.country || 'BD',
-        currency: (account.country || baseOpt.country || 'BD') === 'BD' ? 'BDT' : 'USD',
+        currency: 'USD',
         dial_code: account.dialCode || baseOpt.dial_code || '+880',
         commission_dust: typeof account.commissionDust === 'number'
           ? Number(account.commissionDust.toFixed(6))
           : (Number(baseOpt.commission_dust) || 0),
         superior_phone: account.superiorPhone || baseOpt.superior_phone || '',
+        created_at: preservedCreatedAt,
+        updated_at: nowIso,
         language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || baseOpt.language || 'en'),
         language_manual: Boolean(account.languageManual || (account.profileData && account.profileData.languageManual) || baseOpt.language_manual)
       });
 
       account._rawOpt = extraMeta;
+      account.updatedAt = nowIso;
 
       const payload = {
         phone: normPhone,
@@ -1091,7 +1114,7 @@ async function dbSaveUser(account) {
         bkash_phone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
         bkash_optional: JSON.stringify(extraMeta),
         created_at: preservedCreatedAt,
-        updated_at: new Date().toISOString()
+        updated_at: nowIso
       };
 
       const { error } = await window.aloSupabase
@@ -1165,53 +1188,97 @@ async function dbAddTeamMember(superiorPhone, memberPhone, memberId, level, tier
   const t = Number(tier) || 1;
   const bal = Number(balance) || 0;
   const rech = Number(rechargeAmount) || 0;
+  const cleanLevel = level || 'LV0';
+  const cleanMemberId = memberId || ('AL' + memNorm.slice(-6));
 
   if (!supNorm || !memNorm || supNorm === memNorm) return false;
   let saved = false;
 
-  // Supabase
+  // Supabase (idempotent check -> update if exists, else insert so team rows persist cleanly without duplicates)
   if (window.aloSupabase) {
     try {
-      // Supabase team table schema: id, superior_phone, member_phone, member_id, tier, level, status, joined_at
-      const payload = {
-        superior_phone: supNorm,
-        member_phone: memNorm,
-        member_id: memberId || ('AL' + Date.now().toString().slice(-8)),
-        tier: t,
-        level: level || 'LV0',
-        status: 'সক্রিয়',
-        joined_at: new Date().toISOString()
-      };
-      const { error } = await window.aloSupabase.from('team').insert(payload);
-      if (!error) saved = true;
-      else console.warn('Supabase dbAddTeamMember warning:', error);
+      const supKeys = expandPhoneLookupKeys([supNorm, superiorPhone]);
+      const memKeys = expandPhoneLookupKeys([memNorm, memberPhone]);
+      let existingRows = null;
+      try {
+        const { data: found } = await window.aloSupabase
+          .from('team')
+          .select('id, level, member_id')
+          .in('superior_phone', supKeys.length > 0 ? supKeys : [supNorm])
+          .in('member_phone', memKeys.length > 0 ? memKeys : [memNorm])
+          .eq('tier', t)
+          .limit(5);
+        if (Array.isArray(found) && found.length > 0) existingRows = found;
+      } catch (qErr) {}
+
+      if (existingRows && existingRows.length > 0) {
+        saved = true;
+        const firstRow = existingRows[0];
+        const updateFields = {};
+        const prevIdx = LEVEL_ORDER.indexOf(firstRow.level || 'LV0');
+        const nextIdx = LEVEL_ORDER.indexOf(cleanLevel);
+        if (nextIdx > prevIdx) updateFields.level = cleanLevel;
+        if (memberId && (!firstRow.member_id || String(firstRow.member_id).startsWith('AL'))) {
+          updateFields.member_id = memberId;
+        }
+        if (Object.keys(updateFields).length > 0) {
+          await window.aloSupabase
+            .from('team')
+            .update(updateFields)
+            .eq('id', firstRow.id);
+        }
+      } else {
+        // Supabase team table schema: id, superior_phone, member_phone, member_id, tier, level, status, joined_at
+        const payload = {
+          superior_phone: supNorm,
+          member_phone: memNorm,
+          member_id: cleanMemberId,
+          tier: t,
+          level: cleanLevel,
+          status: 'সক্রিয়',
+          joined_at: new Date().toISOString()
+        };
+        const { error } = await window.aloSupabase.from('team').insert(payload);
+        if (!error) saved = true;
+        else console.warn('Supabase dbAddTeamMember warning:', error);
+      }
     } catch (err) {
       console.warn('Supabase dbAddTeamMember error:', err);
     }
   }
 
-  // Local Storage aloTeamRecords
+  // Local Storage aloTeamRecords (upsert cleanly)
   try {
     const local = JSON.parse(localStorage.getItem('aloTeamRecords') || '[]');
-    const exists = local.some(function(item) {
-      return item.superiorPhone === supNorm && item.memberPhone === memNorm && item.tier === t;
+    const existingIdx = local.findIndex(function(item) {
+      return normalizeBdPhone(item.superiorPhone) === supNorm && normalizeBdPhone(item.memberPhone) === memNorm && Number(item.tier) === t;
     });
-      if (!exists) {
-        local.push({
-          superiorPhone: supNorm,
-          memberPhone: memNorm,
-          memberId: memberId || ('AL' + Date.now().toString().slice(-8)),
-          tier: t,
-          level: level || 'LV0',
-          status: 'সক্রিয়',
-          balance: bal,
-          rechargeAmount: rech,
-          joinedAt: new Date().toISOString()
-        });
-        if (local.length > 250) local.splice(0, local.length - 250);
-        localStorage.setItem('aloTeamRecords', JSON.stringify(local));
-      }
+    if (existingIdx >= 0) {
+      const prevIdx = LEVEL_ORDER.indexOf(local[existingIdx].level || 'LV0');
+      const nextIdx = LEVEL_ORDER.indexOf(cleanLevel);
+      if (nextIdx > prevIdx) local[existingIdx].level = cleanLevel;
+      if (memberId) local[existingIdx].memberId = memberId;
+      localStorage.setItem('aloTeamRecords', JSON.stringify(local));
+    } else {
+      local.push({
+        superiorPhone: supNorm,
+        memberPhone: memNorm,
+        memberId: cleanMemberId,
+        tier: t,
+        level: cleanLevel,
+        status: 'সক্রিয়',
+        balance: bal,
+        rechargeAmount: rech,
+        joinedAt: new Date().toISOString()
+      });
+      if (local.length > 250) local.splice(0, local.length - 250);
+      localStorage.setItem('aloTeamRecords', JSON.stringify(local));
+    }
   } catch(e) {}
+
+  if (typeof _realTeamCache !== 'undefined') {
+    _realTeamCache.delete(supNorm);
+  }
 
   return saved;
 }
@@ -1490,7 +1557,7 @@ async function _computeDbGetRealTeam(normPhone) {
         packageSpendToday: Number(data.packageSpendToday) || 0,
         taskEarningsTotal: Number(data.taskEarningsTotal) || 0,
         taskEarningsToday: Number(data.taskEarningsToday) || 0,
-        currency: data.currency || 'BDT',
+        currency: data.currency || 'USD',
         _fromUsersTable: Boolean(data.fromUsersTable),
         joinedAt: data.joinedAt || new Date().toISOString()
       });
@@ -1600,7 +1667,7 @@ async function _computeDbGetRealTeam(normPhone) {
             fromUsersTable: true,
             memberId: mapped.memberId,
             inviteCode: mapped.inviteCode || '',
-            currency: mapped.currency || 'BDT',
+            currency: mapped.currency || 'USD',
             tier: cur.tier,
             level: mapped.packageLevel || 'LV0',
             purchasedPackages: mapped.purchasedPackages || [],
@@ -1657,7 +1724,7 @@ async function _computeDbGetRealTeam(normPhone) {
                 fromUsersTable: true,
                 memberId: mapped.memberId || ('AL' + p.slice(-6)),
                 inviteCode: mapped.inviteCode || '',
-                currency: mapped.currency || 'BDT',
+                currency: mapped.currency || 'USD',
                 tier: 1,
                 level: mapped.packageLevel || 'LV0',
                 purchasedPackages: mapped.purchasedPackages || [],
@@ -1702,7 +1769,7 @@ async function _computeDbGetRealTeam(normPhone) {
                   fromUsersTable: true,
                   memberId: mapped.memberId || ('AL' + p.slice(-6)),
                   inviteCode: mapped.inviteCode || '',
-                  currency: mapped.currency || 'BDT',
+                  currency: mapped.currency || 'USD',
                   tier: 2,
                   level: mapped.packageLevel || 'LV0',
                   purchasedPackages: mapped.purchasedPackages || [],
@@ -1744,7 +1811,7 @@ async function _computeDbGetRealTeam(normPhone) {
                   fromUsersTable: true,
                   memberId: mapped.memberId || ('AL' + p.slice(-6)),
                   inviteCode: mapped.inviteCode || '',
-                  currency: mapped.currency || 'BDT',
+                  currency: mapped.currency || 'USD',
                   tier: 3,
                   level: mapped.packageLevel || 'LV0',
                   purchasedPackages: mapped.purchasedPackages || [],
@@ -1966,7 +2033,7 @@ const dashboardTitles = {
   vip: 'Hall',
   records: 'VIP',
   'package-detail': 'Package Details',
-  'savings-plan': 'Savings Plan',
+  'employee-benefits': 'Employee Benefits',
   tasks: 'Tasks',
   profile: 'Mine',
   personal: 'Personal Info',
@@ -1997,7 +2064,7 @@ function updateDashboardTitleForLang(targetLang) {
       vip: 'হল',
       records: 'অবস্থান',
       'package-detail': 'প্যাকেজের বিস্তারিত',
-      'savings-plan': 'সঞ্চয় পরিকল্পনা',
+      'employee-benefits': 'Employee Benefits',
       tasks: 'টাস্ক',
       profile: 'আমার',
       personal: 'ব্যক্তিগত তথ্য',
@@ -2024,7 +2091,7 @@ function updateDashboardTitleForLang(targetLang) {
       vip: 'Hall',
       records: 'VIP',
       'package-detail': 'Package Details',
-      'savings-plan': 'Savings Plan',
+      'employee-benefits': 'Employee Benefits',
       tasks: 'Tasks',
       profile: 'Mine',
       personal: 'Personal Info',
@@ -2051,7 +2118,7 @@ function updateDashboardTitleForLang(targetLang) {
       vip: 'القاعة',
       records: 'الأعضاء',
       'package-detail': 'تفاصيل الباقة',
-      'savings-plan': 'خطة الادخار',
+      'employee-benefits': 'Employee Benefits',
       tasks: 'المهام',
       profile: 'حسابي',
       personal: 'المعلومات الشخصية',
@@ -2102,11 +2169,11 @@ window.addEventListener('alo-language-changed', function(e) {
   } catch(err) {}
 });
 
-// PW NEW MEDIA Landing Page Certificates & Lightbox (add image paths to CERTS[].src when ready)
+// PW NEW MEDIA Landing Page Certificates & Lightbox
 var CERTS = [
-  { n: 'TikTok', code: 'PW-TT-2026', descKey: 'lp_cert_tt_desc', src: '' },
-  { n: 'Facebook', code: 'PW-FB-2026', descKey: 'lp_cert_fb_desc', src: '' },
-  { n: 'YouTube', code: 'PW-YT-2026', descKey: 'lp_cert_yt_desc', src: '' }
+  { n: 'TikTok', code: 'PW-TT-2026', descKey: 'lp_cert_tt_desc', src: '/assets/certificates/cert_tiktok_pw.jpg' },
+  { n: 'Facebook', code: 'PW-FB-2026', descKey: 'lp_cert_fb_desc', src: '/assets/certificates/cert_facebook_pw.jpg' },
+  { n: 'YouTube', code: 'PW-YT-2026', descKey: 'lp_cert_yt_desc', src: '/assets/certificates/cert_youtube_pw.jpg' }
 ];
 window.CERTS = CERTS;
 
@@ -2157,7 +2224,47 @@ function buildLandingCertificateMarkup(c, fullView) {
   );
 }
 
+function bindHomeCertLightbox() {
+  const lightbox = document.getElementById('home-cert-lightbox');
+  const lightboxImg = document.getElementById('home-cert-lightbox-img');
+  if (!lightbox || !lightboxImg) return;
+
+  document.querySelectorAll('#home-panel [data-home-cert-src]').forEach(function(btn) {
+    if (btn.dataset.homeCertBound) return;
+    btn.dataset.homeCertBound = 'true';
+    btn.addEventListener('click', function() {
+      const src = btn.getAttribute('data-home-cert-src');
+      const title = btn.getAttribute('data-home-cert-title') || 'Official Certificate';
+      if (!src) return;
+      lightboxImg.src = src;
+      lightboxImg.alt = title;
+      lightbox.hidden = false;
+    });
+  });
+
+  if (!lightbox.dataset.homeCertBound) {
+    lightbox.dataset.homeCertBound = 'true';
+    lightbox.addEventListener('click', function() {
+      lightbox.hidden = true;
+      lightboxImg.removeAttribute('src');
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && !lightbox.hidden) {
+        lightbox.hidden = true;
+        lightboxImg.removeAttribute('src');
+      }
+    });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bindHomeCertLightbox);
+} else {
+  bindHomeCertLightbox();
+}
+
 function renderLandingCertificates() {
+  bindHomeCertLightbox();
   const cg = document.getElementById('landing-cg');
   const lb = document.getElementById('landing-lb');
   if (!cg) return;
@@ -2168,12 +2275,12 @@ function renderLandingCertificates() {
     b.type = 'button';
     b.innerHTML =
       '<div class="cf">' +
-      (c.src ? '<img alt="' + c.n + '" src="' + c.src + '">' : buildLandingCertificateMarkup(c, false)) +
+      (c.src ? '<img alt="' + c.n + ' Official Certificate - PW NEW MEDIA" src="' + c.src + '" loading="lazy" referrerpolicy="no-referrer">' : buildLandingCertificateMarkup(c, false)) +
       '</div><b>' + (LANDING_LG[c.n] || '') + '<span class="notranslate">' + c.n + '</span></b>';
     b.onclick = function() {
       if (!lb) return;
       lb.innerHTML = c.src
-        ? '<img alt="' + c.n + '" src="' + c.src + '">'
+        ? '<img alt="' + c.n + ' Official Certificate - PW NEW MEDIA" src="' + c.src + '" referrerpolicy="no-referrer">'
         : buildLandingCertificateMarkup(c, true);
       lb.hidden = false;
     };
@@ -2435,10 +2542,10 @@ function renderInvitePage() {
   const initTodayEl = document.getElementById('invite-today-commission');
   const initCountEl = document.getElementById('invite-team-members-count');
   const initNewEl = document.getElementById('invite-today-new-count');
-  if (initTotEl) initTotEl.textContent = '0.00';
-  if (initTodayEl) initTodayEl.textContent = '0.00';
-  if (initCountEl) initCountEl.textContent = '0';
-  if (initNewEl) initNewEl.textContent = '0';
+  if (initTotEl && !initTotEl.textContent.trim()) initTotEl.textContent = '0.00';
+  if (initTodayEl && !initTodayEl.textContent.trim()) initTodayEl.textContent = '0.00';
+  if (initCountEl && !initCountEl.textContent.trim()) initCountEl.textContent = '0';
+  if (initNewEl && !initNewEl.textContent.trim()) initNewEl.textContent = '0';
 
   // Populate dynamic Top Commission summary card from real commission transactions + 6%/2%/1% package & 3%/2%/1% daily task rates
   try {
@@ -2487,6 +2594,7 @@ function renderInvitePage() {
         const tierNum = Number(m.tier) || 1;
         const pkgRate = PACKAGE_COMMISSION_RATES[tierNum] || 0;
         const taskRate = DAILY_TASK_COMMISSION_RATES[tierNum] || 0;
+        const mCurr = m.currency || 'USD';
 
         // Package spend in member currency -> viewer currency (exact conversion so fractional USD/USDT sums accurately)
         let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
@@ -2494,14 +2602,14 @@ function renderInvitePage() {
           const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
           const uniquePaid = Array.from(new Set(paidPkgs.map(function(p) { return String(p || '').toUpperCase().trim(); })))
             .filter(function(p) { return p && p !== 'LV0' && packageData[p] && Number(packageData[p].price) > 0; });
-          const memberIsUsd = String(m.currency || 'BDT').toUpperCase() === 'USD';
+          const memberIsUsd = String(mCurr).toUpperCase() === 'USD';
           pkgSpendRaw = uniquePaid.reduce(function(sum, lvl) {
             const bdtPrice = Number(packageData[lvl].price) || 0;
             return sum + (memberIsUsd ? convertBetweenCurrencies(bdtPrice, 'BDT', 'USD') : bdtPrice);
           }, 0);
         }
-        const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, m.currency || 'BDT', viewerCurr);
-        const pkgSpendToday = convertBetweenCurrenciesExact(Number(m.packageSpendToday) || 0, m.currency || 'BDT', viewerCurr);
+        const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, mCurr, viewerCurr);
+        const pkgSpendToday = convertBetweenCurrenciesExact(Number(m.packageSpendToday) || 0, mCurr, viewerCurr);
 
         // Paid task earnings in member currency -> viewer currency (avoid falling back to totalIncome when tx history loaded)
         const memberHasPaidLvl = String(m.level || 'LV0').toUpperCase() !== 'LV0' ||
@@ -2510,8 +2618,8 @@ function renderInvitePage() {
           ? (Number(m.taskEarningsTotal) || 0)
           : (Number(m.taskEarningsTotal) || (memberHasPaidLvl ? (Number(m.totalIncome) || 0) : 0));
         const taskEarnTodayRaw = Number(m.taskEarningsToday) || 0;
-        const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, m.currency || 'BDT', viewerCurr);
-        const taskEarnToday = convertBetweenCurrenciesExact(taskEarnTodayRaw, m.currency || 'BDT', viewerCurr);
+        const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, mCurr, viewerCurr);
+        const taskEarnToday = convertBetweenCurrenciesExact(taskEarnTodayRaw, mCurr, viewerCurr);
 
         teamPkgCommTotal += pkgSpend * pkgRate;
         teamPkgCommToday += pkgSpendToday * pkgRate;
@@ -2569,8 +2677,191 @@ function renderInvitePage() {
     }).catch(function() {});
   } catch(e) {}
 
+  // Refresh latest admin salary/platform config in background whenever Invite/Salary page opens
+  if (typeof loadPlatformConfigFromSupabase === 'function') {
+    loadPlatformConfigFromSupabase(true).catch(function() {});
+  }
+
   // Render dynamic VIP Salary & Upgrade Level progress and buttons
   renderInviteVipSalaryCards();
+}
+
+const SALARY_ICON_SVGS = [
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><circle cx="22" cy="14" r="8" fill="url(#gB)"/><path d="M6 42c0-10 7-16 16-16s16 6 16 16z" fill="url(#gB)"/><polygon points="38,26 40.6,31.4 46.4,32.2 42.2,36.2 43.2,42 38,39.2 32.8,42 33.8,36.2 29.6,32.2 35.4,31.4" fill="url(#gG)"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="13,30 7,45 16,42 20,47 25,31" fill="#0f3d91"/><polygon points="35,30 41,45 32,42 28,47 23,31" fill="#1877f2"/><circle cx="24" cy="18" r="15" fill="url(#gB)"/><circle cx="24" cy="18" r="10.5" fill="#0f3d91"/><polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gW)"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><path d="M5 36V13l11 11 8-15 8 15 11-11v23z" fill="url(#gB)"/><rect x="5" y="38" width="38" height="7" rx="2.5" fill="url(#gB)"/><circle cx="5" cy="12" r="3" fill="url(#gG)"/><circle cx="24" cy="8" r="3" fill="url(#gG)"/><circle cx="43" cy="12" r="3" fill="url(#gG)"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="11,8 37,8 46,19 24,45 2,19" fill="url(#gB)"/><polygon points="11,8 37,8 46,19 2,19" fill="#fff" opacity=".25"/><path d="M2 19h44M17 19l7-11 7 11-7 26z" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" fill="none"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><g transform="rotate(40 24 24)"><path d="M24 2c8 6 11 16 9 30H15C13 18 16 8 24 2z" fill="url(#gW)"/><path d="M24 2c8 6 11 16 9 30H24z" fill="#60a5fa" opacity=".5"/><circle cx="24" cy="16" r="4.5" fill="url(#gB)"/><path d="M15 24l-7 10 7-2zM33 24l7 10-7-2z" fill="#1877f2"/><path d="M19 32h10l-5 13z" fill="url(#gG)"/></g></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><path d="M24 3l17 6v13c0 11-7 19-17 23C14 41 7 33 7 22V9z" fill="url(#gB)"/><path d="M24 8l12 4.5V22c0 8-5 14-12 17.5C17 36 12 30 12 22v-9.5z" fill="#0f3d91"/><polygon points="24,15 26.4,20.3 32,21 27.8,24.8 29,30.5 24,27.6 19,30.5 20.2,24.8 16,21 21.6,20.3" fill="url(#gW)"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><path d="M14 6h20v13c0 7-4.5 12-10 12s-10-5-10-12z" fill="url(#gG)"/><path d="M14 10H6c0 8 3 12 9 13M34 10h8c0 8-3 12-9 13" stroke="#d97706" stroke-width="3" fill="none"/><rect x="21" y="31" width="6" height="8" fill="#b45309"/><rect x="14" y="39" width="20" height="6" rx="2" fill="url(#gG)"/></svg>`,
+  `<svg viewBox="0 0 48 48" class="w-10 h-10"><polygon points="12,30 7,46 16,42 21,47 26,31" fill="#0f3d91"/><polygon points="36,30 41,46 32,42 27,47 22,31" fill="#1877f2"/><circle cx="24" cy="18" r="16" fill="url(#gG)"/><circle cx="24" cy="18" r="11" fill="#0f3d91"/><polygon points="24,10 26.4,15.3 32,16 27.8,19.8 29,25.5 24,22.6 19,25.5 20.2,19.8 16,16 21.6,15.3" fill="url(#gG)"/></svg>`
+];
+
+const DEFAULT_SALARY_PAGE_CONFIG = {
+  titleBn: 'আপনার অর্জন, আপনার সম্মান',
+  titleEn: 'Your Achievement, Your Honor',
+  titleAr: 'إنجازك هو فخرك',
+  subtitleBn: 'নির্ধারিত লক্ষ্য পূরণ করে পদমর্যাদা ও মাসিক বেতন অর্জন করুন।',
+  subtitleEn: 'Reach the target milestones to unlock ranks and monthly salary.',
+  subtitleAr: 'حقق الأهداف المطلوبة لفتح الرتب والحصول على راتب شهري.',
+  activeLabelBn: 'সক্রিয় A-লেভেল সদস্য (প্যাকেজ ক্রয়কৃত):',
+  activeLabelEn: 'Active A-Level Members (Paid):',
+  activeLabelAr: 'أعضاء المستوى A النشطون (باقة مدفوعة):',
+  unitBn: 'জন',
+  unitEn: 'Members',
+  unitAr: 'عضو',
+  badgeLockedBn: '🔒 মাসিক বেতন',
+  badgeLockedEn: '🔒 Monthly Salary',
+  badgeLockedAr: '🔒 الراتب الشهري',
+  badgeClaimBn: 'গ্রহণ করুন',
+  badgeClaimEn: 'Claim',
+  badgeClaimAr: 'استلام',
+  badgeClaimedBn: 'গৃহীত ✓',
+  badgeClaimedEn: 'Claimed ✓',
+  badgeClaimedAr: 'تم الاستلام ✓',
+  modalNoteBn: 'আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। শুধু ফ্রি রেফার করলে গণ্য হবে না — A-লেভেলের সদস্যরা প্যাকেজ (LV1+) ক্রয় করলেই সক্রিয় হবে এবং বেতন অগ্রগতি বাড়বে।',
+  modalNoteEn: 'Invite friends using your link. Free signups do not count — A-Level members become active once they purchase a VIP package (LV1+).',
+  modalNoteAr: 'ادعُ أصدقاءك عبر رابط الدعوة. التسجيل المجاني لا يُحتسب — يصبح أعضاء المستوى A نشطين بعد شراء باقة مدفوعة (LV1+).',
+  tiers: [
+    { id: 'অবস্থান ১', enabled: true, nameBn: 'অবস্থান ১', nameEn: 'Position 1', nameAr: 'المركز 1', req: 3, salaryUsd: 8.00, descBn: 'আপনার প্রথম ৩ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 3 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 3 أعضاء نشطين أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ২', enabled: true, nameBn: 'অবস্থান ২', nameEn: 'Position 2', nameAr: 'المركز 2', req: 5, salaryUsd: 15.00, descBn: 'আপনার প্রথম ৫ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 5 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 5 أعضاء نشطين أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৩', enabled: true, nameBn: 'অবস্থান ৩', nameEn: 'Position 3', nameAr: 'المركز 3', req: 8, salaryUsd: 20.00, descBn: 'আপনার প্রথম ৮ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 8 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 8 أعضاء نشطين أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৪', enabled: true, nameBn: 'অবস্থান ৪', nameEn: 'Position 4', nameAr: 'المركز 4', req: 15, salaryUsd: 25.00, descBn: 'আপনার প্রথম ১৫ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 15 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 15 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৫', enabled: true, nameBn: 'অবস্থান ৫', nameEn: 'Position 5', nameAr: 'المركز 5', req: 25, salaryUsd: 32.00, descBn: 'আপনার প্রথম ২৫ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 25 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 25 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৬', enabled: true, nameBn: 'অবস্থান ৬', nameEn: 'Position 6', nameAr: 'المركز 6', req: 40, salaryUsd: 45.00, descBn: 'আপনার প্রথম ৪০ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 40 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 40 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৭', enabled: true, nameBn: 'অবস্থান ৭', nameEn: 'Position 7', nameAr: 'المركز 7', req: 70, salaryUsd: 55.00, descBn: 'আপনার প্রথম ৭০ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 70 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 70 عضوًا نشطًا أو أكثر في المستوى A.' },
+    { id: 'অবস্থান ৮', enabled: true, nameBn: 'অবস্থান ৮', nameEn: 'Position 8', nameAr: 'المركز 8', req: 100, salaryUsd: 80.00, descBn: 'আপনার প্রথম ১০০ জন বা তার বেশি A-লেভেল সক্রিয় সদস্য (রিচার্জ ও প্যাকেজ ক্রয়) থাকলে যোগ্য হবেন।', descEn: 'Qualify when you have 100 or more active A-Level members (with paid package).', descAr: 'تتأهل عندما يكون لديك 100 عضو نشط أو أكثر في المستوى A.' }
+  ]
+};
+
+function escapeSalaryHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeSalaryPageConfig(raw) {
+  const src = (raw && typeof raw === 'object') ? raw : {};
+  const strOr = function(val, fallback) {
+    return (typeof val === 'string' && val.trim().length > 0) ? val.trim() : fallback;
+  };
+  const rawTiers = Array.isArray(src.tiers) && src.tiers.length > 0 ? src.tiers : DEFAULT_SALARY_PAGE_CONFIG.tiers;
+  const normalizedTiers = rawTiers.map(function(t, idx) {
+    const def = DEFAULT_SALARY_PAGE_CONFIG.tiers[idx] || {
+      id: `অবস্থান ${idx + 1}`,
+      enabled: true,
+      nameBn: `অবস্থান ${idx + 1}`,
+      nameEn: `Position ${idx + 1}`,
+      nameAr: `المركز ${idx + 1}`,
+      req: Math.max(1, (idx + 1) * 10),
+      salaryUsd: 10,
+      descBn: `আপনার প্রথম ${idx + 1} জন বা তার বেশি A-লেভেল সক্রিয় সদস্য থাকলে যোগ্য হবেন।`,
+      descEn: `Qualify with required active A-Level members.`,
+      descAr: `تتأهل عند استيفاء عدد الأعضاء النشطين المطلوب.`
+    };
+    const item = (t && typeof t === 'object') ? t : {};
+    const parsedReq = parseInt(item.req, 10);
+    const parsedSalaryUsd = parseFloat(item.salaryUsd !== undefined ? item.salaryUsd : item.salary);
+    const nameBn = strOr(item.nameBn, def.nameBn);
+    const nameEn = strOr(item.nameEn, def.nameEn);
+    const nameAr = strOr(item.nameAr, def.nameAr);
+    return {
+      id: strOr(item.id, def.id || nameBn),
+      enabled: item.enabled !== false,
+      nameBn: nameBn,
+      nameEn: nameEn,
+      nameAr: nameAr,
+      req: Number.isFinite(parsedReq) && parsedReq >= 1 ? parsedReq : def.req,
+      salaryUsd: Number.isFinite(parsedSalaryUsd) && parsedSalaryUsd >= 0 ? Number(parsedSalaryUsd.toFixed(2)) : def.salaryUsd,
+      descBn: strOr(item.descBn, def.descBn),
+      descEn: strOr(item.descEn, def.descEn),
+      descAr: strOr(item.descAr, def.descAr)
+    };
+  });
+
+  return {
+    titleBn: strOr(src.titleBn, DEFAULT_SALARY_PAGE_CONFIG.titleBn),
+    titleEn: strOr(src.titleEn, DEFAULT_SALARY_PAGE_CONFIG.titleEn),
+    titleAr: strOr(src.titleAr, DEFAULT_SALARY_PAGE_CONFIG.titleAr),
+    subtitleBn: strOr(src.subtitleBn, DEFAULT_SALARY_PAGE_CONFIG.subtitleBn),
+    subtitleEn: strOr(src.subtitleEn, DEFAULT_SALARY_PAGE_CONFIG.subtitleEn),
+    subtitleAr: strOr(src.subtitleAr, DEFAULT_SALARY_PAGE_CONFIG.subtitleAr),
+    activeLabelBn: strOr(src.activeLabelBn, DEFAULT_SALARY_PAGE_CONFIG.activeLabelBn),
+    activeLabelEn: strOr(src.activeLabelEn, DEFAULT_SALARY_PAGE_CONFIG.activeLabelEn),
+    activeLabelAr: strOr(src.activeLabelAr, DEFAULT_SALARY_PAGE_CONFIG.activeLabelAr),
+    unitBn: strOr(src.unitBn, DEFAULT_SALARY_PAGE_CONFIG.unitBn),
+    unitEn: strOr(src.unitEn, DEFAULT_SALARY_PAGE_CONFIG.unitEn),
+    unitAr: strOr(src.unitAr, DEFAULT_SALARY_PAGE_CONFIG.unitAr),
+    badgeLockedBn: strOr(src.badgeLockedBn, DEFAULT_SALARY_PAGE_CONFIG.badgeLockedBn),
+    badgeLockedEn: strOr(src.badgeLockedEn, DEFAULT_SALARY_PAGE_CONFIG.badgeLockedEn),
+    badgeLockedAr: strOr(src.badgeLockedAr, DEFAULT_SALARY_PAGE_CONFIG.badgeLockedAr),
+    badgeClaimBn: strOr(src.badgeClaimBn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimBn),
+    badgeClaimEn: strOr(src.badgeClaimEn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimEn),
+    badgeClaimAr: strOr(src.badgeClaimAr, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimAr),
+    badgeClaimedBn: strOr(src.badgeClaimedBn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimedBn),
+    badgeClaimedEn: strOr(src.badgeClaimedEn, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimedEn),
+    badgeClaimedAr: strOr(src.badgeClaimedAr, DEFAULT_SALARY_PAGE_CONFIG.badgeClaimedAr),
+    modalNoteBn: strOr(src.modalNoteBn, DEFAULT_SALARY_PAGE_CONFIG.modalNoteBn),
+    modalNoteEn: strOr(src.modalNoteEn, DEFAULT_SALARY_PAGE_CONFIG.modalNoteEn),
+    modalNoteAr: strOr(src.modalNoteAr, DEFAULT_SALARY_PAGE_CONFIG.modalNoteAr),
+    tiers: normalizedTiers
+  };
+}
+
+let activeSalaryPageConfig = normalizeSalaryPageConfig(DEFAULT_SALARY_PAGE_CONFIG);
+
+function getActiveSalaryPageConfig() {
+  return activeSalaryPageConfig || normalizeSalaryPageConfig(DEFAULT_SALARY_PAGE_CONFIG);
+}
+window.getActiveSalaryPageConfig = getActiveSalaryPageConfig;
+
+function applyRemoteSalaryConfig(rawSalaryCfg, skipCacheWrite) {
+  if (!rawSalaryCfg || typeof rawSalaryCfg !== 'object') return;
+  const normalized = normalizeSalaryPageConfig(rawSalaryCfg);
+  const prevJson = JSON.stringify(activeSalaryPageConfig);
+  const nextJson = JSON.stringify(normalized);
+  activeSalaryPageConfig = normalized;
+  window.aloPlatformConfig.salaryPage = normalized;
+
+  if (!skipCacheWrite) {
+    try {
+      localStorage.setItem('alo_system_salary_cache', nextJson);
+    } catch (e) {}
+  }
+
+  if (prevJson !== nextJson && typeof renderInviteVipSalaryCards === 'function') {
+    renderInviteVipSalaryCards();
+  }
+}
+window.applyRemoteSalaryConfig = applyRemoteSalaryConfig;
+
+try {
+  const cachedSalaryRaw = localStorage.getItem('alo_system_salary_cache');
+  if (cachedSalaryRaw) {
+    const cachedSalaryObj = JSON.parse(cachedSalaryRaw);
+    if (cachedSalaryObj && typeof cachedSalaryObj === 'object') {
+      activeSalaryPageConfig = normalizeSalaryPageConfig(cachedSalaryObj);
+      window.aloPlatformConfig.salaryPage = activeSalaryPageConfig;
+    }
+  }
+} catch (e) {}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('storage', function(ev) {
+    if (ev && ev.key === 'alo_system_salary_cache' && ev.newValue) {
+      try {
+        applyRemoteSalaryConfig(JSON.parse(ev.newValue), true);
+      } catch (e) {}
+    }
+  });
+  window.addEventListener('alo-language-changed', function() {
+    if (typeof renderInviteVipSalaryCards === 'function') {
+      renderInviteVipSalaryCards();
+    }
+  });
 }
 
 async function renderInviteVipSalaryCards() {
@@ -2578,11 +2869,34 @@ async function renderInviteVipSalaryCards() {
   if (!container) return;
 
   const user = getCurrentUser();
-  const isUsd = isUsdOnlyUser(user);
   const sym = getUserCurrencySymbol(user);
   const lang = getActiveLang(user);
   const phone = (user && (user.phone || user.accountNumber)) || '';
   const expectedNormPhone = normalizeBdPhone(phone);
+  const salaryCfg = getActiveSalaryPageConfig();
+
+  // Apply dynamic admin-configured page header, subtitle, active bar labels & modal note immediately
+  const titleEl = document.getElementById('salary-page-title');
+  if (titleEl) {
+    titleEl.textContent = tLang(lang, salaryCfg.titleBn, salaryCfg.titleEn, salaryCfg.titleAr);
+  }
+  const subtitleEl = document.getElementById('salary-page-subtitle');
+  if (subtitleEl) {
+    subtitleEl.textContent = tLang(lang, salaryCfg.subtitleBn, salaryCfg.subtitleEn, salaryCfg.subtitleAr);
+  }
+  const activeALabelEl = document.getElementById('salary-active-a-label');
+  if (activeALabelEl) {
+    activeALabelEl.textContent = tLang(lang, salaryCfg.activeLabelBn, salaryCfg.activeLabelEn, salaryCfg.activeLabelAr);
+  }
+  const activeAUnitEl = document.getElementById('salary-active-a-unit');
+  if (activeAUnitEl) {
+    activeAUnitEl.textContent = tLang(lang, salaryCfg.unitBn, salaryCfg.unitEn, salaryCfg.unitAr);
+  }
+  const modalNoteEl = document.getElementById('salary-modal-info-note');
+  if (modalNoteEl) {
+    modalNoteEl.textContent = tLang(lang, salaryCfg.modalNoteBn, salaryCfg.modalNoteEn, salaryCfg.modalNoteAr);
+  }
+
   // Salary progression counts ONLY A-Level (Tier 1) active members who purchased a paid package (LV1+)
   let activeTier1Count = 0;
 
@@ -2597,22 +2911,9 @@ async function renderInviteVipSalaryCards() {
     activeTier1Count = 0;
   }
 
-  const activeALabelEl = document.getElementById('salary-active-a-label');
   const activeACountEl = document.getElementById('salary-active-a-count');
-  const activeAUnitEl = document.getElementById('salary-active-a-unit');
-  if (activeALabelEl) {
-    activeALabelEl.textContent = tLang(
-      lang,
-      'সক্রিয় A-লেভেল সদস্য (প্যাকেজ ক্রয়কৃত):',
-      'Active A-Level Members (Paid):',
-      'أعضاء المستوى A النشطون (باقة مدفوعة):'
-    );
-  }
   if (activeACountEl) {
     activeACountEl.textContent = lang === 'bn' ? formatBanglaNumber(activeTier1Count) : String(activeTier1Count);
-  }
-  if (activeAUnitEl) {
-    activeAUnitEl.textContent = tLang(lang, 'জন', 'Members', 'عضو');
   }
 
   let claimed = (user && Array.isArray(user.claimedInviteRewards)) ? user.claimedInviteRewards : [];
@@ -2624,109 +2925,77 @@ async function renderInviteVipSalaryCards() {
     }
   }
 
-  const tiersConfig = [
-    { tier: 'অবস্থান ১', tierEn: 'Position 1', tierAr: 'المركز 1', req: 3, salary: 1000, label: '৳ ১,০০০' },
-    { tier: 'অবস্থান ২', tierEn: 'Position 2', tierAr: 'المركز 2', req: 5, salary: 1800, label: '৳ ১,৮০০' },
-    { tier: 'অবস্থান ৩', tierEn: 'Position 3', tierAr: 'المركز 3', req: 8, salary: 2500, label: '৳ ২,৫০০' },
-    { tier: 'অবস্থান ৪', tierEn: 'Position 4', tierAr: 'المركز 4', req: 15, salary: 3200, label: '৳ ৩,২০০' },
-    { tier: 'অবস্থান ৫', tierEn: 'Position 5', tierAr: 'المركز 5', req: 25, salary: 4000, label: '৳ ৪,০০০' },
-    { tier: 'অবস্থান ৬', tierEn: 'Position 6', tierAr: 'المركز 6', req: 40, salary: 5500, label: '৳ ৫,৫০০' },
-    { tier: 'অবস্থান ৭', tierEn: 'Position 7', tierAr: 'المركز 7', req: 70, salary: 7000, label: '৳ ৭,০০০' },
-    { tier: 'অবস্থান ৮', tierEn: 'Position 8', tierAr: 'المركز 8', req: 100, salary: 10000, label: '৳ ১০,০০০' }
-  ];
+  const visibleTiers = (salaryCfg.tiers || []).filter(function(t) { return t && t.enabled !== false; });
+  const lockedLabel = tLang(lang, salaryCfg.badgeLockedBn, salaryCfg.badgeLockedEn, salaryCfg.badgeLockedAr);
+  const claimLabel = tLang(lang, salaryCfg.badgeClaimBn, salaryCfg.badgeClaimEn, salaryCfg.badgeClaimAr);
+  const claimedLabel = tLang(lang, salaryCfg.badgeClaimedBn, salaryCfg.badgeClaimedEn, salaryCfg.badgeClaimedAr);
+  const unitTxt = tLang(lang, salaryCfg.unitBn, salaryCfg.unitEn, salaryCfg.unitAr);
 
-  tiersConfig.forEach(function(cfg) {
+  container.innerHTML = visibleTiers.map(function(cfg, idx) {
     const effectiveCount = activeTier1Count;
-
-    const rewardAmt = toUserCurrencyAmount(cfg.salary, user);
-    const displayLabel = isUsd
-      ? `${sym}${rewardAmt.toFixed(2)}`
-      : (lang === 'bn' ? cfg.label : `৳ ${cfg.salary.toLocaleString('en-US')}`);
-    const salaryKey = `${cfg.tier}-salary`;
+    const rewardAmt = Number(cfg.salaryUsd) || 0;
+    const displayLabel = `${sym}${rewardAmt.toFixed(2)}`;
+    const salaryKey = `${cfg.id}-salary`;
     const isClaimed = claimed.includes(salaryKey);
     const isUnlocked = effectiveCount >= cfg.req;
-    const pct = Math.min(100, Math.floor((effectiveCount / cfg.req) * 100));
+    const pct = Math.min(100, Math.floor((effectiveCount / Math.max(1, cfg.req)) * 100));
+    const posTitle = tLang(lang, cfg.nameBn, cfg.nameEn, cfg.nameAr);
+    const descRaw = tLang(lang, cfg.descBn, cfg.descEn, cfg.descAr);
+    const descSafe = escapeSalaryHtml(descRaw)
+      .replace(/\{req\}/g, lang === 'bn' ? formatBanglaNumber(cfg.req) : String(cfg.req))
+      .replace(/(A-লেভেল|A-Level|المستوى A)/g, '<b>$1</b>');
+    const pctText = lang === 'bn' ? `${formatBanglaNumber(pct)}%` : `${pct}%`;
+    const curShow = Math.min(effectiveCount, cfg.req);
+    const ratioText = lang === 'bn'
+      ? `${formatBanglaNumber(curShow)} / ${formatBanglaNumber(cfg.req)} ${escapeSalaryHtml(unitTxt)}`
+      : `${curShow} / ${cfg.req}`;
+    const iconSvg = SALARY_ICON_SVGS[idx % SALARY_ICON_SVGS.length];
 
-    // Update real progress bar and percentage text in the row
-    const row = document.querySelector(`.salary-row[data-vip-tier="${cfg.tier}"]`);
-    if (row) {
-      const posEl = row.querySelector('.salary-pos');
-      if (posEl) posEl.textContent = tLang(lang, cfg.tier, cfg.tierEn, cfg.tierAr);
-      const fillEl = row.querySelector('.fill');
-      if (fillEl) fillEl.style.width = `${pct}%`;
-      const pctEl = row.querySelector('.pct');
-      if (pctEl) pctEl.textContent = lang === 'bn' ? `${formatBanglaNumber(pct)}%` : `${pct}%`;
-      const progWrap = row.querySelector('.prog');
-      if (progWrap) {
-        let countBadge = row.querySelector('.salary-count-ratio');
-        if (!countBadge) {
-          countBadge = document.createElement('div');
-          countBadge.className = 'salary-count-ratio text-[10.5px] text-[#38bdf8] font-mono font-semibold mt-0.5';
-          progWrap.parentNode.appendChild(countBadge);
-        }
-        const curShow = Math.min(effectiveCount, cfg.req);
-        countBadge.textContent = lang === 'bn'
-          ? `${formatBanglaNumber(curShow)} / ${formatBanglaNumber(cfg.req)} জন`
-          : `${curShow} / ${cfg.req}`;
-      }
-      if (isUnlocked) {
-        row.classList.add('done');
-      } else {
-        row.classList.remove('done');
-      }
+    let btnStyle = 'background: #071638 !important; color: #e5e7eb !important; cursor: pointer !important;';
+    let btnSmall = `<small class="block text-[10.5px] font-semibold leading-tight text-[#e5e7eb]">${escapeSalaryHtml(lockedLabel)}</small>`;
+    let btnStrong = `<strong class="block text-[16px] font-bold font-mono leading-tight text-[#f3f4f6]">${escapeSalaryHtml(displayLabel)}</strong>`;
+    let claimedAttr = 'false';
+    let unlockedAttr = 'false';
+
+    if (isClaimed) {
+      claimedAttr = 'true';
+      btnStyle = 'background: #059669 !important; color: #ffffff !important; cursor: default !important;';
+      btnSmall = `<small class="block text-[10.5px] font-semibold leading-tight text-white">${escapeSalaryHtml(claimedLabel)}</small>`;
+      btnStrong = `<strong class="block text-[16px] font-bold font-mono leading-tight text-white">${escapeSalaryHtml(displayLabel)}</strong>`;
+    } else if (isUnlocked) {
+      unlockedAttr = 'true';
+      btnStyle = 'background: #1877f2 !important; color: #ffffff !important; cursor: pointer !important;';
+      btnSmall = `<small class="block text-[10.5px] font-semibold leading-tight text-white">${escapeSalaryHtml(claimLabel)}</small>`;
+      btnStrong = `<strong class="block text-[16px] font-bold font-mono leading-tight text-white">${escapeSalaryHtml(displayLabel)}</strong>`;
     }
 
-    const salaryBtn = document.querySelector(`.salary-pay[data-vip-tier="${cfg.tier}"][data-reward-type="salary"], .invite-claim-btn[data-vip-tier="${cfg.tier}"][data-reward-type="salary"]`);
-    if (salaryBtn) {
-      salaryBtn.dataset.currentCount = String(effectiveCount);
-      salaryBtn.dataset.requiredMembers = String(cfg.req);
-      salaryBtn.dataset.rewardAmount = String(rewardAmt);
-
-      if (isClaimed) {
-        salaryBtn.dataset.isClaimed = 'true';
-        salaryBtn.dataset.isUnlocked = 'false';
-        salaryBtn.style.setProperty('background', '#059669', 'important');
-        salaryBtn.style.setProperty('color', '#ffffff', 'important');
-        salaryBtn.style.setProperty('filter', 'none', 'important');
-        salaryBtn.style.setProperty('opacity', '1', 'important');
-        salaryBtn.style.setProperty('cursor', 'default', 'important');
-        salaryBtn.style.setProperty('box-shadow', 'none', 'important');
-        salaryBtn.classList.remove('animate-pulse');
-        salaryBtn.innerHTML = `
-          <small class="block text-[10.5px] font-semibold leading-tight text-white">${tLang(lang, 'গৃহীত ✓', 'Claimed ✓', 'تم الاستلام ✓')}</small>
-          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${displayLabel}</strong>
-        `;
-      } else if (isUnlocked) {
-        salaryBtn.dataset.isClaimed = 'false';
-        salaryBtn.dataset.isUnlocked = 'true';
-        salaryBtn.style.setProperty('background', '#1877f2', 'important');
-        salaryBtn.style.setProperty('color', '#ffffff', 'important');
-        salaryBtn.style.setProperty('filter', 'none', 'important');
-        salaryBtn.style.setProperty('opacity', '1', 'important');
-        salaryBtn.style.setProperty('cursor', 'pointer', 'important');
-        salaryBtn.style.setProperty('box-shadow', 'none', 'important');
-        salaryBtn.classList.remove('animate-pulse');
-        salaryBtn.innerHTML = `
-          <small class="block text-[10.5px] font-semibold leading-tight text-white">${tLang(lang, 'গ্রহণ করুন', 'Claim', 'استلام')}</small>
-          <strong class="block text-[16px] font-bold font-mono leading-tight text-white">${displayLabel}</strong>
-        `;
-      } else {
-        salaryBtn.dataset.isClaimed = 'false';
-        salaryBtn.dataset.isUnlocked = 'false';
-        salaryBtn.style.setProperty('background', '#071638', 'important');
-        salaryBtn.style.setProperty('color', '#e5e7eb', 'important');
-        salaryBtn.style.setProperty('filter', 'none', 'important');
-        salaryBtn.style.setProperty('opacity', '1', 'important');
-        salaryBtn.style.setProperty('cursor', 'pointer', 'important');
-        salaryBtn.style.setProperty('box-shadow', 'none', 'important');
-        salaryBtn.classList.remove('animate-pulse');
-        salaryBtn.innerHTML = `
-          <small class="block text-[10.5px] font-semibold leading-tight text-[#e5e7eb]">${tLang(lang, '🔒 মাসিক বেতন', '🔒 Monthly Salary', '🔒 الراتب الشهري')}</small>
-          <strong class="block text-[16px] font-bold font-mono leading-tight text-[#f3f4f6]">${displayLabel}</strong>
-        `;
-      }
-    }
-  });
+    return `
+      <div class="salary-row${isUnlocked ? ' done' : ''}" data-salary-idx="${idx}" data-vip-tier="${escapeSalaryHtml(cfg.id)}">
+        <div class="salary-ico">${iconSvg}</div>
+        <div class="salary-pos">${escapeSalaryHtml(posTitle)}</div>
+        <div class="salary-desc">
+          <div class="salary-desc-text">${descSafe}</div>
+          <div class="prog">
+            <div class="bar"><div class="fill" style="width: ${pct}%;"></div></div>
+            <span class="pct">${pctText}</span>
+          </div>
+          <div class="salary-count-ratio text-[10.5px] text-[#38bdf8] font-mono font-semibold mt-0.5">${ratioText}</div>
+        </div>
+        <button type="button" class="salary-pay"
+          data-vip-tier="${escapeSalaryHtml(cfg.id)}"
+          data-reward-type="salary"
+          data-reward-amount="${rewardAmt.toFixed(2)}"
+          data-required-members="${cfg.req}"
+          data-current-count="${effectiveCount}"
+          data-is-claimed="${claimedAttr}"
+          data-is-unlocked="${unlockedAttr}"
+          style="${btnStyle}">
+          ${btnSmall}
+          ${btnStrong}
+        </button>
+      </div>
+    `;
+  }).join('');
 }
 window.renderInviteVipSalaryCards = renderInviteVipSalaryCards;
 
@@ -2788,6 +3057,12 @@ function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
 
   const typeEl = document.getElementById('invite-modal-reward-type');
   if (typeEl) typeEl.textContent = tLang(lang, 'নির্ধারিত লক্ষ্য পূরণ বেতন', 'Target Achievement Salary', 'راتب تحقيق الهدف');
+
+  const salaryCfgModal = getActiveSalaryPageConfig();
+  const modalNoteEl = document.getElementById('salary-modal-info-note');
+  if (modalNoteEl) {
+    modalNoteEl.textContent = tLang(lang, salaryCfgModal.modalNoteBn, salaryCfgModal.modalNoteEn, salaryCfgModal.modalNoteAr);
+  }
 
   const amtEl = document.getElementById('invite-modal-amount-display');
   if (amtEl) amtEl.textContent = `${sym} ` + Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -2886,13 +3161,19 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
     verifiedActiveCount = 0;
   }
 
-  if (verifiedActiveCount < Number(reqMembers)) {
-    const needed = Number(reqMembers) - verifiedActiveCount;
+  // Re-verify live required members & salary amount from admin-configured salaryPage
+  const liveSalaryCfg = getActiveSalaryPageConfig();
+  const matchedTierCfg = (liveSalaryCfg.tiers || []).find(function(t) { return t && t.id === tier; });
+  const effectiveReqMembers = matchedTierCfg ? Number(matchedTierCfg.req) : Number(reqMembers);
+  const effectiveRewardAmount = matchedTierCfg ? Number(matchedTierCfg.salaryUsd) : Number(amount);
+
+  if (verifiedActiveCount < effectiveReqMembers) {
+    const needed = effectiveReqMembers - verifiedActiveCount;
     showToastNotification(tLang(
       lang,
-      `⚠️ শর্ত পূরণ হয়নি! A-লেভেলে আরও ${formatBanglaNumber(needed)} জন প্যাকেজ কেনা সক্রিয় সদস্য প্রয়োজন (বর্তমান: ${formatBanglaNumber(verifiedActiveCount)}/${formatBanglaNumber(reqMembers)})`,
-      `⚠️ Requirement not met! ${needed} more A-Level active member(s) with a paid package required (${verifiedActiveCount}/${reqMembers}).`,
-      `⚠️ لم يتم استيفاء الشرط! مطلوب ${needed} عضو نشط إضافي في المستوى A اشترى باقة (${verifiedActiveCount}/${reqMembers}).`
+      `⚠️ শর্ত পূরণ হয়নি! A-লেভেলে আরও ${formatBanglaNumber(needed)} জন প্যাকেজ কেনা সক্রিয় সদস্য প্রয়োজন (বর্তমান: ${formatBanglaNumber(verifiedActiveCount)}/${formatBanglaNumber(effectiveReqMembers)})`,
+      `⚠️ Requirement not met! ${needed} more A-Level active member(s) with a paid package required (${verifiedActiveCount}/${effectiveReqMembers}).`,
+      `⚠️ لم يتم استيفاء الشرط! مطلوب ${needed} عضو نشط إضافي في المستوى A اشترى باقة (${verifiedActiveCount}/${effectiveReqMembers}).`
     ));
     closeInviteVipClaimModal();
     await renderInviteVipSalaryCards();
@@ -2908,7 +3189,7 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
     localStorage.setItem('alo_claimed_invite_rewards', JSON.stringify(claimed));
     showToastNotification(tLang(
       lang,
-      `✓ আপনি ${tier} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`,
+      `✓ আপনি ${tierDisp} এর এই বোনাসটি ইতোমধ্যে গ্রহণ করেছেন!`,
       `✓ You have already claimed this ${tierDisp} reward!`,
       `✓ لقد استلمت مكافأة ${tierDisp} هذه مسبقاً!`
     ));
@@ -2918,7 +3199,7 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
   }
 
   const prevBal = Number(liveUser.balance) || 0;
-  const addAmt = Number(amount) || 0;
+  const addAmt = Number(effectiveRewardAmount) || 0;
   const newBal = Number((prevBal + addAmt).toFixed(2));
   liveUser.balance = newBal;
   liveUser.totalIncome = Number(((Number(liveUser.totalIncome) || 0) + addAmt).toFixed(2));
@@ -3082,7 +3363,7 @@ function openDashboardPanel(panelName) {
     'team-report': 'profile',
     'team-members': 'profile',
     'my-team': 'profile',
-    'savings-plan': 'profile',
+    'employee-benefits': 'profile',
     'lucky-spin': 'profile',
     'bkash-setup': 'profile',
     'nagad-setup': 'profile',
@@ -3110,8 +3391,8 @@ function openDashboardPanel(panelName) {
   if (nextPanel === 'invite') {
     renderInvitePage();
   }
-  if (nextPanel === 'savings-plan') {
-    renderSavingsPlanPanel();
+  if (nextPanel === 'employee-benefits') {
+    if (typeof renderInviteVipSalaryCards === 'function') renderInviteVipSalaryCards();
   }
   if (nextPanel === 'lucky-spin') {
     if (typeof renderLuckySpinPanel === 'function') renderLuckySpinPanel();
@@ -3978,7 +4259,9 @@ function selectRegistrationCountry(code) {
   }
   const phoneInput = document.getElementById('register-phone');
   if (phoneInput) {
-    phoneInput.maxLength = country.phoneLen || 15;
+    const rule = typeof getCountryPhoneRule === 'function' ? getCountryPhoneRule(country.code) : { max: country.phoneLen || 15, trunkZero: true };
+    phoneInput.maxLength = Math.max(15, rule.max + 5);
+    phoneInput.setCustomValidity('');
   }
   if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
     window.aloI18n.translateDOM();
@@ -4459,9 +4742,327 @@ function isBdRealOtpActive(countryCode) {
     !(window.aloPlatformConfig && window.aloPlatformConfig.bdRealOtpEnabled === false);
 }
 
+// Country-specific real mobile phone validation rules (ITU-T / E.164 National Significant Number digits after dial code)
+// [minDigits, maxDigits, mobileRegexOrNull, allowLeadingTrunkZero]
+const COUNTRY_PHONE_RULES = {
+  BD: [10, 10, /^1[3-9]\d{8}$/, true],
+  AF: [9, 9, /^7\d{8}$/, true],
+  AX: [9, 10, /^(4\d{8,9}|50\d{7,8})$/, true],
+  AL: [9, 9, /^6[6-9]\d{7}$/, true],
+  DZ: [9, 9, /^[567]\d{8}$/, true],
+  AS: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  AD: [6, 9, /^[346]\d{5,8}$/, false],
+  AO: [9, 9, /^9\d{8}$/, false],
+  AI: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  AG: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  AR: [10, 11, /^(9?\d{10})$/, true],
+  AM: [8, 8, /^(33|4[1349]|55|77|88|9[13-9])\d{6}$/, true],
+  AW: [7, 7, /^[2-9]\d{6}$/, false],
+  AU: [9, 9, /^4\d{8}$/, true],
+  AT: [10, 11, /^6\d{9,10}$/, true],
+  AZ: [9, 9, /^(10|5[015]|7[07]|99)\d{7}$/, true],
+  BS: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  BH: [8, 8, /^[36]\d{7}$/, false],
+  BB: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  BY: [9, 9, /^(25|29|33|44)\d{7}$/, true],
+  BE: [9, 9, /^4\d{8}$/, true],
+  BZ: [7, 7, /^6\d{6}$/, false],
+  BJ: [8, 10, /^[45690]\d{7,9}$/, false],
+  BM: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  BT: [8, 8, /^[17]\d{7}$/, false],
+  BO: [8, 8, /^[67]\d{7}$/, false],
+  BA: [8, 9, /^6\d{7,8}$/, true],
+  BW: [8, 8, /^7\d{7}$/, false],
+  BR: [11, 11, /^[1-9]{2}9\d{8}$/, true],
+  BN: [7, 7, /^[78]\d{6}$/, false],
+  BG: [9, 9, /^[89]\d{8}$/, true],
+  BF: [8, 8, /^[567]\d{7}$/, false],
+  BI: [8, 8, /^[67]\d{7}$/, false],
+  KH: [8, 9, /^[1-9]\d{7,8}$/, true],
+  CM: [9, 9, /^6\d{8}$/, false],
+  CA: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  CV: [7, 7, /^[59]\d{6}$/, false],
+  KY: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  CF: [8, 8, /^7\d{7}$/, false],
+  TD: [8, 8, /^[679]\d{7}$/, false],
+  CL: [9, 9, /^9\d{8}$/, false],
+  CN: [11, 11, /^1[3-9]\d{9}$/, false],
+  CO: [10, 10, /^3\d{9}$/, false],
+  KM: [7, 7, /^[34]\d{6}$/, false],
+  CG: [9, 9, /^0?[456]\d{7,8}$/, false],
+  CD: [9, 9, /^[89]\d{8}$/, true],
+  CR: [8, 8, /^[5678]\d{7}$/, false],
+  CI: [10, 10, /^0[157]\d{8}$/, false],
+  HR: [8, 9, /^9\d{7,8}$/, true],
+  CU: [8, 8, /^5\d{7}$/, false],
+  CY: [8, 8, /^9\d{7}$/, false],
+  CZ: [9, 9, /^[67]\d{8}$/, false],
+  DK: [8, 8, /^[2-9]\d{7}$/, false],
+  DJ: [8, 8, /^77\d{6}$/, false],
+  DM: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  DO: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  EC: [9, 9, /^9\d{8}$/, true],
+  EG: [10, 10, /^1[0125]\d{8}$/, true],
+  SV: [8, 8, /^[67]\d{7}$/, false],
+  GQ: [9, 9, /^[25]\d{8}$/, false],
+  ER: [7, 7, /^7\d{6}$/, true],
+  EE: [7, 8, /^5\d{6,7}$/, false],
+  SZ: [8, 8, /^7[6-9]\d{6}$/, false],
+  ET: [9, 9, /^[79]\d{8}$/, true],
+  FJ: [7, 7, /^[789]\d{6}$/, false],
+  FI: [9, 10, /^(4\d{8,9}|50\d{7,8})$/, true],
+  FR: [9, 9, /^[67]\d{8}$/, true],
+  GA: [7, 8, /^[67]\d{6,7}$/, true],
+  GM: [7, 7, /^[235679]\d{6}$/, false],
+  GE: [9, 9, /^5\d{8}$/, true],
+  DE: [10, 11, /^1[567]\d{8,9}$/, true],
+  GH: [9, 9, /^[25]\d{8}$/, true],
+  GI: [8, 8, /^5\d{7}$/, false],
+  GR: [10, 10, /^69\d{8}$/, false],
+  GL: [6, 6, /^[245]\d{5}$/, false],
+  GD: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  GT: [8, 8, /^[345]\d{7}$/, false],
+  GN: [9, 9, /^6\d{8}$/, false],
+  GW: [7, 9, /^9\d{6,8}$/, false],
+  GY: [7, 7, /^6\d{6}$/, false],
+  HT: [8, 8, /^[34]\d{7}$/, false],
+  HN: [8, 8, /^[3789]\d{7}$/, false],
+  HK: [8, 8, /^[4-9]\d{7}$/, false],
+  HU: [9, 9, /^[2357]0\d{7}$/, true],
+  IS: [7, 7, /^[678]\d{6}$/, false],
+  IN: [10, 10, /^[6-9]\d{9}$/, true],
+  ID: [9, 12, /^8\d{8,11}$/, true],
+  IR: [10, 10, /^9\d{9}$/, true],
+  IQ: [10, 10, /^7[3-9]\d{8}$/, true],
+  IE: [9, 9, /^8[2-9]\d{7}$/, true],
+  IL: [9, 9, /^5\d{8}$/, true],
+  IT: [9, 10, /^3\d{8,9}$/, false],
+  JM: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  JP: [10, 10, /^[789]0\d{8}$/, true],
+  JO: [9, 9, /^7[789]\d{7}$/, true],
+  KZ: [10, 10, /^7\d{9}$/, true],
+  KE: [9, 9, /^[17]\d{8}$/, true],
+  KW: [8, 8, /^[569]\d{7}$/, false],
+  KG: [9, 9, /^[2579]\d{8}$/, true],
+  LA: [9, 10, /^20\d{7,8}$/, true],
+  LV: [8, 8, /^2\d{7}$/, false],
+  LB: [7, 8, /^(3\d{6}|[78]\d{7})$/, true],
+  LS: [8, 8, /^[56]\d{7}$/, false],
+  LR: [7, 9, /^[45678]\d{6,8}$/, true],
+  LY: [9, 9, /^9[1-6]\d{7}$/, true],
+  LI: [7, 9, /^7\d{6,8}$/, false],
+  LT: [8, 8, /^6\d{7}$/, true],
+  LU: [9, 9, /^6\d{8}$/, false],
+  MO: [8, 8, /^6\d{7}$/, false],
+  MG: [9, 9, /^3[234789]\d{7}$/, true],
+  MW: [9, 9, /^[789]\d{8}$/, true],
+  MY: [9, 10, /^1\d{8,9}$/, true],
+  MV: [7, 7, /^[79]\d{6}$/, false],
+  ML: [8, 8, /^[56789]\d{7}$/, false],
+  MT: [8, 8, /^[79]\d{7}$/, false],
+  MR: [8, 8, /^[234]\d{7}$/, false],
+  MU: [8, 8, /^5\d{7}$/, false],
+  MX: [10, 10, /^[1-9]\d{9}$/, false],
+  MD: [8, 8, /^[67]\d{7}$/, true],
+  MC: [8, 9, /^[46]\d{7,8}$/, false],
+  MN: [8, 8, /^[89]\d{7}$/, false],
+  ME: [8, 8, /^6[036789]\d{6}$/, true],
+  MA: [9, 9, /^[67]\d{8}$/, true],
+  MZ: [9, 9, /^8[2-7]\d{7}$/, false],
+  MM: [8, 10, /^9\d{7,9}$/, true],
+  NA: [9, 9, /^8[15]\d{7}$/, true],
+  NP: [10, 10, /^9[678]\d{8}$/, true],
+  NL: [9, 9, /^6\d{8}$/, true],
+  NZ: [8, 10, /^2\d{7,9}$/, true],
+  NI: [8, 8, /^[578]\d{7}$/, false],
+  NE: [8, 8, /^[89]\d{7}$/, false],
+  NG: [10, 10, /^[789][01]\d{8}$/, true],
+  MK: [8, 8, /^7\d{7}$/, true],
+  NO: [8, 8, /^[49]\d{7}$/, false],
+  OM: [8, 8, /^[79]\d{7}$/, false],
+  PK: [10, 10, /^3\d{9}$/, true],
+  PS: [9, 9, /^5[69]\d{7}$/, true],
+  PA: [8, 8, /^6\d{7}$/, false],
+  PG: [8, 8, /^[78]\d{7}$/, false],
+  PY: [9, 9, /^9\d{8}$/, true],
+  PE: [9, 9, /^9\d{8}$/, false],
+  PH: [10, 10, /^9\d{9}$/, true],
+  PL: [9, 9, /^[4-8]\d{8}$/, false],
+  PT: [9, 9, /^9[1236]\d{7}$/, false],
+  PR: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  QA: [8, 8, /^[3567]\d{7}$/, false],
+  RO: [9, 9, /^7\d{8}$/, true],
+  RU: [10, 10, /^9\d{9}$/, true],
+  RW: [9, 9, /^7[2389]\d{7}$/, true],
+  SA: [9, 9, /^5\d{8}$/, true],
+  SN: [9, 9, /^7[05678]\d{7}$/, false],
+  RS: [8, 9, /^6\d{7,8}$/, true],
+  SC: [7, 7, /^2\d{6}$/, false],
+  SL: [8, 8, /^[234789]\d{7}$/, true],
+  SG: [8, 8, /^[89]\d{7}$/, false],
+  SK: [9, 9, /^9\d{8}$/, true],
+  SI: [8, 8, /^[34567]\d{7}$/, true],
+  SO: [8, 9, /^[679]\d{7,8}$/, true],
+  ZA: [9, 9, /^[678]\d{8}$/, true],
+  KR: [9, 10, /^1[016789]\d{7,8}$/, true],
+  SS: [9, 9, /^9\d{8}$/, true],
+  ES: [9, 9, /^[67]\d{8}$/, false],
+  LK: [9, 9, /^7\d{8}$/, true],
+  SD: [9, 9, /^[19]\d{8}$/, true],
+  SR: [7, 7, /^[78]\d{6}$/, false],
+  SE: [9, 9, /^7[02369]\d{7}$/, true],
+  CH: [9, 9, /^7[4-9]\d{7}$/, true],
+  SY: [9, 9, /^9\d{8}$/, true],
+  TW: [9, 9, /^9\d{8}$/, true],
+  TJ: [9, 9, /^[5789]\d{8}$/, false],
+  TZ: [9, 9, /^[67]\d{8}$/, true],
+  TH: [9, 9, /^[689]\d{8}$/, true],
+  TL: [8, 8, /^7\d{7}$/, false],
+  TG: [8, 8, /^[79]\d{7}$/, false],
+  TT: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  TN: [8, 8, /^[2459]\d{7}$/, false],
+  TR: [10, 10, /^5\d{9}$/, true],
+  TM: [8, 8, /^6\d{7}$/, true],
+  UG: [9, 9, /^7\d{8}$/, true],
+  UA: [9, 9, /^[35679]\d{8}$/, true],
+  AE: [9, 9, /^5\d{8}$/, true],
+  GB: [10, 10, /^7\d{9}$/, true],
+  US: [10, 10, /^[2-9]\d{2}[2-9]\d{6}$/, false],
+  UY: [8, 8, /^9\d{7}$/, true],
+  UZ: [9, 9, /^[35789]\d{8}$/, false],
+  VE: [10, 10, /^4\d{9}$/, true],
+  VN: [9, 9, /^[35789]\d{8}$/, true],
+  YE: [9, 9, /^7[01378]\d{7}$/, true],
+  ZM: [9, 9, /^[79]\d{8}$/, true],
+  ZW: [9, 9, /^7[1378]\d{7}$/, true]
+};
+
+function getCountryPhoneRule(countryCode) {
+  const code = String(countryCode || 'BD').trim().toUpperCase();
+  const entry = COUNTRY_PHONE_RULES[code];
+  if (entry) {
+    return { min: entry[0], max: entry[1], pattern: entry[2], trunkZero: Boolean(entry[3]) };
+  }
+  return { min: 8, max: 12, pattern: /^[1-9]\d{7,11}$/, trunkZero: true };
+}
+
+function isFakePhonePattern(nsn) {
+  const s = String(nsn || '').replace(/\D/g, '');
+  if (!s || s.length < 6) return true;
+  // 1. All identical digits (e.g. 0000000000, 1111111111, 555555555)
+  if (/^(\d)\1+$/.test(s)) return true;
+  // 2. Subscriber tail after 2-digit prefix is all identical (e.g. 1700000000, 1711111111, 509999999)
+  if (s.length >= 7 && /^(\d)\1+$/.test(s.slice(2))) return true;
+  // 3. 6 or more consecutive identical digits anywhere (e.g. 1710000005, 9855555512)
+  if (/(\d)\1{5,}/.test(s)) return true;
+  // 4. Strictly ascending or descending sequential runs of 6+ digits (e.g. 1712345678, 1798765432, 501234567)
+  const asc = '01234567890123456789';
+  const desc = '98765432109876543210';
+  for (let i = 0; i <= s.length - 6; i++) {
+    const sub = s.slice(i, i + 6);
+    if (asc.includes(sub) || desc.includes(sub)) return true;
+  }
+  // 5. Repeating 2-digit pattern across full number or subscriber tail (e.g. 1712121212, 1701010101, 1313131313)
+  if (/^(\d{2})\1{2,}$/.test(s) || (s.length >= 8 && /^(\d{2})\1{2,}$/.test(s.slice(2)))) return true;
+  // 6. Very low digit variety: fewer than 3 distinct digits across the entire phone number (e.g. 1717171717, 1811811811)
+  if (new Set(s.split('')).size < 3) return true;
+  return false;
+}
+
+function validateRegistrationPhoneNumber(rawPhone, countryCode, lang) {
+  const code = String(countryCode || 'BD').trim().toUpperCase();
+  const country = typeof getCountryByCode === 'function' ? getCountryByCode(code) : null;
+  const dialCode = (country && country.dialCode) || '+880';
+  const dialDigits = dialCode.replace(/\D/g, '');
+  const rule = getCountryPhoneRule(code);
+  const cNameBn = (country && country.nameBn) || 'বাংলাদেশ';
+  const cNameEn = (country && country.nameEn) || 'Bangladesh';
+  const cNameAr = (country && country.nameAr) || cNameEn;
+
+  const rawTrim = String(rawPhone || '').trim();
+  if (!rawTrim || /[^\d\s+\-()]/.test(rawTrim)) {
+    return {
+      valid: false,
+      nsn: '',
+      error: tLang(
+        lang,
+        'শুধুমাত্র সঠিক মোবাইল নম্বর (সংখ্যা) লিখুন।',
+        'Please enter a valid mobile number using digits only.',
+        'يرجى إدخال رقم هاتف صالح باستخدام الأرقام فقط.'
+      )
+    };
+  }
+
+  let nsn = rawTrim.replace(/\D/g, '');
+
+  // If user pasted full international number starting with country's own dial code, strip dial code once
+  if (dialDigits && nsn.startsWith(dialDigits)) {
+    const afterDial = nsn.slice(dialDigits.length);
+    const maxAllowedAfterDial = rule.max + (rule.trunkZero ? 1 : 0);
+    if (afterDial.length >= rule.min && afterDial.length <= maxAllowedAfterDial) {
+      nsn = afterDial;
+    }
+  }
+
+  // Strip AT MOST ONE leading trunk '0' if the country uses trunk zero and the next digit is non-zero
+  if (rule.trunkZero && nsn.startsWith('0') && !nsn.startsWith('00')) {
+    const withoutZero = nsn.slice(1);
+    if (withoutZero.length >= rule.min && withoutZero.length <= rule.max) {
+      nsn = withoutZero;
+    }
+  }
+
+  const lenTextBn = rule.min === rule.max ? `${formatBanglaNumber(String(rule.min))}` : `${formatBanglaNumber(String(rule.min))}–${formatBanglaNumber(String(rule.max))}`;
+  const lenTextEn = rule.min === rule.max ? `${rule.min}` : `${rule.min}–${rule.max}`;
+
+  if (nsn.length < rule.min || nsn.length > rule.max) {
+    const exampleBn = code === 'BD' ? ' (যেমন: 17XXXXXXXX বা 017XXXXXXXX)' : '';
+    const exampleEn = code === 'BD' ? ' (e.g. 17XXXXXXXX or 017XXXXXXXX)' : '';
+    return {
+      valid: false,
+      nsn: nsn,
+      error: tLang(
+        lang,
+        `${cNameBn} (${dialCode})-এর পর সঠিক ${lenTextBn} ডিজিটের মোবাইল নম্বর দিন${exampleBn}।`,
+        `Please enter a valid ${lenTextEn}-digit mobile number after ${cNameEn} (${dialCode})${exampleEn}.`,
+        `يرجى إدخال رقم هاتف صالح مكون من ${lenTextEn} رقماً بعد ${cNameAr} (${dialCode}).`
+      )
+    };
+  }
+
+  if (rule.pattern && !rule.pattern.test(nsn)) {
+    const bdHintBn = code === 'BD' ? ' বাংলাদেশি নম্বর 13–19 দিয়ে শুরু হতে হবে।' : '';
+    const bdHintEn = code === 'BD' ? ' Bangladesh numbers must start with 13–19.' : '';
+    return {
+      valid: false,
+      nsn: nsn,
+      error: tLang(
+        lang,
+        `${cNameBn} (${dialCode})-এর জন্য সঠিক মোবাইল নম্বর দিন।${bdHintBn}`,
+        `Please enter a valid ${cNameEn} (${dialCode}) mobile number.${bdHintEn}`,
+        `يرجى إدخال رقم هاتف محمول صالح لـ ${cNameAr} (${dialCode}).`
+      )
+    };
+  }
+
+  if (isFakePhonePattern(nsn)) {
+    return {
+      valid: false,
+      nsn: nsn,
+      error: tLang(
+        lang,
+        'ভুয়া বা ধারাবাহিক নম্বর দিয়ে রেজিস্ট্রেশন করা যাবে না। অনুগ্রহ করে আপনার আসল মোবাইল নম্বর দিন।',
+        'Fake or sequential phone numbers are not allowed. Please enter your real mobile number.',
+        'لا يُسمح بالأرقام الوهمية أو المتسلسلة. يرجى إدخال رقم هاتفك الحقيقي.'
+      )
+    };
+  }
+
+  return { valid: true, nsn: nsn, error: '' };
+}
+
 function isValidBdMobileNumber(rawPhone) {
-  const norm = normalizeBdPhone(rawPhone, 'BD');
-  return /^1[3-9]\d{8}$/.test(norm);
+  return validateRegistrationPhoneNumber(rawPhone, 'BD', 'en').valid;
 }
 
 function normalizeCpanelOtpBase(rawUrl) {
@@ -4721,6 +5322,36 @@ function clearRegisterPasswordErrors() {
 if (regPassInput) regPassInput.addEventListener('input', clearRegisterPasswordErrors);
 if (confPassInput) confPassInput.addEventListener('input', clearRegisterPasswordErrors);
 
+// Keep registration phone input strictly numeric and synced to the selected country's max digits
+const regPhoneInputEl = document.getElementById('register-phone');
+if (regPhoneInputEl) {
+  const initRule = getCountryPhoneRule((currentRegistrationCountry && currentRegistrationCountry.code) || 'BD');
+  regPhoneInputEl.maxLength = Math.max(15, initRule.max + 5);
+  regPhoneInputEl.addEventListener('input', function() {
+    const selectEl = document.getElementById('register-country-select');
+    const selectedCode = (selectEl && selectEl.value) || document.getElementById('register-country-code')?.value || (currentRegistrationCountry && currentRegistrationCountry.code) || 'BD';
+    const country = getCountryByCode(selectedCode) || COUNTRY_DATABASE[0];
+    const rule = getCountryPhoneRule(country.code);
+    const dialDigits = (country.dialCode || '').replace(/\D/g, '');
+    let digits = regPhoneInputEl.value.replace(/\D/g, '');
+    // Auto-strip pasted country dial code (e.g. +88017... -> 17...)
+    if (dialDigits && digits.startsWith(dialDigits) && digits.length > rule.max) {
+      const rest = digits.slice(dialDigits.length);
+      if (rest.length <= rule.max + (rule.trunkZero ? 1 : 0)) {
+        digits = rest;
+      }
+    }
+    const maxChars = rule.max + (rule.trunkZero && digits.startsWith('0') ? 1 : 0);
+    if (digits.length > maxChars) digits = digits.slice(0, maxChars);
+    if (regPhoneInputEl.value !== digits) {
+      regPhoneInputEl.value = digits;
+    }
+    regPhoneInputEl.setCustomValidity('');
+    const msg = document.getElementById('register-message');
+    if (msg && msg.textContent) msg.textContent = '';
+  });
+}
+
 const registerForm = document.getElementById('register-form');
 let _isRegisterSubmitting = false;
 if (registerForm) {
@@ -4793,22 +5424,20 @@ if (registerForm) {
     }
     if (confirmation) confirmation.setCustomValidity('');
 
-    // Country-aware phone validation
-    if (countryCode === 'BD') {
-      if (!isValidBdMobileNumber(phoneInput)) {
-        if (message) message.textContent = tLang(targetLang, 'অনুগ্রহ করে সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর (013–019) দিন।', 'Please enter a valid 11-digit Bangladesh mobile number (013–019).', 'يرجى إدخال رقم هاتف بنغلاديشي صالح مكون من 11 رقماً (013–019).');
-        if (phoneEl) phoneEl.focus();
-        return;
+    // Strict country-aware real mobile number & anti-fake validation (BD + all international countries)
+    const phoneValidation = validateRegistrationPhoneNumber(phoneInput, countryCode, targetLang);
+    if (!phoneValidation.valid) {
+      if (message) message.textContent = phoneValidation.error;
+      if (phoneEl) {
+        phoneEl.setCustomValidity(phoneValidation.error);
+        phoneEl.reportValidity();
+        phoneEl.focus();
       }
-    } else {
-      if (!cleanPhone || cleanPhone.length < 7) {
-        if (message) message.textContent = tLang(targetLang, 'অনুগ্রহ করে সঠিক মোবাইল নম্বর দিন।', 'Please enter a valid mobile number.', 'يرجى إدخال رقم هاتف صالح.');
-        if (phoneEl) phoneEl.focus();
-        return;
-      }
+      return;
     }
+    if (phoneEl) phoneEl.setCustomValidity('');
 
-    const registeredNumber = phoneInput;
+    const registeredNumber = phoneValidation.nsn;
     const normInput = normalizeBdPhone(registeredNumber, countryCode);
     const requireRealBdOtp = isBdRealOtpActive(countryCode);
     const usedMasterOfflineOtp = requireRealBdOtp ? await isMasterOfflineOtpMatch(smsCode) : false;
@@ -5031,13 +5660,19 @@ if (sendSmsBtn) {
         return;
       }
 
-      if (!isValidBdMobileNumber(phone)) {
-        if (message) message.textContent = tLang(targetLang, 'সঠিক ১১ ডিজিটের বাংলাদেশি মোবাইল নম্বর (013–019) দিন।', 'Please enter a valid 11-digit Bangladesh mobile number (013–019).', 'يرجى إدخال رقم هاتف بنغلاديشي صالح مكون من 11 رقماً (013–019).');
-        if (phoneInput) phoneInput.focus();
+      const bdValidation = validateRegistrationPhoneNumber(phone, 'BD', targetLang);
+      if (!bdValidation.valid) {
+        if (message) message.textContent = bdValidation.error;
+        if (phoneInput) {
+          phoneInput.setCustomValidity(bdValidation.error);
+          phoneInput.reportValidity();
+          phoneInput.focus();
+        }
         return;
       }
+      if (phoneInput) phoneInput.setCustomValidity('');
 
-      const normBd = normalizeBdPhone(phone, 'BD');
+      const normBd = normalizeBdPhone(bdValidation.nsn, 'BD');
       const originalText = tLang(targetLang, 'যাচাইকরণ কোড পাঠান', 'Send Code', 'إرسال الرمز');
       sendSmsBtn.disabled = true;
       sendSmsBtn.textContent = tLang(targetLang, 'পাঠানো হচ্ছে…', 'Sending…', 'جاري الإرسال…');
@@ -5076,11 +5711,17 @@ if (sendSmsBtn) {
       return;
     }
 
-    if (!cleanPhone || cleanPhone.length < 8) {
-      if (message) message.textContent = tLang(targetLang, 'যাচাইকরণ কোড পেতে সঠিক ফোন নম্বর লিখুন।', 'Please enter a valid phone number to receive verification code.', 'يرجى إدخال رقم هاتف صالح لاستلام رمز التحقق.');
-      if (phoneInput) phoneInput.focus();
+    const intlValidation = validateRegistrationPhoneNumber(phone, selectedCode, targetLang);
+    if (!intlValidation.valid) {
+      if (message) message.textContent = intlValidation.error;
+      if (phoneInput) {
+        phoneInput.setCustomValidity(intlValidation.error);
+        phoneInput.reportValidity();
+        phoneInput.focus();
+      }
       return;
     }
+    if (phoneInput) phoneInput.setCustomValidity('');
 
     demoSmsCode = String(Math.floor(100000 + Math.random() * 900000));
     const smsInput = document.getElementById('register-sms-code');
@@ -5312,6 +5953,13 @@ function getActiveLang(user) {
 
 function getVipTierLabel(tierKey, lang) {
   const l = normalizeAppLang(lang || getActiveLang());
+  if (typeof getActiveSalaryPageConfig === 'function') {
+    const cfg = getActiveSalaryPageConfig();
+    const matched = (cfg && Array.isArray(cfg.tiers)) ? cfg.tiers.find(function(t) { return t && t.id === tierKey; }) : null;
+    if (matched) {
+      return tLang(l, matched.nameBn, matched.nameEn, matched.nameAr);
+    }
+  }
   if (l === 'bn') return tierKey;
   const bnToNum = { '১': 1, '২': 2, '৩': 3, '৪': 4, '৫': 5, '৬': 6, '৭': 7, '৮': 8 };
   const m = String(tierKey || '').match(/([১-৮\d]+)/);
@@ -5654,49 +6302,49 @@ const packageBanners = {
     badge: 'LV0',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV0',
-    desc: 'দৈনিক ৫টি কাজ · প্রতি কাজ ২০ ৳ · ১০০% ফ্রি',
+    desc: 'দৈনিক ৫টি কাজ · প্রতি কাজ $0.16 USD · ১০০% ফ্রি',
     gradientClass: 'bg-gradient-to-br from-[#0c2340] via-[#133e68] to-[#041224]'
   },
   LV1: {
     badge: 'LV1',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV1',
-    desc: 'দৈনিক ৬টি কাজ · প্রতি কাজ ৩০ ৳ · দৈনিক ১৮০ ৳',
+    desc: 'দৈনিক ৬টি কাজ · প্রতি কাজ $0.24 USD · দৈনিক $1.44 USD',
     gradientClass: 'bg-gradient-to-br from-[#0f4c9c] via-[#125ebf] to-[#08234d]'
   },
   LV2: {
     badge: 'LV2',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV2',
-    desc: 'দৈনিক ১২টি কাজ · প্রতি কাজ ৪০ ৳ · দৈনিক ৪৮০ ৳',
+    desc: 'দৈনিক ১২টি কাজ · প্রতি কাজ $0.32 USD · দৈনিক $3.84 USD',
     gradientClass: 'bg-gradient-to-br from-[#3b0764] via-[#4f46e5] to-[#0f172a]'
   },
   LV3: {
     badge: 'LV3',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV3',
-    desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজ ৫০ ৳ · দৈনিক ৭৫০ ৳',
+    desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজ $0.40 USD · দৈনিক $6.00 USD',
     gradientClass: 'bg-gradient-to-br from-[#1e293b] via-[#3b82f6] to-[#0a192f]'
   },
   LV4: {
     badge: 'LV4',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV4',
-    desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজ ৬০ ৳ · দৈনিক ১,৫০০ ৳',
+    desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজ $0.48 USD · দৈনিক $12.00 USD',
     gradientClass: 'bg-gradient-to-br from-[#78350f] via-[#b45309] to-[#1c1917]'
   },
   LV5: {
     badge: 'LV5',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV5',
-    desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজ ৭০ ৳ · দৈনিক ২,৪৫০ ৳',
+    desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজ $0.56 USD · দৈনিক $19.60 USD',
     gradientClass: 'bg-gradient-to-br from-[#064e3b] via-[#059669] to-[#022c22]'
   },
   LV6: {
     badge: 'LV6',
     tagline: 'অফিশিয়াল মিডিয়া ক্যাম্পেইন',
     title: 'LV6',
-    desc: 'দৈনিক ৫০টি ভিআইপি কাজ · প্রতি কাজ ১০০ ৳ · দৈনিক ৫,০০০ ৳',
+    desc: 'দৈনিক ৫০টি ভিআইপি কাজ · প্রতি কাজ $0.79 USD · দৈনিক $39.50 USD',
     gradientClass: 'bg-gradient-to-br from-[#4c0519] via-[#be123c] to-[#090514]'
   }
 };
@@ -5853,6 +6501,16 @@ function renderPackageDetailPage(level) {
       buyBtn.disabled = false;
       buyBtn.className = 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition active:scale-95 cursor-pointer';
     }
+  }
+
+  const descP2El = document.getElementById('page-pkg-desc-p2');
+  if (descP2El) {
+    descP2El.textContent = tLang(
+      lang,
+      'প্রতিটি কাজ শেষ করার সাথে সাথে কাজের নির্দিষ্ট পারিশ্রমিক সরাসরি আপনার ব্যালেন্সে জমা হবে। মেয়াদ চলাকালীন প্রতিদিনের উপার্জিত টাকা আপনি কোনো ঝামেলা ছাড়াই সরাসরি আপনার USDT (BEP20 / Binance) ওয়ালেটে উত্তোলন করতে পারবেন।',
+      'Upon completing and verifying each task, the task reward is credited directly to your balance. You can withdraw your daily earnings seamlessly to your USDT (BEP20 / Binance) wallet.',
+      'عند إكمال كل مهمة والتحقق منها، تُضاف مكافأتها مباشرة إلى رصيدك ويمكنك سحب أرباحك اليومية بسهولة إلى محفظة USDT (BEP20 / Binance).'
+    );
   }
 
   const step4El = document.getElementById('page-pkg-earn-step4');
@@ -6027,7 +6685,7 @@ function handlePackagePurchase(level, triggerBtn) {
         try {
           await window.aloSupabase
             .from('team')
-            .update({ level: level, balance: freshUser.balance })
+            .update({ level: level })
             .in('member_phone', expandPhoneLookupKeys([purchasedPhoneNorm, freshUser.phone || freshUser.accountNumber]));
         } catch (e) {}
       }
@@ -6059,11 +6717,15 @@ function handlePackagePurchase(level, triggerBtn) {
 
       // Distribute 3-level Package Purchase Referral Commission: Level 1 (6%), Level 2 (2%), Level 3 (1%)
       if (level !== 'LV0' && price > 0 && typeof distributeTeamCommission === 'function') {
-        distributeTeamCommission(freshUser.phone || freshUser.accountNumber, price, {
-          kind: 'package',
-          packageLevel: level,
-          currency: getUserCurrency(freshUser)
-        }).catch(function() {});
+        try {
+          await distributeTeamCommission(freshUser.phone || freshUser.accountNumber, price, {
+            kind: 'package',
+            packageLevel: level,
+            currency: getUserCurrency(freshUser)
+          });
+        } catch (commErr) {
+          console.warn('[Commission] Package commission warning:', commErr);
+        }
       }
 
       if (btn) {
@@ -6156,6 +6818,8 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
 
   const rateTable = kind === 'task' ? DAILY_TASK_COMMISSION_RATES : PACKAGE_COMMISSION_RATES;
 
+  const lookupPhones = expandPhoneLookupKeys([normPhone, memberPhone]);
+
   // If package purchase, update member's level in Supabase team & local aloTeamRecords
   if (kind === 'package' && pkgLevel && pkgLevel !== 'LV0') {
     if (window.aloSupabase) {
@@ -6163,7 +6827,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
         await window.aloSupabase
           .from('team')
           .update({ level: pkgLevel })
-          .eq('member_phone', normPhone);
+          .in('member_phone', lookupPhones.length > 0 ? lookupPhones : [normPhone]);
       } catch (e) {}
     }
     try {
@@ -6180,7 +6844,6 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
   let teamRows = [];
   if (window.aloSupabase) {
     try {
-      const lookupPhones = expandPhoneLookupKeys([normPhone, memberPhone]);
       const { data } = await window.aloSupabase
         .from('team')
         .select('*')
@@ -6198,6 +6861,10 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
     } catch (e) {}
   }
 
+  const memberProfile = await dbGetUser(normPhone).catch(function() { return null; });
+  const healedMemberId = (memberProfile && memberProfile.memberId) ? memberProfile.memberId : '';
+  const healedMemberLevel = pkgLevel || (memberProfile && memberProfile.packageLevel) || 'LV0';
+
   // Resolve Tier 1
   let upline1Phone = null;
   let upline1User = null;
@@ -6207,7 +6874,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
     upline1User = await dbFindInviter(raw);
     upline1Phone = upline1User ? normalizeBdPhone(upline1User.phone || upline1User.accountNumber || upline1User.account_number) : normalizeBdPhone(raw);
   } else {
-    const selfUser = await dbGetUser(normPhone);
+    const selfUser = memberProfile;
     const selfSup = (selfUser && selfUser.superiorPhone && selfUser.superiorPhone !== '11')
       ? selfUser.superiorPhone
       : (selfUser && selfUser.superiorId && selfUser.superiorId !== '11' ? selfUser.superiorId : null);
@@ -6220,7 +6887,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
           member_phone: normPhone,
           tier: 1
         });
-        dbAddTeamMember(upline1Phone, normPhone, selfUser?.memberId, pkgLevel || selfUser?.packageLevel, 1).catch(function() {});
+        await dbAddTeamMember(upline1Phone, normPhone, healedMemberId, healedMemberLevel, 1).catch(function() {});
       }
     }
   }
@@ -6250,7 +6917,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
         member_phone: normPhone,
         tier: 2
       });
-      dbAddTeamMember(upline2Phone, normPhone, '', pkgLevel || 'LV0', 2).catch(function() {});
+      await dbAddTeamMember(upline2Phone, normPhone, healedMemberId, healedMemberLevel, 2).catch(function() {});
     }
   }
 
@@ -6279,11 +6946,10 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
         member_phone: normPhone,
         tier: 3
       });
-      dbAddTeamMember(upline3Phone, normPhone, '', pkgLevel || 'LV0', 3).catch(function() {});
+      await dbAddTeamMember(upline3Phone, normPhone, healedMemberId, healedMemberLevel, 3).catch(function() {});
     }
   }
 
-  const memberProfile = await dbGetUser(normPhone).catch(function() { return null; });
   const activeSelfProfile = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   const activeSelfMatch = activeSelfProfile && normalizeBdPhone(activeSelfProfile.phone || activeSelfProfile.accountNumber) === normPhone;
   const memberCurr = opts.currency ||
@@ -6338,7 +7004,8 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
         supUser.balance = Number(((Number(supUser.balance) || 0) + commission).toFixed(2));
         supUser.totalIncome = Number(((Number(supUser.totalIncome) || 0) + commission).toFixed(2));
         supUser.lifetimeEarnings = Number(((Number(supUser.lifetimeEarnings) || 0) + commission).toFixed(2));
-        const sameDayAsUpdate = supUser.updatedAt && (new Date(supUser.updatedAt).toDateString() === new Date().toDateString());
+        const supLastUpd = supUser.updatedAt || (supUser._rawOpt && supUser._rawOpt.updated_at) || '';
+        const sameDayAsUpdate = !supLastUpd || (new Date(supLastUpd).toDateString() === new Date().toDateString());
         supUser.todayIncome = Number((((sameDayAsUpdate ? Number(supUser.todayIncome) : 0) || 0) + commission).toFixed(2));
         await dbSaveUser(supUser);
 
@@ -6395,13 +7062,17 @@ async function confirmDeposit() {
     return;
   }
 
-  const customInput = document.getElementById('custom-deposit-amount');
+  const inlineDrawer = document.getElementById('inline-recharge-drawer');
+  const isInlineOpen = !!(inlineDrawer && !inlineDrawer.classList.contains('hidden'));
+  const customInput = document.getElementById(isInlineOpen ? 'inline-custom-deposit-amount' : 'custom-deposit-amount')
+    || document.getElementById('custom-deposit-amount');
+  const statusMsg = document.getElementById(isInlineOpen ? 'inline-deposit-status-message' : 'deposit-status-message')
+    || document.getElementById('deposit-status-message');
   let amount = selectedDepositAmount;
   if (customInput && customInput.value && parseFloat(customInput.value) > 0) {
     amount = parseFloat(customInput.value);
   }
   if (!amount || amount <= 0) {
-    const statusMsg = document.getElementById('deposit-status-message');
     if (statusMsg) {
       statusMsg.className = 'text-center font-bold text-xs text-amber-300';
       statusMsg.textContent = tLang(langPre, 'অনুগ্রহ করে রিচার্জের সঠিক পরিমাণ দিন।', 'Please enter a valid deposit amount.', 'يرجى إدخال مبلغ إيداع صحيح.');
@@ -6413,7 +7084,6 @@ async function confirmDeposit() {
   const sym = getUserCurrencySymbol(user);
   const isUsd = isUsdOnlyUser(user);
   if (amount < minRcAmt) {
-    const statusMsg = document.getElementById('deposit-status-message');
     if (statusMsg) {
       statusMsg.className = 'text-center font-bold text-xs text-amber-300';
       statusMsg.textContent = tLang(
@@ -6467,7 +7137,6 @@ async function confirmDeposit() {
   const curr = getUserCurrency(user);
   const lang = getActiveLang(user);
 
-  const statusMsg = document.getElementById('deposit-status-message');
   if (statusMsg) {
     statusMsg.className = 'text-center font-bold text-xs text-amber-300';
     statusMsg.textContent = tLang(
@@ -7875,7 +8544,139 @@ function renderUsdtSetupPanel() {
   }
 }
 
-function saveUsdtAccountDetails() {
+let _isSavingUsdtAccount = false;
+
+function showDuplicateUsdtAddressModal(attemptedAddress) {
+  const existing = document.getElementById('usdt-duplicate-alert-modal');
+  if (existing) existing.remove();
+
+  const rawAddr = String(attemptedAddress || '').trim();
+  const maskedAddr = rawAddr.length > 14 ? `${rawAddr.slice(0, 8)}...${rawAddr.slice(-6)}` : rawAddr;
+
+  const modal = document.createElement('div');
+  modal.id = 'usdt-duplicate-alert-modal';
+  modal.className = 'notranslate fixed inset-0 z-[10050] flex items-center justify-center px-5';
+  modal.setAttribute('role', 'alertdialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'usdt-dup-modal-title');
+  modal.setAttribute('data-no-translate', 'true');
+  modal.style.cssText = "background: rgba(3, 10, 28, 0.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; opacity: 0; transition: opacity 0.2s ease;";
+
+  modal.innerHTML = `
+    <div id="usdt-duplicate-alert-card" class="notranslate w-full max-w-[330px] rounded-2xl p-6 text-center" style="background: #0b1730; border: 1px solid rgba(56, 189, 248, 0.22); box-shadow: 0 24px 64px rgba(2, 8, 24, 0.8); transform: scale(0.94); transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+      <div class="w-14 h-14 mx-auto rounded-full flex items-center justify-center" style="background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.35);">
+        <svg viewBox="0 0 24 24" class="w-7 h-7" fill="none" stroke="#f87171" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <line x1="12" y1="15" x2="12" y2="17.5"></line>
+        </svg>
+      </div>
+      <h3 id="usdt-dup-modal-title" class="mt-4 text-[18px] font-bold text-white tracking-[-0.015em] leading-snug" style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">Address Already Bound</h3>
+      <p class="mt-2 text-[13.5px] leading-relaxed" style="color: #cbd5e1; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+        This BEP20 address is already bound to another account. Please use a different wallet address.
+      </p>
+      <div id="usdt-dup-modal-addr" class="mt-3.5 inline-block px-3 py-1.5 rounded-lg text-[12px] font-mono tracking-wide" style="background: #071638; color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.16);${maskedAddr ? '' : ' display: none;'}"></div>
+      <button type="button" id="usdt-dup-modal-ok-btn" class="mt-5 w-full py-3 rounded-xl text-white font-semibold text-[14.5px] cursor-pointer active:scale-[0.98] transition border-0" style="background: #1877f2; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;">
+        OK
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  const addrChip = document.getElementById('usdt-dup-modal-addr');
+  if (addrChip && maskedAddr) addrChip.textContent = maskedAddr;
+
+  requestAnimationFrame(function() {
+    modal.style.opacity = '1';
+    const card = document.getElementById('usdt-duplicate-alert-card');
+    if (card) card.style.transform = 'scale(1)';
+  });
+
+  function closeModal() {
+    modal.style.opacity = '0';
+    const card = document.getElementById('usdt-duplicate-alert-card');
+    if (card) card.style.transform = 'scale(0.95)';
+    document.removeEventListener('keydown', onKeyDown);
+    setTimeout(function() { modal.remove(); }, 180);
+  }
+  function onKeyDown(ev) {
+    if (ev.key === 'Escape') closeModal();
+  }
+
+  const okBtn = document.getElementById('usdt-dup-modal-ok-btn');
+  if (okBtn) okBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', function(ev) {
+    if (ev.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', onKeyDown);
+}
+
+async function isUsdtAddressAlreadyBoundByOther(address, currentUser) {
+  const targetLower = String(address || '').trim().toLowerCase();
+  if (!targetLower) return false;
+
+  const currentNormPhone = currentUser
+    ? normalizeBdPhone(currentUser.phone || currentUser.accountNumber || '')
+    : '';
+
+  // 1. Live Supabase check across all users (case-insensitive match on stored usdt_address inside bkash_optional)
+  if (window.aloSupabase) {
+    try {
+      const { data, error } = await window.aloSupabase
+        .from('users')
+        .select('phone, account_number, bkash_optional')
+        .ilike('bkash_optional', `%${targetLower}%`)
+        .limit(25);
+
+      if (!error && Array.isArray(data)) {
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
+          const rowNormPhone = normalizeBdPhone(row.phone || row.account_number || '');
+          if (currentNormPhone && rowNormPhone && rowNormPhone === currentNormPhone) {
+            continue;
+          }
+          let opt = {};
+          if (row.bkash_optional) {
+            try {
+              opt = typeof row.bkash_optional === 'string' ? JSON.parse(row.bkash_optional) : row.bkash_optional;
+            } catch (e) {
+              opt = {};
+            }
+          }
+          const boundAddr = String((opt && opt.usdt_address) || '').trim().toLowerCase();
+          if (boundAddr && boundAddr === targetLower) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('BEP20 duplicate check warning:', e);
+    }
+  }
+
+  // 2. Fallback check against local user cache if present
+  try {
+    const rawUsers = localStorage.getItem('aloUsers');
+    if (rawUsers) {
+      const list = JSON.parse(rawUsers);
+      if (Array.isArray(list)) {
+        for (let i = 0; i < list.length; i++) {
+          const u = list[i];
+          if (!u) continue;
+          const uPhone = normalizeBdPhone(u.phone || u.accountNumber || '');
+          if (currentNormPhone && uPhone && uPhone === currentNormPhone) continue;
+          const uAddr = String((u.usdt && u.usdt.address) || u.usdtAddress || '').trim().toLowerCase();
+          if (uAddr && uAddr === targetLower) return true;
+        }
+      }
+    }
+  } catch (e) {}
+
+  return false;
+}
+
+async function saveUsdtAccountDetails() {
+  if (_isSavingUsdtAccount) return;
   const existing = getSavedUsdtAccount();
   const lang = getActiveLang();
   if (existing && existing.address) {
@@ -7885,6 +8686,7 @@ function saveUsdtAccountDetails() {
 
   const nameInput = document.getElementById('usdt-fullname-input');
   const addressInput = document.getElementById('usdt-address-input');
+  const submitBtn = document.getElementById('usdt-set-submit-btn');
   const fullName = (nameInput ? nameInput.value.trim() : '') || getSavedRealName();
   const address = addressInput ? addressInput.value.trim() : '';
 
@@ -7893,53 +8695,78 @@ function saveUsdtAccountDetails() {
     if (nameInput) nameInput.focus();
     return;
   }
-  if (!address || address.length < 15 || !address.toLowerCase().startsWith('0x')) {
-    showToastNotification(tLang(lang, '⚠️ সঠিক BEP20 (0x...) ওয়ালেট ঠিকানা লিখুন', '⚠️ Please enter a valid BEP20 (0x...) wallet address', '⚠️ يرجى إدخال عنوان محفظة BEP20 (0x...) صحيح'));
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    showToastNotification(tLang(lang, '⚠️ সঠিক ৪২ অক্ষরের BEP20 (0x...) ওয়ালেট ঠিকানা লিখুন', '⚠️ Please enter a valid 42-character BEP20 (0x...) wallet address', '⚠️ يرجى إدخال عنوان محفظة BEP20 (0x...) صحيح مكون من 42 حرفاً'));
     if (addressInput) addressInput.focus();
     return;
   }
 
-  const usdtData = {
-    fullName: fullName,
-    address: address,
-    network: 'BEP20',
-    locked: true,
-    boundAt: new Date().toISOString()
-  };
+  _isSavingUsdtAccount = true;
+  const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span>${tLang(lang, 'যাচাই হচ্ছে…', 'Verifying…', 'جاري التحقق…')}</span>`;
+  }
 
   try {
-    localStorage.setItem('alo_usdt_account', JSON.stringify(usdtData));
-    localStorage.setItem('alo_usdt_address', address);
-    if (!localStorage.getItem('alo_real_name')) {
-      localStorage.setItem('alo_real_name', fullName);
-    }
     const user = getCurrentUser();
-    if (user) {
-      user.usdt = usdtData;
-      user.usdtName = fullName;
-      user.usdtAddress = address;
-      user.realName = user.realName || fullName;
-      if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
-      localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      dbSaveUser(user).catch(function() {});
+    const alreadyBound = await isUsdtAddressAlreadyBoundByOther(address, user);
+    if (alreadyBound) {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnHtml;
+      }
+      showDuplicateUsdtAddressModal(address);
+      return;
     }
-  } catch(e) {}
 
-  userSelectedWithdrawMethod = 'USDT';
-  updateUsdtDisplayAcrossApp();
-  updateRealNameDisplayAcrossApp();
-  renderUsdtSetupPanel();
-  showToastNotification(tLang(lang, '✓ USDT (BEP20) অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!', '✓ USDT (BEP20) account permanently saved!', '✓ تم حفظ حساب USDT (BEP20) بشكل دائم!'));
-  setTimeout(() => {
-    if (previousDashboardPanel === 'my-pass') {
-      openDashboardPanel('my-pass');
-      openWithdrawSheet();
-    } else if (previousDashboardPanel === 'payment-method') {
-      openDashboardPanel('payment-method');
-    } else {
-      openDashboardPanel('personal');
+    const usdtData = {
+      fullName: fullName,
+      address: address,
+      network: 'BEP20',
+      locked: true,
+      boundAt: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem('alo_usdt_account', JSON.stringify(usdtData));
+      localStorage.setItem('alo_usdt_address', address);
+      if (!localStorage.getItem('alo_real_name')) {
+        localStorage.setItem('alo_real_name', fullName);
+      }
+      if (user) {
+        user.usdt = usdtData;
+        user.usdtName = fullName;
+        user.usdtAddress = address;
+        user.realName = user.realName || fullName;
+        if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
+        localStorage.setItem('aloSignedInUser', JSON.stringify(user));
+        await dbSaveUser(user).catch(function() {});
+      }
+    } catch (e) {}
+
+    userSelectedWithdrawMethod = 'USDT';
+    updateUsdtDisplayAcrossApp();
+    updateRealNameDisplayAcrossApp();
+    renderUsdtSetupPanel();
+    showToastNotification(tLang(lang, '✓ USDT (BEP20) অ্যাকাউন্ট সফলভাবে এককালীন সংরক্ষণ করা হয়েছে!', '✓ USDT (BEP20) account permanently saved!', '✓ تم حفظ حساب USDT (BEP20) بشكل دائم!'));
+    setTimeout(() => {
+      if (previousDashboardPanel === 'my-pass') {
+        openDashboardPanel('my-pass');
+        openWithdrawSheet();
+      } else if (previousDashboardPanel === 'payment-method') {
+        openDashboardPanel('payment-method');
+      } else {
+        openDashboardPanel('personal');
+      }
+    }, 400);
+  } finally {
+    _isSavingUsdtAccount = false;
+    if (submitBtn && !getSavedUsdtAccount()?.address) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origBtnHtml;
     }
-  }, 400);
+  }
 }
 
 function getAvailableBalance() {
@@ -8161,7 +8988,9 @@ const platformTaskDescriptions = {
 
 function getPlatformTaskDescription(platform, index, lang) {
   lang = normalizeAppLang(lang || getActiveLang());
-  const plat = platformTaskDescriptions[platform] || platformTaskDescriptions.TikTok;
+  const plat = platformTaskDescriptions[platform]
+    || (String(platform || '').toLowerCase() === 'facebook' ? platformTaskDescriptions.FaceBook : null)
+    || platformTaskDescriptions.TikTok;
   const list = plat[lang] || plat.en || plat.bn;
   const idx = Math.abs(parseInt(index || 0, 10));
   return list[idx % list.length];
@@ -9688,17 +10517,22 @@ function checkPendingReviews() {
         localStorage.setItem('my_pass_available_bal', (Number(user.balance) || 0).toFixed(2));
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
 
-        dbSaveUser(user).catch(function() {});
+        const savePromise = dbSaveUser(user).catch(function() {});
         updateUserDetails(user);
         updateProfileMetrics();
 
         // Distribute 3-level Daily Task Commission on paid package task earnings: Level 1 (3%), Level 2 (2%), Level 3 (1%)
         if (paidReward > 0 && typeof distributeTeamCommission === 'function') {
-          distributeTeamCommission(curPhone, paidReward, {
-            kind: 'task',
-            taskCount: completedInBatch,
-            currency: getUserCurrency(user)
-          }).catch(function() {});
+          const taskCurr = getUserCurrency(user);
+          savePromise.then(function() {
+            return distributeTeamCommission(curPhone, paidReward, {
+              kind: 'task',
+              taskCount: completedInBatch,
+              currency: taskCurr
+            });
+          }).catch(function(commErr) {
+            console.warn('[Commission] Task commission warning:', commErr);
+          });
         }
       }
       if (completedInBatch > 0 && typeof showToastNotification === 'function') {
@@ -10022,7 +10856,7 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
   const viewerSym = getUserCurrencySymbol(viewerUser);
   const viewerCurr = getUserCurrency(viewerUser);
   const viewerLang = getActiveLang(viewerUser);
-  const memberCurr = (memberAcc && memberAcc.currency) || (member && member.currency) || 'BDT';
+  const memberCurr = (memberAcc && memberAcc.currency) || (member && member.currency) || 'USD';
 
   const rawBalance = Number((memberAcc && memberAcc.balance) ?? (member && member.balance) ?? 0);
   let rawDeposit = Number((memberAcc && memberAcc.rechargeAmount) ?? (member && member.rechargeAmount) ?? 0);
@@ -10187,13 +11021,13 @@ async function updateTeamReportMetrics(forceRefresh) {
 
   // 1. Calculate 8 Main Real Stats (converted to viewer's active currency)
   const totalBalance = all.reduce(function(sum, m) {
-    return sum + convertBetweenCurrencies(Number(m.balance) || 0, m.currency || 'BDT', viewerCurr);
+    return sum + convertBetweenCurrencies(Number(m.balance) || 0, m.currency || 'USD', viewerCurr);
   }, 0);
   const totalRecharge = all.reduce(function(sum, m) {
-    return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'BDT', viewerCurr);
+    return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'USD', viewerCurr);
   }, 0);
   const totalCashout = all.reduce(function(sum, m) {
-    return sum + convertBetweenCurrencies(Number(m.cashoutAmount) || 0, m.currency || 'BDT', viewerCurr);
+    return sum + convertBetweenCurrencies(Number(m.cashoutAmount) || 0, m.currency || 'USD', viewerCurr);
   }, 0);
   const totalFlow = totalRecharge + totalCashout + totalBalance;
   const firstChargeCount = all.filter(function(m) { return (Number(m.rechargeAmount) || 0) > 0; }).length;
@@ -10267,27 +11101,28 @@ function updateActiveTierMetrics(cachedTeamData) {
 
   const count = targetList.length;
   const rechargeSum = targetList.reduce(function(sum, m) {
-    return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'BDT', viewerCurr);
+    return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'USD', viewerCurr);
   }, 0);
   const rebateSumRaw = targetList.reduce(function(sum, m) {
+    const mCurr = m.currency || 'USD';
     let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
     if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
       const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
       const uniquePaid = Array.from(new Set(paidPkgs.map(function(p) { return String(p || '').toUpperCase().trim(); })))
         .filter(function(p) { return p && p !== 'LV0' && packageData[p] && Number(packageData[p].price) > 0; });
-      const memberIsUsd = String(m.currency || 'BDT').toUpperCase() === 'USD';
+      const memberIsUsd = String(mCurr).toUpperCase() === 'USD';
       pkgSpendRaw = uniquePaid.reduce(function(acc, lvl) {
         const bdtPrice = Number(packageData[lvl].price) || 0;
         return acc + (memberIsUsd ? convertBetweenCurrencies(bdtPrice, 'BDT', 'USD') : bdtPrice);
       }, 0);
     }
-    const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, m.currency || 'BDT', viewerCurr);
+    const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, mCurr, viewerCurr);
     const memberHasPaidLvl = String(m.level || 'LV0').toUpperCase() !== 'LV0' ||
       (Array.isArray(m.purchasedPackages) && m.purchasedPackages.some(function(p) { return String(p || '').toUpperCase() !== 'LV0'; }));
     const taskEarnRaw = m._hasTxLoaded
       ? (Number(m.taskEarningsTotal) || 0)
       : (Number(m.taskEarningsTotal) || (memberHasPaidLvl ? (Number(m.totalIncome) || 0) : 0));
-    const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, m.currency || 'BDT', viewerCurr);
+    const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, mCurr, viewerCurr);
     return sum + (pkgSpend * pkgRate) + (taskEarn * taskRate);
   }, 0);
   const rebateSum = Math.round(rebateSumRaw * 100) / 100;
@@ -10341,7 +11176,7 @@ document.addEventListener('click', function(event) {
     const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
     const pkgBal = Number(((Number(user && user.balance) || 0) + (Number(user && user.rechargeFrozenBalance) || 0)).toFixed(2));
     const deficit = Number(Math.max(0, pkgPrice - pkgBal).toFixed(2));
-    const customInputs = document.querySelectorAll('#custom-deposit-amount');
+    const customInputs = document.querySelectorAll('#custom-deposit-amount, #inline-custom-deposit-amount');
     customInputs.forEach(function(inp) { inp.value = deficit; });
     selectedDepositAmount = deficit;
     switchSheetTab('deposit');
@@ -12229,11 +13064,13 @@ if (closeInlineRechargeBtn) {
   });
 }
 
-// Deposit confirmation listener
-const confirmDepositBtn = document.getElementById('confirm-deposit-btn');
-if (confirmDepositBtn) {
-  confirmDepositBtn.addEventListener('click', confirmDeposit);
-}
+// Deposit confirmation listeners (action sheet + inline drawer)
+['confirm-deposit-btn', 'inline-confirm-deposit-btn'].forEach(function(btnId) {
+  const btnEl = document.getElementById(btnId);
+  if (btnEl) {
+    btnEl.addEventListener('click', confirmDeposit);
+  }
+});
 
 // Quick deposit amount buttons with site-colors selection animation
 document.querySelectorAll('.quick-deposit-amt').forEach(function(btn) {
@@ -12241,7 +13078,7 @@ document.querySelectorAll('.quick-deposit-amt').forEach(function(btn) {
     const amt = parseFloat(btn.dataset.amount || '0');
     if (amt > 0) {
       selectedDepositAmount = amt;
-      const customInputs = document.querySelectorAll('#custom-deposit-amount');
+      const customInputs = document.querySelectorAll('#custom-deposit-amount, #inline-custom-deposit-amount');
       customInputs.forEach(function(inp) { inp.value = amt; });
 
       document.querySelectorAll('.quick-deposit-amt').forEach(function(b) {
@@ -12254,24 +13091,26 @@ document.querySelectorAll('.quick-deposit-amt').forEach(function(btn) {
   });
 });
 
-const customDepositInput = document.getElementById('custom-deposit-amount');
-if (customDepositInput) {
-  customDepositInput.addEventListener('input', function() {
-    const val = parseFloat(customDepositInput.value);
-    if (!isNaN(val) && val > 0) {
-      selectedDepositAmount = val;
-      document.querySelectorAll('.quick-deposit-amt').forEach(function(b) {
-        if (parseFloat(b.dataset.amount || '0') === val) {
-          b.classList.add('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
-          b.classList.remove('bg-[#0e2a66]');
-        } else {
-          b.classList.remove('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
-          b.classList.add('bg-[#0e2a66]');
-        }
-      });
-    }
-  });
-}
+['custom-deposit-amount', 'inline-custom-deposit-amount'].forEach(function(inputId) {
+  const inpEl = document.getElementById(inputId);
+  if (inpEl) {
+    inpEl.addEventListener('input', function() {
+      const val = parseFloat(inpEl.value);
+      if (!isNaN(val) && val > 0) {
+        selectedDepositAmount = val;
+        document.querySelectorAll('.quick-deposit-amt').forEach(function(b) {
+          if (parseFloat(b.dataset.amount || '0') === val) {
+            b.classList.add('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
+            b.classList.remove('bg-[#0e2a66]');
+          } else {
+            b.classList.remove('ring-2', 'ring-[#35c6e7]', 'bg-[#1264c9]');
+            b.classList.add('bg-[#0e2a66]');
+          }
+        });
+      }
+    });
+  }
+});
 
 function handleLogout() {
   const l = getActiveLang();
@@ -14938,21 +15777,22 @@ window.addEventListener('alo-language-changed', function(e) {
 // LUCKY SPIN (ভাগ্যবান স্পিন) - REAL SUPABASE DRAW & PRIZE SYSTEM (৳42 - ৳45000)
 // ============================================================================
 const LUCKY_SPIN_PRIZES = [
-  { amount: 42,    label: '৪২৳',    enLabel: '42৳',    weight: 34, fill: '#1877f2', text: '#eef2fb' },
-  { amount: 500,   label: '৫০০৳',   enLabel: '500৳',   weight: 2,  fill: '#0b2253', text: '#cbd5e1' },
-  { amount: 95,    label: '৯৫৳',    enLabel: '95৳',    weight: 14, fill: '#1877f2', text: '#eef2fb' },
-  { amount: 5000,  label: '৫০০০৳',  enLabel: '5000৳',  weight: 0.25, fill: '#0b2253', text: '#eef2fb' },
-  { amount: 220,   label: '২২০৳',   enLabel: '220৳',   weight: 6,  fill: '#1877f2', text: '#eef2fb' },
-  { amount: 45000, label: '৪৫০০০৳', enLabel: '45000৳', weight: 0.05, fill: '#0b2253', text: '#eef2fb' },
-  { amount: 65,    label: '৬৫৳',    enLabel: '65৳',    weight: 22, fill: '#1877f2', text: '#eef2fb' },
-  { amount: 1500,  label: '১৫০০৳',  enLabel: '1500৳',  weight: 0.6, fill: '#0b2253', text: '#cbd5e1' },
-  { amount: 150,   label: '১৫০৳',   enLabel: '150৳',   weight: 8,  fill: '#1877f2', text: '#eef2fb' },
-  { amount: 15000, label: '১৫০০০৳', enLabel: '15000৳', weight: 0.1, fill: '#0b2253', text: '#eef2fb' },
-  { amount: 80,    label: '৮০৳',    enLabel: '80৳',    weight: 18, fill: '#1877f2', text: '#eef2fb' },
-  { amount: 2500,  label: '২৫০০৳',  enLabel: '2500৳',  weight: 0.4, fill: '#0b2253', text: '#cbd5e1' }
+  { amount: 42,    label: '৪২৳',    enLabel: '42৳',    weight: 34,   fill: '#ef4444', text: '#ffffff' },
+  { amount: 500,   label: '৫০০৳',   enLabel: '500৳',   weight: 2,    fill: '#f59e0b', text: '#091326' },
+  { amount: 95,    label: '৯৫৳',    enLabel: '95৳',    weight: 14,   fill: '#10b981', text: '#ffffff' },
+  { amount: 5000,  label: '৫০০০৳',  enLabel: '5000৳',  weight: 0.25, fill: '#3b82f6', text: '#ffffff' },
+  { amount: 220,   label: '২২০৳',   enLabel: '220৳',   weight: 6,    fill: '#a855f7', text: '#ffffff' },
+  { amount: 45000, label: '৪৫০০০৳', enLabel: '45000৳', weight: 0.05, fill: '#ec4899', text: '#ffffff' },
+  { amount: 65,    label: '৬৫৳',    enLabel: '65৳',    weight: 22,   fill: '#06b6d4', text: '#071638' },
+  { amount: 1500,  label: '১৫০০৳',  enLabel: '1500৳',  weight: 0.6,  fill: '#f97316', text: '#ffffff' },
+  { amount: 150,   label: '১৫০৳',   enLabel: '150৳',   weight: 8,    fill: '#84cc16', text: '#071638' },
+  { amount: 15000, label: '১৫০০০৳', enLabel: '15000৳', weight: 0.1,  fill: '#6366f1', text: '#ffffff' },
+  { amount: 80,    label: '৮০৳',    enLabel: '80৳',    weight: 18,   fill: '#14b8a6', text: '#071638' },
+  { amount: 2500,  label: '২৫০০৳',  enLabel: '2500৳',  weight: 0.4,  fill: '#eab308', text: '#071638' }
 ];
 
-let luckySpinCurrentRotation = 0;
+// Start at 15deg (half a slice) so the fixed top pointer rests neutrally on the divider seam — not favoring any dollar slice
+let luckySpinCurrentRotation = 15;
 let isLuckySpinAnimating = false;
 let luckySpinWheelBuilt = false;
 
@@ -14973,19 +15813,18 @@ function buildLuckySpinWheelSvg() {
   if (!rotator) return;
 
   const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
-  const isUsd = isUsdOnlyUser(user);
   const lang = getActiveLang(user);
   const cx = 200;
   const cy = 200;
-  const r = 183;
+  const r = 182;
   const n = LUCKY_SPIN_PRIZES.length;
   const sliceDeg = 360 / n; // 30 deg
   const svgParts = [];
 
   for (let i = 0; i < n; i++) {
     const item = LUCKY_SPIN_PRIZES[i];
-    // Center slice i at angle = 180 + i * 30 deg (so i=0 sits at 180 deg = exact LEFT pointer!)
-    const centerDeg = 180 + i * sliceDeg;
+    // Center slice i at angle = 270 + i * 30 deg (so i=0 sits at 270 deg = exact TOP 12 o'clock pointer when rotation = 0)
+    const centerDeg = 270 + i * sliceDeg;
     const startRad = (centerDeg - sliceDeg / 2) * (Math.PI / 180);
     const endRad = (centerDeg + sliceDeg / 2) * (Math.PI / 180);
 
@@ -14996,15 +15835,20 @@ function buildLuckySpinWheelSvg() {
 
     const d = `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
     const prizeText = getLuckySpinPrizeLabelForUser(item, user, lang);
-    const fontSize = prizeText.length >= 6 ? '13.5' : (prizeText.length >= 5 ? '15' : '17');
+    const fontSize = prizeText.length >= 6 ? '15.5' : (prizeText.length >= 5 ? '17' : '18.5');
+    const isLightText = item.text === '#ffffff';
+    const textStroke = isLightText ? 'stroke="rgba(7,22,56,0.55)" stroke-width="2.6" paint-order="stroke"' : '';
 
     svgParts.push(
-      `<path d="${d}" fill="${item.fill}" stroke="#071638" stroke-width="2" stroke-linejoin="round"/>`,
-      `<text x="98" y="200" fill="${item.text}" font-size="${fontSize}" font-weight="600" text-anchor="middle" dominant-baseline="central" transform="rotate(${i * sliceDeg} 200 200)" style="font-family:'Hind Siliguri',system-ui,sans-serif;">${prizeText}</text>`
+      `<path d="${d}" fill="${item.fill}" stroke="#071638" stroke-width="2.5" stroke-linejoin="round"/>`,
+      `<text x="315" y="200" fill="${item.text}" ${textStroke} font-size="${fontSize}" font-weight="800" text-anchor="middle" dominant-baseline="central" transform="rotate(${-90 + i * sliceDeg} 200 200)" style="font-family:'Inter','Hind Siliguri',system-ui,sans-serif;letter-spacing:-0.02em;">${prizeText}</text>`
     );
   }
 
   rotator.innerHTML = svgParts.join('');
+  if (!isLuckySpinAnimating) {
+    rotator.style.transform = `rotate(${luckySpinCurrentRotation}deg)`;
+  }
   luckySpinWheelBuilt = true;
 }
 

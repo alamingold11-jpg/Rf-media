@@ -66,7 +66,7 @@ function escapeHtml(str) {
 
 function formatMoney(val) {
   const num = Number(val) || 0;
-  return '৳' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function getTodayDateString() {
@@ -1860,11 +1860,13 @@ function syncEditUserPackageOptions(packagesObj) {
   if (!selectEl) return;
   const currentVal = selectEl.value;
   const pkgs = normalizePackagesMap(packagesObj);
+  const rate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
   PACKAGE_LEVEL_KEYS.forEach(lvl => {
     const opt = selectEl.querySelector(`option[value="${lvl}"]`);
     if (!opt) return;
     const pkg = pkgs[lvl];
-    const priceLabel = Number(pkg.price) === 0 ? 'Free' : `৳${Number(pkg.price).toLocaleString()}`;
+    const usdPrice = Number(pkg.price) === 0 ? 0 : Number((Number(pkg.price) / rate).toFixed(2));
+    const priceLabel = Number(pkg.price) === 0 ? 'Free' : `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
     opt.textContent = `${lvl} (${pkg.nameEn} - ${priceLabel})`;
   });
   if (currentVal) selectEl.value = currentVal;
@@ -1874,10 +1876,13 @@ function renderPackageConfigEditor(packagesObj) {
   const container = document.getElementById('package-configs-editor');
   if (!container) return;
   const pkgs = normalizePackagesMap(packagesObj);
+  const rate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
 
   container.innerHTML = PACKAGE_LEVEL_KEYS.map(lvl => {
     const p = pkgs[lvl];
     const dailyIncome = Number((p.count * p.reward).toFixed(2));
+    const dailyUsd = Number((dailyIncome / rate).toFixed(2));
+    const priceUsd = Number((Number(p.price || 0) / rate).toFixed(2));
     const badgeColor = lvl === 'LV0'
       ? 'bg-sky-50 text-sky-700 border-sky-200'
       : 'bg-slate-100 text-slate-800 border-slate-200';
@@ -1890,8 +1895,10 @@ function renderPackageConfigEditor(packagesObj) {
             <span class="text-xs font-semibold text-slate-700">${escapeHtml(p.nameBn)} · ${escapeHtml(p.nameEn)}</span>
           </div>
           <div class="text-xs font-medium text-slate-500">
-            দৈনিক আয় (Daily Income):
-            <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">৳${dailyIncome.toLocaleString('en-US', { minimumFractionDigits: dailyIncome % 1 ? 2 : 0, maximumFractionDigits: 2 })}</span>
+            দৈনিক আয় (Daily):
+            <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">$${dailyUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
+            <span class="mx-1.5 text-slate-300">|</span>
+            দাম: <span class="font-mono font-bold text-slate-800" data-pkg-price-usd="${lvl}">$${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             <span class="mx-1.5 text-slate-300">|</span>
             মেয়াদ: <span class="font-mono font-bold text-sky-700" data-pkg-validity-preview="${lvl}">${p.validityDays} দিন</span>
           </div>
@@ -1905,13 +1912,13 @@ function renderPackageConfigEditor(packagesObj) {
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
           </div>
           <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রতি কাজের এমাউন্ট (Per-Task Amount ৳)</label>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রতি কাজের বেস (Base BDT ÷ ${rate} = USD)</label>
             <input type="number" min="0" step="0.01" required
               data-pkg-level="${lvl}" data-pkg-field="reward" value="${p.reward}"
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
           </div>
           <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্যাকেজ দাম (Package Price ৳)</label>
+            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্যাকেজ দাম বেস (Base BDT ÷ ${rate} = USD)</label>
             <input type="number" min="0" step="1" required
               data-pkg-level="${lvl}" data-pkg-field="price" value="${p.price}"
               class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
@@ -1952,16 +1959,23 @@ function renderPackageConfigEditor(packagesObj) {
     inp.addEventListener('input', () => {
       const lvl = inp.dataset.pkgLevel;
       if (!lvl) return;
+      const curRate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
       const countInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="count"]`);
       const rewardInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="reward"]`);
+      const priceInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="price"]`);
       const valInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="validityDays"]`);
       const incEl = container.querySelector(`[data-pkg-income="${lvl}"]`);
+      const priceUsdEl = container.querySelector(`[data-pkg-price-usd="${lvl}"]`);
       const valPrevEl = container.querySelector(`[data-pkg-validity-preview="${lvl}"]`);
       if (incEl && countInp && rewardInp) {
         const c = Math.max(0, parseInt(countInp.value || '0', 10) || 0);
         const r = Math.max(0, parseFloat(rewardInp.value || '0') || 0);
-        const inc = Number((c * r).toFixed(2));
-        incEl.textContent = `৳${inc.toLocaleString('en-US', { minimumFractionDigits: inc % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
+        const incUsd = Number(((c * r) / curRate).toFixed(2));
+        incEl.textContent = `$${incUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+      }
+      if (priceUsdEl && priceInp) {
+        const prUsd = Number((Math.max(0, parseFloat(priceInp.value || '0') || 0) / curRate).toFixed(2));
+        priceUsdEl.textContent = `$${prUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
       if (valPrevEl && valInp) {
         const v = Math.max(1, parseInt(valInp.value || '1', 10) || 1);

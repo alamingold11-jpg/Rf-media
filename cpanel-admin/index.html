@@ -207,7 +207,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Recharge</div>
-              <div id="kpi-total-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-total-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-total-recharge-count" class="text-slate-700">0</span> Approved · <span id="kpi-pending-recharge-count" class="text-amber-600">0</span> Pending
               </div>
@@ -215,7 +215,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Today Recharge</div>
-              <div id="kpi-today-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-today-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-today-recharge-count" class="text-slate-700">0</span> Approved today
               </div>
@@ -223,7 +223,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Withdrawal</div>
-              <div id="kpi-total-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-total-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-total-withdraw-count" class="text-slate-700">0</span> Total · <span id="kpi-pending-withdraw-count" class="text-amber-600">0</span> Pending
               </div>
@@ -231,7 +231,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Today Withdrawal</div>
-              <div id="kpi-today-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-today-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-today-withdraw-count" class="text-slate-700">0</span> Requests today
               </div>
@@ -674,29 +674,29 @@
             <select id="edit-user-level"
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
               <option value="LV0">LV0 (Free)</option>
-              <option value="LV1">LV1 (৳5,500)</option>
-              <option value="LV2">LV2 (৳15,000)</option>
-              <option value="LV3">LV3 (৳40,000)</option>
-              <option value="LV4">LV4 (৳100,000)</option>
-              <option value="LV5">LV5 (৳220,000)</option>
-              <option value="LV6">LV6 (৳500,000)</option>
+              <option value="LV1">LV1 ($27.78 USD)</option>
+              <option value="LV2">LV2 ($59.52 USD)</option>
+              <option value="LV3">LV3 ($285.71 USD)</option>
+              <option value="LV4">LV4 ($666.67 USD)</option>
+              <option value="LV5">LV5 ($1,190.48 USD)</option>
+              <option value="LV6">LV6 ($2,380.95 USD)</option>
             </select>
           </div>
         </div>
 
         <div class="rounded-lg bg-slate-50 border border-slate-200/80 p-3 space-y-2">
           <div class="flex items-center justify-between gap-2">
-            <label class="block text-[11px] font-semibold text-slate-800">Real-Time Live Adjust (+ / -)</label>
+            <label class="block text-[11px] font-semibold text-slate-800">Real-Time Live Adjust (+ / - USD)</label>
             <select id="edit-live-bal-type" class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700">
               <option value="available">Available (উপলব্ধ)</option>
               <option value="frozen">Frozen (বরফ)</option>
             </select>
           </div>
           <div class="flex gap-1.5">
-            <button type="button" onclick="quickBumpBalance(500)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+500</button>
-            <button type="button" onclick="quickBumpBalance(1000)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+1k</button>
-            <button type="button" onclick="quickBumpBalance(-500)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-500</button>
-            <button type="button" onclick="quickBumpBalance(-1000)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-1k</button>
+            <button type="button" onclick="quickBumpBalance(10)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+$10</button>
+            <button type="button" onclick="quickBumpBalance(50)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+$50</button>
+            <button type="button" onclick="quickBumpBalance(-10)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-$10</button>
+            <button type="button" onclick="quickBumpBalance(-50)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-$50</button>
           </div>
           <div class="flex items-center gap-1.5">
             <input id="edit-live-delta-amount" type="number" step="0.01" min="0.01" placeholder="Custom amount"
@@ -827,8 +827,8 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (BDT)</label>
-            <input id="manual-amount" type="number" step="0.01" min="0.01" required placeholder="500"
+            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (USD / USDT)</label>
+            <input id="manual-amount" type="number" step="0.01" min="0.01" required placeholder="25.00"
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
           </div>
         </div>
@@ -837,10 +837,8 @@
           <label class="block text-xs font-medium text-slate-600 mb-1">Method / Note</label>
           <select id="manual-method"
             class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+            <option value="USDT BEP20 [Admin Approved]">USDT BEP20 (Recharge)</option>
             <option value="Admin Real-Time Credit">Admin Real-Time Adjust</option>
-            <option value="bKash [Admin Approved]">bKash (Admin)</option>
-            <option value="Nagad [Admin Approved]">Nagad (Admin)</option>
-            <option value="USDT BEP20 [Admin Approved]">USDT BEP20</option>
             <option value="System Bonus [Admin]">System Bonus</option>
           </select>
         </div>

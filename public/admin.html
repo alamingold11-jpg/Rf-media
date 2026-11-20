@@ -126,6 +126,12 @@
             <span>Team &amp; Rebates</span>
           </button>
 
+          <button type="button" data-nav="salary" onclick="switchSection('salary')"
+            class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
+            <span>Salary Page (বেতন)</span>
+            <span id="nav-salary-tiers-count" class="font-mono text-xs text-blue-600 font-semibold tabular-nums">8</span>
+          </button>
+
           <button type="button" data-nav="platform" onclick="switchSection('platform')"
             class="nav-item w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer">
             <span>Platform &amp; Packages</span>
@@ -167,6 +173,10 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
+          <button type="button" onclick="switchSection('salary')"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-xs font-semibold text-blue-700 transition cursor-pointer">
+            বেতন পেজ
+          </button>
           <button type="button" onclick="openManualAdjustModal()"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer">
             ± Adjust Balance
@@ -207,7 +217,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Recharge</div>
-              <div id="kpi-total-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-total-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-total-recharge-count" class="text-slate-700">0</span> Approved · <span id="kpi-pending-recharge-count" class="text-amber-600">0</span> Pending
               </div>
@@ -215,7 +225,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Today Recharge</div>
-              <div id="kpi-today-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-today-recharge" class="mt-2 text-2xl sm:text-3xl font-bold text-emerald-700 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-today-recharge-count" class="text-slate-700">0</span> Approved today
               </div>
@@ -223,7 +233,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Total Withdrawal</div>
-              <div id="kpi-total-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-total-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-total-withdraw-count" class="text-slate-700">0</span> Total · <span id="kpi-pending-withdraw-count" class="text-amber-600">0</span> Pending
               </div>
@@ -231,7 +241,7 @@
 
             <div class="bg-white rounded-xl p-5 shadow-xs">
               <div class="text-xs font-medium text-slate-500">Today Withdrawal</div>
-              <div id="kpi-today-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">৳0.00</div>
+              <div id="kpi-today-withdraw" class="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 font-mono tabular-nums">$0.00</div>
               <div class="mt-1.5 text-xs text-slate-500 font-mono">
                 <span id="kpi-today-withdraw-count" class="text-slate-700">0</span> Requests today
               </div>
@@ -450,6 +460,220 @@
                 </thead>
                 <tbody id="commissions-table-body" class="divide-y divide-slate-100 text-sm"></tbody>
               </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================
+             SECTION: SALARY PAGE (বেতন পেজ — রিয়েল টাইম এডিটর)
+        ================================================== -->
+        <section id="section-salary" class="hidden space-y-5">
+          <!-- Header Toolbar -->
+          <div class="bg-white rounded-xl p-4 sm:p-5 shadow-xs flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-slate-900">Salary Page Control (বেতন পেজ — রিয়েল টাইম কন্ট্রোল)</h3>
+                <span id="salary-dirty-badge" class="hidden px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-[11px] font-semibold">Unsaved Changes</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">এখান থেকে বেতন পেজের শিরোনাম, বিবরণ, পদের নাম, প্রয়োজনীয় সক্রিয় সদস্য এবং মাসিক বেতনের USD/USDT এমাউন্ট পরিবর্তন করলে সাথে সাথে লাইভ ওয়েবসাইটে আপডেট হবে।</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <button type="button" onclick="addSalaryTierRow()"
+                class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition cursor-pointer">
+                + Add Position
+              </button>
+              <button type="button" onclick="resetSalaryPageDefaults()"
+                class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition cursor-pointer">
+                Reset Defaults
+              </button>
+              <button type="button" onclick="document.getElementById('salary-page-form')?.requestSubmit()"
+                class="px-4 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer">
+                Save &amp; Sync Live
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+            <!-- Left Column: Editor Form -->
+            <form id="salary-page-form" novalidate class="xl:col-span-7 space-y-5">
+              <!-- Language Switcher Tabs -->
+              <div class="bg-white rounded-xl p-5 shadow-xs space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900">Page Headings, Labels &amp; Notes (শিরোনাম ও লেখা)</h4>
+                    <p class="text-[11px] text-slate-500">ভাষা সিলেক্ট করে বাংলা, ইংরেজি বা আরবি সব লেখা এডিট করুন</p>
+                  </div>
+                  <div class="inline-flex rounded-lg bg-slate-100 p-0.5 self-start sm:self-auto" id="salary-lang-tabs">
+                    <button type="button" data-salary-lang="bn" onclick="setSalaryEditorLang('bn')" class="salary-lang-tab px-3 py-1 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-xs cursor-pointer">বাংলা (BN)</button>
+                    <button type="button" data-salary-lang="en" onclick="setSalaryEditorLang('en')" class="salary-lang-tab px-3 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">English (EN)</button>
+                    <button type="button" data-salary-lang="ar" onclick="setSalaryEditorLang('ar')" class="salary-lang-tab px-3 py-1 rounded-md text-xs font-medium text-slate-600 hover:text-slate-900 cursor-pointer">العربية (AR)</button>
+                  </div>
+                </div>
+
+                <!-- BN Fields -->
+                <div data-salary-lang-group="bn" class="space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">মূল শিরোনাম (Title - বাংলা)</label>
+                      <input id="sal-title-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">সাবটাইটেল (Subtitle - বাংলা)</label>
+                      <input id="sal-subtitle-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">সক্রিয় সদস্য বার লেবেল (Active Label)</label>
+                      <input id="sal-active-label-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">একক (Unit)</label>
+                      <input id="sal-unit-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">লকড বাটন লেখা</label>
+                      <input id="sal-locked-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">গ্রহণ করুন বাটন লেখা</label>
+                      <input id="sal-claim-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">গৃহীত বাটন লেখা</label>
+                      <input id="sal-claimed-bn" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">ক্লেইম পপআপ নোট / শর্তাবলি (Modal Info Note - বাংলা)</label>
+                    <textarea id="sal-modal-note-bn" rows="2" class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400"></textarea>
+                  </div>
+                </div>
+
+                <!-- EN Fields -->
+                <div data-salary-lang-group="en" class="hidden space-y-3">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Main Title (English)</label>
+                      <input id="sal-title-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Subtitle (English)</label>
+                      <input id="sal-subtitle-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Active Members Label (English)</label>
+                      <input id="sal-active-label-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Member Unit</label>
+                      <input id="sal-unit-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Locked Button Label</label>
+                      <input id="sal-locked-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Claim Button Label</label>
+                      <input id="sal-claim-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">Claimed Button Label</label>
+                      <input id="sal-claimed-en" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">Claim Modal Note (English)</label>
+                    <textarea id="sal-modal-note-en" rows="2" class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400"></textarea>
+                  </div>
+                </div>
+
+                <!-- AR Fields -->
+                <div data-salary-lang-group="ar" class="hidden space-y-3" dir="rtl">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">العنوان الرئيسي (Arabic)</label>
+                      <input id="sal-title-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">العنوان الفرعي (Arabic)</label>
+                      <input id="sal-subtitle-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-2">
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">تسمية الأعضاء النشطين</label>
+                      <input id="sal-active-label-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">الوحدة</label>
+                      <input id="sal-unit-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">زر مغلق</label>
+                      <input id="sal-locked-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">زر استلام</label>
+                      <input id="sal-claim-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-medium text-slate-600 mb-1">زر تم الاستلام</label>
+                      <input id="sal-claimed-ar" type="text" required class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-[11px] font-medium text-slate-600 mb-1">ملاحظة نافذة الاستلام</label>
+                    <textarea id="sal-modal-note-ar" rows="2" class="sal-meta-inp w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Salary Tiers / Positions Editor -->
+              <div class="bg-white rounded-xl p-5 shadow-xs space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900">Salary Positions &amp; USD/USDT Amounts (অবস্থান ও বেতন তালিকা)</h4>
+                    <p class="text-[11px] text-slate-500">প্রতিটি পদের নাম, প্রয়োজনীয় A-লেভেল সদস্য, বেতনের এমাউন্ট ($) এবং বিবরণ পরিবর্তন করুন</p>
+                  </div>
+                  <button type="button" onclick="addSalaryTierRow()"
+                    class="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition cursor-pointer">
+                    + Add Position
+                  </button>
+                </div>
+
+                <div id="salary-tiers-editor" class="space-y-3"></div>
+
+                <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                  <span class="text-[11px] text-slate-500">Save করলে ওয়েবসাইটের বেতন পেজে সাথে সাথে রিয়েল টাইম আপডেট হবে।</span>
+                  <button type="submit" class="px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+                    Save &amp; Sync Live to Website
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- Right Column: Live Website Preview -->
+            <div class="xl:col-span-5 xl:sticky xl:top-20 space-y-3">
+              <div class="bg-white rounded-xl p-4 shadow-xs">
+                <div class="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Live Website Preview</h4>
+                    <p class="text-[11px] text-slate-500">এডিট করার সাথে সাথে প্রিভিউ আপডেট হচ্ছে</p>
+                  </div>
+                  <span class="text-[11px] font-mono font-semibold text-emerald-700">USD / USDT</span>
+                </div>
+
+                <div id="salary-live-preview" class="rounded-2xl p-4 text-[#f3f4f6] max-h-[72vh] overflow-y-auto" style="background: #0b1730;"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -674,12 +898,12 @@
             <select id="edit-user-level"
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
               <option value="LV0">LV0 (Free)</option>
-              <option value="LV1">LV1 (৳5,500)</option>
-              <option value="LV2">LV2 (৳15,000)</option>
-              <option value="LV3">LV3 (৳40,000)</option>
-              <option value="LV4">LV4 (৳100,000)</option>
-              <option value="LV5">LV5 (৳220,000)</option>
-              <option value="LV6">LV6 (৳500,000)</option>
+              <option value="LV1">LV1 ($27.78 USD)</option>
+              <option value="LV2">LV2 ($59.52 USD)</option>
+              <option value="LV3">LV3 ($285.71 USD)</option>
+              <option value="LV4">LV4 ($666.67 USD)</option>
+              <option value="LV5">LV5 ($1,190.48 USD)</option>
+              <option value="LV6">LV6 ($2,380.95 USD)</option>
             </select>
           </div>
         </div>
@@ -687,17 +911,17 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           <div class="rounded-lg bg-slate-50 border border-slate-200/80 p-2.5 space-y-2">
             <div class="flex items-center justify-between gap-2">
-              <label class="block text-[11px] font-semibold text-slate-800">Real-Time Live Adjust (+ / -)</label>
+              <label class="block text-[11px] font-semibold text-slate-800">Real-Time Live Adjust (+ / - USD)</label>
               <select id="edit-live-bal-type" class="px-2 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700">
                 <option value="available">Available (উপলব্ধ)</option>
                 <option value="frozen">Frozen (বরফ)</option>
               </select>
             </div>
             <div class="flex gap-1.5">
-              <button type="button" onclick="quickBumpBalance(500)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+500</button>
-              <button type="button" onclick="quickBumpBalance(1000)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+1k</button>
-              <button type="button" onclick="quickBumpBalance(-500)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-500</button>
-              <button type="button" onclick="quickBumpBalance(-1000)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-1k</button>
+              <button type="button" onclick="quickBumpBalance(10)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+$10</button>
+              <button type="button" onclick="quickBumpBalance(50)" class="flex-1 py-1.5 rounded-md bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-mono font-semibold transition cursor-pointer">+$50</button>
+              <button type="button" onclick="quickBumpBalance(-10)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-$10</button>
+              <button type="button" onclick="quickBumpBalance(-50)" class="flex-1 py-1.5 rounded-md bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-mono font-semibold transition cursor-pointer">-$50</button>
             </div>
             <div class="flex items-center gap-1.5">
               <input id="edit-live-delta-amount" type="number" step="0.01" min="0.01" placeholder="Custom amount"
@@ -839,8 +1063,8 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (BDT)</label>
-            <input id="manual-amount" type="number" step="0.01" min="0.01" required placeholder="500"
+            <label class="block text-xs font-medium text-slate-600 mb-1">Amount (USD / USDT)</label>
+            <input id="manual-amount" type="number" step="0.01" min="0.01" required placeholder="25.00"
               class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400" />
           </div>
         </div>
@@ -849,10 +1073,8 @@
           <label class="block text-xs font-medium text-slate-600 mb-1">Method / Note</label>
           <select id="manual-method"
             class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-none focus:bg-white focus:border-slate-400">
+            <option value="USDT BEP20 [Admin Approved]">USDT BEP20 (Recharge)</option>
             <option value="Admin Real-Time Credit">Admin Real-Time Adjust</option>
-            <option value="bKash [Admin Approved]">bKash (Admin)</option>
-            <option value="Nagad [Admin Approved]">Nagad (Admin)</option>
-            <option value="USDT BEP20 [Admin Approved]">USDT BEP20</option>
             <option value="System Bonus [Admin]">System Bonus</option>
           </select>
         </div>
