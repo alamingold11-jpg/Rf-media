@@ -3392,6 +3392,8 @@ function openDashboardPanel(panelName) {
     renderInvitePage();
   }
   if (nextPanel === 'employee-benefits') {
+    document.body.style.overflow = '';
+    try { window.scrollTo(0, 0); } catch (_) {}
     if (typeof renderInviteVipSalaryCards === 'function') renderInviteVipSalaryCards();
   }
   if (nextPanel === 'lucky-spin') {
@@ -6037,6 +6039,27 @@ function syncLv0ExpiredStamp(cardEl, shouldShow) {
   }
 }
 
+function syncVipOwnedSeal(cardEl, shouldShow) {
+  if (!cardEl) return;
+  const existing = cardEl.querySelector('.vip-owned-seal-wrap');
+  if (shouldShow) {
+    if (!existing) {
+      const wrap = document.createElement('div');
+      wrap.className = 'vip-owned-seal-wrap';
+      wrap.setAttribute('aria-hidden', 'true');
+      const img = document.createElement('img');
+      img.src = '/assets/aistudio/maxresdefault_2cef91ca.jpg';
+      img.alt = 'CONGRATULATIONS';
+      img.className = 'vip-owned-seal-img';
+      img.draggable = false;
+      wrap.appendChild(img);
+      cardEl.appendChild(wrap);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
 function updateVipHallRooms() {
   const user = getCurrentUser();
   const userLevel = (user && user.packageLevel) || 'LV0';
@@ -6187,11 +6210,10 @@ function updateRecordsPanelPackages() {
       ? (isUsd ? `$0.00 ${labels.freeText}` : `${formatNumber(0, user)} ${labels.freeText}`)
       : (isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${formatNumber(pkgPrice, user)} ${curr}`);
 
+    const isCurrent = (level === userLevel);
+    const isPurchased = Boolean(user && user.purchasedPackages && user.purchasedPackages.includes(level));
     const btn = card.querySelector('[data-buy-package]');
     if (btn) {
-      const isCurrent = (level === userLevel);
-      const isPurchased = (user && user.purchasedPackages && user.purchasedPackages.includes(level));
-
       if (isCurrent) {
         btn.textContent = `${priceLabel} · ${labels.btnCurrent}`;
         btn.disabled = true;
@@ -6209,6 +6231,9 @@ function updateRecordsPanelPackages() {
 
     // 5. Overlay clean EXPIRED stamp image when 5-day free validity has ended
     syncLv0ExpiredStamp(card, isLv0ExpiredCard);
+
+    // 6. Overlay diagonal CONGRATULATIONS corner seal on the user's active/owned package
+    syncVipOwnedSeal(card, (isCurrent && !isLv0ExpiredCard) || isPurchased);
   });
 }
 

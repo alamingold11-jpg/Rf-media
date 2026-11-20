@@ -135,9 +135,13 @@ html, body {
   font-family: 'Inter', 'Hind Siliguri', system-ui, sans-serif !important;
 }
 #employee-benefits-panel {
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior-y: contain !important;
+  overflow: visible !important;
+  overscroll-behavior-y: auto !important;
+  touch-action: pan-y !important;
+}
+.dashboard-shell:has(#employee-benefits-panel:not([hidden])) {
+  padding-bottom: 0 !important;
+  overflow: visible !important;
 }
 
 /* Exact Screenshot Bottom Navigation Bar - ALWAYS VISIBLE ON EVERY PAGE */
@@ -653,57 +657,62 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #profile-nav-options .profile-nav-group-label{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:#7f8fb0}
 .no-scrollbar::-webkit-scrollbar{display:none}
 .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none}
-/* VIP Panel: Site-Palette Glass Cards + Moving TikTok/Facebook/YouTube Reels Backdrop */
-#records-panel{position:relative;isolation:isolate;z-index:1;background:#040c22}
+/* VIP Panel: Exact Site Royal-Blue (#071b50) Theme + Clearly Visible Moving Reels Backdrop */
+.dashboard-shell:has(#records-panel:not([hidden])){padding-bottom:0!important}
+#records-panel{position:relative;isolation:isolate;z-index:1;background:#071b50;padding-bottom:5.75rem!important}
 #records-panel[hidden] .vip-reels-backdrop{display:none!important}
-#records-panel .vip-reels-backdrop{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,430px);z-index:0;pointer-events:none;overflow:hidden;background:radial-gradient(circle at 50% 15%,#0b1e4d 0%,#040c22 72%)}
-#records-panel .vip-reels-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:0 8px;height:100%;width:100%;opacity:.82}
+#records-panel .vip-reels-backdrop{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,430px);z-index:0;pointer-events:none;overflow:hidden;background:linear-gradient(180deg,#071b50 0%,#0a2468 50%,#071b50 100%)}
+#records-panel .vip-reels-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding:0 8px;height:100%;width:100%;opacity:.96}
 #records-panel .vip-reels-col{position:relative;height:100%;overflow:hidden}
 #records-panel .vip-reels-track{display:flex;flex-direction:column;gap:10px;will-change:transform}
-#records-panel .vip-reels-col--up .vip-reels-track{animation:vip-reel-scroll-up 28s linear infinite}
-#records-panel .vip-reels-col--down .vip-reels-track{animation:vip-reel-scroll-down 34s linear infinite}
-#records-panel .vip-reels-col--up-fast .vip-reels-track{animation:vip-reel-scroll-up 24s linear infinite}
+#records-panel .vip-reels-col--up .vip-reels-track{animation:vip-reel-scroll-up 26s linear infinite}
+#records-panel .vip-reels-col--down .vip-reels-track{animation:vip-reel-scroll-down 32s linear infinite}
+#records-panel .vip-reels-col--up-fast .vip-reels-track{animation:vip-reel-scroll-up 22s linear infinite}
 @keyframes vip-reel-scroll-up{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(0,-50%,0)}}
 @keyframes vip-reel-scroll-down{0%{transform:translate3d(0,-50%,0)}100%{transform:translate3d(0,0,0)}}
-#records-panel .vip-reel-tile{position:relative;aspect-ratio:9/15;border-radius:12px;overflow:hidden;border:1px solid rgba(56,189,248,.22);padding:8px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 0 24px rgba(2,8,24,.55)}
-#records-panel .vip-reel-tile::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 22%,rgba(255,255,255,.16) 0%,transparent 48%),linear-gradient(180deg,rgba(3,10,28,.12) 0%,rgba(3,10,28,.62) 100%);pointer-events:none}
-#records-panel .vip-reel-tile--tt{background:linear-gradient(160deg,#082047 0%,#0c173d 48%,#2b1036 100%);border-color:rgba(37,244,238,.28)}
-#records-panel .vip-reel-tile--fb{background:linear-gradient(160deg,#0c2f7a 0%,#081c4d 52%,#0b2b68 100%);border-color:rgba(56,189,248,.34)}
-#records-panel .vip-reel-tile--yt{background:linear-gradient(160deg,#30102d 0%,#0c1942 52%,#0a1e52 100%);border-color:rgba(248,113,113,.28)}
-#records-panel .vip-reel-head{position:relative;z-index:1;display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;letter-spacing:.03em;color:rgba(238,244,255,.9)}
-#records-panel .vip-reel-head svg{width:13px;height:13px;flex:none}
+#records-panel .vip-reel-tile{position:relative;aspect-ratio:9/15;border-radius:12px;overflow:hidden;border:1px solid rgba(53,198,231,.38);padding:8px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 14px rgba(5,16,52,.35)}
+#records-panel .vip-reel-tile::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 75% 20%,rgba(125,211,252,.28) 0%,transparent 48%),linear-gradient(180deg,rgba(7,27,80,.06) 0%,rgba(7,27,80,.42) 100%);pointer-events:none}
+#records-panel .vip-reel-tile--tt{background:linear-gradient(160deg,#0f357c 0%,#12296e 48%,#4a1b5c 100%);border-color:rgba(37,244,238,.48)}
+#records-panel .vip-reel-tile--fb{background:linear-gradient(160deg,#1249b5 0%,#0d2e7c 52%,#1445a8 100%);border-color:rgba(53,198,231,.52)}
+#records-panel .vip-reel-tile--yt{background:linear-gradient(160deg,#52183f 0%,#142d78 52%,#10378a 100%);border-color:rgba(248,113,113,.48)}
+#records-panel .vip-reel-head{position:relative;z-index:1;display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;letter-spacing:.02em;color:#ffffff;width:fit-content;padding:2px 6px;border-radius:9999px;background:rgba(7,27,80,.55);border:1px solid rgba(255,255,255,.18)}
+#records-panel .vip-reel-head svg{width:12px;height:12px;flex:none}
 #records-panel .vip-reel-center{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;margin:auto 0;padding-top:4px}
-#records-panel .vip-reel-play{width:28px;height:28px;border-radius:9999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.26);display:flex;align-items:center;justify-content:center;margin:0 auto;color:#fff}
-#records-panel .vip-reel-play svg{width:11px;height:11px;margin-left:1.5px}
-#records-panel .vip-reel-actions{position:absolute;right:0;bottom:-12px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.68}
-#records-panel .vip-reel-actions span{width:11px;height:11px;border-radius:9999px;background:rgba(226,238,255,.26);border:1px solid rgba(255,255,255,.22);display:block}
+#records-panel .vip-reel-play{width:30px;height:30px;border-radius:9999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.42);display:flex;align-items:center;justify-content:center;margin:0 auto;color:#fff}
+#records-panel .vip-reel-play svg{width:12px;height:12px;margin-left:1.5px}
+#records-panel .vip-reel-actions{position:absolute;right:1px;bottom:-10px;display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.82}
+#records-panel .vip-reel-actions span{width:10px;height:10px;border-radius:9999px;background:rgba(233,242,255,.36);border:1px solid rgba(255,255,255,.35);display:block}
 #records-panel .vip-reel-foot{position:relative;z-index:1;display:flex;flex-direction:column;gap:4px}
-#records-panel .vip-reel-handle{font-size:8.5px;font-weight:700;color:rgba(226,238,255,.84);letter-spacing:.01em}
-#records-panel .vip-reel-bar{height:2.5px;width:100%;border-radius:9999px;background:rgba(255,255,255,.15);overflow:hidden}
-#records-panel .vip-reel-bar i{display:block;height:100%;width:58%;border-radius:9999px;background:linear-gradient(90deg,#1877f2,#38bdf8)}
+#records-panel .vip-reel-handle{font-size:9px;font-weight:700;color:rgba(241,247,255,.95);letter-spacing:.01em;text-shadow:0 1px 3px rgba(5,16,48,.7)}
+#records-panel .vip-reel-bar{height:2.5px;width:100%;border-radius:9999px;background:rgba(255,255,255,.22);overflow:hidden}
+#records-panel .vip-reel-bar i{display:block;height:100%;width:62%;border-radius:9999px;background:linear-gradient(90deg,#168bff,#35c6e7)}
 #records-panel .vip-reel-tile--tt .vip-reel-bar i{background:linear-gradient(90deg,#25f4ee,#fe2c55)}
-#records-panel .vip-reel-tile--yt .vip-reel-bar i{background:linear-gradient(90deg,#ef4444,#38bdf8)}
-#records-panel .vip-reels-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(4,12,34,.52) 0%,rgba(5,15,42,.58) 50%,rgba(4,12,34,.72) 100%)}
+#records-panel .vip-reel-tile--yt .vip-reel-bar i{background:linear-gradient(90deg,#ff2e4d,#35c6e7)}
+#records-panel .vip-reels-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(7,27,80,.26) 0%,rgba(7,27,80,.34) 52%,rgba(7,27,80,.46) 100%)}
 #records-panel .vip-panel-foreground{position:relative;z-index:2}
-#records-panel .vip-reel-card{position:relative;overflow:hidden;border-radius:16px;padding:16px 18px 18px;background:rgba(4,13,36,.87);-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);border:1.25px solid rgba(56,189,248,.56);box-shadow:0 10px 28px rgba(2,9,28,.62),inset 0 1px 0 rgba(125,211,252,.18);color:#ffffff;transition:border-color .2s ease,transform .18s ease,box-shadow .2s ease;cursor:pointer}
-#records-panel .vip-reel-card:hover{border-color:rgba(56,189,248,.88);box-shadow:0 12px 30px rgba(24,119,242,.3),inset 0 1px 0 rgba(125,211,252,.25)}
+#records-panel .vip-wallet-bar{position:relative;overflow:hidden;border-radius:14px;padding:12px 14px;background:rgba(7,27,80,.78);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(53,198,231,.45);box-shadow:0 6px 20px rgba(4,15,48,.42)}
+#records-panel .vip-reel-card{position:relative;overflow:hidden;border-radius:16px;padding:16px 18px 18px;background:rgba(7,27,80,.64);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);border:1.25px solid rgba(53,198,231,.58);box-shadow:0 8px 24px rgba(4,16,52,.42);color:#ffffff;transition:border-color .2s ease,transform .18s ease,box-shadow .2s ease;cursor:pointer}
+#records-panel .vip-reel-card:hover{border-color:#35c6e7;box-shadow:0 10px 26px rgba(18,100,201,.36)}
 #records-panel .vip-reel-card:active{transform:scale(.992)}
-#records-panel .vip-card-title{text-align:center;font-size:20px;font-weight:800;letter-spacing:.04em;color:#ffffff;line-height:1.25;padding-bottom:10px;margin:0 0 12px;border-bottom:1.5px dotted rgba(56,189,248,.48);text-shadow:0 1px 10px rgba(56,189,248,.28)}
-#records-panel .vip-card-rows{display:flex;flex-direction:column;gap:9px;margin-bottom:16px}
+#records-panel .vip-card-title{text-align:center;font-size:20px;font-weight:800;letter-spacing:.04em;color:#ffffff;line-height:1.25;padding-bottom:10px;margin:0 0 12px;border-bottom:1.5px dotted rgba(53,198,231,.52);text-shadow:0 1px 8px rgba(4,15,48,.85)}
+#records-panel .vip-card-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 #records-panel .vip-card-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;line-height:1.35}
-#records-panel .vip-card-row:last-child{background:linear-gradient(90deg,rgba(24,119,242,.22),rgba(56,189,248,.16));border:1px solid rgba(56,189,248,.36);border-radius:10px;padding:7px 11px;margin-top:2px}
-#records-panel .vip-card-label{color:#dbeafe;font-weight:600;font-size:14px}
+#records-panel .vip-card-row:last-child{background:rgba(18,100,201,.28);border:1px solid rgba(53,198,231,.45);border-radius:10px;padding:7px 11px;margin-top:2px}
+#records-panel .vip-card-label{color:#e9f2ff;font-weight:600;font-size:14px;text-shadow:0 1px 5px rgba(4,14,44,.9)}
 #records-panel .vip-label-tasks,#records-panel .vip-label-income{color:#ffffff;font-weight:700;font-size:14.5px}
-#records-panel .vip-card-val{color:#ffffff;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;text-align:right;text-shadow:0 1px 4px rgba(2,8,24,.65)}
-#records-panel .vip-val-tasks{color:#7dd3fc;font-weight:800;font-size:16.5px;text-shadow:0 0 12px rgba(125,211,252,.38)}
-#records-panel .vip-card-val--accent{color:#38bdf8;font-weight:900;font-size:17.5px;letter-spacing:.01em;text-shadow:0 0 14px rgba(56,189,248,.55)}
+#records-panel .vip-card-val{color:#ffffff;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;text-align:right;text-shadow:0 1px 6px rgba(4,14,44,.92)}
+#records-panel .vip-val-tasks{color:#7dd3fc;font-weight:800;font-size:16.5px;text-shadow:0 1px 8px rgba(4,14,44,.95)}
+#records-panel .vip-card-val--accent{color:#35c6e7;font-weight:900;font-size:17.5px;letter-spacing:.01em;text-shadow:0 1px 10px rgba(4,14,44,.95)}
 #records-panel .vip-card-cta-wrap{display:flex;justify-content:center}
-#records-panel .vip-card-cta{min-height:44px;min-width:78%;max-width:100%;padding:10px 22px;border-radius:9999px;font-size:14.5px;font-weight:800;letter-spacing:.015em;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s ease,filter .18s ease,box-shadow .18s ease;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(2,10,30,.35)}
-#records-panel .vip-card-cta--buy{background:linear-gradient(90deg,#1877f2 0%,#229ef5 55%,#38bdf8 100%);color:#ffffff;border:1px solid rgba(186,230,253,.45);box-shadow:0 6px 18px rgba(24,119,242,.46);cursor:pointer}
-#records-panel .vip-card-cta--buy:hover{filter:brightness(1.07);box-shadow:0 8px 22px rgba(56,189,248,.46)}
+#records-panel .vip-card-cta{min-height:44px;min-width:80%;max-width:100%;padding:10px 22px;border-radius:9999px;font-size:14.5px;font-weight:800;letter-spacing:.015em;display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s ease,filter .18s ease,box-shadow .18s ease;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(4,14,44,.4)}
+#records-panel .vip-card-cta--buy{background:linear-gradient(90deg,#1264c9 0%,#168bff 52%,#35c6e7 100%);color:#ffffff;border:1px solid rgba(186,230,253,.48);box-shadow:0 6px 18px rgba(18,100,201,.48);cursor:pointer}
+#records-panel .vip-card-cta--buy:hover{filter:brightness(1.07);box-shadow:0 8px 22px rgba(53,198,231,.48)}
 #records-panel .vip-card-cta--buy:active{transform:scale(.97)}
-#records-panel .vip-card-cta--current{background:rgba(15,38,88,.9);color:#e0f2fe;border:1px solid rgba(56,189,248,.45);cursor:default}
-#records-panel .vip-card-cta--purchased{background:rgba(12,56,98,.9);color:#bae6fd;border:1px solid rgba(56,189,248,.55);cursor:default}
+#records-panel .vip-card-cta--current{background:rgba(18,59,141,.85);color:#e9f2ff;border:1px solid rgba(53,198,231,.5);cursor:default}
+#records-panel .vip-card-cta--purchased{background:rgba(18,100,201,.78);color:#e0f2fe;border:1px solid rgba(53,198,231,.6);cursor:default}
+/* Diagonal Corner CONGRATULATIONS Seal on Active/Owned VIP Package */
+#records-panel .vip-owned-seal-wrap{position:absolute;top:-14px;right:-24px;width:166px;z-index:22;pointer-events:none;user-select:none;transform:rotate(22deg);transform-origin:center center}
+#records-panel .vip-owned-seal-img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;filter:url(#congrats-ribbon-cutout) drop-shadow(0 3px 6px rgba(4,12,38,.72))}
 @media (prefers-reduced-motion:reduce){#records-panel .vip-reels-track{animation:none!important}#records-panel .vip-reel-card,#records-panel .vip-card-cta{transition:none}}
 </style>
   <script type="module" src="/src/init.js"></script>
@@ -715,6 +724,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <defs>
       <filter id="expired-stamp-cutout" color-interpolation-filters="sRGB">
         <feColorMatrix type="matrix" values="1.25 0 0 0 0.08  0.05 0.15 0 0 0.02  0.05 0 0.15 0 0.02  2.6 -2.6 0 0 -0.08" />
+      </filter>
+      <filter id="congrats-ribbon-cutout" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="1.06 0 0 0 0  0 1.06 0 0 0  0 0 1.06 0 0  6.0 3.0 1.5 0 -0.22" />
       </filter>
     </defs>
   </svg>
@@ -3213,16 +3225,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
             <!-- Foreground Content Stack -->
             <div class="vip-panel-foreground space-y-4">
               <!-- User Status & Balance Header in Packages -->
-              <div class="p-3.5 rounded-2xl bg-[#06153c]/82 backdrop-blur-md border border-[#38bdf8]/35 flex items-center justify-between text-xs shadow-[0_8px_24px_rgba(3,10,28,0.5)]">
-                <div>
-                  <p class="text-[#9fb7df] text-[11px]">আপনার বর্তমান স্তর:</p>
-                  <p class="font-bold text-[#38bdf8] text-sm" id="records-current-level-display">LV0</p>
+              <div class="vip-wallet-bar flex items-center justify-between gap-2.5 text-xs">
+                <div class="min-w-0">
+                  <p class="text-[#b8cef2] text-[11px] font-medium leading-tight">আপনার বর্তমান স্তর</p>
+                  <p class="font-extrabold text-[#38bdf8] text-[16px] tracking-wide mt-0.5 leading-tight" id="records-current-level-display">LV0</p>
                 </div>
-                <div class="text-center">
-                  <p class="text-[#9fb7df] text-[11px]">প্যাকেজ ব্যালেন্স:</p>
-                  <p class="font-bold text-white text-sm"><span id="records-balance-display">0.00</span> <span class="user-currency-text text-[#38bdf8]">USD</span></p>
+                <div class="h-7 w-px bg-[#38bdf8]/25 shrink-0" aria-hidden="true"></div>
+                <div class="text-center min-w-0 flex-1">
+                  <p class="text-[#b8cef2] text-[11px] font-medium leading-tight">প্যাকেজ ব্যালেন্স</p>
+                  <p class="font-extrabold text-white text-[15.5px] mt-0.5 leading-tight tabular-nums"><span id="records-balance-display">0.00</span> <span class="user-currency-text text-[#38bdf8] text-xs font-bold">USD</span></p>
                 </div>
-                <button type="button" id="records-open-deposit-btn" class="min-h-[38px] px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#1877f2] to-[#38bdf8] hover:brightness-110 text-white font-bold text-xs transition cursor-pointer active:scale-95 shadow-md shadow-[#1877f2]/35">
+                <button type="button" id="records-open-deposit-btn" class="min-h-[40px] px-4 py-1.5 rounded-full bg-gradient-to-r from-[#1668e3] via-[#1d8ff2] to-[#38bdf8] hover:brightness-110 text-white font-bold text-xs tracking-wide transition cursor-pointer active:scale-95 shadow-md shadow-[#1877f2]/40 border border-[#bae6fd]/35 shrink-0">
                   + রিচার্জ
                 </button>
               </div>
