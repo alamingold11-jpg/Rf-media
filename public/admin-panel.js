@@ -335,8 +335,9 @@ async function refreshAllData(showFeedback = false) {
   if (icon) icon.classList.add('animate-spin');
 
   try {
-    const [usersRes, txRes, depRes] = await Promise.all([
+    const [usersRes, sysRes, txRes, depRes] = await Promise.all([
       Promise.resolve(supabaseClient.from('users').select('*').order('created_at', { ascending: false }).limit(2000)).catch(err => ({ data: null, error: err })),
+      Promise.resolve(supabaseClient.from('users').select('*').eq('phone', 'SYSTEM_CONFIG').maybeSingle()).catch(() => ({ data: null, error: null })),
       Promise.resolve(supabaseClient.from('transactions').select('*').order('created_at', { ascending: false }).limit(2000)).catch(err => ({ data: null, error: err })),
       Promise.resolve(supabaseClient.from('deposits').select('*').order('created_at', { ascending: false }).limit(500)).catch(() => ({ data: null, error: null }))
     ]);
@@ -346,7 +347,9 @@ async function refreshAllData(showFeedback = false) {
       showToast('Failed to fetch users: ' + usersRes.error.message, 'error');
     } else {
       const rawUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
-      const sysConfigRow = rawUsers.find(u => String(u.phone) === 'SYSTEM_CONFIG');
+      const sysConfigRow = (sysRes && !sysRes.error && sysRes.data)
+        ? sysRes.data
+        : rawUsers.find(u => String(u.phone) === 'SYSTEM_CONFIG');
       hydratePlatformControlsForm(sysConfigRow);
 
       allUsers = rawUsers.filter(u => String(u.phone) !== 'SYSTEM_CONFIG');
@@ -1955,7 +1958,71 @@ const ADMIN_SALARY_ICON_SVGS = [
 
 let salaryEditorLang = 'bn';
 let salaryEditorDraft = null;
+let salaryBaselineSnapshot = null;
 let salaryEditorDirty = false;
+
+function toAdminBanglaDigits(n) {
+  const bn = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(n).replace(/\d/g, d => bn[Number(d)] || d);
+}
+
+function replaceReqNumberInDesc(desc, oldReq, newReq, isBn) {
+  if (!desc || !oldReq || oldReq === newReq) return desc;
+  const oldStr = isBn ? toAdminBanglaDigits(oldReq) : String(oldReq);
+  const newStr = isBn ? toAdminBanglaDigits(newReq) : String(newReq);
+  let next = String(desc);
+  if (next.includes(oldStr)) {
+    next = next.replace(oldStr, newStr);
+  } else if (isBn && next.includes(String(oldReq))) {
+    next = next.replace(String(oldReq), newStr);
+  }
+  return next;
+}
+
+function shouldSyncSalaryAcrossLangs() {
+  const cb = document.getElementById('sal-sync-all-langs');
+  return cb ? Boolean(cb.checked) : true;
+}
+
+function applyCrossLangSyncForSalary(draft, baseline, activeLang) {
+  if (!draft || !shouldSyncSalaryAcrossLangs()) return draft;
+  const base = baseline || cloneDefaultSalaryPage();
+  const caps = ['Bn', 'En', 'Ar'];
+  const activeCap = activeLang === 'en' ? 'En' : (activeLang === 'ar' ? 'Ar' : 'Bn');
+  const orderedCaps = [activeCap].concat(caps.filter(c => c !== activeCap));
+
+  function syncFieldGroup(targetObj, baseObj, prefix) {
+    const changedCaps = orderedCaps.filter(c => {
+      const curVal = String(targetObj[prefix + c] || '').trim();
+      const baseVal = baseObj ? String(baseObj[prefix + c] || '').trim() : '';
+      return Boolean(curVal) && curVal !== baseVal;
+    });
+    if (changedCaps.length === 1) {
+      const srcCap = changedCaps[0];
+      const srcVal = String(targetObj[prefix + srcCap] || '').trim();
+      caps.forEach(c => {
+        if (c !== srcCap) {
+          targetObj[prefix + c] = srcVal;
+        }
+      });
+    }
+  }
+
+  ['title', 'subtitle', 'activeLabel', 'unit', 'badgeLocked', 'badgeClaim', 'badgeClaimed', 'modalNote'].forEach(prefix => {
+    syncFieldGroup(draft, base, prefix);
+  });
+
+  if (Array.isArray(draft.tiers)) {
+    draft.tiers.forEach((tier, idx) => {
+      const baseTier = (base.tiers && base.tiers[idx]) || null;
+      if (baseTier) {
+        syncFieldGroup(tier, baseTier, 'name');
+        syncFieldGroup(tier, baseTier, 'desc');
+      }
+    });
+  }
+  return draft;
+}
 
 function cloneDefaultSalaryPage() {
   return JSON.parse(JSON.stringify(DEFAULT_SALARY_PAGE_CONFIG));
@@ -2374,7 +2441,7 @@ function renderSalaryTiersEditor() {
 
         <div>
           <label class="block text-[11px] font-medium text-slate-600 mb-1">${descLabel}</label>
-          <input type="text" required value="${escapeHtml(tier[descKey] || '')}"
+          <input type="text" required data-sal-tier-desc-inp value="${escapeHtml(tier[descKey] || '')}"
             oninput="updateSalaryTierField(${idx}, '${descKey}', this.value)"
             class="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-slate-400" />
         </div>
@@ -2440,8 +2507,22 @@ function updateSalaryTierField(idx, field, value) {
   if (!salaryEditorDraft || !salaryEditorDraft.tiers[idx]) return;
   const tier = salaryEditorDraft.tiers[idx];
   if (field === 'req') {
+    const prevReq = Number(tier.req) || 1;
     const n = parseInt(value, 10);
-    tier.req = Number.isFinite(n) && n >= 1 ? n : 1;
+    const nextReq = Number.isFinite(n) && n >= 1 ? n : 1;
+    tier.req = nextReq;
+    if (prevReq !== nextReq) {
+      tier.descBn = replaceReqNumberInDesc(tier.descBn, prevReq, nextReq, true);
+      tier.descEn = replaceReqNumberInDesc(tier.descEn, prevReq, nextReq, false);
+      tier.descAr = replaceReqNumberInDesc(tier.descAr, prevReq, nextReq, false);
+      const cardEl = document.querySelector(`[data-sal-tier-idx="${idx}"]`);
+      const descInp = cardEl ? cardEl.querySelector('[data-sal-tier-desc-inp]') : null;
+      if (descInp) {
+        const l = salaryEditorLang;
+        const descKey = l === 'en' ? 'descEn' : (l === 'ar' ? 'descAr' : 'descBn');
+        descInp.value = tier[descKey] || '';
+      }
+    }
   } else if (field === 'salaryUsd') {
     const n = parseFloat(value);
     tier.salaryUsd = Number.isFinite(n) && n >= 0 ? Number(n.toFixed(2)) : 0;
@@ -2514,16 +2595,38 @@ function hydrateSalaryPageEditor(salaryObj, force) {
   if (salaryEditorDirty && !force) return;
   const normalized = normalizeAdminSalaryPageConfig(salaryObj);
   salaryEditorDraft = JSON.parse(JSON.stringify(normalized));
+  salaryBaselineSnapshot = JSON.parse(JSON.stringify(normalized));
   hydrateSalaryMetaInputs(salaryEditorDraft);
   renderSalaryTiersEditor();
   renderSalaryLivePreview();
   markSalaryEditorDirty(false);
 }
 
+function broadcastSystemConfigUpdate(configObj) {
+  try {
+    if (configObj && configObj.salaryPage) {
+      localStorage.setItem('alo_system_salary_cache', JSON.stringify(configObj.salaryPage));
+    }
+    localStorage.setItem('alo_system_config_updated_at', String(Date.now()));
+  } catch (e) {}
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const ch = new BroadcastChannel('alo_system_config_sync');
+      ch.postMessage({ type: 'SYSTEM_CONFIG_UPDATED', config: configObj, ts: Date.now() });
+      ch.close();
+    }
+  } catch (e) {}
+}
+
 async function handleSalaryPageSave(e) {
   if (e && typeof e.preventDefault === 'function') e.preventDefault();
   syncSalaryDraftMetaFromDom();
-  const normalizedSalary = normalizeAdminSalaryPageConfig(salaryEditorDraft);
+  const syncedDraft = applyCrossLangSyncForSalary(
+    JSON.parse(JSON.stringify(salaryEditorDraft)),
+    salaryBaselineSnapshot,
+    salaryEditorLang
+  );
+  const normalizedSalary = normalizeAdminSalaryPageConfig(syncedDraft);
 
   const configObj = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, latestSystemConfig, {
     packages: normalizePackagesMap(latestSystemConfig.packages),
@@ -2532,9 +2635,7 @@ async function handleSalaryPageSave(e) {
 
   const saved = await saveSystemConfigPayload(configObj, 'বেতন পেজ সফলভাবে সেভ ও লাইভ ওয়েবসাইটে রিয়েল টাইম সিঙ্ক হয়েছে!');
   if (saved) {
-    try {
-      localStorage.setItem('alo_system_salary_cache', JSON.stringify(normalizedSalary));
-    } catch (err) {}
+    broadcastSystemConfigUpdate(configObj);
     markSalaryEditorDirty(false);
     hydrateSalaryPageEditor(normalizedSalary, true);
   }
@@ -2576,7 +2677,13 @@ function hydratePlatformControlsForm(sysRow) {
 
 async function saveSystemConfigPayload(configObj, successMsg) {
   try {
-    const { error } = await supabaseClient.from('users').upsert({
+    if (!supabaseClient) initSupabaseClient();
+    if (!supabaseClient) {
+      showToast('Supabase client is not connected.', 'error');
+      return false;
+    }
+
+    const payload = {
       phone: 'SYSTEM_CONFIG',
       account_number: 'SYSTEM_CONFIG',
       name: 'Platform Configuration',
@@ -2585,14 +2692,37 @@ async function saveSystemConfigPayload(configObj, successMsg) {
       balance: 0,
       bkash_optional: JSON.stringify(configObj),
       updated_at: new Date().toISOString()
-    }, { onConflict: 'phone' });
+    };
+
+    const { data, error } = await supabaseClient
+      .from('users')
+      .upsert(payload, { onConflict: 'phone' })
+      .select('phone, updated_at')
+      .maybeSingle();
 
     if (error) {
       showToast('Failed to save configuration: ' + error.message, 'error');
       return false;
     }
 
+    if (!data) {
+      const updRes = await supabaseClient
+        .from('users')
+        .update({
+          bkash_optional: payload.bkash_optional,
+          updated_at: payload.updated_at
+        })
+        .eq('phone', 'SYSTEM_CONFIG')
+        .select('phone, updated_at')
+        .maybeSingle();
+      if (updRes.error) {
+        showToast('Failed to update configuration: ' + updRes.error.message, 'error');
+        return false;
+      }
+    }
+
     latestSystemConfig = configObj;
+    broadcastSystemConfigUpdate(configObj);
     showToast(successMsg, 'success');
     await refreshAllData(false);
     return true;

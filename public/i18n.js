@@ -1,15 +1,31 @@
 // PW New Media Multi-Language (i18n) Engine
-// Supports English (en - Default), Arabic (ar), Bengali (bn)
+// Supports 12 Languages: English (default), Tagalo, Korea, Vietnam, Arab, Turkey, India, Indonesia, Malaysia, Portugal, Spanish, Russia
 
 (function() {
   'use strict';
 
-  const VALID_LANGS = ['en', 'ar', 'bn'];
+  const LANGUAGE_OPTIONS = [
+    { code: 'en', label: 'English' },
+    { code: 'tl', label: 'Tagalo' },
+    { code: 'ko', label: 'Korea' },
+    { code: 'vi', label: 'Vietnam' },
+    { code: 'ar', label: 'Arab' },
+    { code: 'tr', label: 'Turkey' },
+    { code: 'hi', label: 'India' },
+    { code: 'id', label: 'Indonesia' },
+    { code: 'ms', label: 'Malaysia' },
+    { code: 'pt', label: 'Portugal' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'ru', label: 'Russia' }
+  ];
+
+  const VALID_LANGS = LANGUAGE_OPTIONS.map(function(o) { return o.code; });
+  const LANGUAGE_LABEL_MAP = {};
+  LANGUAGE_OPTIONS.forEach(function(o) { LANGUAGE_LABEL_MAP[o.code] = o.label; });
 
   function normalizeLangCode(lang) {
-    const clean = String(lang || '').trim().toLowerCase();
-    if (clean === 'en' || clean === 'ar' || clean === 'bn') return clean;
-    if (clean === 'hi') return 'en';
+    const clean = String(lang || '').trim().toLowerCase().split('-')[0];
+    if (VALID_LANGS.indexOf(clean) !== -1) return clean;
     return 'en';
   }
 
@@ -1123,6 +1139,7 @@
     "টিম ও আয়": { en: "Team & Income", ar: "الفريق والدخل" },
     "সাপোর্ট ও আরও": { en: "Support & More", ar: "الدعم والمزيد" },
     "দৈনিক বিবৃতি": { en: "Daily Statement", ar: "البيان اليومي" },
+    "Legal Info": { en: "Legal Info", bn: "লিগ্যাল ইনফো", ar: "المعلومات القانونية" },
     "অ্যাকাউন্ট পরিবর্তনের রেকর্ড এখানে উপলভ্য নয়।": { en: "Account change records are not available here.", ar: "سجل تغييرات الحساب غير متاح هنا." },
     "অ্যাকাউন্ট রেকর্ড": { en: "Account Record", ar: "سجل الحساب" },
     "বন্ধুকে আমন্ত্রণ জানান": { en: "Invite Friends", ar: "ادعُ صديقاً" },
@@ -1621,7 +1638,31 @@
     "০ BDT (ফ্রি)": { en: "0 BDT (Free)", ar: "0 BDT (مجاني)" },
     "সোশ্যাল মিডিয়া প্যাকেজ (LV1)": { en: "Social Media Package (LV1)", ar: "باقة التواصل الاجتماعي (LV1)" },
     "দৈনিক ৬টি কাজ · প্রতি কাজ ৩০ ৳": { en: "6 Daily Tasks · ৳30 Per Task", ar: "6 مهام يومياً · ৳30 لكل مهمة" },
-    "৬টি কাজ (প্রতি কাজ ৳ ৩০)": { en: "6 Tasks (৳30 Each)", ar: "6 مهام (৳30 لكل مهمة)" }
+    "৬টি কাজ (প্রতি কাজ ৳ ৩০)": { en: "6 Tasks (৳30 Each)", ar: "6 مهام (৳30 لكل مهمة)" },
+    "আপনার বর্তমান স্তর": { en: "Your Current Level", ar: "مستواك الحالي" },
+    "অফিশিয়াল সার্টিফিকেট": { en: "Official Certificates", ar: "الشهادات الرسمية" },
+    "• আপনার জাতীয় পরিচয়পত্র বা ওয়ালেটে থাকা আসল নাম দিন। এই নাম আপনার USDT অ্যাকাউন্ট ও প্রোফাইলে এককালীন স্বয়ংক্রিয়ভাবে ব্যবহৃত হবে।": { en: "• Enter your real name from your National ID or wallet. This name will be saved permanently for your USDT account and profile.", ar: "• أدخل اسمك الحقيقي كما يظهر في هويتك أو محفظتك. سيتم حفظه تلقائياً لحساب USDT وملفك الشخصي." },
+    "রিচার্জের পরিমাণ নির্বাচন করুন (USD):": { en: "Select Recharge Amount (USD):", ar: "اختر مبلغ الشحن (USD):" },
+    "মেয়াদ": { en: "Valid Time", ar: "الصلاحية" },
+    "৫ দিন": { en: "5 Days", ar: "5 أيام" },
+    "৩০ দিন": { en: "30 Days", ar: "30 يوماً" },
+    "$0.00 ফ্রি · বর্তমান স্তর": { en: "$0.00 Free · Current Level", ar: "$0.00 مجاني · المستوى الحالي" },
+    "আনলক করুন": { en: "Unlock Now", ar: "فتح الآن" },
+    "ফ্রি": { en: "Free", ar: "مجاني" },
+    "দৈনিক ৬টি কাজ · প্রতি কাজ $0.24 USD": { en: "6 Daily Tasks · $0.24 USD Per Task", ar: "6 مهام يومياً · $0.24 USD لكل مهمة" },
+    "৬টি কাজ (প্রতি কাজ $0.24)": { en: "6 Tasks ($0.24 Per Task)", ar: "6 مهام ($0.24 لكل مهمة)" },
+    "🗑️ রিমুভ": { en: "🗑️ Remove", ar: "🗑️ حذف" },
+    "রিমুভ": { en: "Remove", ar: "حذف" },
+    "বন্ধ করতে টানুন": { en: "Drag to close", ar: "اسحب للإغلاق" },
+    "আপনার ইনভাইট লিংক দিয়ে বন্ধুদের জয়েন করান। শুধু ফ্রি রেফার করলে গণ্য হবে না — A-লেভেলের সদস্যরা প্যাকেজ (LV1+) ক্রয় করলেই সক্রিয় হবে এবং বেতন অগ্রগতি বাড়বে।": { en: "Invite friends using your link. Free signups do not count — A-Level members become active once they purchase a VIP package (LV1+).", ar: "ادعُ أصدقاءك عبر رابط الدعوة. التسجيل المجاني لا يُحتسب — يصبح أعضاء المستوى A نشطين بعد شراء باقة مدفوعة (LV1+)." },
+    "এসএমএস যাচাইকরণ কোড লিখুন": { en: "Enter SMS verification code", ar: "أدخل رمز التحقق SMS" },
+    "প্রকৃত নাম লিখুন": { en: "Enter real name", ar: "أدخل الاسم الحقيقي" },
+    "বিকাশ নম্বর লিখুন": { en: "Enter bKash number", ar: "أدخل رقم bKash" },
+    "নগদ নম্বর লিখুন": { en: "Enter Nagad number", ar: "أدخل رقم Nagad" },
+    "আপনার প্রকৃত নাম লিখুন": { en: "Enter your full legal name", ar: "أدخل اسمك القانوني الكامل" },
+    "পরিমাণ লিখুন ($ USD)": { en: "Enter amount ($ USD)", ar: "أدخل المبلغ ($ USD)" },
+    "পরিমাণ লিখুন (USD)": { en: "Enter amount (USD)", ar: "أدخل المبلغ (USD)" },
+    "১২৬ থেকে ৫০,০০০": { en: "126 to 50,000", ar: "من 126 إلى 50,000" }
   };
 
   // Placeholders dictionary
@@ -1667,9 +1708,14 @@
       ar: 'أدخل مبلغ السحب'
     },
     'custom-deposit-amount': {
-      bn: 'টাকার পরিমাণ লিখুন',
-      en: 'Enter deposit amount',
-      ar: 'أدخل مبلغ الإيداع'
+      bn: 'পরিমাণ লিখুন (USD)',
+      en: 'Enter amount (USD)',
+      ar: 'أدخل المبلغ (USD)'
+    },
+    'inline-custom-deposit-amount': {
+      bn: 'পরিমাণ লিখুন ($ USD)',
+      en: 'Enter amount ($ USD)',
+      ar: 'أدخل المبلغ ($ USD)'
     },
     'gateway-custom-amount': {
       bn: '১২৬ থেকে ৫০,০০০',
@@ -1793,30 +1839,155 @@
     currentLang = 'en';
   }
 
+  const multiLangUiMap = {
+    'Language': { tl: 'Wika', ko: '언어', vi: 'Ngôn ngữ', tr: 'Dil', hi: 'भाषा', id: 'Bahasa', ms: 'Bahasa', pt: 'Idioma', es: 'Idioma', ru: 'Язык' },
+    'Change Language': { tl: 'Palitan ang Wika', ko: '언어 변경', vi: 'Đổi ngôn ngữ', tr: 'Dili Değiştir', hi: 'भाषा बदलें', id: 'Ubah Bahasa', ms: 'Tukar Bahasa', pt: 'Alterar Idioma', es: 'Cambiar Idioma', ru: 'Сменить язык' },
+    'Home': { tl: 'Tahanan', ko: '홈', vi: 'Trang chủ', tr: 'Ana Sayfa', hi: 'होम', id: 'Beranda', ms: 'Utama', pt: 'Início', es: 'Inicio', ru: 'Главная' },
+    'Hall': { tl: 'Bulwagan', ko: '홀', vi: 'Sảnh', tr: 'Salon', hi: 'हॉल', id: 'Aula', ms: 'Dewan', pt: 'Salão', es: 'Sala', ru: 'Зал' },
+    'Tasks': { tl: 'Mga Gawain', ko: '작업', vi: 'Nhiệm vụ', tr: 'Görevler', hi: 'कार्य', id: 'Tugas', ms: 'Tugasan', pt: 'Tarefas', es: 'Tareas', ru: 'Задачи' },
+    'Mine': { tl: 'Akin', ko: '마이', vi: 'Của tôi', tr: 'Benim', hi: 'मेरा', id: 'Milik Saya', ms: 'Saya', pt: 'Meu', es: 'Mío', ru: 'Профиль' },
+    'Login': { tl: 'Mag-login', ko: '로그인', vi: 'Đăng nhập', tr: 'Giriş Yap', hi: 'लॉगिन', id: 'Masuk', ms: 'Log Masuk', pt: 'Entrar', es: 'Iniciar sesión', ru: 'Войти' },
+    'Sign In': { tl: 'Mag-sign In', ko: '로그인', vi: 'Đăng nhập', tr: 'Giriş Yap', hi: 'साइन इन', id: 'Masuk', ms: 'Log Masuk', pt: 'Entrar', es: 'Iniciar sesión', ru: 'Войти' },
+    'Register': { tl: 'Magrehistro', ko: '회원가입', vi: 'Đăng ký', tr: 'Kayıt Ol', hi: 'पंजीकरण', id: 'Daftar', ms: 'Daftar', pt: 'Registrar', es: 'Registrarse', ru: 'Регистрация' },
+    'Create Account': { tl: 'Gumawa ng Account', ko: '계정 만들기', vi: 'Tạo tài khoản', tr: 'Hesap Oluştur', hi: 'खाता बनाएं', id: 'Buat Akun', ms: 'Cipta Akaun', pt: 'Criar Conta', es: 'Crear Cuenta', ru: 'Создать аккаунт' },
+    'Sign Out': { tl: 'Mag-sign Out', ko: '로그아웃', vi: 'Đăng xuất', tr: 'Çıkış Yap', hi: 'साइन आउट', id: 'Keluar', ms: 'Log Keluar', pt: 'Sair', es: 'Cerrar sesión', ru: 'Выйти' },
+    'Logout': { tl: 'Mag-logout', ko: '로그아웃', vi: 'Đăng xuất', tr: 'Çıkış Yap', hi: 'लॉगआउट', id: 'Keluar', ms: 'Log Keluar', pt: 'Sair', es: 'Cerrar sesión', ru: 'Выйти' },
+    'Back': { tl: 'Bumalik', ko: '뒤로', vi: 'Quay lại', tr: 'Geri', hi: 'वापस', id: 'Kembali', ms: 'Kembali', pt: 'Voltar', es: 'Atrás', ru: 'Назад' },
+    'Confirm': { tl: 'Kumpirmahin', ko: '확인', vi: 'Xác nhận', tr: 'Onayla', hi: 'पुष्टि करें', id: 'Konfirmasi', ms: 'Sahkan', pt: 'Confirmar', es: 'Confirmar', ru: 'Подтвердить' },
+    'Cancel': { tl: 'Kanselahin', ko: '취소', vi: 'Hủy', tr: 'İptal', hi: 'रद्द करें', id: 'Batal', ms: 'Batal', pt: 'Cancelar', es: 'Cancelar', ru: 'Отмена' },
+    'Save': { tl: 'I-save', ko: '저장', vi: 'Lưu', tr: 'Kaydet', hi: 'सहेजें', id: 'Simpan', ms: 'Simpan', pt: 'Salvar', es: 'Guardar', ru: 'Сохранить' },
+    'Submit': { tl: 'Isumite', ko: '제출', vi: 'Gửi', tr: 'Gönder', hi: 'सबमिट करें', id: 'Kirim', ms: 'Hantar', pt: 'Enviar', es: 'Enviar', ru: 'Отправить' },
+    'Copy': { tl: 'Kopyahin', ko: '복사', vi: 'Sao chép', tr: 'Kopyala', hi: 'कॉपी करें', id: 'Salin', ms: 'Salin', pt: 'Copiar', es: 'Copiar', ru: 'Копировать' },
+    'Close': { tl: 'Isara', ko: '닫기', vi: 'Đóng', tr: 'Kapat', hi: 'बंद करें', id: 'Tutup', ms: 'Tutup', pt: 'Fechar', es: 'Cerrar', ru: 'Закрыть' },
+    'OK': { tl: 'OK', ko: '확인', vi: 'Đồng ý', tr: 'Tamam', hi: 'ठीक है', id: 'OK', ms: 'OK', pt: 'OK', es: 'Aceptar', ru: 'ОК' },
+    'All': { tl: 'Lahat', ko: '전체', vi: 'Tất cả', tr: 'Tümü', hi: 'सभी', id: 'Semua', ms: 'Semua', pt: 'Todos', es: 'Todo', ru: 'Все' },
+    'Active': { tl: 'Aktibo', ko: '활성', vi: 'Đang hoạt động', tr: 'Aktif', hi: 'सक्रिय', id: 'Aktif', ms: 'Aktif', pt: 'Ativo', es: 'Activo', ru: 'Активный' },
+    'Pending': { tl: 'Nakabinbin', ko: '대기 중', vi: 'Đang chờ', tr: 'Beklemede', hi: 'लंबित', id: 'Tertunda', ms: 'Menunggu', pt: 'Pendente', es: 'Pendiente', ru: 'В ожидании' },
+    'Completed': { tl: 'Nakumpleto', ko: '완료됨', vi: 'Hoàn thành', tr: 'Tamamlandı', hi: 'पूर्ण', id: 'Selesai', ms: 'Selesai', pt: 'Concluído', es: 'Completado', ru: 'Завершено' },
+    'Failed': { tl: 'Nabigo', ko: '실패', vi: 'Thất bại', tr: 'Başarısız', hi: 'विफल', id: 'Gagal', ms: 'Gagal', pt: 'Falhou', es: 'Fallido', ru: 'Ошибка' },
+    'In Progress': { tl: 'Isinasagawa', ko: '진행 중', vi: 'Đang thực hiện', tr: 'Devam Ediyor', hi: 'प्रगति में', id: 'Sedang Berjalan', ms: 'Sedang Berjalan', pt: 'Em andamento', es: 'En progreso', ru: 'В процессе' },
+    'Under Review': { tl: 'Sinusuri', ko: '검토 중', vi: 'Đang duyệt', tr: 'İnceleniyor', hi: 'समीक्षाधीन', id: 'Sedang Ditinjau', ms: 'Dalam Semakan', pt: 'Em análise', es: 'En revisión', ru: 'На проверке' },
+    'Personal Info': { tl: 'Personal na Impormasyon', ko: '개인 정보', vi: 'Thông tin cá nhân', tr: 'Kişisel Bilgiler', hi: 'व्यक्तिगत जानकारी', id: 'Info Pribadi', ms: 'Maklumat Peribadi', pt: 'Informações Pessoais', es: 'Información Personal', ru: 'Личные данные' },
+    'My Wallet': { tl: 'Aking Wallet', ko: '내 지갑', vi: 'Ví của tôi', tr: 'Cüzdanım', hi: 'मेरा वॉलेट', id: 'Dompet Saya', ms: 'Dompet Saya', pt: 'Minha Carteira', es: 'Mi Billetera', ru: 'Мой кошелек' },
+    'Account Record': { tl: 'Tala ng Account', ko: '계정 기록', vi: 'Lịch sử tài khoản', tr: 'Hesap Kaydı', hi: 'खाता रिकॉर्ड', id: 'Catatan Akun', ms: 'Rekod Akaun', pt: 'Registro da Conta', es: 'Registro de Cuenta', ru: 'История счета' },
+    'Team Report': { tl: 'Ulat ng Koponan', ko: '팀 보고서', vi: 'Báo cáo đội nhóm', tr: 'Ekip Raporu', hi: 'टीम रिपोर्ट', id: 'Laporan Tim', ms: 'Laporan Pasukan', pt: 'Relatório da Equipe', es: 'Informe del Equipo', ru: 'Отчет команды' },
+    'Invite Friends': { tl: 'Mag-imbita ng Kaibigan', ko: '친구 초대', vi: 'Mời bạn bè', tr: 'Arkadaş Davet Et', hi: 'दोस्तों को आमंत्रित करें', id: 'Undang Teman', ms: 'Jemput Rakan', pt: 'Convidar Amigos', es: 'Invitar Amigos', ru: 'Пригласить друзей' },
+    'Employee Benefits': { tl: 'Benepisyo ng Empleyado', ko: '직원 혜택', vi: 'Phúc lợi nhân viên', tr: 'Çalışan Hakları', hi: 'कर्मचारी लाभ', id: 'Tunjangan Karyawan', ms: 'Faedah Pekerja', pt: 'Benefícios', es: 'Beneficios', ru: 'Бонусы сотрудников' },
+    'Legal Info': { tl: 'Legal na Impormasyon', ko: '법적 정보', vi: 'Thông tin pháp lý', tr: 'Yasal Bilgiler', hi: 'कानूनी जानकारी', id: 'Info Hukum', ms: 'Maklumat Undang-undang', pt: 'Info Legal', es: 'Información Legal', ru: 'Правовая информация' },
+    'Lucky Spin': { tl: 'Maswerteng Ikot', ko: '럭키 스핀', vi: 'Vòng quay may mắn', tr: 'Şans Çarkı', hi: 'लकी स्पिन', id: 'Putaran Keberuntungan', ms: 'Putaran Bertuah', pt: 'Roleta da Sorte', es: 'Ruleta de la Suerte', ru: 'Колесо удачи' },
+    'APP Download': { tl: 'I-download ang APP', ko: '앱 다운로드', vi: 'Tải ứng dụng', tr: 'Uygulamayı İndir', hi: 'ऐप डाउनलोड', id: 'Unduh Aplikasi', ms: 'Muat Turun APP', pt: 'Baixar APP', es: 'Descargar APP', ru: 'Скачать приложение' },
+    'Customer Service': { tl: 'Serbisyo sa Customer', ko: '고객 서비스', vi: 'Chăm sóc khách hàng', tr: 'Müşteri Hizmetleri', hi: 'ग्राहक सेवा', id: 'Layanan Pelanggan', ms: 'Khidmat Pelanggan', pt: 'Atendimento', es: 'Servicio al Cliente', ru: 'Служба поддержки' },
+    'Online Support': { tl: 'Online na Suporta', ko: '온라인 지원', vi: 'Hỗ trợ trực tuyến', tr: 'Çevrimiçi Destek', hi: 'ऑनलाइन सहायता', id: 'Dukungan Online', ms: 'Sokongan Dalam Talian', pt: 'Suporte Online', es: 'Soporte en Línea', ru: 'Онлайн-поддержка' },
+    'Account': { tl: 'Account', ko: '계정', vi: 'Tài khoản', tr: 'Hesap', hi: 'खाता', id: 'Akun', ms: 'Akaun', pt: 'Conta', es: 'Cuenta', ru: 'Аккаунт' },
+    'Team & Income': { tl: 'Koponan at Kita', ko: '팀 및 수익', vi: 'Đội nhóm & Thu nhập', tr: 'Ekip ve Gelir', hi: 'टीम और आय', id: 'Tim & Pendapatan', ms: 'Pasukan & Pendapatan', pt: 'Equipe e Renda', es: 'Equipo e Ingresos', ru: 'Команда и доход' },
+    'Support & More': { tl: 'Suporta at Iba Pa', ko: '지원 및 더보기', vi: 'Hỗ trợ & Thêm', tr: 'Destek ve Daha Fazlası', hi: 'सहायता और अधिक', id: 'Dukungan & Lainnya', ms: 'Sokongan & Lagi', pt: 'Suporte e Mais', es: 'Soporte y Más', ru: 'Поддержка и еще' },
+    'Deposit': { tl: 'Magdeposito', ko: '입금', vi: 'Nạp tiền', tr: 'Yatır', hi: 'जमा करें', id: 'Deposit', ms: 'Deposit', pt: 'Depositar', es: 'Depositar', ru: 'Пополнить' },
+    'Recharge': { tl: 'Mag-recharge', ko: '충전', vi: 'Nạp tiền', tr: 'Yükle', hi: 'रिचार्ज', id: 'Isi Ulang', ms: 'Tambah Nilai', pt: 'Recarregar', es: 'Recargar', ru: 'Пополнить' },
+    '+ Recharge': { tl: '+ Mag-recharge', ko: '+ 충전', vi: '+ Nạp tiền', tr: '+ Yükle', hi: '+ रिचार्ज', id: '+ Isi Ulang', ms: '+ Tambah Nilai', pt: '+ Recarregar', es: '+ Recargar', ru: '+ Пополнить' },
+    'Withdraw': { tl: 'Mag-withdraw', ko: '출금', vi: 'Rút tiền', tr: 'Para Çek', hi: 'निकासी', id: 'Tarik Dana', ms: 'Keluarkan', pt: 'Sacar', es: 'Retirar', ru: 'Вывести' },
+    'Balance': { tl: 'Balanse', ko: '잔액', vi: 'Số dư', tr: 'Bakiye', hi: 'बैलेंस', id: 'Saldo', ms: 'Baki', pt: 'Saldo', es: 'Saldo', ru: 'Баланс' },
+    'Total Balance': { tl: 'Kabuuang Balanse', ko: '총 잔액', vi: 'Tổng số dư', tr: 'Toplam Bakiye', hi: 'कुल बैलेंस', id: 'Total Saldo', ms: 'Jumlah Baki', pt: 'Saldo Total', es: 'Saldo Total', ru: 'Общий баланс' },
+    'Package Balance': { tl: 'Balanse ng Package', ko: '패키지 잔액', vi: 'Số dư gói', tr: 'Paket Bakiyesi', hi: 'पैकेज बैलेंस', id: 'Saldo Paket', ms: 'Baki Pakej', pt: 'Saldo do Pacote', es: 'Saldo del Paquete', ru: 'Баланс пакета' },
+    "Today's Earnings": { tl: 'Kita Ngayon', ko: '오늘의 수익', vi: 'Thu nhập hôm nay', tr: 'Bugünkü Kazanç', hi: 'आज की कमाई', id: 'Pendapatan Hari Ini', ms: 'Pendapatan Hari Ini', pt: 'Ganhos de Hoje', es: 'Ganancias de Hoy', ru: 'Доход за сегодня' },
+    'Total Revenue': { tl: 'Kabuuang Kita', ko: '총 수익', vi: 'Tổng thu nhập', tr: 'Toplam Gelir', hi: 'कुल आय', id: 'Total Pendapatan', ms: 'Jumlah Hasil', pt: 'Receita Total', es: 'Ingresos Totales', ru: 'Общий доход' },
+    'Your Current Level': { tl: 'Iyong Kasalukuyang Level', ko: '현재 등급', vi: 'Cấp độ hiện tại', tr: 'Mevcut Seviyeniz', hi: 'आपका वर्तमान स्तर', id: 'Level Anda Saat Ini', ms: 'Tahap Semasa Anda', pt: 'Seu Nível Atual', es: 'Tu Nivel Actual', ru: 'Ваш текущий уровень' },
+    'Daily Tasks': { tl: 'Pang-araw-araw na Gawain', ko: '일일 작업', vi: 'Nhiệm vụ hàng ngày', tr: 'Günlük Görevler', hi: 'दैनिक कार्य', id: 'Tugas Harian', ms: 'Tugasan Harian', pt: 'Tarefas Diárias', es: 'Tareas Diarias', ru: 'Ежедневные задачи' },
+    'Daily Income': { tl: 'Pang-araw-araw na Kita', ko: '일일 수익', vi: 'Thu nhập hàng ngày', tr: 'Günlük Gelir', hi: 'दैनिक आय', id: 'Pendapatan Harian', ms: 'Pendapatan Harian', pt: 'Renda Diária', es: 'Ingreso Diario', ru: 'Ежедневный доход' },
+    'Monthly Income': { tl: 'Buwanang Kita', ko: '월간 수익', vi: 'Thu nhập hàng tháng', tr: 'Aylık Gelir', hi: 'मासिक आय', id: 'Pendapatan Bulanan', ms: 'Pendapatan Bulanan', pt: 'Renda Mensal', es: 'Ingreso Mensual', ru: 'Месячный доход' },
+    'Task Hall': { tl: 'Bulwagan ng Gawain', ko: '작업 홀', vi: 'Sảnh nhiệm vụ', tr: 'Görev Salonu', hi: 'कार्य हॉल', id: 'Aula Tugas', ms: 'Dewan Tugasan', pt: 'Salão de Tarefas', es: 'Sala de Tareas', ru: 'Зал заданий' },
+    'Mission Hall': { tl: 'Bulwagan ng Misyon', ko: '미션 홀', vi: 'Sảnh nhiệm vụ', tr: 'Görev Salonu', hi: 'मिशन हॉल', id: 'Aula Misi', ms: 'Dewan Misi', pt: 'Salão de Missões', es: 'Sala de Misiones', ru: 'Зал миссий' },
+    'Company Profile': { tl: 'Profile ng Kumpanya', ko: '회사 소개', vi: 'Hồ sơ công ty', tr: 'Şirket Profili', hi: 'कंपनी प्रोफ़ाइल', id: 'Profil Perusahaan', ms: 'Profil Syarikat', pt: 'Perfil da Empresa', es: 'Perfil de la Empresa', ru: 'О компании' },
+    'Security Center': { tl: 'Sentro ng Seguridad', ko: '보안 센터', vi: 'Trung tâm bảo mật', tr: 'Güvenlik Merkezi', hi: 'सुरक्षा केंद्र', id: 'Pusat Keamanan', ms: 'Pusat Keselamatan', pt: 'Centro de Segurança', es: 'Centro de Seguridad', ru: 'Центр безопасности' },
+    'Fund Password': { tl: 'Password ng Pondo', ko: '자금 비밀번호', vi: 'Mật khẩu quỹ', tr: 'Fon Şifresi', hi: 'फंड पासवर्ड', id: 'Kata Sandi Dana', ms: 'Kata Laluan Dana', pt: 'Senha de Fundos', es: 'Contraseña de Fondos', ru: 'Платежный пароль' },
+    'Login Password': { tl: 'Password sa Pag-login', ko: '로그인 비밀번호', vi: 'Mật khẩu đăng nhập', tr: 'Giriş Şifresi', hi: 'लॉगिन पासवर्ड', id: 'Kata Sandi Masuk', ms: 'Kata Laluan Log Masuk', pt: 'Senha de Login', es: 'Contraseña de Acceso', ru: 'Пароль входа' },
+    'Real Name': { tl: 'Tunay na Pangalan', ko: '실명', vi: 'Họ và tên thật', tr: 'Gerçek Ad', hi: 'असली नाम', id: 'Nama Asli', ms: 'Nama Sebenar', pt: 'Nome Real', es: 'Nombre Real', ru: 'Настоящее имя' },
+    'Account Number:': { tl: 'Numero ng Account:', ko: '계정 번호:', vi: 'Số tài khoản:', tr: 'Hesap Numarası:', hi: 'खाता संख्या:', id: 'Nomor Akun:', ms: 'Nombor Akaun:', pt: 'Número da Conta:', es: 'Número de Cuenta:', ru: 'Номер счета:' },
+    'Invite Code:': { tl: 'Code ng Imbitasyon:', ko: '초대 코드:', vi: 'Mã mời:', tr: 'Davet Kodu:', hi: 'आमंत्रण कोड:', id: 'Kode Undangan:', ms: 'Kod Jemputan:', pt: 'Código de Convite:', es: 'Código de Invitación:', ru: 'Код приглашения:' },
+    'Copy Invite Code': { tl: 'Kopyahin ang Code', ko: '초대 코드 복사', vi: 'Sao chép mã mời', tr: 'Davet Kodunu Kopyala', hi: 'कोड कॉपी करें', id: 'Salin Kode Undangan', ms: 'Salin Kod Jemputan', pt: 'Copiar Código', es: 'Copiar Código', ru: 'Копировать код' },
+    'Copy Invite Link': { tl: 'Kopyahin ang Link', ko: '초대 링크 복사', vi: 'Sao chép liên kết', tr: 'Davet Linkini Kopyala', hi: 'लिंक कॉपी करें', id: 'Salin Tautan Undangan', ms: 'Salin Pautan Jemputan', pt: 'Copiar Link', es: 'Copiar Enlace', ru: 'Копировать ссылку' },
+    'Total Commission': { tl: 'Kabuuang Komisyon', ko: '총 커미션', vi: 'Tổng hoa hồng', tr: 'Toplam Komisyon', hi: 'कुल कमीशन', id: 'Total Komisi', ms: 'Jumlah Komisen', pt: 'Comissão Total', es: 'Comisión Total', ru: 'Общая комиссия' },
+    'Team Members': { tl: 'Mga Miyembro ng Koponan', ko: '팀 멤버', vi: 'Thành viên đội', tr: 'Ekip Üyeleri', hi: 'टीम के सदस्य', id: 'Anggota Tim', ms: 'Ahli Pasukan', pt: 'Membros da Equipe', es: 'Miembros del Equipo', ru: 'Участники команды' },
+    'New Today': { tl: 'Bago Ngayon', ko: '오늘 신규', vi: 'Mới hôm nay', tr: 'Bugün Yeni', hi: 'आज नए', id: 'Baru Hari Ini', ms: 'Baru Hari Ini', pt: 'Novos Hoje', es: 'Nuevos Hoy', ru: 'Новые сегодня' },
+    'Welcome Back': { tl: 'Maligayang Pagbabalik', ko: '다시 오신 것을 환영합니다', vi: 'Chào mừng trở lại', tr: 'Tekrar Hoş Geldiniz', hi: 'वापसी पर स्वागत है', id: 'Selamat Datang Kembali', ms: 'Selamat Kembali', pt: 'Bem-vindo de Volta', es: 'Bienvenido de Nuevo', ru: 'С возвращением' },
+    'Phone Number': { tl: 'Numero ng Telepono', ko: '전화번호', vi: 'Số điện thoại', tr: 'Telefon Numarası', hi: 'फ़ोन नंबर', id: 'Nomor Telepon', ms: 'Nombor Telefon', pt: 'Número de Telefone', es: 'Número de Teléfono', ru: 'Номер телефона' },
+    'Password': { tl: 'Password', ko: '비밀번호', vi: 'Mật khẩu', tr: 'Şifre', hi: 'पासवर्ड', id: 'Kata Sandi', ms: 'Kata Laluan', pt: 'Senha', es: 'Contraseña', ru: 'Пароль' },
+    'Receive': { tl: 'Tanggapin', ko: '받기', vi: 'Nhận', tr: 'Al', hi: 'प्राप्त करें', id: 'Terima', ms: 'Terima', pt: 'Receber', es: 'Recibir', ru: 'Принять' },
+    'Buy Now': { tl: 'Bumili Ngayon', ko: '지금 구매', vi: 'Mua ngay', tr: 'Şimdi Satın Al', hi: 'अभी खरीदें', id: 'Beli Sekarang', ms: 'Beli Sekarang', pt: 'Comprar Agora', es: 'Comprar Ahora', ru: 'Купить сейчас' },
+    'Upgrade Now': { tl: 'Mag-upgrade Ngayon', ko: '지금 업그레이드', vi: 'Nâng cấp ngay', tr: 'Şimdi Yükselt', hi: 'अभी अपग्रेड करें', id: 'Upgrade Sekarang', ms: 'Naik Taraf Sekarang', pt: 'Atualizar Agora', es: 'Mejorar Ahora', ru: 'Обновить сейчас' }
+  };
+
+  function getLanguageDisplayLabel(code) {
+    const normalized = normalizeLangCode(code);
+    return LANGUAGE_LABEL_MAP[normalized] || 'English';
+  }
+
+  function renderLanguagePickerList() {
+    const listEl = document.getElementById('language-picker-list');
+    if (!listEl) return;
+    const activeCode = normalizeLangCode(currentLang);
+    listEl.innerHTML = LANGUAGE_OPTIONS.map(function(opt) {
+      const isSelected = opt.code === activeCode;
+      return (
+        '<button type="button" data-select-lang="' + opt.code + '" class="lang-option-card w-full flex items-center justify-between px-5 py-4 rounded-xl text-left cursor-pointer active:scale-[0.985]' + (isSelected ? ' is-selected' : '') + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '">' +
+          '<span class="text-[16px] font-medium tracking-[0.01em]">' + opt.label + '</span>' +
+          '<span class="lang-radio-dot" aria-hidden="true">' +
+            (isSelected
+              ? '<svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+              : '') +
+          '</span>' +
+        '</button>'
+      );
+    }).join('');
+  }
+
+  function openLanguagePicker() {
+    const modal = document.getElementById('language-picker-modal');
+    if (!modal) return;
+    renderLanguagePickerList();
+    modal.hidden = false;
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+    if (document.body) {
+      document.body.dataset.prevOverflowLang = document.body.style.overflow || '';
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeLanguagePicker() {
+    const modal = document.getElementById('language-picker-modal');
+    if (!modal) return;
+    modal.hidden = true;
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    if (document.body) {
+      document.body.style.overflow = document.body.dataset.prevOverflowLang || '';
+    }
+  }
+
   function syncCountryLanguageOptions() {
     currentLang = normalizeLangCode(currentLang);
+    const activeLabel = getLanguageDisplayLabel(currentLang);
     const selectors = document.querySelectorAll('#landing-language-switch, #language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher');
-    const targetTag = 'EN_AR_BN';
+    const targetTag = 'LANG_12_NO_BN';
+    const optionsHtml = LANGUAGE_OPTIONS.map(function(opt) {
+      return '<option value="' + opt.code + '">' + opt.label + '</option>';
+    }).join('');
     selectors.forEach(function(sel) {
       if (!sel) return;
       if (sel.dataset.countryTag !== targetTag) {
         sel.dataset.countryTag = targetTag;
-        if (sel.id === 'landing-language-switch') {
-          sel.innerHTML =
-            '<option value="en">English</option>' +
-            '<option value="bn">বাংলা</option>' +
-            '<option value="ar">العربية</option>';
-        } else {
-          sel.innerHTML =
-            '<option value="en" class="bg-[#050e21] text-white">English</option>' +
-            '<option value="ar" class="bg-[#050e21] text-white">العربية</option>' +
-            '<option value="bn" class="bg-[#050e21] text-white">বাংলা</option>';
-        }
+        sel.innerHTML = optionsHtml;
       }
       if (sel.value !== currentLang) {
         sel.value = currentLang;
       }
     });
+    document.querySelectorAll('[data-current-lang-label]').forEach(function(lbl) {
+      if (lbl && lbl.textContent !== activeLabel) {
+        lbl.textContent = activeLabel;
+      }
+    });
+    renderLanguagePickerList();
   }
 
   function getTranslation(key, lang) {
@@ -1824,81 +1995,175 @@
     if (translations[l] && translations[l][key]) {
       return translations[l][key];
     }
-    return (translations.en && translations.en[key]) || (translations.bn && translations.bn[key]) || key;
+    const enFallback = (translations.en && translations.en[key]) || key;
+    if (l !== 'en' && multiLangUiMap[enFallback] && multiLangUiMap[enFallback][l]) {
+      return multiLangUiMap[enFallback][l];
+    }
+    return enFallback;
   }
 
   // Lossless Text Node cache so switching en <-> ar <-> bn preserves original source cleanly
   const originalTextMap = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
   const originalAttrMap = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  const originalPlaceholderMap = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
 
-  // Build reverse index once for fast lookup from en/ar/bn variants to canonical phraseDictionary key
+  // Build O(1) exact lookup map + language-specific substring indexes ONCE at boot
   const sortedPhraseKeys = Object.keys(phraseDictionary).sort(function(a, b) {
     return b.length - a.length;
   });
 
-  function resolvePhraseEntry(rawText) {
-    if (phraseDictionary[rawText]) {
-      return { key: rawText, entry: phraseDictionary[rawText] };
-    }
-    for (let i = 0; i < sortedPhraseKeys.length; i++) {
-      const k = sortedPhraseKeys[i];
-      const e = phraseDictionary[k];
-      if ((e.en && e.en === rawText) || (e.ar && e.ar === rawText) || (e.bn && e.bn === rawText)) {
-        return { key: k, entry: e };
+  const exactLookupMap = new Map();
+  const bnSubstringPairs = [];
+  const arSubstringPairs = [];
+  const enSubstringPairs = [];
+  const BN_CHAR_RE = /[\u0980-\u09FF]/;
+  const AR_CHAR_RE = /[\u0600-\u06FF]/;
+  const EN_CHAR_RE = /[A-Za-z]/;
+
+  for (let i = 0; i < sortedPhraseKeys.length; i++) {
+    const k = sortedPhraseKeys[i];
+    const e = phraseDictionary[k];
+    const rec = { key: k, entry: e };
+    if (!exactLookupMap.has(k)) exactLookupMap.set(k, rec);
+    if (e.bn && !exactLookupMap.has(e.bn)) exactLookupMap.set(e.bn, rec);
+    if (e.en && !exactLookupMap.has(e.en)) exactLookupMap.set(e.en, rec);
+    if (e.ar && !exactLookupMap.has(e.ar)) exactLookupMap.set(e.ar, rec);
+
+    if (!/^\d+$/.test(k) && k.length >= 2) {
+      if (BN_CHAR_RE.test(k)) {
+        bnSubstringPairs.push({ src: k, entry: e, key: k });
+      } else if (AR_CHAR_RE.test(k)) {
+        arSubstringPairs.push({ src: k, entry: e, key: k });
+      } else if (k.length >= 3 && EN_CHAR_RE.test(k)) {
+        enSubstringPairs.push({ src: k, entry: e, key: k });
+      }
+      if (e.bn && e.bn !== k && e.bn.length >= 2 && BN_CHAR_RE.test(e.bn)) {
+        bnSubstringPairs.push({ src: e.bn, entry: e, key: k });
+      }
+      if (e.ar && e.ar !== k && e.ar.length >= 3 && AR_CHAR_RE.test(e.ar)) {
+        arSubstringPairs.push({ src: e.ar, entry: e, key: k });
+      }
+      if (e.en && e.en !== k && e.en.length >= 3 && EN_CHAR_RE.test(e.en)) {
+        enSubstringPairs.push({ src: e.en, entry: e, key: k });
       }
     }
-    return null;
+  }
+  bnSubstringPairs.sort(function(a, b) { return b.src.length - a.src.length; });
+  arSubstringPairs.sort(function(a, b) { return b.src.length - a.src.length; });
+  enSubstringPairs.sort(function(a, b) { return b.src.length - a.src.length; });
+
+  const translationResultCache = new Map();
+
+  function resolvePhraseEntry(rawText) {
+    return exactLookupMap.get(rawText) || null;
   }
 
   function translateTextString(sourceStr, lang) {
+    lang = normalizeLangCode(lang);
+    const targetLang = lang;
+    const cacheKey = targetLang + '\u0000' + sourceStr;
+    const cached = translationResultCache.get(cacheKey);
+    if (cached) return cached;
+
+    // For the 10 additional international languages, resolve clean English first then map via multiLangUiMap (never leaks Bengali)
+    if (targetLang !== 'en' && targetLang !== 'ar') {
+      const enRes = translateTextString(sourceStr, 'en');
+      const enVal = enRes.value;
+      const enTrimmed = enVal.trim();
+      const mapped = multiLangUiMap[enTrimmed] && multiLangUiMap[enTrimmed][targetLang];
+      let finalVal = enVal;
+      let finalChanged = enRes.changed;
+      if (mapped && mapped !== enTrimmed) {
+        const lead = enVal.match(/^\s*/)[0];
+        const trail = enVal.match(/\s*$/)[0];
+        finalVal = lead + mapped + trail;
+        finalChanged = true;
+      }
+      const resObj = { value: finalVal, changed: finalChanged };
+      if (translationResultCache.size < 6000) {
+        translationResultCache.set(cacheKey, resObj);
+      }
+      return resObj;
+    }
+
     let val = sourceStr;
     let changed = false;
+    const trimmed = val.trim();
 
-    const exact = resolvePhraseEntry(val.trim());
+    const exact = exactLookupMap.get(trimmed);
     if (exact) {
-      const targetExact = exact.entry[lang] || (lang === 'bn' ? exact.key : exact.entry.en) || val.trim();
-      const lead = val.match(/^\s*/)[0];
-      const trail = val.match(/\s*$/)[0];
-      const nextVal = lead + targetExact + trail;
-      if (nextVal !== val) {
-        val = nextVal;
+      const targetExact = exact.entry[targetLang] || exact.entry.en || trimmed;
+      if (targetExact !== trimmed) {
+        const lead = val.match(/^\s*/)[0];
+        const trail = val.match(/\s*$/)[0];
+        val = lead + targetExact + trail;
         changed = true;
       }
     } else {
-      sortedPhraseKeys.forEach(function(phrase) {
-        if (/^\d+$/.test(phrase) || phrase.length < 2) return;
-        const entry = phraseDictionary[phrase];
-        const target = entry[lang] || (lang === 'bn' ? (entry.bn || phrase) : (entry.en || phrase));
+      // Fast-skip substring scan when text has no characters from other scripts
+      const hasBn = BN_CHAR_RE.test(val);
+      const hasAr = AR_CHAR_RE.test(val);
+      const hasEn = EN_CHAR_RE.test(val);
 
-        if (val.includes(phrase)) {
-          if (phrase !== target) {
-            val = val.split(phrase).join(target);
-            changed = true;
-          }
-        } else {
-          const variants = [entry.bn, entry.en, entry.ar];
-          for (let v = 0; v < variants.length; v++) {
-            const candidate = variants[v];
-            if (candidate && !/^\d+$/.test(candidate.trim()) && candidate.trim().length >= 3 && val.includes(candidate)) {
-              if (candidate !== target) {
-                val = val.split(candidate).join(target);
-                changed = true;
-              }
-              break;
+      if (hasBn && lang !== 'bn') {
+        for (let i = 0; i < bnSubstringPairs.length; i++) {
+          const item = bnSubstringPairs[i];
+          if (val.indexOf(item.src) !== -1) {
+            const target = item.entry[lang] || item.entry.en || item.src;
+            if (item.src !== target) {
+              val = val.split(item.src).join(target);
+              changed = true;
+              if (!BN_CHAR_RE.test(val)) break;
             }
           }
         }
-      });
+      }
+      if (hasAr && lang !== 'ar') {
+        for (let i = 0; i < arSubstringPairs.length; i++) {
+          const item = arSubstringPairs[i];
+          if (val.indexOf(item.src) !== -1) {
+            const target = item.entry[lang] || (lang === 'bn' ? (item.entry.bn || item.key) : item.entry.en) || item.src;
+            if (item.src !== target) {
+              val = val.split(item.src).join(target);
+              changed = true;
+              if (!AR_CHAR_RE.test(val)) break;
+            }
+          }
+        }
+      }
+      if (hasEn && lang !== 'en') {
+        for (let i = 0; i < enSubstringPairs.length; i++) {
+          const item = enSubstringPairs[i];
+          if (val.indexOf(item.src) !== -1) {
+            const target = item.entry[lang] || (lang === 'bn' ? (item.entry.bn || item.key) : item.entry.en) || item.src;
+            if (item.src !== target) {
+              val = val.split(item.src).join(target);
+              changed = true;
+            }
+          }
+        }
+      }
     }
 
-    // Boundary-safe replacement for standalone "জন"
-    if (lang !== 'bn') {
+    // Boundary-safe replacement for standalone "জন", numeric "টি", and numeric "দিন"
+    if (lang !== 'bn' && BN_CHAR_RE.test(val)) {
       const memberWord = lang === 'ar' ? 'أعضاء' : 'members';
       if (val.trim() === 'জন') {
         val = val.replace('জন', memberWord);
         changed = true;
       } else if (/(^|[\s\d০-৯(])জন(?=$|[\s,.()।:])/.test(val)) {
         val = val.replace(/(^|[\s\d০-৯(])জন(?=$|[\s,.()।:])/g, '$1' + memberWord);
+        changed = true;
+      }
+
+      if (/[\d০-৯]\s*টি(?=$|[\s,.()।:])/.test(val)) {
+        val = val.replace(/([\d০-৯]+)\s*টি(?=$|[\s,.()।:])/g, '$1');
+        changed = true;
+      }
+
+      if (/[\d০-৯]\s*দিন(?=$|[\s,.()।:])/.test(val)) {
+        const daysWord = lang === 'ar' ? 'أيام' : 'Days';
+        val = val.replace(/([\d০-৯]+)\s*দিন(?=$|[\s,.()।:])/g, '$1 ' + daysWord);
         changed = true;
       }
     }
@@ -1911,12 +2176,26 @@
       changed = true;
     }
 
-    return { value: val, changed: changed };
+    const result = { value: val, changed: changed };
+    if (translationResultCache.size < 4000) {
+      translationResultCache.set(cacheKey, result);
+    }
+    return result;
   }
 
+  let _lastTranslateDomLang = '';
+  let _lastTranslateDomAt = 0;
+
   // Translate all text nodes in the DOM
-  function translateDOM(targetLang) {
+  function translateDOM(targetLang, opts) {
     const lang = normalizeLangCode(targetLang || currentLang);
+    const now = Date.now();
+    const isSilent = Boolean(opts && opts.silent);
+    if (isSilent && _lastTranslateDomLang === lang && (now - _lastTranslateDomAt) < 250) {
+      return;
+    }
+    _lastTranslateDomLang = lang;
+    _lastTranslateDomAt = now;
 
     // 1. Update document attributes & title
     if (document.documentElement) {
@@ -1939,25 +2218,55 @@
     // 3. Update input placeholders from placeholderMap
     Object.keys(placeholderMap).forEach(function(id) {
       const els = document.querySelectorAll('[id="' + id + '"]');
+      const entry = placeholderMap[id];
+      const phVal = entry[lang] !== undefined
+        ? entry[lang]
+        : ((multiLangUiMap[entry.en] && multiLangUiMap[entry.en][lang]) || entry.en);
       els.forEach(function(el) {
-        if (el && placeholderMap[id][lang] !== undefined) {
-          el.placeholder = placeholderMap[id][lang];
+        if (el && phVal !== undefined) {
+          el.placeholder = phVal;
         }
       });
+    });
+
+    // 3b. Fallback: translate any remaining input/textarea placeholders not in placeholderMap
+    document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(function(el) {
+      if (!el || (el.id && placeholderMap[el.id]) || el.hasAttribute('data-i18n-placeholder')) return;
+      if (el.closest && el.closest('.notranslate, [data-no-translate]')) return;
+      const curPh = el.getAttribute('placeholder');
+      if (!curPh) return;
+      let basePh = curPh;
+      if (originalPlaceholderMap) {
+        const rec = originalPlaceholderMap.get(el);
+        if (rec && rec.last === curPh) {
+          basePh = rec.orig;
+        } else {
+          originalPlaceholderMap.set(el, { orig: curPh, last: curPh });
+          basePh = curPh;
+        }
+      }
+      const resPh = translateTextString(basePh, lang);
+      if (resPh.value !== curPh) {
+        el.setAttribute('placeholder', resPh.value);
+        if (originalPlaceholderMap) {
+          const rec = originalPlaceholderMap.get(el);
+          if (rec) rec.last = resPh.value;
+        }
+      }
     });
 
     // 4. Update elements with data-i18n attribute
     document.querySelectorAll('[data-i18n]').forEach(function(el) {
       const key = el.getAttribute('data-i18n');
       const val = getTranslation(key, lang);
-      if (val) el.textContent = val;
+      if (val && el.textContent !== val) el.textContent = val;
     });
 
     // 4b. Update elements with data-i18n-placeholder attribute
     document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
       const key = el.getAttribute('data-i18n-placeholder');
       const val = getTranslation(key, lang);
-      if (val) el.placeholder = val;
+      if (val && el.placeholder !== val) el.placeholder = val;
     });
 
     // 5. Replace text in DOM tree using phraseDictionary (with WeakMap round-trip memory)
@@ -2047,30 +2356,32 @@
       }
     });
 
-    // 6. Dynamic panel refreshes if functions exist
-    try {
-      if (typeof window.updateDashboardTitleForLang === 'function') {
-        window.updateDashboardTitleForLang(lang);
-      }
-      if (typeof window.updatePaymentAndWithdrawalForUser === 'function') {
-        window.updatePaymentAndWithdrawalForUser();
-      }
-      if (typeof window.updateTeamReportMetrics === 'function') {
-        window.updateTeamReportMetrics();
-      }
-      if (typeof window.updateProfileMetrics === 'function') {
-        window.updateProfileMetrics();
-      }
-      if (typeof window.updateHomeWithdrawalTicker === 'function') {
-        window.updateHomeWithdrawalTicker();
-      }
-      if (typeof window.updateHomeMemberUpdates === 'function') {
-        window.updateHomeMemberUpdates();
-      }
-      if (typeof window.populateAllCountrySelects === 'function') {
-        window.populateAllCountrySelects(lang);
-      }
-    } catch(e) {}
+    // 6. Dynamic panel refreshes if functions exist (skip redundant callbacks on silent boot)
+    if (!isSilent) {
+      try {
+        if (typeof window.updateDashboardTitleForLang === 'function') {
+          window.updateDashboardTitleForLang(lang);
+        }
+        if (typeof window.updatePaymentAndWithdrawalForUser === 'function') {
+          window.updatePaymentAndWithdrawalForUser();
+        }
+        if (typeof window.updateTeamReportMetrics === 'function') {
+          window.updateTeamReportMetrics();
+        }
+        if (typeof window.updateProfileMetrics === 'function') {
+          window.updateProfileMetrics();
+        }
+        if (typeof window.updateHomeWithdrawalTicker === 'function') {
+          window.updateHomeWithdrawalTicker();
+        }
+        if (typeof window.updateHomeMemberUpdates === 'function') {
+          window.updateHomeMemberUpdates();
+        }
+        if (typeof window.populateAllCountrySelects === 'function') {
+          window.populateAllCountrySelects(lang);
+        }
+      } catch(e) {}
+    }
   }
 
   function setAppLanguage(newLang, options) {
@@ -2097,7 +2408,7 @@
     } catch(e) {}
 
     syncCountryLanguageOptions();
-    translateDOM(normalized);
+    translateDOM(normalized, { silent: isSilent });
 
     if (changed) {
       try {
@@ -2122,6 +2433,10 @@
   window.aloI18n = {
     setLanguage: setAppLanguage,
     getLanguage: function() { return currentLang; },
+    getLanguageLabel: getLanguageDisplayLabel,
+    languages: LANGUAGE_OPTIONS.slice(),
+    openLanguagePicker: openLanguagePicker,
+    closeLanguagePicker: closeLanguagePicker,
     normalizeLangCode: normalizeLangCode,
     t: getTranslation,
     translateDOM: translateDOM,
@@ -2131,6 +2446,8 @@
     getCountryAllowedLanguages: getCountryAllowedLanguages
   };
   window.setAppLanguage = setAppLanguage;
+  window.openLanguagePicker = openLanguagePicker;
+  window.closeLanguagePicker = closeLanguagePicker;
   window.syncCountryLanguageOptions = syncCountryLanguageOptions;
   window.t = getTranslation;
 
@@ -2152,6 +2469,41 @@
   document.addEventListener('change', function(e) {
     if (e.target && e.target.matches && e.target.matches('#landing-language-switch, #language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher')) {
       setAppLanguage(e.target.value, { silent: false });
+    }
+  });
+
+  // Global delegated click listeners for full-screen Language Picker modal
+  document.addEventListener('click', function(e) {
+    const openTrigger = e.target && e.target.closest ? e.target.closest('[data-open-language-picker]') : null;
+    if (openTrigger) {
+      e.preventDefault();
+      openLanguagePicker();
+      return;
+    }
+
+    const closeBtn = e.target && e.target.closest ? e.target.closest('#close-language-picker-btn') : null;
+    if (closeBtn) {
+      e.preventDefault();
+      closeLanguagePicker();
+      return;
+    }
+
+    const optionBtn = e.target && e.target.closest ? e.target.closest('[data-select-lang]') : null;
+    if (optionBtn) {
+      e.preventDefault();
+      const chosen = optionBtn.getAttribute('data-select-lang');
+      setAppLanguage(chosen, { silent: false });
+      renderLanguagePickerList();
+      setTimeout(closeLanguagePicker, 140);
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('language-picker-modal');
+      if (modal && !modal.hidden) {
+        closeLanguagePicker();
+      }
     }
   });
 

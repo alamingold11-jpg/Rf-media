@@ -316,14 +316,13 @@ function getPlatformSvg(platform, sizeClass) {
 // ==========================================
 function normalizeAppLang(lang) {
   const clean = String(lang || '').trim().toLowerCase().split('-')[0];
-  if (clean === 'ar' || clean === 'bn' || clean === 'en') return clean;
+  if (['en', 'tl', 'ko', 'vi', 'ar', 'tr', 'hi', 'id', 'ms', 'pt', 'es', 'ru'].indexOf(clean) !== -1) return clean;
   return 'en';
 }
 window.normalizeAppLang = normalizeAppLang;
 
 function tLang(lang, bnText, enText, arText) {
   const l = normalizeAppLang(lang);
-  if (l === 'bn') return bnText;
   if (l === 'ar') return arText !== undefined ? arText : enText;
   return enText;
 }
@@ -648,7 +647,9 @@ function applyPlatformConfigData(rawOpt) {
   if (parsed.salaryPage && typeof parsed.salaryPage === 'object') {
     window.aloPlatformConfig.salaryPage = parsed.salaryPage;
     if (typeof applyRemoteSalaryConfig === 'function') {
-      applyRemoteSalaryConfig(parsed.salaryPage);
+      const empPanel = document.getElementById('employee-benefits-panel');
+      const isSalaryOpen = Boolean(empPanel && !empPanel.hidden);
+      applyRemoteSalaryConfig(parsed.salaryPage, false, isSalaryOpen);
     }
   }
 }
@@ -660,8 +661,8 @@ async function loadPlatformConfigFromSupabase(force) {
   if (!window.aloSupabase) return;
   const now = Date.now();
   if (!force && _lastConfigLoadedAt > 0 && (now - _lastConfigLoadedAt) < 15000) return;
-  if (_loadingConfigPromise) return _loadingConfigPromise;
-  _loadingConfigPromise = (async function() {
+  if (_loadingConfigPromise && !force) return _loadingConfigPromise;
+  const runPromise = (async function() {
     try {
       const { data, error } = await window.aloSupabase
         .from('users')
@@ -673,10 +674,13 @@ async function loadPlatformConfigFromSupabase(force) {
         _lastConfigLoadedAt = Date.now();
       }
     } catch (e) {} finally {
-      _loadingConfigPromise = null;
+      if (_loadingConfigPromise === runPromise) {
+        _loadingConfigPromise = null;
+      }
     }
   })();
-  return _loadingConfigPromise;
+  _loadingConfigPromise = runPromise;
+  return runPromise;
 }
 
 function mapSupabaseTeam(d) {
@@ -941,7 +945,7 @@ function initSupabaseLiveSync(user) {
 window.initSupabaseLiveSync = initSupabaseLiveSync;
 
 window.addEventListener('alo-supabase-ready', function() {
-  loadPlatformConfigFromSupabase();
+  loadPlatformConfigFromSupabase(true);
   ensurePlatformConfigLiveChannel();
   if (typeof getCurrentUser === 'function') {
     const user = getCurrentUser();
@@ -2818,7 +2822,7 @@ function getActiveSalaryPageConfig() {
 }
 window.getActiveSalaryPageConfig = getActiveSalaryPageConfig;
 
-function applyRemoteSalaryConfig(rawSalaryCfg, skipCacheWrite) {
+function applyRemoteSalaryConfig(rawSalaryCfg, skipCacheWrite, forceRender) {
   if (!rawSalaryCfg || typeof rawSalaryCfg !== 'object') return;
   const normalized = normalizeSalaryPageConfig(rawSalaryCfg);
   const prevJson = JSON.stringify(activeSalaryPageConfig);
@@ -2832,7 +2836,9 @@ function applyRemoteSalaryConfig(rawSalaryCfg, skipCacheWrite) {
     } catch (e) {}
   }
 
-  if (prevJson !== nextJson && typeof renderInviteVipSalaryCards === 'function') {
+  const empPanel = document.getElementById('employee-benefits-panel');
+  const isSalaryVisible = Boolean(empPanel && !empPanel.hidden);
+  if ((prevJson !== nextJson || forceRender || isSalaryVisible) && typeof renderInviteVipSalaryCards === 'function') {
     renderInviteVipSalaryCards();
   }
 }
@@ -2851,10 +2857,39 @@ try {
 
 if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
   window.addEventListener('storage', function(ev) {
-    if (ev && ev.key === 'alo_system_salary_cache' && ev.newValue) {
+    if (!ev) return;
+    if (ev.key === 'alo_system_salary_cache' && ev.newValue) {
       try {
-        applyRemoteSalaryConfig(JSON.parse(ev.newValue), true);
+        applyRemoteSalaryConfig(JSON.parse(ev.newValue), true, true);
       } catch (e) {}
+    } else if (ev.key === 'alo_system_config_updated_at') {
+      loadPlatformConfigFromSupabase(true);
+    }
+  });
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      const cfgBc = new BroadcastChannel('alo_system_config_sync');
+      cfgBc.onmessage = function(ev) {
+        const msg = ev && ev.data;
+        if (msg && msg.type === 'SYSTEM_CONFIG_UPDATED' && msg.config) {
+          applyPlatformConfigData(msg.config);
+        } else {
+          loadPlatformConfigFromSupabase(true);
+        }
+      };
+    }
+  } catch (e) {}
+  let _lastFocusSyncAt = 0;
+  function refreshConfigOnFocusThrottled() {
+    const now = Date.now();
+    if (now - _lastFocusSyncAt < 8000) return;
+    _lastFocusSyncAt = now;
+    loadPlatformConfigFromSupabase(true);
+  }
+  window.addEventListener('focus', refreshConfigOnFocusThrottled);
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      refreshConfigOnFocusThrottled();
     }
   });
   window.addEventListener('alo-language-changed', function() {
@@ -3395,6 +3430,11 @@ function openDashboardPanel(panelName) {
     document.body.style.overflow = '';
     try { window.scrollTo(0, 0); } catch (_) {}
     if (typeof renderInviteVipSalaryCards === 'function') renderInviteVipSalaryCards();
+    if (typeof loadPlatformConfigFromSupabase === 'function') {
+      loadPlatformConfigFromSupabase(true).then(function() {
+        if (typeof renderInviteVipSalaryCards === 'function') renderInviteVipSalaryCards();
+      });
+    }
   }
   if (nextPanel === 'lucky-spin') {
     if (typeof renderLuckySpinPanel === 'function') renderLuckySpinPanel();
@@ -10603,7 +10643,7 @@ function checkPendingReviews() {
   }
 }
 
-// Live timer tick every second (lightweight: throttles DB/storage checks, avoids background CPU spikes)
+// Live timer tick every second (lightweight: skips DOM/storage work when no reviews active)
 let _missionTickCounter = 0;
 setInterval(function() {
   if (document.hidden) return;
@@ -10611,20 +10651,28 @@ setInterval(function() {
   if (!curU) return;
 
   _missionTickCounter = (_missionTickCounter + 1) % 60;
-  const timerEls = document.querySelectorAll('[data-review-ends]');
-  timerEls.forEach(function(el) {
-    const ends = parseInt(el.dataset.reviewEnds || '0', 10);
-    const rem = Math.max(0, Math.ceil((ends - Date.now()) / 1000));
-    const m = Math.floor(rem / 60);
-    const s = rem % 60;
-    el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
-  });
+  const tasksPanel = document.getElementById('tasks-panel');
+  const isTasksVisible = Boolean(tasksPanel && !tasksPanel.hidden);
+  let hasTimers = false;
 
-  if (timerEls.length > 0 || _missionTickCounter % 5 === 0) {
+  if (isTasksVisible) {
+    const timerEls = tasksPanel.querySelectorAll('[data-review-ends]');
+    hasTimers = timerEls.length > 0;
+    timerEls.forEach(function(el) {
+      const ends = parseInt(el.dataset.reviewEnds || '0', 10);
+      const rem = Math.max(0, Math.ceil((ends - Date.now()) / 1000));
+      const m = Math.floor(rem / 60);
+      const s = rem % 60;
+      const nextTxt = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      if (el.textContent !== nextTxt) el.textContent = nextTxt;
+    });
+  }
+
+  if (hasTimers || _missionTickCounter % 10 === 0) {
     checkPendingReviews();
   }
 
-  if (_missionTickCounter % 15 === 0) {
+  if (_missionTickCounter % 20 === 0) {
     const uLvl = curU.packageLevel || 'LV0';
     const nextQuotaKey = getActive24hQuotaKey(readAcceptedMissions(), uLvl, Date.now());
     if (window._lastActive24hQuotaKey && window._lastActive24hQuotaKey !== nextQuotaKey) {
@@ -13184,7 +13232,7 @@ if (logoutBtn) {
 // PW Home Banner Carousel (3 Slides - Auto-change continually, Touch swipe OFF)
 let pwBannerCurrentIndex = 0;
 let pwBannerTimer = null;
-const PW_BANNER_TOTAL = 3;
+const PW_BANNER_TOTAL = 4;
 
 function goToPWBannerSlide(idx) {
   pwBannerCurrentIndex = ((idx % PW_BANNER_TOTAL) + PW_BANNER_TOTAL) % PW_BANNER_TOTAL;
@@ -13202,6 +13250,22 @@ function goToPWBannerSlide(idx) {
       dot.removeAttribute('aria-current');
     }
   });
+  const depositVideo = document.getElementById('pw-home-deposit-video');
+  if (depositVideo) {
+    if (pwBannerCurrentIndex === 0) {
+      depositVideo.play().catch(function() {});
+    } else if (!depositVideo.paused) {
+      depositVideo.pause();
+    }
+  }
+  const holoSlide = document.getElementById('pw-home-holo-slide');
+  if (holoSlide) {
+    holoSlide.classList.toggle('pw-holo-paused', pwBannerCurrentIndex !== 1);
+  }
+  const teamSlide = document.getElementById('pw-home-team-slide');
+  if (teamSlide) {
+    teamSlide.classList.toggle('pw-holo-paused', pwBannerCurrentIndex !== 3);
+  }
 }
 
 function startPWBannerAutoPlay() {
@@ -13244,6 +13308,33 @@ function initPWBannerCarousel() {
       e.stopPropagation();
       goToPWBannerSlide(pwBannerCurrentIndex + 1);
       startPWBannerAutoPlay();
+    });
+  }
+
+  // Block right-click / long-press save & drag on header banners, images, and videos
+  if (!window._pwMediaProtectionBound) {
+    window._pwMediaProtectionBound = true;
+    document.addEventListener('contextmenu', function(e) {
+      const t = e.target;
+      if (!t) return;
+      if (
+        t.tagName === 'IMG' ||
+        t.tagName === 'VIDEO' ||
+        (t.closest && t.closest('#pw-hero-banner-container, .pw-media-shield, .home-cert-card, #home-cert-lightbox, #screenshot-lightbox-modal'))
+      ) {
+        e.preventDefault();
+      }
+    });
+    document.addEventListener('dragstart', function(e) {
+      const t = e.target;
+      if (!t) return;
+      if (
+        t.tagName === 'IMG' ||
+        t.tagName === 'VIDEO' ||
+        (t.closest && t.closest('#pw-hero-banner-container, .home-cert-card'))
+      ) {
+        e.preventDefault();
+      }
     });
   }
 }
@@ -13455,7 +13546,8 @@ window.updateHomeMemberUpdates = updateHomeMemberUpdates;
 // Initial session check
 function initApp() {
   initPWBannerCarousel();
-  loadPlatformConfigFromSupabase();
+  loadPlatformConfigFromSupabase(true);
+  ensurePlatformConfigLiveChannel();
 
   let savedUser = getCurrentUser();
 
