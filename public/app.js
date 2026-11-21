@@ -334,6 +334,12 @@ window.tLang = tLang;
 // ==========================================
 // SUPABASE & CLOUD DATABASE INTEGRATION (USER, TEAM, TRANSACTIONS)
 // ==========================================
+function isBangladeshPhoneDigits(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return false;
+  return /^(?:880|0)?1[3-9]\d{8}$/.test(digits);
+}
+
 function mapSupabaseUser(d) {
   if (!d) return null;
   let opt = {};
@@ -372,6 +378,7 @@ function mapSupabaseUser(d) {
     superiorPhone: opt.superior_phone || d.superior_phone || d.superiorPhone || '',
     packageLevel: d.package_level || d.packageLevel || 'LV0',
     purchasedPackages: purchasedPackages,
+    packagePurchaseDates: (opt.package_purchase_dates && typeof opt.package_purchase_dates === 'object') ? Object.assign({}, opt.package_purchase_dates) : {},
     balance: typeof d.balance === 'number' ? d.balance : parseFloat(d.balance || 0) || 0,
     frozenBalance: Number(opt.frozen_balance) || 0,
     lv0FrozenBalance: Number(opt.lv0_frozen_balance) || 0,
@@ -391,18 +398,45 @@ function mapSupabaseUser(d) {
     bonusSpins: Number(opt.bonus_spins) || 0,
     spinHistory: Array.isArray(opt.spin_history) ? opt.spin_history : [],
     country: (function() {
-      const dialMatch = opt.dial_code && opt.dial_code !== '+880' && typeof COUNTRY_DATABASE !== 'undefined'
-        ? COUNTRY_DATABASE.find(function(c) { return c.dialCode === opt.dial_code; })
+      const rawOptCountry = String(opt.country || '').trim().toUpperCase();
+      const rawDial = String(opt.dial_code || '').trim();
+      const phoneRaw = String(d.phone || d.account_number || d.accountNumber || '').trim();
+      const looksLikeBdPhone = isBangladeshPhoneDigits(phoneRaw);
+
+      // Auto-heal Bangladesh accounts previously overwritten to 'US' when USD became global
+      if ((rawOptCountry === 'US' || !rawOptCountry) && (rawDial === '+880' || (rawDial !== '+1' && looksLikeBdPhone))) {
+        return 'BD';
+      }
+      if (rawOptCountry) {
+        return rawOptCountry;
+      }
+      if (rawDial === '+880') {
+        return 'BD';
+      }
+      const dialMatch = rawDial && typeof COUNTRY_DATABASE !== 'undefined'
+        ? COUNTRY_DATABASE.find(function(c) { return c.dialCode === rawDial; })
         : null;
-      const rawC = String(
-        opt.country ||
-        (dialMatch && dialMatch.code) ||
-        (opt.currency === 'USD' ? 'US' : (opt.currency === 'INR' || String(d.phone || '').startsWith('91') ? 'IN' : 'BD'))
-      ).toUpperCase();
-      return rawC || 'BD';
+      if (dialMatch && dialMatch.code) {
+        return String(dialMatch.code).toUpperCase();
+      }
+      if (looksLikeBdPhone) {
+        return 'BD';
+      }
+      if (opt.currency === 'INR' || (phoneRaw.startsWith('91') && phoneRaw.length >= 12)) {
+        return 'IN';
+      }
+      return 'BD';
     })(),
     currency: 'USD',
-    dialCode: opt.dial_code || '',
+    dialCode: (function() {
+      const rawOptCountry = String(opt.country || '').trim().toUpperCase();
+      const rawDial = String(opt.dial_code || '').trim();
+      const phoneRaw = String(d.phone || d.account_number || d.accountNumber || '').trim();
+      if ((rawOptCountry === 'BD' || rawOptCountry === 'US' || !rawOptCountry) && (rawDial === '+880' || (rawDial !== '+1' && isBangladeshPhoneDigits(phoneRaw)))) {
+        return '+880';
+      }
+      return rawDial || '';
+    })(),
     commissionDust: Number(opt.commission_dust) || 0,
     language: mappedLang,
     languageManual: isManualLang,
@@ -439,13 +473,11 @@ function resetTeamAndCommissionDom() {
       const el = document.getElementById(id);
       if (el) el.textContent = '0';
     });
-    const zeroMoneyIds = ['invite-total-commission', 'invite-today-commission', 'team-stat-balance', 'team-stat-flow', 'team-stat-recharge', 'team-stat-cashout', 'tier-metric-recharge', 'tier-metric-rebate', 'tier-comm-pkg-val', 'tier-comm-task-val', 'team-comm-all-tiers-total', 'team-comm-today-total'];
+    const zeroMoneyIds = ['invite-total-commission', 'invite-today-commission', 'team-stat-balance', 'team-stat-flow', 'team-stat-recharge', 'team-stat-cashout', 'tier-metric-recharge', 'tier-metric-rebate'];
     zeroMoneyIds.forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.textContent = '0.00';
     });
-    const teamCommRecords = document.getElementById('team-comm-records-list');
-    if (teamCommRecords) teamCommRecords.innerHTML = '';
     const teamAccordion = document.getElementById('team-fresh-accordion-container');
     if (teamAccordion) teamAccordion.innerHTML = '';
     const spinHistoryList = document.getElementById('lucky-spin-history-list');
@@ -1074,6 +1106,9 @@ async function dbSaveUser(account) {
         recharge_amount: typeof account.rechargeAmount === 'number' ? account.rechargeAmount : (Number(baseOpt.recharge_amount) || 0),
         cashout_amount: typeof account.cashoutAmount === 'number' ? account.cashoutAmount : (Number(baseOpt.cashout_amount) || 0),
         purchased_packages: purchasedPkgs,
+        package_purchase_dates: (account.packagePurchaseDates && typeof account.packagePurchaseDates === 'object')
+          ? account.packagePurchaseDates
+          : ((baseOpt.package_purchase_dates && typeof baseOpt.package_purchase_dates === 'object') ? baseOpt.package_purchase_dates : {}),
         accepted_missions: Array.isArray(account.acceptedMissions)
           ? compactMissionsForCloud(account.acceptedMissions)
           : (Array.isArray(baseOpt.accepted_missions) ? baseOpt.accepted_missions : []),
@@ -1093,9 +1128,23 @@ async function dbSaveUser(account) {
         spin_history: Array.isArray(account.spinHistory)
           ? account.spinHistory.slice(0, 25)
           : (Array.isArray(baseOpt.spin_history) ? baseOpt.spin_history : []),
-        country: account.country || baseOpt.country || 'BD',
+        country: (function() {
+          const candCountry = String(account.country || baseOpt.country || 'BD').trim().toUpperCase();
+          const candDial = String(account.dialCode || baseOpt.dial_code || '').trim();
+          if ((candCountry === 'US' || !candCountry) && (candDial === '+880' || (candDial !== '+1' && isBangladeshPhoneDigits(normPhone)))) {
+            return 'BD';
+          }
+          return candCountry || 'BD';
+        })(),
         currency: 'USD',
-        dial_code: account.dialCode || baseOpt.dial_code || '+880',
+        dial_code: (function() {
+          const candCountry = String(account.country || baseOpt.country || 'BD').trim().toUpperCase();
+          const candDial = String(account.dialCode || baseOpt.dial_code || '').trim();
+          if (candCountry === 'BD' || ((candCountry === 'US' || !candCountry) && (candDial === '+880' || (candDial !== '+1' && isBangladeshPhoneDigits(normPhone))))) {
+            return '+880';
+          }
+          return candDial || '+880';
+        })(),
         commission_dust: typeof account.commissionDust === 'number'
           ? Number(account.commissionDust.toFixed(6))
           : (Number(baseOpt.commission_dust) || 0),
@@ -2071,7 +2120,7 @@ const dashboardTitles = {
   'login-password-setup': 'Login Password',
   'usdt-deposit': 'USDT Deposit',
   'bd-recharge': 'Recharge',
-  'lucky-spin': 'Lucky Spin',
+  'lucky-spin': 'Lucky Wheel',
   'customer-service': 'Customer Service',
   manager: 'Customer Service'
 };
@@ -2103,7 +2152,7 @@ function updateDashboardTitleForLang(targetLang) {
       'login-password-setup': 'প্রবেশের গুপ্তসংকেত',
       'usdt-deposit': 'USDT ডিপোজিট',
       'bd-recharge': 'রিচার্জ',
-      'lucky-spin': 'ভাগ্যবান স্পিন',
+      'lucky-spin': 'Lucky Wheel',
       'customer-service': 'গ্রাহক সেবা',
       manager: 'গ্রাহক সেবা'
     },
@@ -2131,7 +2180,7 @@ function updateDashboardTitleForLang(targetLang) {
       'login-password-setup': 'Login Password',
       'usdt-deposit': 'USDT Deposit',
       'bd-recharge': 'Recharge',
-      'lucky-spin': 'Lucky Spin',
+      'lucky-spin': 'Lucky Wheel',
       'customer-service': 'Customer Service',
       manager: 'Customer Service'
     },
@@ -2685,8 +2734,8 @@ function renderInvitePage() {
         const amt = Number(tx.actual || tx.amount || 0);
         if (amt <= 0) return;
         const methodStr = String(tx.method || '').toLowerCase();
-        // Exclude Lucky Spin rewards recorded under type='commission'
-        if (methodStr.includes('lucky spin') || methodStr.includes('ভাগ্যবান স্পিন') || methodStr.includes('লটারি')) {
+        // Exclude Lucky Wheel / Lucky Spin rewards recorded under type='commission'
+        if (methodStr.includes('lucky spin') || methodStr.includes('lucky wheel') || methodStr.includes('ভাগ্যবান স্পিন') || methodStr.includes('লটারি')) {
           return;
         }
         const isPkgTx = methodStr.includes('প্যাকেজ') || methodStr.includes('package');
@@ -3621,9 +3670,16 @@ function isBangladeshUser(user) {
     } catch(e) {}
   }
   if (!user) return true;
-  if (user.country && String(user.country).trim().toUpperCase() !== 'BD') return false;
-  if (user.currency === 'USD' || user.currency === 'INR') return false;
-  if (user.dialCode && user.dialCode !== '+880') return false;
+  const rawCountry = String(user.country || '').trim().toUpperCase();
+  const rawDial = String(user.dialCode || '').trim();
+  const rawPhone = String(user.phone || user.accountNumber || '').trim();
+  if (rawDial === '+880') return true;
+  if (rawCountry === 'BD') return true;
+  if ((rawCountry === 'US' || !rawCountry) && rawDial !== '+1' && isBangladeshPhoneDigits(rawPhone)) {
+    return true;
+  }
+  if (rawCountry && rawCountry !== 'BD') return false;
+  if (rawDial && rawDial !== '+880') return false;
   return true;
 }
 window.isBangladeshUser = isBangladeshUser;
@@ -3686,7 +3742,7 @@ function updateUserDetails(user) {
   if (!user) return;
 
   const isBd = isBangladeshUser(user);
-  const countryObj = getCountryByCode(user.country || (isBd ? 'BD' : 'US'));
+  const countryObj = getCountryByCode(isBd ? 'BD' : (user.country || 'BD')) || COUNTRY_DATABASE[0];
   user.country = isBd ? 'BD' : countryObj.code;
   user.currency = 'USD';
   user.currencySymbol = '$';
@@ -4687,8 +4743,19 @@ if (loginForm) {
         return;
       }
 
-      const accountCountryCode = String(account.country || (account.profileData && account.profileData.country) || 'BD').trim().toUpperCase();
+      let accountCountryCode = String(account.country || (account.profileData && account.profileData.country) || 'BD').trim().toUpperCase();
       const selectedLoginCode = String(loginCountry.code || 'BD').trim().toUpperCase();
+      let healedCorruptedCountry = false;
+      if (
+        selectedLoginCode === 'BD' &&
+        accountCountryCode === 'US' &&
+        (account.dialCode === '+880' || (account.dialCode !== '+1' && isBangladeshPhoneDigits(account.phone || account.accountNumber || normPhone)))
+      ) {
+        accountCountryCode = 'BD';
+        account.country = 'BD';
+        account.dialCode = '+880';
+        healedCorruptedCountry = true;
+      }
       if (accountCountryCode !== selectedLoginCode) {
         const regCountryObj = getCountryByCode(accountCountryCode) || COUNTRY_DATABASE[0];
         const regCountryName = currentAppLang === 'bn'
@@ -4763,6 +4830,9 @@ if (loginForm) {
 
       hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
+      if (healedCorruptedCountry || (account._rawOpt && String(account._rawOpt.country || '').trim().toUpperCase() !== signedInUser.country)) {
+        dbSaveUser(signedInUser).catch(function() {});
+      }
 
       if (typeof setAppLanguage === 'function') {
         setAppLanguage(targetUserLang, { silent: !targetLangManual });
@@ -6043,15 +6113,15 @@ function getCurrentUser() {
   user.language = isManualLang
     ? normalizeAppLang(user.language || localStorage.getItem('alo_lang') || 'en')
     : 'en';
-  if (!isBd) {
-    const cObj = getCountryByCode(user.country || 'US');
-    user.country = cObj.code === 'BD' ? 'US' : cObj.code;
-    user.dialCode = user.dialCode || cObj.dialCode || '';
-    user.countryName = cObj.nameEn;
-  } else {
+  if (isBd) {
     user.country = 'BD';
     user.dialCode = '+880';
     user.countryName = 'Bangladesh';
+  } else {
+    const cObj = getCountryByCode(user.country || 'BD') || COUNTRY_DATABASE[0];
+    user.country = cObj.code;
+    user.dialCode = user.dialCode || cObj.dialCode || '';
+    user.countryName = cObj.nameEn;
   }
   user.currency = 'USD';
   user.currencySymbol = '$';
@@ -6147,20 +6217,80 @@ function getLv0TrialStatus(user) {
 }
 window.getLv0TrialStatus = getLv0TrialStatus;
 
+function getPackageValidityStatus(level, user) {
+  if (!user) user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  const lvl = String(level || 'LV0').toUpperCase().trim();
+  const pkg = packageData[lvl];
+  const validityDays = Math.max(1, parseInt((pkg && pkg.validityDays) || (lvl === 'LV0' ? 5 : 30), 10) || (lvl === 'LV0' ? 5 : 30));
+
+  if (lvl === 'LV0') {
+    const trial = getLv0TrialStatus(user);
+    return {
+      level: 'LV0',
+      isOwned: true,
+      isExpired: Boolean(trial.isExpired),
+      isActive: !trial.isExpired,
+      validityDays: trial.validityDays,
+      daysLeft: trial.daysLeft
+    };
+  }
+
+  if (!user) {
+    return { level: lvl, isOwned: false, isExpired: false, isActive: false, validityDays: validityDays, daysLeft: 0 };
+  }
+
+  const userLevel = String(user.packageLevel || 'LV0').toUpperCase().trim();
+  const purchasedList = Array.isArray(user.purchasedPackages)
+    ? user.purchasedPackages.map(function(p) { return String(p || '').toUpperCase().trim(); })
+    : [];
+  const isOwned = (userLevel === lvl) || purchasedList.includes(lvl);
+  if (!isOwned) {
+    return { level: lvl, isOwned: false, isExpired: false, isActive: false, validityDays: validityDays, daysLeft: 0 };
+  }
+
+  const dates = (user.packagePurchaseDates && typeof user.packagePurchaseDates === 'object') ? user.packagePurchaseDates : {};
+  const rawStart = dates[lvl] || user.updatedAt || user.updated_at || user.createdAt || user.created_at;
+  const startTs = rawStart ? new Date(rawStart).getTime() : NaN;
+  if (!Number.isFinite(startTs) || startTs <= 0) {
+    return { level: lvl, isOwned: true, isExpired: false, isActive: true, validityDays: validityDays, daysLeft: validityDays };
+  }
+
+  const totalMs = validityDays * 24 * 60 * 60 * 1000;
+  const elapsedMs = Math.max(0, Date.now() - startTs);
+  const remainingMs = totalMs - elapsedMs;
+  const isExpired = remainingMs <= 0;
+  const daysLeft = isExpired ? 0 : Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)));
+  return {
+    level: lvl,
+    isOwned: true,
+    isExpired: isExpired,
+    isActive: !isExpired,
+    validityDays: validityDays,
+    daysLeft: daysLeft
+  };
+}
+window.getPackageValidityStatus = getPackageValidityStatus;
+
 function isLevelUnlocked(targetLevel, user) {
   if (!user) user = getCurrentUser();
-  if (targetLevel === 'LV0') {
+  const lvl = String(targetLevel || 'LV0').toUpperCase().trim();
+  if (lvl === 'LV0') {
     const trialStatus = getLv0TrialStatus(user);
     return !trialStatus.isExpired;
   }
   if (!user) return false;
-  if (user.purchasedPackages && user.purchasedPackages.includes(targetLevel)) {
-    return true;
+  const targetStatus = getPackageValidityStatus(lvl, user);
+  if (targetStatus.isOwned) {
+    return !targetStatus.isExpired;
   }
-  const userLevel = user.packageLevel || 'LV0';
+  const userLevel = String(user.packageLevel || 'LV0').toUpperCase().trim();
   const userIdx = LEVEL_ORDER.indexOf(userLevel);
-  const targetIdx = LEVEL_ORDER.indexOf(targetLevel);
-  return userIdx >= targetIdx && userIdx > 0;
+  const targetIdx = LEVEL_ORDER.indexOf(lvl);
+  if (userIdx >= targetIdx && userIdx > 0) {
+    const activeStatus = getPackageValidityStatus(userLevel, user);
+    return !activeStatus.isExpired;
+  }
+  return false;
 }
 
 let currentPurchaseLevel = 'LV1';
@@ -6212,13 +6342,13 @@ function syncVipOwnedSeal(cardEl, shouldShow) {
 function updateVipHallRooms() {
   const user = getCurrentUser();
   const userLevel = (user && user.packageLevel) || 'LV0';
-  const lv0Status = getLv0TrialStatus(user);
   const rooms = document.querySelectorAll('.hall-level-room');
   rooms.forEach(function(room) {
     const lvl = room.dataset.level;
     if (!lvl) return;
     const isCurrent = (lvl === userLevel);
-    const isLv0ExpiredHere = (lvl === 'LV0' && lv0Status.isExpired);
+    const pkgStatus = getPackageValidityStatus(lvl, user);
+    const isRoomExpired = Boolean(pkgStatus.isOwned && pkgStatus.isExpired);
 
     const lang = getActiveLang(user);
     const hallLabels = {
@@ -6237,7 +6367,7 @@ function updateVipHallRooms() {
     }
 
     let tag = room.querySelector('.hall-current-tag, .hall-status-tag');
-    if (isCurrent && !isLv0ExpiredHere) {
+    if (isCurrent && !isRoomExpired) {
       if (!tag) {
         tag = document.createElement('span');
         room.insertBefore(tag, room.firstChild);
@@ -6250,7 +6380,7 @@ function updateVipHallRooms() {
       tag.remove();
     }
 
-    syncLv0ExpiredStamp(room, isLv0ExpiredHere);
+    syncLv0ExpiredStamp(room, isRoomExpired);
   });
 }
 
@@ -6306,7 +6436,6 @@ function updateRecordsPanelPackages() {
     return `${d} ${d === 1 ? 'Day' : 'Days'}`;
   };
 
-  const lv0Trial = getLv0TrialStatus(user);
   const pkgCards = document.querySelectorAll('[data-record-package]');
   pkgCards.forEach(function(card) {
     const level = card.dataset.recordPackage;
@@ -6317,7 +6446,8 @@ function updateRecordsPanelPackages() {
     const pkgReward = isUsd ? getPackageRewardUsd(level) : Number(pkg.reward || 0);
     const pkgDaily = Number((pkgReward * pkg.count).toFixed(2));
     const validityDays = Math.max(1, parseInt(pkg.validityDays, 10) || (level === 'LV0' ? 5 : 30));
-    const isLv0ExpiredCard = (level === 'LV0' && lv0Trial.isExpired);
+    const pkgStatus = getPackageValidityStatus(level, user);
+    const isExpiredCard = Boolean(pkgStatus.isOwned && pkgStatus.isExpired);
 
     // 1. Update Card Title (LV0 - LV6)
     const titleEl = card.querySelector('.vip-card-title');
@@ -6363,7 +6493,15 @@ function updateRecordsPanelPackages() {
     const isPurchased = Boolean(user && user.purchasedPackages && user.purchasedPackages.includes(level));
     const btn = card.querySelector('[data-buy-package]');
     if (btn) {
-      if (isCurrent) {
+      if (isExpiredCard && level === 'LV0') {
+        btn.textContent = 'EXPIRED';
+        btn.disabled = true;
+        btn.className = 'package-card-btn vip-card-cta vip-card-cta--current';
+      } else if (isExpiredCard) {
+        btn.textContent = `EXPIRED · ${priceLabel}`;
+        btn.disabled = false;
+        btn.className = 'package-card-btn vip-card-cta vip-card-cta--buy';
+      } else if (isCurrent) {
         btn.textContent = `${priceLabel} · ${labels.btnCurrent}`;
         btn.disabled = true;
         btn.className = 'package-card-btn vip-card-cta vip-card-cta--current';
@@ -6378,11 +6516,11 @@ function updateRecordsPanelPackages() {
       }
     }
 
-    // 5. Overlay clean EXPIRED stamp image when 5-day free validity has ended
-    syncLv0ExpiredStamp(card, isLv0ExpiredCard);
+    // 5. Overlay clean EXPIRED stamp image whenever package validity has ended (LV0 - LV6)
+    syncLv0ExpiredStamp(card, isExpiredCard);
 
-    // 6. Overlay diagonal CONGRATULATIONS corner seal on the user's active/owned package
-    syncVipOwnedSeal(card, (isCurrent && !isLv0ExpiredCard) || isPurchased);
+    // 6. Overlay diagonal CONGRATULATIONS corner seal on the user's active/owned package (hidden when expired)
+    syncVipOwnedSeal(card, (isCurrent || isPurchased) && !isExpiredCard);
   });
 }
 
@@ -6706,8 +6844,18 @@ function renderPackageDetailPage(level) {
     buyBtn.dataset.targetLevel = level;
     const isCurrent = (level === userLevel);
     const isPurchased = (user && user.purchasedPackages && user.purchasedPackages.includes(level));
+    const pkgStatus = getPackageValidityStatus(level, user);
+    const isExpiredPkg = Boolean(pkgStatus.isOwned && pkgStatus.isExpired);
 
-    if (isCurrent) {
+    if (isExpiredPkg && level === 'LV0') {
+      buyBtn.textContent = 'EXPIRED';
+      buyBtn.disabled = true;
+      buyBtn.className = 'px-6 py-3 rounded-xl bg-rose-900/60 text-rose-200 font-bold text-sm cursor-default';
+    } else if (isExpiredPkg) {
+      buyBtn.textContent = `EXPIRED · ${tLang(lang, 'পুনরায় ক্রয় করুন', 'Renew Now', 'جدّد الآن')}`;
+      buyBtn.disabled = false;
+      buyBtn.className = 'px-7 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition active:scale-95 cursor-pointer';
+    } else if (isCurrent) {
       buyBtn.textContent = tLang(lang, 'বর্তমান স্তর', 'Current Tier', 'المستوى الحالي');
       buyBtn.disabled = true;
       buyBtn.className = 'px-6 py-3 rounded-xl bg-slate-700/60 text-slate-400 font-bold text-sm cursor-default';
@@ -6805,8 +6953,10 @@ function handlePackagePurchase(level, triggerBtn) {
   }
 
   const pkg = packageData[level];
-  const isCurrent = (level === user.packageLevel);
-  const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level));
+  const pkgStatus = getPackageValidityStatus(level, user);
+  const isExpiredOwned = Boolean(pkgStatus.isOwned && pkgStatus.isExpired);
+  const isCurrent = (level === user.packageLevel) && !isExpiredOwned;
+  const isPurchased = (user.purchasedPackages && user.purchasedPackages.includes(level)) && !isExpiredOwned;
 
   if (isCurrent) {
     showToastNotification(tLang(initLang, `আপনি বর্তমানে ${level} প্যাকেজে সক্রিয় রয়েছেন।`, `You are already active on the ${level} package.`, `أنت نشط بالفعل في باقة ${level}.`));
@@ -6910,6 +7060,10 @@ function handlePackagePurchase(level, triggerBtn) {
       if (!freshUser.purchasedPackages.includes(level)) {
         freshUser.purchasedPackages.push(level);
       }
+      if (!freshUser.packagePurchaseDates || typeof freshUser.packagePurchaseDates !== 'object') {
+        freshUser.packagePurchaseDates = {};
+      }
+      freshUser.packagePurchaseDates[level] = new Date().toISOString();
 
       localStorage.setItem('my_pass_available_bal', freshUser.balance.toFixed(2));
       localStorage.setItem('aloSignedInUser', JSON.stringify(freshUser));
@@ -8537,8 +8691,10 @@ async function saveLoginPasswordDetails() {
       plainPassword: '',
       updatedAt: nowIso
     });
+    const rawStoredCountry = liveAccount && liveAccount._rawOpt ? String(liveAccount._rawOpt.country || '').trim().toUpperCase() : '';
+    const needsCountrySync = Boolean(rawStoredCountry && rawStoredCountry !== String(updatedUser.country || '').trim().toUpperCase());
 
-    if (!dbUpdated) {
+    if (!dbUpdated || needsCountrySync) {
       dbUpdated = await dbSaveUser(updatedUser);
     }
 
@@ -9882,8 +10038,9 @@ function refreshDailyMissionLimit(level) {
   
   const user = getCurrentUser();
   const isUnlocked = isLevelUnlocked(level, user);
-  const lv0Status = getLv0TrialStatus(user);
-  const isLv0Expired = (level === 'LV0' && lv0Status.isExpired);
+  const pkgStatus = getPackageValidityStatus(level, user);
+  const isPkgExpired = Boolean(pkgStatus.isOwned && pkgStatus.isExpired);
+  const isLv0Expired = (level === 'LV0' && isPkgExpired);
   const userLevel = (user && user.packageLevel) || 'LV0';
   const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
   const nowMs = Date.now();
@@ -9906,7 +10063,9 @@ function refreshDailyMissionLimit(level) {
     title.textContent = `${activePlatform} · ${level}`;
   }
   if (note) {
-    note.textContent = tLang(lang, 'আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ', 'Available tasks for your package', 'المهام المتاحة لباقتك الحالية');
+    note.textContent = isPkgExpired
+      ? 'EXPIRED'
+      : tLang(lang, 'আপনার বর্তমান প্যাকেজের জন্য উপলভ্য কাজ', 'Available tasks for your package', 'المهام المتاحة لباقتك الحالية');
   }
 
   // Update button states in task list
@@ -9925,10 +10084,14 @@ function refreshDailyMissionLimit(level) {
       });
 
       if (!isUnlocked) {
-        btn.textContent = tLang(lang, 'লকড 🔒', 'Locked 🔒', 'مقفل 🔒');
+        btn.textContent = isPkgExpired ? 'EXPIRED' : tLang(lang, 'লকড 🔒', 'Locked 🔒', 'مقفل 🔒');
         btn.disabled = false;
-        btn.className = 'platform-task-accept bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
+        btn.className = isPkgExpired
+          ? 'platform-task-accept bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30'
+          : 'platform-task-accept bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30';
         btn.dataset.lockedLevel = level;
+        if (isPkgExpired) btn.dataset.pkgExpired = 'true';
+        else btn.removeAttribute('data-pkg-expired');
         if (isLv0Expired) btn.dataset.lv0Expired = 'true';
         else btn.removeAttribute('data-lv0-expired');
       } else if (isTaskAccepted || btn.dataset.accepted === 'true') {
@@ -10248,8 +10411,8 @@ function renderPackageTasks(level) {
   activePackageLevel = packageTaskSettings[level] ? level : 'LV0';
   const user = getCurrentUser();
   const isUnlocked = isLevelUnlocked(activePackageLevel, user);
-  const lv0Status = getLv0TrialStatus(user);
-  const isLv0Expired = (activePackageLevel === 'LV0' && lv0Status.isExpired);
+  const pkgStatus = getPackageValidityStatus(activePackageLevel, user);
+  const isPkgExpired = Boolean(pkgStatus.isOwned && pkgStatus.isExpired);
   const settings = packageTaskSettings[activePackageLevel];
   const userLevel = (user && user.packageLevel) || 'LV0';
   const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
@@ -10284,10 +10447,12 @@ function renderPackageTasks(level) {
     let btnClass = 'platform-task-accept';
 
     if (!isUnlocked) {
-      btnText = tLang(lang, 'লকড 🔒', 'Locked 🔒', 'مقفل 🔒');
+      btnText = isPkgExpired ? 'EXPIRED' : tLang(lang, 'লকড 🔒', 'Locked 🔒', 'مقفل 🔒');
       btnDisabled = false;
-      extraAttr = `data-locked-level="${activePackageLevel}"${isLv0Expired ? ' data-lv0-expired="true"' : ''}`;
-      btnClass = 'platform-task-accept bg-[#0c2364] text-[#35c6e7] border border-[#35c6e7]/40 hover:bg-[#1264c9] hover:text-white transition';
+      extraAttr = `data-locked-level="${activePackageLevel}"${isPkgExpired ? ' data-lv0-expired="true" data-pkg-expired="true"' : ''}`;
+      btnClass = isPkgExpired
+        ? 'platform-task-accept bg-rose-900/70 text-rose-200 border border-rose-400/50 hover:bg-rose-800 transition'
+        : 'platform-task-accept bg-[#0c2364] text-[#35c6e7] border border-[#35c6e7]/40 hover:bg-[#1264c9] hover:text-white transition';
     } else if (isThisAccepted) {
       btnText = tLang(lang, 'গৃহীত', 'Accepted', 'مقبول');
       btnDisabled = true;
@@ -11574,8 +11739,8 @@ function parseTeamCommissionTxsByTier(commTxs, viewerUser) {
 
     const methodRaw = String(tx.method || '');
     const methodStr = methodRaw.toLowerCase();
-    // Exclude Lucky Spin prizes stored under type='commission'
-    if (methodStr.includes('lucky spin') || methodStr.includes('ভাগ্যবান স্পিন') || methodStr.includes('লটারি')) {
+    // Exclude Lucky Wheel / Lucky Spin prizes stored under type='commission'
+    if (methodStr.includes('lucky spin') || methodStr.includes('lucky wheel') || methodStr.includes('ভাগ্যবান স্পিন') || methodStr.includes('লটারি')) {
       return;
     }
 
@@ -11813,56 +11978,6 @@ function updateActiveTierMetrics(cachedTeamData, commTxsArg) {
   if (mEl) mEl.textContent = String(count);
   if (rEl) rEl.textContent = rechargeSum.toFixed(2);
   if (bEl) bEl.textContent = activeData.total.toFixed(2);
-
-  // Update per-tier breakdown & total commission summary card in Team Report
-  const pkgRateEl = document.getElementById('tier-comm-pkg-rate');
-  const taskRateEl = document.getElementById('tier-comm-task-rate');
-  const pkgValEl = document.getElementById('tier-comm-pkg-val');
-  const taskValEl = document.getElementById('tier-comm-task-val');
-  const allTotalEl = document.getElementById('team-comm-all-tiers-total');
-  const todayTotalEl = document.getElementById('team-comm-today-total');
-
-  if (pkgRateEl) pkgRateEl.textContent = `${pkgRatePct}%`;
-  if (taskRateEl) taskRateEl.textContent = `${taskRatePct}%`;
-  if (pkgValEl) pkgValEl.textContent = activeData.pkg.toFixed(2);
-  if (taskValEl) taskValEl.textContent = activeData.task.toFixed(2);
-  if (allTotalEl) allTotalEl.textContent = allTiersTotal.toFixed(2);
-  if (todayTotalEl) todayTotalEl.textContent = allTiersToday.toFixed(2);
-
-  // Render recent credited commission records for the selected tier
-  const recordsListEl = document.getElementById('team-comm-records-list');
-  if (recordsListEl) {
-    const recs = activeData.records || [];
-    if (recs.length === 0) {
-      const emptyTxt = 'No commission records in this tier yet';
-      recordsListEl.innerHTML = `<div class="py-5 text-center text-xs text-slate-400">${emptyTxt}</div>`;
-    } else {
-      recordsListEl.innerHTML = recs.slice(0, 15).map(function(rec) {
-        const typeLabel = rec.kind === 'package'
-          ? 'Package Commission'
-          : (rec.kind === 'task' ? 'Daily Task Commission' : 'Team Commission');
-        const ratioBadge = rec.ratio ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#0c2666] text-[#38bdf8] border border-[#1d4ed8]/40">${rec.ratio}</span>` : '';
-        const dateTime = [rec.date, rec.time].filter(Boolean).join(' · ');
-        return `
-          <div class="flex items-center justify-between py-2.5 px-3 bg-[#040f2e]/85 rounded-lg border border-[#102966]/70">
-            <div class="min-w-0 pr-2">
-              <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-white truncate">${typeLabel}</span>
-                ${ratioBadge}
-              </div>
-              <div class="text-[11px] text-slate-400 font-mono mt-0.5">${dateTime || '—'}</div>
-            </div>
-            <div class="text-right shrink-0">
-              <div class="text-xs sm:text-sm font-bold text-emerald-400 font-mono tabular-nums">+${viewerSym}${Number(rec.amount || 0).toFixed(2)}</div>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-    if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
-      window.aloI18n.translateDOM(lang, { silent: true });
-    }
-  }
 }
 window.updateActiveTierMetrics = updateActiveTierMetrics;
 
@@ -12904,7 +13019,8 @@ document.addEventListener('click', function(event) {
     }
     event.preventDefault();
     const lang = getActiveLang(user);
-    const msg = (level === 'LV0' && getLv0TrialStatus(user).isExpired)
+    const pkgSt = getPackageValidityStatus(level, user);
+    const msg = (pkgSt.isOwned && pkgSt.isExpired)
       ? 'EXPIRED'
       : tLang(lang, 'ক্রয় করা হয়নি', 'Not purchased', 'غير مشترى');
     showCenterTextNotice(msg);
@@ -13006,18 +13122,28 @@ document.addEventListener('click', function(event) {
   const lockedBtn = event.target.closest('[data-locked-level]');
   if (lockedBtn) {
     const lvl = lockedBtn.dataset.lockedLevel || activePackageLevel;
-    if (lvl === 'LV0' || lockedBtn.dataset.lv0Expired === 'true') {
+    const curU = getCurrentUser();
+    const l = getActiveLang(curU);
+    const pkgSt = getPackageValidityStatus(lvl, curU);
+    if (lvl === 'LV0' || lockedBtn.dataset.lv0Expired === 'true' || lockedBtn.dataset.pkgExpired === 'true' || (pkgSt.isOwned && pkgSt.isExpired)) {
       event.preventDefault();
-      const curU = getCurrentUser();
-      const l = getActiveLang(curU);
-      const lv0St = getLv0TrialStatus(curU);
-      showToastNotification(tLang(
-        l,
-        `⏳ আপনার ${formatBanglaNumber(lv0St.validityDays)} দিনের ফ্রি কাজের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে LV1+ প্যাকেজ ক্রয় করুন।`,
-        `⏳ Your ${lv0St.validityDays}-day free work validity has expired! Please purchase LV1+.`,
-        `⏳ انتهت صلاحية العمل المجاني (${lv0St.validityDays} أيام)! يرجى شراء باقة LV1+.`
-      ));
-      openDashboardPanel('records');
+      if (lvl === 'LV0') {
+        showToastNotification(tLang(
+          l,
+          `⏳ আপনার ${formatBanglaNumber(pkgSt.validityDays)} দিনের ফ্রি কাজের মেয়াদ শেষ হয়েছে! অনুগ্রহ করে LV1+ প্যাকেজ ক্রয় করুন।`,
+          `⏳ Your ${pkgSt.validityDays}-day free work validity has expired! Please purchase LV1+.`,
+          `⏳ انتهت صلاحية العمل المجاني (${pkgSt.validityDays} أيام)! يرجى شراء باقة LV1+.`
+        ));
+        openDashboardPanel('records');
+      } else {
+        showToastNotification(tLang(
+          l,
+          `⏳ আপনার ${lvl} প্যাকেজের ${formatBanglaNumber(pkgSt.validityDays)} দিনের মেয়াদ শেষ (EXPIRED)! পুনরায় ক্রয় বা আপগ্রেড করুন।`,
+          `⏳ Your ${lvl} package (${pkgSt.validityDays} days) has EXPIRED! Please renew or upgrade.`,
+          `⏳ انتهت صلاحية باقة ${lvl} (${pkgSt.validityDays} يوماً)! يرجى التجديد أو الترقية.`
+        ));
+        openPackageDetailPage(lvl);
+      }
       return;
     }
     if (lvl && lvl !== 'LV0') {
@@ -13064,14 +13190,23 @@ document.addEventListener('click', function(event) {
     }
     const lang = getActiveLang(user);
 
-    if (activePackageLevel === 'LV0' && getLv0TrialStatus(user).isExpired) {
-      const lv0St = getLv0TrialStatus(user);
-      showToastNotification(tLang(
-        lang,
-        `⏳ আপনার ${formatBanglaNumber(lv0St.validityDays)} দিনের ফ্রি কাজের মেয়াদ শেষ হয়েছে! কাজ করতে LV1+ প্যাকেজ ক্রয় করুন।`,
-        `⏳ Your ${lv0St.validityDays}-day free validity has expired! Purchase LV1+ package to continue.`,
-        `⏳ انتهت صلاحية العمل المجاني (${lv0St.validityDays} أيام)! يرجى شراء باقة LV1+.`
-      ));
+    const activePkgSt = getPackageValidityStatus(activePackageLevel, user);
+    if (activePkgSt.isOwned && activePkgSt.isExpired) {
+      showToastNotification(
+        activePackageLevel === 'LV0'
+          ? tLang(
+              lang,
+              `⏳ আপনার ${formatBanglaNumber(activePkgSt.validityDays)} দিনের ফ্রি কাজের মেয়াদ শেষ হয়েছে! কাজ করতে LV1+ প্যাকেজ ক্রয় করুন।`,
+              `⏳ Your ${activePkgSt.validityDays}-day free validity has expired! Purchase LV1+ package to continue.`,
+              `⏳ انتهت صلاحية العمل المجاني (${activePkgSt.validityDays} أيام)! يرجى شراء باقة LV1+.`
+            )
+          : tLang(
+              lang,
+              `⏳ আপনার ${activePackageLevel} প্যাকেজের ${formatBanglaNumber(activePkgSt.validityDays)} দিনের মেয়াদ শেষ (EXPIRED)! পুনরায় ক্রয় বা আপগ্রেড করুন।`,
+              `⏳ Your ${activePackageLevel} package (${activePkgSt.validityDays} days) has EXPIRED! Please renew or upgrade.`,
+              `⏳ انتهت صلاحية باقة ${activePackageLevel} (${activePkgSt.validityDays} يوماً)! يرجى التجديد أو الترقية.`
+            )
+      );
       openDashboardPanel('records');
       return;
     }
@@ -16631,18 +16766,18 @@ window.addEventListener('alo-language-changed', function(e) {
 // LUCKY SPIN (ভাগ্যবান স্পিন) - REAL SUPABASE DRAW & PRIZE SYSTEM (৳42 - ৳45000)
 // ============================================================================
 const LUCKY_SPIN_PRIZES = [
-  { amount: 42,    label: '৪২৳',    enLabel: '42৳',    weight: 34,   fill: '#ef4444', text: '#ffffff' },
-  { amount: 500,   label: '৫০০৳',   enLabel: '500৳',   weight: 2,    fill: '#f59e0b', text: '#091326' },
-  { amount: 95,    label: '৯৫৳',    enLabel: '95৳',    weight: 14,   fill: '#10b981', text: '#ffffff' },
-  { amount: 5000,  label: '৫০০০৳',  enLabel: '5000৳',  weight: 0.25, fill: '#3b82f6', text: '#ffffff' },
-  { amount: 220,   label: '২২০৳',   enLabel: '220৳',   weight: 6,    fill: '#a855f7', text: '#ffffff' },
-  { amount: 45000, label: '৪৫০০০৳', enLabel: '45000৳', weight: 0.05, fill: '#ec4899', text: '#ffffff' },
-  { amount: 65,    label: '৬৫৳',    enLabel: '65৳',    weight: 22,   fill: '#06b6d4', text: '#071638' },
-  { amount: 1500,  label: '১৫০০৳',  enLabel: '1500৳',  weight: 0.6,  fill: '#f97316', text: '#ffffff' },
-  { amount: 150,   label: '১৫০৳',   enLabel: '150৳',   weight: 8,    fill: '#84cc16', text: '#071638' },
-  { amount: 15000, label: '১৫০০০৳', enLabel: '15000৳', weight: 0.1,  fill: '#6366f1', text: '#ffffff' },
-  { amount: 80,    label: '৮০৳',    enLabel: '80৳',    weight: 18,   fill: '#14b8a6', text: '#071638' },
-  { amount: 2500,  label: '২৫০০৳',  enLabel: '2500৳',  weight: 0.4,  fill: '#eab308', text: '#071638' }
+  { amount: 12.6,  usdAmount: 0.10, label: '$0.10',  enLabel: '$0.10',  weight: 72,   fill: '#ef4444', text: '#ffffff' },
+  { amount: 500,                    label: '৫০০৳',   enLabel: '500৳',   weight: 0.6,  fill: '#f59e0b', text: '#091326' },
+  { amount: 95,                     label: '৯৫৳',    enLabel: '95৳',    weight: 4.5,  fill: '#10b981', text: '#ffffff' },
+  { amount: 5000,                   label: '৫০০০৳',  enLabel: '5000৳',  weight: 0.08, fill: '#3b82f6', text: '#ffffff' },
+  { amount: 220,                    label: '২২০৳',   enLabel: '220৳',   weight: 1.2,  fill: '#a855f7', text: '#ffffff' },
+  { amount: 45000,                  label: '৪৫০০০৳', enLabel: '45000৳', weight: 0.02, fill: '#ec4899', text: '#ffffff' },
+  { amount: 65,                     label: '৬৫৳',    enLabel: '65৳',    weight: 7,    fill: '#06b6d4', text: '#071638' },
+  { amount: 1500,                   label: '১৫০০৳',  enLabel: '1500৳',  weight: 0.25, fill: '#f97316', text: '#ffffff' },
+  { amount: 150,                    label: '১৫০৳',   enLabel: '150৳',   weight: 2.2,  fill: '#84cc16', text: '#071638' },
+  { amount: 15000,                  label: '১৫০০০৳', enLabel: '15000৳', weight: 0.03, fill: '#6366f1', text: '#ffffff' },
+  { amount: 42,                     label: '৪২৳',    enLabel: '42৳',    weight: 12,   fill: '#14b8a6', text: '#071638' },
+  { amount: 2500,                   label: '২৫০০৳',  enLabel: '2500৳',  weight: 0.12, fill: '#eab308', text: '#071638' }
 ];
 
 // Start at 15deg (half a slice) so the fixed top pointer rests neutrally on the divider seam — not favoring any dollar slice
@@ -16650,13 +16785,21 @@ let luckySpinCurrentRotation = 15;
 let isLuckySpinAnimating = false;
 let luckySpinWheelBuilt = false;
 
-function getLuckySpinPrizeAmountForUser(baseBdtAmount, user) {
-  return toUserCurrencyAmount(baseBdtAmount, user);
+function getLuckySpinPrizeAmountForUser(prizeOrBdt, user) {
+  if (prizeOrBdt && typeof prizeOrBdt === 'object') {
+    if (isUsdOnlyUser(user) && Number.isFinite(Number(prizeOrBdt.usdAmount))) {
+      return Number(Number(prizeOrBdt.usdAmount).toFixed(2));
+    }
+    return toUserCurrencyAmount(prizeOrBdt.amount, user);
+  }
+  return toUserCurrencyAmount(prizeOrBdt, user);
 }
 
 function getLuckySpinPrizeLabelForUser(item, user, lang) {
   if (isUsdOnlyUser(user)) {
-    const usdAmt = toUserCurrencyAmount(item.amount, user);
+    const usdAmt = Number.isFinite(Number(item.usdAmount))
+      ? Number(Number(item.usdAmount).toFixed(2))
+      : toUserCurrencyAmount(item.amount, user);
     return usdAmt >= 100 ? `$${Math.round(usdAmt)}` : `$${usdAmt.toFixed(2)}`;
   }
   return lang === 'bn' ? item.label : item.enLabel;
@@ -16849,7 +16992,7 @@ async function renderLuckySpinPanel() {
         .from('transactions')
         .select('*')
         .eq('phone', normPhone)
-        .or('method.ilike.%স্পিন%,method.ilike.%Spin%')
+        .or('method.ilike.%স্পিন%,method.ilike.%Spin%,method.ilike.%Wheel%')
         .order('created_at', { ascending: false })
         .limit(30);
       const currentAfter = getCurrentUser();
@@ -16918,7 +17061,7 @@ async function renderLuckySpinPanel() {
           <div class="flex items-center justify-between px-4 py-3 rounded-xl bg-[#0b1730] border-0">
             <div class="flex items-center gap-3 min-w-0">
               <div class="min-w-0">
-                <p class="text-sm font-semibold text-[#eef2fb] truncate">${tLang(lang, 'ভাগ্যবান স্পিন পুরস্কার', 'Lucky Spin Reward', 'جائزة عجلة الحظ')}</p>
+                <p class="text-sm font-semibold text-[#eef2fb] truncate">${tLang(lang, 'Lucky Wheel পুরস্কার', 'Lucky Wheel Reward', 'جائزة عجلة الحظ')}</p>
                 <p class="text-[11px] text-[#7f8fb0] font-mono">${r.date || ''} ${r.time || ''}</p>
               </div>
             </div>
@@ -16994,7 +17137,7 @@ async function executeLuckySpin() {
     latestUser.usedSpins = Math.max(Number(latestUser.usedSpins) || 0, freshUser.usedSpins);
 
     const isUsd = isUsdOnlyUser(latestUser);
-    const wonAmount = getLuckySpinPrizeAmountForUser(prize.amount, latestUser);
+    const wonAmount = getLuckySpinPrizeAmountForUser(prize, latestUser);
     const prevBal = Number(latestUser.balance) || 0;
     const nextBal = Number((prevBal + wonAmount).toFixed(2));
     latestUser.balance = nextBal;
@@ -17018,7 +17161,7 @@ async function executeLuckySpin() {
       ratio: '100%',
       actual: wonAmount,
       status: 'অনুমোদিত',
-      method: isUsd ? 'Lucky Spin Reward' : 'ভাগ্যবান স্পিন (Lucky Spin)',
+      method: isUsd ? 'Lucky Wheel Reward' : 'Lucky Wheel',
       date: dateStr,
       time: timeStr,
       newBalance: nextBal

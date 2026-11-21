@@ -1505,6 +1505,21 @@ async function handleSaveUserForm(e) {
   const unlockedDelta = Math.min(frozenReduction, availIncrease);
   const nextRechargeFrozen = Math.max(0, Math.min(nextFrozen, Number(rawOpt.recharge_frozen_balance || 0) - frozenReduction));
 
+  const nextLevel = document.getElementById('edit-user-level').value || 'LV0';
+  const prevLevel = String(existing.package_level || 'LV0').toUpperCase();
+  const nextPurchaseDates = Object.assign(
+    {},
+    (rawOpt.package_purchase_dates && typeof rawOpt.package_purchase_dates === 'object') ? rawOpt.package_purchase_dates : {}
+  );
+  const nextPurchasedPkgs = Array.isArray(rawOpt.purchased_packages) ? rawOpt.purchased_packages.slice() : ['LV0'];
+  if (!nextPurchasedPkgs.includes('LV0')) nextPurchasedPkgs.unshift('LV0');
+  if (nextLevel !== 'LV0') {
+    if (!nextPurchasedPkgs.includes(nextLevel)) nextPurchasedPkgs.push(nextLevel);
+    if (nextLevel !== prevLevel || !nextPurchaseDates[nextLevel]) {
+      nextPurchaseDates[nextLevel] = new Date().toISOString();
+    }
+  }
+
   const updatedMeta = Object.assign({}, rawOpt, {
     nagad_name: existingMeta.nagadName || newName,
     nagad_phone: document.getElementById('edit-user-nagad-phone').value.trim(),
@@ -1515,13 +1530,15 @@ async function handleSaveUserForm(e) {
     account_status: document.getElementById('edit-user-status').value || 'active',
     frozen_balance: Number(nextFrozen.toFixed(2)),
     recharge_frozen_balance: Number(nextRechargeFrozen.toFixed(2)),
-    admin_unfrozen_balance: Number(((Number(rawOpt.admin_unfrozen_balance) || 0) + unlockedDelta).toFixed(2))
+    admin_unfrozen_balance: Number(((Number(rawOpt.admin_unfrozen_balance) || 0) + unlockedDelta).toFixed(2)),
+    purchased_packages: nextPurchasedPkgs,
+    package_purchase_dates: nextPurchaseDates
   });
 
   const payload = {
     name: newName,
     balance: Number(nextAvail.toFixed(2)),
-    package_level: document.getElementById('edit-user-level').value || 'LV0',
+    package_level: nextLevel,
     superior_id: document.getElementById('edit-user-superior').value.trim() || '11',
     plain_password: newPlainPass,
     bkash_phone: document.getElementById('edit-user-bkash-phone').value.trim(),
