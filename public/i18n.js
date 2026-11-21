@@ -1662,7 +1662,29 @@
     "আপনার প্রকৃত নাম লিখুন": { en: "Enter your full legal name", ar: "أدخل اسمك القانوني الكامل" },
     "পরিমাণ লিখুন ($ USD)": { en: "Enter amount ($ USD)", ar: "أدخل المبلغ ($ USD)" },
     "পরিমাণ লিখুন (USD)": { en: "Enter amount (USD)", ar: "أدخل المبلغ (USD)" },
-    "১২৬ থেকে ৫০,০০০": { en: "126 to 50,000", ar: "من 126 إلى 50,000" }
+    "১২৬ থেকে ৫০,০০০": { en: "126 to 50,000", ar: "من 126 إلى 50,000" },
+    "Language": { en: "Language", ar: "اللغة" },
+    "Phone Number": { en: "Phone Number", ar: "رقم الهاتف" },
+    "Employee Benefits": { en: "Employee Benefits", ar: "مزايا الموظفين" },
+    "Customer Service": { en: "Customer Service", ar: "خدمة العملاء" },
+    "Refer & Earn": { en: "Refer & Earn", ar: "ادعُ واربح" },
+    "First Time": { en: "First Time", ar: "أول مرة" },
+    "Deposit $30": { en: "Deposit $30", ar: "إيداع 30$" },
+    "Bonus $2": { en: "Bonus $2", ar: "مكافأة 2$" },
+    "First Time Deposit $30": { en: "First Time Deposit $30", ar: "أول إيداع 30$" },
+    "Payment method": { en: "Payment method", ar: "طريقة الدفع" },
+    "Manual recharge": { en: "Manual recharge", ar: "شحن يدوي" },
+    "Fast and convenient": { en: "Fast and convenient", ar: "سريع ومريح" },
+    "Deposit": { en: "Deposit", ar: "إيداع" },
+    "Crypto transfer": { en: "Crypto transfer", ar: "تحويل عملات رقمية" },
+    "Network": { en: "Network", ar: "الشبكة" },
+    "Recommended": { en: "Recommended", ar: "موصى به" },
+    "Deposit Address (BEP20):": { en: "Deposit Address (BEP20):", ar: "عنوان الإيداع (BEP20):" },
+    "Live Address": { en: "Live Address", ar: "عنوان مباشر" },
+    "Select country": { en: "Select country", ar: "اختر الدولة" },
+    "Task Reward": { en: "Task Reward", ar: "مكافأة المهمة" },
+    "Today Earnings": { en: "Today Earnings", ar: "أرباح اليوم" },
+    "Log Out": { en: "Log Out", ar: "تسجيل الخروج" }
   };
 
   // Placeholders dictionary
@@ -1913,7 +1935,288 @@
     'Password': { tl: 'Password', ko: '비밀번호', vi: 'Mật khẩu', tr: 'Şifre', hi: 'पासवर्ड', id: 'Kata Sandi', ms: 'Kata Laluan', pt: 'Senha', es: 'Contraseña', ru: 'Пароль' },
     'Receive': { tl: 'Tanggapin', ko: '받기', vi: 'Nhận', tr: 'Al', hi: 'प्राप्त करें', id: 'Terima', ms: 'Terima', pt: 'Receber', es: 'Recibir', ru: 'Принять' },
     'Buy Now': { tl: 'Bumili Ngayon', ko: '지금 구매', vi: 'Mua ngay', tr: 'Şimdi Satın Al', hi: 'अभी खरीदें', id: 'Beli Sekarang', ms: 'Beli Sekarang', pt: 'Comprar Agora', es: 'Comprar Ahora', ru: 'Купить сейчас' },
-    'Upgrade Now': { tl: 'Mag-upgrade Ngayon', ko: '지금 업그레이드', vi: 'Nâng cấp ngay', tr: 'Şimdi Yükselt', hi: 'अभी अपग्रेड करें', id: 'Upgrade Sekarang', ms: 'Naik Taraf Sekarang', pt: 'Atualizar Agora', es: 'Mejorar Ahora', ru: 'Обновить сейчас' }
+    'Upgrade Now': { tl: 'Mag-upgrade Ngayon', ko: '지금 업그레이드', vi: 'Nâng cấp ngay', tr: 'Şimdi Yükselt', hi: 'अभी अपग्रेड करें', id: 'Upgrade Sekarang', ms: 'Naik Taraf Sekarang', pt: 'Atualizar Agora', es: 'Mejorar Ahora', ru: 'Обновить сейчас' },
+    'VIP Zone': { tl: 'VIP Zone', ko: 'VIP 존', vi: 'Khu VIP', tr: 'VIP Bölgesi', hi: 'वीआईपी ज़ोन', id: 'Zona VIP', ms: 'Zon VIP', pt: 'Zona VIP', es: 'Zona VIP', ru: 'VIP Зона' },
+    'Active Missions': { tl: 'Aktibong Misyon', ko: '진행 중 미션', vi: 'Nhiệm vụ hoạt động', tr: 'Aktif Görevler', hi: 'सक्रिय मिशन', id: 'Misi Aktif', ms: 'Misi Aktif', pt: 'Missões Ativas', es: 'Misiones Activas', ru: 'Активные миссии' },
+    'Manager': { tl: 'Tagapamahala', ko: '매니저', vi: 'Quản lý', tr: 'Yönetici', hi: 'प्रबंधक', id: 'Manajer', ms: 'Pengurus', pt: 'Gerente', es: 'Gerente', ru: 'Менеджер' },
+    'FOR YOU': { tl: 'PARA SA IYO', ko: '맞춤 추천', vi: 'DÀNH CHO BẠN', tr: 'SENİN İÇİN', hi: 'आपके लिए', id: 'UNTUK ANDA', ms: 'UNTUK ANDA', pt: 'PARA VOCÊ', es: 'PARA TI', ru: 'ДЛЯ ВАС' },
+    'Like Reels Only': { tl: 'Like Reels Lamang', ko: '릴스 좋아요 전용', vi: 'Chỉ thích Reels', tr: 'Sadece Reels Beğen', hi: 'केवल रील्स लाइक करें', id: 'Suka Reels Saja', ms: 'Suka Reels Sahaja', pt: 'Apenas Curtir Reels', es: 'Solo Me Gusta en Reels', ru: 'Только лайки Reels' },
+    'Member Updates': { tl: 'Update ng Miyembro', ko: '회원 업데이트', vi: 'Cập nhật thành viên', tr: 'Üye Güncellemeleri', hi: 'सदस्य अपडेट', id: 'Pembaruan Anggota', ms: 'Kemas Kini Ahli', pt: 'Atualizações de Membros', es: 'Actualizaciones de Miembros', ru: 'Обновления участников' },
+    'Refer & Earn': { tl: 'Mag-refer at Kumita', ko: '추천하고 적립', vi: 'Giới thiệu & Kiếm tiền', tr: 'Davet Et ve Kazan', hi: 'रेफर करें और कमाएं', id: 'Undang & Hasilkan', ms: 'Rujuk & Jana', pt: 'Indique e Ganhe', es: 'Refiere y Gana', ru: 'Приглашай и зарабатывай' },
+    'Earn Together': { tl: 'Kumita nang Magkasama', ko: '함께 수익 창출', vi: 'Cùng nhau kiếm tiền', tr: 'Birlikte Kazanın', hi: 'साथ मिलकर कमाएं', id: 'Hasilkan Bersama', ms: 'Jana Bersama', pt: 'Ganhem Juntos', es: 'Ganemos Juntos', ru: 'Зарабатывайте вместе' },
+    'Share your referral link and view your team activity.': { tl: 'Ibahagi ang iyong referral link at tingnan ang aktibidad ng iyong koponan.', ko: '추천 링크를 공유하고 팀 활동을 확인하세요.', vi: 'Chia sẻ liên kết giới thiệu và xem hoạt động đội nhóm của bạn.', tr: 'Referans bağlantınızı paylaşın ve ekip aktivitenizi görüntüleyin.', hi: 'अपना रेफरल लिंक साझा करें और अपनी टीम की गतिविधि देखें।', id: 'Bagikan tautan referensi Anda dan lihat aktivitas tim Anda.', ms: 'Kongsi pautan rujukan anda dan lihat aktiviti pasukan anda.', pt: 'Compartilhe seu link de indicação e veja a atividade da sua equipe.', es: 'Comparte tu enlace de referido y mira la actividad de tu equipo.', ru: 'Поделитесь реферальной ссылкой и следите за активностью команды.' },
+    'Refer Now': { tl: 'Mag-refer Ngayon', ko: '지금 추천', vi: 'Giới thiệu ngay', tr: 'Şimdi Davet Et', hi: 'अभी रेफर करें', id: 'Undang Sekarang', ms: 'Rujuk Sekarang', pt: 'Indicar Agora', es: 'Referir Ahora', ru: 'Пригласить сейчас' },
+    'More Friends': { tl: 'Mas Maraming Kaibigan', ko: '더 많은 친구', vi: 'Thêm nhiều bạn bè', tr: 'Daha Fazla Arkadaş', hi: 'अधिक दोस्त', id: 'Lebih Banyak Teman', ms: 'Lebih Ramai Rakan', pt: 'Mais Amigos', es: 'Más Amigos', ru: 'Больше друзей' },
+    'More Income': { tl: 'Mas Malaking Kita', ko: '더 많은 수익', vi: 'Thu nhập cao hơn', tr: 'Daha Fazla Gelir', hi: 'अधिक आय', id: 'Lebih Banyak Pendapatan', ms: 'Lebih Banyak Pendapatan', pt: 'Mais Renda', es: 'Más Ingresos', ru: 'Больше дохода' },
+    'My Superior:': { tl: 'Aking Superior:', ko: '내 추천인:', vi: 'Cấp trên của tôi:', tr: 'Üst Sponsorum:', hi: 'मेरे सीनियर:', id: 'Atasan Saya:', ms: 'Atasan Saya:', pt: 'Meu Superior:', es: 'Mi Superior:', ru: 'Мой наставник:' },
+    'My Pass': { tl: 'Aking Wallet', ko: '내 지갑', vi: 'Ví của tôi', tr: 'Cüzdanım', hi: 'मेरा वॉलेट', id: 'Dompet Saya', ms: 'Dompet Saya', pt: 'Minha Carteira', es: 'Mi Billetera', ru: 'Мой кошелек' },
+    'Account Balance': { tl: 'Balanse ng Account', ko: '계정 잔액', vi: 'Số dư tài khoản', tr: 'Hesap Bakiyesi', hi: 'खाता बैलेंस', id: 'Saldo Akun', ms: 'Baki Akaun', pt: 'Saldo da Conta', es: 'Saldo de la Cuenta', ru: 'Баланс счета' },
+    'Withdrawable Balance': { tl: 'Maaring I-withdraw', ko: '출금 가능 잔액', vi: 'Số dư có thể rút', tr: 'Çekilebilir Bakiye', hi: 'निकासी योग्य बैलेंस', id: 'Saldo Dapat Ditarik', ms: 'Baki Boleh Dikeluarkan', pt: 'Saldo Disponível', es: 'Saldo Retirable', ru: 'Доступно к выводу' },
+    'Today\'s Tasks': { tl: 'Mga Gawain Ngayon', ko: '오늘의 작업', vi: 'Nhiệm vụ hôm nay', tr: 'Bugünkü Görevler', hi: 'आज के कार्य', id: 'Tugas Hari Ini', ms: 'Tugasan Hari Ini', pt: 'Tarefas de Hoje', es: 'Tareas de Hoy', ru: 'Задачи на сегодня' },
+    'Remaining Tasks': { tl: 'Natitirang Gawain', ko: '남은 작업', vi: 'Nhiệm vụ còn lại', tr: 'Kalan Görevler', hi: 'शेष कार्य', id: 'Sisa Tugas', ms: 'Baki Tugasan', pt: 'Tarefas Restantes', es: 'Tareas Restantes', ru: 'Оставшиеся задачи' },
+    'Completed Tasks': { tl: 'Natapos na Gawain', ko: '완료된 작업', vi: 'Nhiệm vụ đã xong', tr: 'Tamamlanan Görevler', hi: 'पूर्ण कार्य', id: 'Tugas Selesai', ms: 'Tugasan Selesai', pt: 'Tarefas Concluídas', es: 'Tareas Completadas', ru: 'Выполненные задачи' },
+    'Package Details': { tl: 'Detalye ng Package', ko: '패키지 상세', vi: 'Chi tiết gói', tr: 'Paket Detayları', hi: 'पैकेज विवरण', id: 'Detail Paket', ms: 'Butiran Pakej', pt: 'Detalhes do Pacote', es: 'Detalles del Paquete', ru: 'Детали пакета' },
+    'Payment Method': { tl: 'Paraan ng Pagbabayad', ko: '결제 수단', vi: 'Phương thức thanh toán', tr: 'Ödeme Yöntemi', hi: 'भुगतान विधि', id: 'Metode Pembayaran', ms: 'Kaedah Pembayaran', pt: 'Método de Pagamento', es: 'Método de Pago', ru: 'Способ оплаты' },
+    'Submit Mission': { tl: 'Isumite ang Misyon', ko: '미션 제출', vi: 'Gửi nhiệm vụ', tr: 'Görevi Gönder', hi: 'मिशन सबमिट करें', id: 'Kirim Misi', ms: 'Hantar Misi', pt: 'Enviar Missão', es: 'Enviar Misión', ru: 'Отправить миссию' },
+    'Missions': { tl: 'Mga Misyon', ko: '미션', vi: 'Nhiệm vụ', tr: 'Görevler', hi: 'मिशन', id: 'Misi', ms: 'Misi', pt: 'Missões', es: 'Misiones', ru: 'Миссии' },
+    'USDT Deposit': { tl: 'USDT Deposit', ko: 'USDT 입금', vi: 'Nạp USDT', tr: 'USDT Yatır', hi: 'USDT जमा', id: 'Deposit USDT', ms: 'Deposit USDT', pt: 'Depósito USDT', es: 'Depósito USDT', ru: 'Депозит USDT' },
+    'USDT Account': { tl: 'USDT Account', ko: 'USDT 계정', vi: 'Tài khoản USDT', tr: 'USDT Hesabı', hi: 'USDT खाता', id: 'Akun USDT', ms: 'Akaun USDT', pt: 'Conta USDT', es: 'Cuenta USDT', ru: 'Счет USDT' },
+    'Account Binding': { tl: 'Pag-link ng Account', ko: '계정 연동', vi: 'Liên kết tài khoản', tr: 'Hesap Bağlama', hi: 'खाता लिंक', id: 'Penautan Akun', ms: 'Pautan Akaun', pt: 'Vinculação de Conta', es: 'Vinculación de Cuenta', ru: 'Привязка счета' },
+    'Current Level': { tl: 'Kasalukuyang Level', ko: '현재 등급', vi: 'Cấp độ hiện tại', tr: 'Mevcut Seviye', hi: 'वर्तमान स्तर', id: 'Level Saat Ini', ms: 'Tahap Semasa', pt: 'Nível Atual', es: 'Nivel Actual', ru: 'Текущий уровень' },
+    'Current': { tl: 'Kasalukuyan', ko: '현재', vi: 'Hiện tại', tr: 'Mevcut', hi: 'वर्तमान', id: 'Saat Ini', ms: 'Semasa', pt: 'Atual', es: 'Actual', ru: 'Текущий' },
+    'Purchased': { tl: 'Nabili na', ko: '구매 완료', vi: 'Đã mua', tr: 'Satın Alındı', hi: 'खरीदा गया', id: 'Sudah Dibeli', ms: 'Telah Dibeli', pt: 'Comprado', es: 'Comprado', ru: 'Куплено' },
+    'Upgrade': { tl: 'Mag-upgrade', ko: '업그레이드', vi: 'Nâng cấp', tr: 'Yükselt', hi: 'अपग्रेड', id: 'Upgrade', ms: 'Naik Taraf', pt: 'Atualizar', es: 'Mejorar', ru: 'Повысить' },
+    'Unit Price': { tl: 'Presyo bawat Gawain', ko: '단가', vi: 'Đơn giá', tr: 'Birim Fiyat', hi: 'प्रति कार्य दर', id: 'Harga Satuan', ms: 'Harga Seunit', pt: 'Preço Unitário', es: 'Precio Unitario', ru: 'Цена за задачу' },
+    'Per Task': { tl: 'Bawat Gawain', ko: '작업당', vi: 'Mỗi nhiệm vụ', tr: 'Görev Başına', hi: 'प्रति कार्य', id: 'Per Tugas', ms: 'Setiap Tugasan', pt: 'Por Tarefa', es: 'Por Tarea', ru: 'За задачу' },
+    'Price': { tl: 'Presyo', ko: '가격', vi: 'Giá', tr: 'Fiyat', hi: 'मूल्य', id: 'Harga', ms: 'Harga', pt: 'Preço', es: 'Precio', ru: 'Цена' },
+    'Validity': { tl: 'Bisa', ko: '유효기간', vi: 'Thời hạn', tr: 'Geçerlilik', hi: 'वैधता', id: 'Masa Berlaku', ms: 'Tempoh Sah', pt: 'Validade', es: 'Validez', ru: 'Срок действия' },
+    'Set Now': { tl: 'Itakda Ngayon', ko: '지금 설정', vi: 'Thiết lập ngay', tr: 'Şimdi Ayarla', hi: 'अभी सेट करें', id: 'Atur Sekarang', ms: 'Tetapkan Sekarang', pt: 'Definir Agora', es: 'Configurar Ahora', ru: 'Настроить' },
+    'Bound': { tl: 'Naka-link', ko: '연동됨', vi: 'Đã liên kết', tr: 'Bağlandı', hi: 'लिंक हो गया', id: 'Tertaut', ms: 'Dipautkan', pt: 'Vinculado', es: 'Vinculado', ru: 'Привязано' },
+    'Not Set': { tl: 'Hindi Nakatakda', ko: '미설정', vi: 'Chưa thiết lập', tr: 'Ayarlanmadı', hi: 'सेट नहीं', id: 'Belum Diatur', ms: 'Belum Ditetapkan', pt: 'Não Definido', es: 'No Configurado', ru: 'Не задано' },
+    'Verified': { tl: 'Beripikado', ko: '인증됨', vi: 'Đã xác minh', tr: 'Doğrulandı', hi: 'सत्यापित', id: 'Terverifikasi', ms: 'Disahkan', pt: 'Verificado', es: 'Verificado', ru: 'Подтверждено' },
+    'No records found': { tl: 'Walang nahanap na tala', ko: '기록이 없습니다', vi: 'Không có bản ghi nào', tr: 'Kayıt bulunamadı', hi: 'कोई रिकॉर्ड नहीं मिला', id: 'Tidak ada catatan', ms: 'Tiada rekod ditemui', pt: 'Nenhum registro encontrado', es: 'No se encontraron registros', ru: 'Записей не найдено' },
+    'No records yet': { tl: 'Wala pang tala', ko: '아직 기록이 없습니다', vi: 'Chưa có bản ghi', tr: 'Henüz kayıt yok', hi: 'अभी कोई रिकॉर्ड नहीं', id: 'Belum ada catatan', ms: 'Belum ada rekod', pt: 'Sem registros ainda', es: 'Aún no hay registros', ru: 'Пока нет записей' },
+    'Remember me': { tl: 'Tandaan ako', ko: '로그인 유지', vi: 'Ghi nhớ đăng nhập', tr: 'Beni hatırla', hi: 'मुझे याद रखें', id: 'Ingat saya', ms: 'Ingat saya', pt: 'Lembrar de mim', es: 'Recuérdame', ru: 'Запомнить меня' },
+    'Forgot password?': { tl: 'Nakalimutan ang password?', ko: '비밀번호를 잊으셨나요?', vi: 'Quên mật khẩu?', tr: 'Şifrenizi mi unuttunuz?', hi: 'पासवर्ड भूल गए?', id: 'Lupa kata sandi?', ms: 'Lupa kata laluan?', pt: 'Esqueceu a senha?', es: '¿Olvidaste tu contraseña?', ru: 'Забыли пароль?' },
+    'New here?': { tl: 'Bago dito?', ko: '처음이신가요?', vi: 'Mới đến đây?', tr: 'Burada yeni misiniz?', hi: 'यहाँ नए हैं?', id: 'Baru di sini?', ms: 'Baru di sini?', pt: 'Novo por aqui?', es: '¿Nuevo aquí?', ru: 'Впервые здесь?' },
+    'Already have an account?': { tl: 'May account na?', ko: '이미 계정이 있으신가요?', vi: 'Đã có tài khoản?', tr: 'Zaten hesabınız var mı?', hi: 'पहले से खाता है?', id: 'Sudah punya akun?', ms: 'Sudah ada akaun?', pt: 'Já tem uma conta?', es: '¿Ya tienes una cuenta?', ru: 'Уже есть аккаунт?' },
+    'Sign up now': { tl: 'Mag-sign up ngayon', ko: '지금 가입하기', vi: 'Đăng ký ngay', tr: 'Şimdi kaydol', hi: 'अभी साइन अप करें', id: 'Daftar sekarang', ms: 'Daftar sekarang', pt: 'Cadastre-se agora', es: 'Regístrate ahora', ru: 'Зарегистрироваться' },
+    'Sign Up': { tl: 'Mag-sign Up', ko: '회원가입', vi: 'Đăng ký', tr: 'Kayıt Ol', hi: 'साइन अप करें', id: 'Daftar', ms: 'Daftar', pt: 'Cadastrar', es: 'Registrarse', ru: 'Регистрация' },
+    'Enter your phone number': { tl: 'Ilagay ang numero ng telepono', ko: '전화번호를 입력하세요', vi: 'Nhập số điện thoại của bạn', tr: 'Telefon numaranızı girin', hi: 'अपना फ़ोन नंबर दर्ज करें', id: 'Masukkan nomor telepon Anda', ms: 'Masukkan nombor telefon anda', pt: 'Digite seu número de telefone', es: 'Ingresa tu número de teléfono', ru: 'Введите номер телефона' },
+    'Enter your password': { tl: 'Ilagay ang iyong password', ko: '비밀번호를 입력하세요', vi: 'Nhập mật khẩu của bạn', tr: 'Şifrenizi girin', hi: 'अपना पासवर्ड दर्ज करें', id: 'Masukkan kata sandi Anda', ms: 'Masukkan kata laluan anda', pt: 'Digite sua senha', es: 'Ingresa tu contraseña', ru: 'Введите пароль' },
+    'Confirm Password': { tl: 'Kumpirmahin ang Password', ko: '비밀번호 확인', vi: 'Xác nhận mật khẩu', tr: 'Şifreyi Onayla', hi: 'पासवर्ड की पुष्टि करें', id: 'Konfirmasi Kata Sandi', ms: 'Sahkan Kata Laluan', pt: 'Confirmar Senha', es: 'Confirmar Contraseña', ru: 'Подтвердите пароль' },
+    'Send Code': { tl: 'Magpadala ng Code', ko: '코드 전송', vi: 'Gửi mã', tr: 'Kod Gönder', hi: 'कोड भेजें', id: 'Kirim Kode', ms: 'Hantar Kod', pt: 'Enviar Código', es: 'Enviar Código', ru: 'Отправить код' },
+    'Send Verification Code': { tl: 'Magpadala ng Verification Code', ko: '인증 코드 전송', vi: 'Gửi mã xác minh', tr: 'Doğrulama Kodu Gönder', hi: 'सत्यापन कोड भेजें', id: 'Kirim Kode Verifikasi', ms: 'Hantar Kod Pengesahan', pt: 'Enviar Código de Verificação', es: 'Enviar Código de Verificación', ru: 'Отправить код' },
+    'Invite Code': { tl: 'Code ng Imbitasyon', ko: '초대 코드', vi: 'Mã mời', tr: 'Davet Kodu', hi: 'आमंत्रण कोड', id: 'Kode Undangan', ms: 'Kod Jemputan', pt: 'Código de Convite', es: 'Código de Invitación', ru: 'Код приглашения' },
+    'Country': { tl: 'Bansa', ko: '국가', vi: 'Quốc gia', tr: 'Ülke', hi: 'देश', id: 'Negara', ms: 'Negara', pt: 'País', es: 'País', ru: 'Страна' },
+    'Open Link': { tl: 'Buksan ang Link', ko: '링크 열기', vi: 'Mở liên kết', tr: 'Bağlantıyı Aç', hi: 'लिंक खोलें', id: 'Buka Tautan', ms: 'Buka Pautan', pt: 'Abrir Link', es: 'Abrir Enlace', ru: 'Открыть ссылку' },
+    'Copy Link': { tl: 'Kopyahin ang Link', ko: '링크 복사', vi: 'Sao chép liên kết', tr: 'Bağlantıyı Kopyala', hi: 'लिंक कॉपी करें', id: 'Salin Tautan', ms: 'Salin Pautan', pt: 'Copiar Link', es: 'Copiar Enlace', ru: 'Копировать ссылку' },
+    'Submit Task': { tl: 'Isumite ang Gawain', ko: '작업 제출', vi: 'Gửi nhiệm vụ', tr: 'Görevi Gönder', hi: 'कार्य सबमिट करें', id: 'Kirim Tugas', ms: 'Hantar Tugasan', pt: 'Enviar Tarefa', es: 'Enviar Tarea', ru: 'Отправить задачу' },
+    'Cancel Task': { tl: 'Kanselahin ang Gawain', ko: '작업 취소', vi: 'Hủy nhiệm vụ', tr: 'Görevi İptal Et', hi: 'कार्य रद्द करें', id: 'Batalkan Tugas', ms: 'Batal Tugasan', pt: 'Cancelar Tarefa', es: 'Cancelar Tarea', ru: 'Отменить задачу' },
+    'Deposit Record': { tl: 'Tala ng Deposito', ko: '입금 내역', vi: 'Lịch sử nạp tiền', tr: 'Yatırım Kaydı', hi: 'जमा रिकॉर्ड', id: 'Riwayat Deposit', ms: 'Rekod Deposit', pt: 'Histórico de Depósito', es: 'Historial de Depósitos', ru: 'История пополнений' },
+    'Withdrawal Record': { tl: 'Tala ng Pag-withdraw', ko: '출금 내역', vi: 'Lịch sử rút tiền', tr: 'Çekim Kaydı', hi: 'निकासी रिकॉर्ड', id: 'Riwayat Penarikan', ms: 'Rekod Pengeluaran', pt: 'Histórico de Saque', es: 'Historial de Retiros', ru: 'История выводов' },
+    'Commission Record': { tl: 'Tala ng Komisyon', ko: '커미션 내역', vi: 'Lịch sử hoa hồng', tr: 'Komisyon Kaydı', hi: 'कमीशन रिकॉर्ड', id: 'Riwayat Komisi', ms: 'Rekod Komisen', pt: 'Histórico de Comissão', es: 'Historial de Comisiones', ru: 'История комиссий' },
+    'Task Record': { tl: 'Tala ng Gawain', ko: '작업 내역', vi: 'Lịch sử nhiệm vụ', tr: 'Görev Kaydı', hi: 'कार्य रिकॉर्ड', id: 'Riwayat Tugas', ms: 'Rekod Tugasan', pt: 'Histórico de Tarefas', es: 'Historial de Tareas', ru: 'История задач' },
+    'Get Started': { tl: 'Magsimula Ngayon', ko: '시작하기', vi: 'Bắt đầu ngay', tr: 'Hemen Başla', hi: 'शुरू करें', id: 'Mulai Sekarang', ms: 'Mula Sekarang', pt: 'Começar Agora', es: 'Comenzar Ahora', ru: 'Начать' },
+    'Terms of Service': { tl: 'Mga Tuntunin ng Serbisyo', ko: '이용약관', vi: 'Điều khoản dịch vụ', tr: 'Hizmet Şartları', hi: 'सेवा की शर्तें', id: 'Ketentuan Layanan', ms: 'Terma Perkhidmatan', pt: 'Termos de Serviço', es: 'Términos de Servicio', ru: 'Условия использования' },
+    'Privacy Policy': { tl: 'Patakaran sa Privacy', ko: '개인정보 처리방침', vi: 'Chính sách bảo mật', tr: 'Gizlilik Politikası', hi: 'गोपनीयता नीति', id: 'Kebijakan Privasi', ms: 'Dasar Privasi', pt: 'Política de Privacidade', es: 'Política de Privacidad', ru: 'Политика конфиденциальности' },
+    'For referring a new member,': { tl: 'Sa pag-refer ng bagong miyembro,', ko: '신규 회원 추천으로,', vi: 'Nhờ giới thiệu thành viên mới,', tr: 'Yeni üye davet ettiğiniz için,', hi: 'नए सदस्य को रेफर करने के लिए,', id: 'Karena mengundang anggota baru,', ms: 'Kerana merujuk ahli baharu,', pt: 'Por indicar um novo membro,', es: 'Por referir a un nuevo miembro,', ru: 'За приглашение нового участника,' },
+    'congratulations on earning a promotion bonus!': { tl: 'binabati kita sa bonus na promosyon!', ko: '프로모션 보너스 획득을 축하합니다!', vi: 'chúc mừng bạn nhận được thưởng khuyến mãi!', tr: 'promosyon bonusu kazandığınız için tebrikler!', hi: 'प्रमोशन बोनस कमाने पर बधाई!', id: 'selamat atas bonus promosi yang didapat!', ms: 'tahniah kerana memperoleh bonus promosi!', pt: 'parabéns por ganhar um bônus de promoção!', es: '¡felicidades por ganar un bono de promoción!', ru: 'поздравляем с получением промо-бонуса!' },
+    'Official Certificate': { tl: 'Opisyal na Sertipiko', ko: '공식 인증서', vi: 'Chứng nhận chính thức', tr: 'Resmi Sertifika', hi: 'आधिकारिक प्रमाणपत्र', id: 'Sertifikat Resmi', ms: 'Sijil Rasmi', pt: 'Certificado Oficial', es: 'Certificado Oficial', ru: 'Официальный сертификат' },
+    'Official Certificates': { tl: 'Mga Opisyal na Sertipiko', ko: '공식 인증서', vi: 'Chứng nhận chính thức', tr: 'Resmi Sertifikalar', hi: 'आधिकारिक प्रमाणपत्र', id: 'Sertifikat Resmi', ms: 'Sijil Rasmi', pt: 'Certificados Oficiais', es: 'Certificados Oficiales', ru: 'Официальные сертификаты' },
+    'Official Platform Partners': { tl: 'Mga Opisyal na Partner', ko: '공식 파트너', vi: 'Đối tác chính thức', tr: 'Resmi İş Ortakları', hi: 'आधिकारिक भागीदार', id: 'Mitra Resmi Platform', ms: 'Rakan Rasmi Platform', pt: 'Parceiros Oficiais', es: 'Socios Oficiales', ru: 'Официальные партнеры' },
+    'Log in': { tl: 'Mag-login', ko: '로그인', vi: 'Đăng nhập', tr: 'Giriş Yap', hi: 'लॉगिन', id: 'Masuk', ms: 'Log Masuk', pt: 'Entrar', es: 'Iniciar sesión', ru: 'Войти' },
+    'Log In': { tl: 'Mag-login', ko: '로그인', vi: 'Đăng nhập', tr: 'Giriş Yap', hi: 'लॉगिन', id: 'Masuk', ms: 'Log Masuk', pt: 'Entrar', es: 'Iniciar sesión', ru: 'Войти' },
+    'Create an account': { tl: 'Gumawa ng account', ko: '계정 만들기', vi: 'Tạo tài khoản', tr: 'Hesap oluştur', hi: 'खाता बनाएं', id: 'Buat akun', ms: 'Cipta akaun', pt: 'Criar uma conta', es: 'Crear una cuenta', ru: 'Создать аккаунт' },
+    'Log in to continue to your account.': { tl: 'Mag-login upang magpatuloy sa iyong account.', ko: '계정을 계속 이용하려면 로그인하세요.', vi: 'Đăng nhập để tiếp tục vào tài khoản của bạn.', tr: 'Hesabınıza devam etmek için giriş yapın.', hi: 'अपने खाते में जारी रखने के लिए लॉगिन करें।', id: 'Masuk untuk melanjutkan ke akun Anda.', ms: 'Log masuk untuk meneruskan ke akaun anda.', pt: 'Entre para continuar na sua conta.', es: 'Inicia sesión para continuar en tu cuenta.', ru: 'Войдите, чтобы продолжить работу с аккаунтом.' },
+    'Keep me logged in': { tl: 'Panatilihin akong naka-login', ko: '로그인 상태 유지', vi: 'Duy trì đăng nhập', tr: 'Oturumu açık tut', hi: 'मुझे लॉगिन रखें', id: 'Tetap masuk', ms: 'Kekalkan log masuk', pt: 'Manter conectado', es: 'Mantener sesión iniciada', ru: 'Оставаться в системе' },
+    'Don\'t have an account?': { tl: 'Wala pang account?', ko: '계정이 없으신가요?', vi: 'Chưa có tài khoản?', tr: 'Hesabınız yok mu?', hi: 'खाता नहीं है?', id: 'Belum punya akun?', ms: 'Tiada akaun?', pt: 'Não tem uma conta?', es: '¿No tienes una cuenta?', ru: 'Нет аккаунта?' },
+    'Enter your details to create an account': { tl: 'Ilagay ang iyong mga detalye upang gumawa ng account', ko: '계정을 만들려면 정보를 입력하세요', vi: 'Nhập thông tin của bạn để tạo tài khoản', tr: 'Hesap oluşturmak için bilgilerinizi girin', hi: 'खाता बनाने के लिए अपना विवरण दर्ज करें', id: 'Masukkan detail Anda untuk membuat akun', ms: 'Masukkan butiran anda untuk mencipta akaun', pt: 'Insira seus dados para criar uma conta', es: 'Ingresa tus datos para crear una cuenta', ru: 'Введите данные для создания аккаунта' },
+    'Select Country': { tl: 'Pumili ng Bansa', ko: '국가 선택', vi: 'Chọn quốc gia', tr: 'Ülke Seç', hi: 'देश चुनें', id: 'Pilih Negara', ms: 'Pilih Negara', pt: 'Selecionar País', es: 'Seleccionar País', ru: 'Выберите страну' },
+    'Select country': { tl: 'Pumili ng bansa', ko: '국가 선택', vi: 'Chọn quốc gia', tr: 'Ülke seç', hi: 'देश चुनें', id: 'Pilih negara', ms: 'Pilih negara', pt: 'Selecionar país', es: 'Seleccionar país', ru: 'Выберите страну' },
+    'SMS Verification Code': { tl: 'SMS Verification Code', ko: 'SMS 인증 코드', vi: 'Mã xác minh SMS', tr: 'SMS Doğrulama Kodu', hi: 'एसएमएस सत्यापन कोड', id: 'Kode Verifikasi SMS', ms: 'Kod Pengesahan SMS', pt: 'Código de Verificação SMS', es: 'Código de Verificación SMS', ru: 'Код подтверждения SMS' },
+    'Invitation Code': { tl: 'Code ng Imbitasyon', ko: '초대 코드', vi: 'Mã mời', tr: 'Davet Kodu', hi: 'आमंत्रण कोड', id: 'Kode Undangan', ms: 'Kod Jemputan', pt: 'Código de Convite', es: 'Código de Invitación', ru: 'Код приглашения' },
+    'Balance:': { tl: 'Balanse:', ko: '잔액:', vi: 'Số dư:', tr: 'Bakiye:', hi: 'बैलेंस:', id: 'Saldo:', ms: 'Baki:', pt: 'Saldo:', es: 'Saldo:', ru: 'Баланс:' },
+    'Tier': { tl: 'Antas', ko: '등급', vi: 'Cấp bậc', tr: 'Seviye', hi: 'स्तर', id: 'Tingkat', ms: 'Tahap', pt: 'Nível', es: 'Nivel', ru: 'Уровень' },
+    'Limit': { tl: 'Limitasyon', ko: '한도', vi: 'Giới hạn', tr: 'Limit', hi: 'सीमा', id: 'Batas', ms: 'Had', pt: 'Limite', es: 'Límite', ru: 'Лимит' },
+    'Good': { tl: 'Mabuti', ko: '양호', vi: 'Tốt', tr: 'İyi', hi: 'अच्छा', id: 'Baik', ms: 'Baik', pt: 'Bom', es: 'Bueno', ru: 'Хорошо' },
+    'Excellent': { tl: 'Napakahusay', ko: '우수', vi: 'Xuất sắc', tr: 'Mükemmel', hi: 'उत्कृष्ट', id: 'Sangat Baik', ms: 'Cemerlang', pt: 'Excelente', es: 'Excelente', ru: 'Отлично' },
+    'Personal Balance': { tl: 'Personal na Balanse', ko: '개인 잔액', vi: 'Số dư cá nhân', tr: 'Kişisel Bakiye', hi: 'व्यक्तिगत बैलेंस', id: 'Saldo Pribadi', ms: 'Baki Peribadi', pt: 'Saldo Pessoal', es: 'Saldo Personal', ru: 'Личный баланс' },
+    'Yesterday\'s Earnings': { tl: 'Kita Kahapon', ko: '어제의 수익', vi: 'Thu nhập hôm qua', tr: 'Dünkü Kazanç', hi: 'कल की कमाई', id: 'Pendapatan Kemarin', ms: 'Pendapatan Semalam', pt: 'Ganhos de Ontem', es: 'Ganancias de Ayer', ru: 'Доход за вчера' },
+    'This Week\'s Earnings': { tl: 'Kita Ngayong Linggo', ko: '이번 주 수익', vi: 'Thu nhập tuần này', tr: 'Bu Haftaki Kazanç', hi: 'इस सप्ताह की कमाई', id: 'Pendapatan Minggu Ini', ms: 'Pendapatan Minggu Ini', pt: 'Ganhos desta Semana', es: 'Ganancias de esta Semana', ru: 'Доход за неделю' },
+    'This Month\'s Earnings': { tl: 'Kita Ngayong Buwan', ko: '이번 달 수익', vi: 'Thu nhập tháng này', tr: 'Bu Ayki Kazanç', hi: 'इस महीने की कमाई', id: 'Pendapatan Bulan Ini', ms: 'Pendapatan Bulan Ini', pt: 'Ganhos deste Mês', es: 'Ganancias de este Mes', ru: 'Доход за месяц' },
+    'Last Month\'s Earnings': { tl: 'Kita Noong Nakaraang Buwan', ko: '지난달 수익', vi: 'Thu nhập tháng trước', tr: 'Geçen Ayki Kazanç', hi: 'पिछले महीने की कमाई', id: 'Pendapatan Bulan Lalu', ms: 'Pendapatan Bulan Lalu', pt: 'Ganhos do Mês Passado', es: 'Ganancias del Mes Pasado', ru: 'Доход за прошлый месяц' },
+    'Tasks Completed Today': { tl: 'Gawaing Natapos Ngayon', ko: '오늘 완료한 작업', vi: 'Nhiệm vụ hoàn thành hôm nay', tr: 'Bugün Tamamlanan Görevler', hi: 'आज पूरे किए गए कार्य', id: 'Tugas Selesai Hari Ini', ms: 'Tugasan Selesai Hari Ini', pt: 'Tarefas Concluídas Hoje', es: 'Tareas Completadas Hoy', ru: 'Выполнено сегодня' },
+    'Remaining tasks today': { tl: 'Natitirang gawain ngayon', ko: '오늘 남은 작업', vi: 'Nhiệm vụ còn lại hôm nay', tr: 'Bugün kalan görevler', hi: 'आज के शेष कार्य', id: 'Sisa tugas hari ini', ms: 'Baki tugasan hari ini', pt: 'Tarefas restantes hoje', es: 'Tareas restantes hoy', ru: 'Осталось задач сегодня' },
+    'For referring a new member —': { tl: 'Sa pag-refer ng bagong miyembro —', ko: '신규 회원 추천 —', vi: 'Giới thiệu thành viên mới —', tr: 'Yeni üye daveti için —', hi: 'नए सदस्य को रेफर करने के लिए —', id: 'Mengundang anggota baru —', ms: 'Merujuk ahli baharu —', pt: 'Por indicar um novo membro —', es: 'Por referir a un nuevo miembro —', ru: 'За приглашение нового участника —' },
+    'Congratulations on receiving promotional reward!': { tl: 'Binabati kita sa pagtanggap ng gantimpala sa promosyon!', ko: '프로모션 보상을 받으신 것을 축하합니다!', vi: 'Chúc mừng bạn đã nhận được phần thưởng khuyến mãi!', tr: 'Promosyon ödülü kazandığınız için tebrikler!', hi: 'प्रमोशनल पुरस्कार प्राप्त करने पर बधाई!', id: 'Selamat atas hadiah promosi yang diterima!', ms: 'Tahniah kerana menerima ganjaran promosi!', pt: 'Parabéns por receber a recompensa promocional!', es: '¡Felicidades por recibir la recompensa promocional!', ru: 'Поздравляем с получением промо-награды!' },
+    'Support': { tl: 'Suporta', ko: '고객지원', vi: 'Hỗ trợ', tr: 'Destek', hi: 'सहायता', id: 'Dukungan', ms: 'Sokongan', pt: 'Suporte', es: 'Soporte', ru: 'Поддержка' },
+    'Direct Solution': { tl: 'Direktang Solusyon', ko: '직접 해결', vi: 'Giải pháp trực tiếp', tr: 'Doğrudan Çözüm', hi: 'सीधा समाधान', id: 'Solusi Langsung', ms: 'Penyelesaian Terus', pt: 'Solução Direta', es: 'Solución Directa', ru: 'Прямое решение' },
+    'Personal Contact via Telegram': { tl: 'Personal na Pakikipag-ugnayan sa Telegram', ko: '텔레그램 1:1 문의', vi: 'Liên hệ trực tiếp qua Telegram', tr: 'Telegram ile Kişisel İletişim', hi: 'टेलीग्राम द्वारा व्यक्तिगत संपर्क', id: 'Kontak Pribadi via Telegram', ms: 'Hubungan Peribadi melalui Telegram', pt: 'Contato Pessoal via Telegram', es: 'Contacto Personal por Telegram', ru: 'Личная связь через Telegram' },
+    'Daily Tasks:': { tl: 'Pang-araw-araw na Gawain:', ko: '일일 작업:', vi: 'Nhiệm vụ hàng ngày:', tr: 'Günlük Görevler:', hi: 'दैनिक कार्य:', id: 'Tugas Harian:', ms: 'Tugasan Harian:', pt: 'Tarefas Diárias:', es: 'Tareas Diárias:', ru: 'Задач в день:' },
+    'Daily Income:': { tl: 'Pang-araw-araw na Kita:', ko: '일일 수익:', vi: 'Thu nhập hàng ngày:', tr: 'Günlük Gelir:', hi: 'दैनिक आय:', id: 'Pendapatan Harian:', ms: 'Pendapatan Harian:', pt: 'Renda Diária:', es: 'Ingreso Diario:', ru: 'Ежедневный доход:' },
+    'Total Return at Maturity:': { tl: 'Kabuuang Kita sa Pagtatapos:', ko: '만기 총 수익:', vi: 'Tổng lợi nhuận đáo hạn:', tr: 'Vade Sonu Toplam Getiri:', hi: 'परिपक्वता पर कुल रिटर्न:', id: 'Total Pengembalian:', ms: 'Jumlah Pulangan:', pt: 'Retorno Total no Vencimento:', es: 'Retorno Total al Vencimiento:', ru: 'Общий доход за срок:' },
+    'Valid Time': { tl: 'Bisa ng Oras', ko: '유효 기간', vi: 'Thời hạn hiệu lực', tr: 'Geçerlilik Süresi', hi: 'वैधता अवधि', id: 'Masa Berlaku', ms: 'Tempoh Sah', pt: 'Tempo de Validade', es: 'Tiempo de Validez', ru: 'Срок действия' },
+    'Interest Rate': { tl: 'Rate ng Kita', ko: '수익률', vi: 'Tỷ lệ lợi nhuận', tr: 'Getiri Oranı', hi: 'ब्याज दर', id: 'Tingkat Pengembalian', ms: 'Kadar Pulangan', pt: 'Taxa de Retorno', es: 'Tasa de Retorno', ru: 'Доходность' },
+    'Cycle (Duration)': { tl: 'Siklo (Tagal)', ko: '주기 (기간)', vi: 'Chu kỳ (Thời hạn)', tr: 'Döngü (Süre)', hi: 'अवधि (चक्र)', id: 'Siklus (Durasi)', ms: 'Kitaran (Tempoh)', pt: 'Ciclo (Duração)', es: 'Ciclo (Duración)', ru: 'Цикл (Длительность)' },
+    'Daily Assigned Tasks': { tl: 'Nakatalagang Gawain Araw-araw', ko: '일일 배정 작업', vi: 'Nhiệm vụ giao mỗi ngày', tr: 'Günlük Atanan Görevler', hi: 'दैनिक निर्धारित कार्य', id: 'Tugas Harian', ms: 'Tugasan Harian', pt: 'Tarefas Diárias Atribuídas', es: 'Tareas Diarias Asignadas', ru: 'Ежедневные задания' },
+    'Purchase Limit': { tl: 'Limitasyon sa Pagbili', ko: '구매 한도', vi: 'Giới hạn mua', tr: 'Satın Alma Limiti', hi: 'खरीद सीमा', id: 'Batas Pembelian', ms: 'Had Pembelian', pt: 'Limite de Compra', es: 'Límite de Compra', ru: 'Лимит покупки' },
+    '1 Unit': { tl: '1 Yunit', ko: '1개', vi: '1 Gói', tr: '1 Adet', hi: '1 यूनिट', id: '1 Unit', ms: '1 Unit', pt: '1 Unidade', es: '1 Unidad', ru: '1 шт.' },
+    'Task Overview & Earnings Breakdown': { tl: 'Buod ng Gawain at Detalye ng Kita', ko: '작업 개요 및 수익 내역', vi: 'Tổng quan nhiệm vụ & Chi tiết thu nhập', tr: 'Görev Özeti ve Kazanç Dağılımı', hi: 'कार्य विवरण और कमाई का ब्योरा', id: 'Ringkasan Tugas & Rincian Penghasilan', ms: 'Ringkasan Tugasan & Perincian Pendapatan', pt: 'Resumo de Tarefas e Ganhos', es: 'Resumen de Tareas y Ganancias', ru: 'Обзор заданий и расчет дохода' },
+    'How Payouts Work & Revenue Model': { tl: 'Paano Gumagana ang Kita at Bayaran', ko: '정산 방식 및 수익 모델', vi: 'Cách thức thanh toán & Mô hình doanh thu', tr: 'Ödemeler ve Gelir Modeli Nasıl Çalışır', hi: 'भुगतान और आय मॉडल कैसे काम करता है', id: 'Cara Kerja Pembayaran & Model Pendapatan', ms: 'Cara Pembayaran & Model Pendapatan', pt: 'Como Funcionam os Pagamentos e Ganhos', es: 'Cómo Funcionan los Pagos y el Modelo de Ingresos', ru: 'Как работают выплаты и модель дохода' },
+    'Your friend': { tl: 'Iyong kaibigan', ko: '추천인', vi: 'Bạn của bạn', tr: 'Arkadaşınız', hi: 'आपके दोस्त', id: 'Teman Anda', ms: 'Rakan anda', pt: 'Seu amigo', es: 'Tu amigo', ru: 'Ваш друг' },
+    'Invites you to join': { tl: 'Iniimbitahan kang sumali', ko: '가입에 초대합니다', vi: 'Mời bạn tham gia', tr: 'Sizi katılmaya davet ediyor', hi: 'आपको जुड़ने के लिए आमंत्रित करते हैं', id: 'Mengundang Anda bergabung', ms: 'Menjemput anda menyertai', pt: 'Convida você para participar', es: 'Te invita a unirte', ru: 'Приглашает вас присоединиться' },
+    'Today\'s Commission': { tl: 'Komisyon Ngayon', ko: '오늘의 커미션', vi: 'Hoa hồng hôm nay', tr: 'Bugünkü Komisyon', hi: 'आज का कमीशन', id: 'Komisi Hari Ini', ms: 'Komisen Hari Ini', pt: 'Comissão de Hoje', es: 'Comisión de Hoy', ru: 'Комиссия за сегодня' },
+    'members': { tl: 'miyembro', ko: '명', vi: 'thành viên', tr: 'üye', hi: 'सदस्य', id: 'anggota', ms: 'ahli', pt: 'membros', es: 'miembros', ru: 'участников' },
+    'Frozen:': { tl: 'Naka-freeze:', ko: '동결:', vi: 'Đóng băng:', tr: 'Dondurulan:', hi: 'फ़्रोज़न:', id: 'Dibekukan:', ms: 'Dibekukan:', pt: 'Congelado:', es: 'Congelado:', ru: 'Заморожено:' },
+    'Available:': { tl: 'Magagamit:', ko: '사용 가능:', vi: 'Khả dụng:', tr: 'Kullanılabilir:', hi: 'उपलब्ध:', id: 'Tersedia:', ms: 'Tersedia:', pt: 'Disponível:', es: 'Disponible:', ru: 'Доступно:' },
+    'Withdrawal': { tl: 'Pag-withdraw', ko: '출금', vi: 'Rút tiền', tr: 'Para Çekme', hi: 'निकासी', id: 'Penarikan', ms: 'Pengeluaran', pt: 'Saque', es: 'Retiro', ru: 'Вывод средств' },
+    'Amount': { tl: 'Halaga', ko: '금액', vi: 'Số tiền', tr: 'Tutar', hi: 'राशि', id: 'Jumlah', ms: 'Jumlah', pt: 'Valor', es: 'Monto', ru: 'Сумма' },
+    'Profit Sharing': { tl: 'Bahagi ng Kita', ko: '수익 분배', vi: 'Chia sẻ lợi nhuận', tr: 'Kâr Paylaşımı', hi: 'लाभ साझाकरण', id: 'Bagi Hasil', ms: 'Perkongsian Untung', pt: 'Divisão de Lucros', es: 'Reparto de Ganancias', ru: 'Распределение прибыли' },
+    'Ratio': { tl: 'Proporsyon', ko: '비율', vi: 'Tỷ lệ', tr: 'Oran', hi: 'अनुपात', id: 'Rasio', ms: 'Nisbah', pt: 'Proporção', es: 'Proporción', ru: 'Доля' },
+    'Actual': { tl: 'Aktwal', ko: '실수령액', vi: 'Thực nhận', tr: 'Gerçekleşen', hi: 'वास्तविक', id: 'Aktual', ms: 'Sebenar', pt: 'Real', es: 'Real', ru: 'Фактически' },
+    'Arrival': { tl: 'Pagdating', ko: '입금', vi: 'Nhận được', tr: 'Varış', hi: 'प्राप्ति', id: 'Diterima', ms: 'Diterima', pt: 'Recebido', es: 'Llegada', ru: 'Зачисление' },
+    'Status': { tl: 'Katayuan', ko: '상태', vi: 'Trạng thái', tr: 'Durum', hi: 'स्थिति', id: 'Status', ms: 'Status', pt: 'Status', es: 'Estado', ru: 'Статус' },
+    'Date': { tl: 'Petsa', ko: '날짜', vi: 'Ngày', tr: 'Tarih', hi: 'दिनांक', id: 'Tanggal', ms: 'Tarikh', pt: 'Data', es: 'Fecha', ru: 'Дата' },
+    'Withdrawal Method': { tl: 'Paraan ng Pag-withdraw', ko: '출금 방법', vi: 'Phương thức rút tiền', tr: 'Çekim Yöntemi', hi: 'निकासी विधि', id: 'Metode Penarikan', ms: 'Kaedah Pengeluaran', pt: 'Método de Saque', es: 'Método de Retiro', ru: 'Способ вывода' },
+    'Select Method': { tl: 'Pumili ng Paraan', ko: '방법 선택', vi: 'Chọn phương thức', tr: 'Yöntem Seç', hi: 'विधि चुनें', id: 'Pilih Metode', ms: 'Pilih Kaedah', pt: 'Selecionar Método', es: 'Seleccionar Método', ru: 'Выберите способ' },
+    'Monthly withdrawal limit: Unlimited': { tl: 'Buwanang limitasyon sa pag-withdraw: Walang hanggan', ko: '월 출금 한도: 무제한', vi: 'Hạn mức rút tiền hàng tháng: Không giới hạn', tr: 'Aylık çekim limiti: Sınırsız', hi: 'मासिक निकासी सीमा: असीमित', id: 'Batas penarikan bulanan: Tanpa batas', ms: 'Had pengeluaran bulanan: Tanpa had', pt: 'Limite mensal de saque: Ilimitado', es: 'Límite mensual de retiro: Ilimitado', ru: 'Месячный лимит вывода: без ограничений' },
+    'Avatar': { tl: 'Avatar', ko: '프로필 사진', vi: 'Ảnh đại diện', tr: 'Profil Fotoğrafı', hi: 'अवतार', id: 'Avatar', ms: 'Avatar', pt: 'Avatar', es: 'Avatar', ru: 'Аватар' },
+    'Country & Currency': { tl: 'Bansa at Pera', ko: '국가 및 통화', vi: 'Quốc gia & Tiền tệ', tr: 'Ülke ve Para Birimi', hi: 'देश और मुद्रा', id: 'Negara & Mata Uang', ms: 'Negara & Mata Wang', pt: 'País e Moeda', es: 'País y Moneda', ru: 'Страна и валюта' },
+    'Set Up': { tl: 'I-set Up', ko: '설정하기', vi: 'Thiết lập', tr: 'Ayarla', hi: 'सेट करें', id: 'Atur', ms: 'Tetapkan', pt: 'Configurar', es: 'Configurar', ru: 'Настроить' },
+    'Withdrawal Password': { tl: 'Password sa Pag-withdraw', ko: '출금 비밀번호', vi: 'Mật khẩu rút tiền', tr: 'Çekim Şifresi', hi: 'निकासी पासवर्ड', id: 'Kata Sandi Penarikan', ms: 'Kata Laluan Pengeluaran', pt: 'Senha de Saque', es: 'Contraseña de Retiro', ru: 'Пароль для вывода' },
+    'Operation submitted successfully': { tl: 'Matagumpay na naisumite', ko: '성공적으로 제출되었습니다', vi: 'Đã gửi thành công', tr: 'İşlem başarıyla gönderildi', hi: 'सफलतापूर्वक सबमिट किया गया', id: 'Berhasil dikirim', ms: 'Berjaya dihantar', pt: 'Enviado com sucesso', es: 'Enviado con éxito', ru: 'Успешно отправлено' },
+    'Accepting...': { tl: 'Tinatanggap...', ko: '수락 중...', vi: 'Đang nhận...', tr: 'Kabul ediliyor...', hi: 'स्वीकार किया जा रहा है...', id: 'Menerima...', ms: 'Menerima...', pt: 'Aceitando...', es: 'Aceptando...', ru: 'Принятие...' },
+    'Recharge Balance (USDT)': { tl: 'Mag-recharge ng Balanse (USDT)', ko: '잔액 충전 (USDT)', vi: 'Nạp số dư (USDT)', tr: 'Bakiye Yükle (USDT)', hi: 'बैलेंस रिचार्ज (USDT)', id: 'Isi Saldo (USDT)', ms: 'Tambah Baki (USDT)', pt: 'Recarregar Saldo (USDT)', es: 'Recargar Saldo (USDT)', ru: 'Пополнить баланс (USDT)' },
+    'Select Recharge Amount (USD):': { tl: 'Pumili ng Halaga ng Recharge (USD):', ko: '충전 금액 선택 (USD):', vi: 'Chọn số tiền nạp (USD):', tr: 'Yükleme Tutarı Seçin (USD):', hi: 'रिचार्ज राशि चुनें (USD):', id: 'Pilih Jumlah Isi Ulang (USD):', ms: 'Pilih Jumlah Tambah Nilai (USD):', pt: 'Selecione o Valor da Recarga (USD):', es: 'Selecciona el Monto de Recarga (USD):', ru: 'Выберите сумму пополнения (USD):' },
+    'Complete Recharge': { tl: 'Kumpletuhin ang Recharge', ko: '충전 완료', vi: 'Hoàn tất nạp tiền', tr: 'Yüklemeyi Tamamla', hi: 'रिचार्ज पूरा करें', id: 'Selesaikan Isi Ulang', ms: 'Selesaikan Tambah Nilai', pt: 'Concluir Recarga', es: 'Completar Recarga', ru: 'Завершить пополнение' },
+    'Mission List': { tl: 'Listahan ng Misyon', ko: '미션 목록', vi: 'Danh sách nhiệm vụ', tr: 'Görev Listesi', hi: 'मिशन सूची', id: 'Daftar Misi', ms: 'Senarai Misi', pt: 'Lista de Missões', es: 'Lista de Misiones', ru: 'Список миссий' },
+    'Available tasks for your active package': { tl: 'Mga magagamit na gawain para sa iyong aktibong package', ko: '현재 패키지의 이용 가능한 작업', vi: 'Nhiệm vụ khả dụng cho gói hiện tại của bạn', tr: 'Aktif paketiniz için mevcut görevler', hi: 'आपके सक्रिय पैकेज के लिए उपलब्ध कार्य', id: 'Tugas tersedia untuk paket aktif Anda', ms: 'Tugasan tersedia untuk pakej aktif anda', pt: 'Tarefas disponíveis para seu pacote ativo', es: 'Tareas disponibles para tu paquete activo', ru: 'Доступные задания для вашего пакета' },
+    'Review': { tl: 'Sinusuri', ko: '검토', vi: 'Đang duyệt', tr: 'İnceleme', hi: 'समीक्षा', id: 'Tinjauan', ms: 'Semakan', pt: 'Análise', es: 'Revisión', ru: 'Проверка' },
+    'Failed / Cancelled': { tl: 'Nabigo / Kinansela', ko: '실패 / 취소', vi: 'Thất bại / Đã hủy', tr: 'Başarısız / İptal', hi: 'विफल / रद्द', id: 'Gagal / Dibatalkan', ms: 'Gagal / Dibatalkan', pt: 'Falhou / Cancelado', es: 'Fallido / Cancelado', ru: 'Ошибка / Отменено' },
+    'Mission Details': { tl: 'Detalye ng Misyon', ko: '미션 상세', vi: 'Chi tiết nhiệm vụ', tr: 'Görev Detayları', hi: 'मिशन विवरण', id: 'Detail Misi', ms: 'Butiran Misi', pt: 'Detalhes da Missão', es: 'Detalles de la Misión', ru: 'Детали миссии' },
+    'Task Title:': { tl: 'Pamagat ng Gawain:', ko: '작업 제목:', vi: 'Tiêu đề nhiệm vụ:', tr: 'Görev Başlığı:', hi: 'कार्य शीर्षक:', id: 'Judul Tugas:', ms: 'Tajuk Tugasan:', pt: 'Título da Tarefa:', es: 'Título de la Tarea:', ru: 'Название задачи:' },
+    'Mission Reward:': { tl: 'Gantimpala sa Misyon:', ko: '미션 보상:', vi: 'Phần thưởng nhiệm vụ:', tr: 'Görev Ödülü:', hi: 'मिशन पुरस्कार:', id: 'Hadiah Misi:', ms: 'Ganjaran Misi:', pt: 'Recompensa da Missão:', es: 'Recompensa de la Misión:', ru: 'Награда за миссию:' },
+    'Mission Description:': { tl: 'Paglalarawan ng Misyon:', ko: '미션 설명:', vi: 'Mô tả nhiệm vụ:', tr: 'Görev Açıklaması:', hi: 'मिशन विवरण:', id: 'Deskripsi Misi:', ms: 'Penerangan Misi:', pt: 'Descrição da Missão:', es: 'Descripción de la Misión:', ru: 'Описание миссии:' },
+    'Task Link:': { tl: 'Link ng Gawain:', ko: '작업 링크:', vi: 'Liên kết nhiệm vụ:', tr: 'Görev Bağlantısı:', hi: 'कार्य लिंक:', id: 'Tautan Tugas:', ms: 'Pautan Tugasan:', pt: 'Link da Tarefa:', es: 'Enlace de la Tarea:', ru: 'Ссылка на задачу:' },
+    'Created Time:': { tl: 'Oras ng Paggawa:', ko: '생성 시간:', vi: 'Thời gian tạo:', tr: 'Oluşturma Zamanı:', hi: 'बनाने का समय:', id: 'Waktu Dibuat:', ms: 'Masa Dicipta:', pt: 'Hora de Criação:', es: 'Hora de Creación:', ru: 'Время создания:' },
+    'Comments': { tl: 'Mga Komento', ko: '코멘트', vi: 'Ghi chú', tr: 'Yorumlar', hi: 'टिप्पणियाँ', id: 'Komentar', ms: 'Komen', pt: 'Comentários', es: 'Comentarios', ru: 'Комментарии' },
+    'Screenshot': { tl: 'Screenshot', ko: '스크린샷', vi: 'Ảnh chụp màn hình', tr: 'Ekran Görüntüsü', hi: 'स्क्रीनशॉट', id: 'Tangkapan Layar', ms: 'Tangkapan Skrin', pt: 'Captura de Tela', es: 'Captura de Pantalla', ru: 'Скриншот' },
+    'Upload': { tl: 'I-upload', ko: '업로드', vi: 'Tải lên', tr: 'Yükle', hi: 'अपलोड', id: 'Unggah', ms: 'Muat Naik', pt: 'Enviar', es: 'Subir', ru: 'Загрузить' },
+    'Do': { tl: 'Gawin', ko: '진행', vi: 'Thực hiện', tr: 'Yap', hi: 'करें', id: 'Kerjakan', ms: 'Lakukan', pt: 'Fazer', es: 'Hacer', ru: 'Выполнить' },
+    'View Preview': { tl: 'Tingnan ang Preview', ko: '미리보기', vi: 'Xem trước', tr: 'Önizlemeyi Gör', hi: 'प्रीव्यू देखें', id: 'Lihat Pratinjau', ms: 'Lihat Pratonton', pt: 'Ver Prévia', es: 'Ver Vista Previa', ru: 'Предпросмотр' },
+    'Manual recharge': { tl: 'Manwal na recharge', ko: '수동 충전', vi: 'Nạp thủ công', tr: 'Manuel yükleme', hi: 'मैन्युअल रिचार्ज', id: 'Isi ulang manual', ms: 'Tambah nilai manual', pt: 'Recarga manual', es: 'Recarga manual', ru: 'Ручное пополнение' },
+    'Fast and convenient': { tl: 'Mabilis at maginhawa', ko: '빠르고 편리함', vi: 'Nhanh chóng và tiện lợi', tr: 'Hızlı ve kolay', hi: 'तेज़ और सुविधाजनक', id: 'Cepat dan nyaman', ms: 'Pantas dan mudah', pt: 'Rápido e conveniente', es: 'Rápido y conveniente', ru: 'Быстро и удобно' },
+    'Online Payment Gateway': { tl: 'Online na Payment Gateway', ko: '온라인 결제 게이트웨이', vi: 'Cổng thanh toán trực tuyến', tr: 'Online Ödeme Ağ Geçidi', hi: 'ऑनलाइन भुगतान गेटवे', id: 'Gerbang Pembayaran Online', ms: 'Gerbang Pembayaran Dalam Talian', pt: 'Gateway de Pagamento Online', es: 'Pasarela de Pago en Línea', ru: 'Онлайн платежный шлюз' },
+    'Crypto transfer': { tl: 'Paglipat ng Crypto', ko: '암호화폐 이체', vi: 'Chuyển khoản Crypto', tr: 'Kripto transferi', hi: 'क्रिप्टो ट्रांसफर', id: 'Transfer kripto', ms: 'Pemindahan kripto', pt: 'Transferência cripto', es: 'Transferencia cripto', ru: 'Криптоперевод' },
+    'Network': { tl: 'Network', ko: '네트워크', vi: 'Mạng lưới', tr: 'Ağ', hi: 'नेटवर्क', id: 'Jaringan', ms: 'Rangkaian', pt: 'Rede', es: 'Red', ru: 'Сеть' },
+    'Recommended': { tl: 'Inirerekomenda', ko: '추천', vi: 'Khuyên dùng', tr: 'Önerilen', hi: 'अनुशंसित', id: 'Disarankan', ms: 'Disyorkan', pt: 'Recomendado', es: 'Recomendado', ru: 'Рекомендуется' },
+    'Deposit Address (BEP20):': { tl: 'Address ng Deposito (BEP20):', ko: '입금 주소 (BEP20):', vi: 'Địa chỉ nạp (BEP20):', tr: 'Yatırma Adresi (BEP20):', hi: 'जमा पता (BEP20):', id: 'Alamat Deposit (BEP20):', ms: 'Alamat Deposit (BEP20):', pt: 'Endereço de Depósito (BEP20):', es: 'Dirección de Depósito (BEP20):', ru: 'Адрес пополнения (BEP20):' },
+    'Live Address': { tl: 'Aktibong Address', ko: '실시간 주소', vi: 'Địa chỉ trực tiếp', tr: 'Canlı Adres', hi: 'लाइव पता', id: 'Alamat Aktif', ms: 'Alamat Aktif', pt: 'Endereço Ativo', es: 'Dirección Activa', ru: 'Активный адрес' },
+    'Copy Address': { tl: 'Kopyahin ang Address', ko: '주소 복사', vi: 'Sao chép địa chỉ', tr: 'Adresi Kopyala', hi: 'पता कॉपी करें', id: 'Salin Alamat', ms: 'Salin Alamat', pt: 'Copiar Endereço', es: 'Copiar Dirección', ru: 'Копировать адрес' },
+    'Check Balance ↺': { tl: 'Suriin ang Balanse ↺', ko: '잔액 확인 ↺', vi: 'Kiểm tra số dư ↺', tr: 'Bakiyeyi Kontrol Et ↺', hi: 'बैलेंस जांचें ↺', id: 'Cek Saldo ↺', ms: 'Semak Baki ↺', pt: 'Verificar Saldo ↺', es: 'Verificar Saldo ↺', ru: 'Проверить баланс ↺' },
+    'Switch Network or Method': { tl: 'Palitan ang Network o Paraan', ko: '네트워크 또는 결제 변경', vi: 'Đổi mạng hoặc phương thức', tr: 'Ağ veya Yöntem Değiştir', hi: 'नेटवर्क या विधि बदलें', id: 'Ganti Jaringan atau Metode', ms: 'Tukar Rangkaian atau Kaedah', pt: 'Trocar Rede ou Método', es: 'Cambiar Red o Método', ru: 'Сменить сеть или способ' },
+    'My Team': { tl: 'Aking Koponan', ko: '내 팀', vi: 'Đội của tôi', tr: 'Ekibim', hi: 'मेरी टीम', id: 'Tim Saya', ms: 'Pasukan Saya', pt: 'Minha Equipe', es: 'Mi Equipo', ru: 'Моя команда' },
+    'Total Team Balance': { tl: 'Kabuuang Balanse ng Koponan', ko: '팀 총 잔액', vi: 'Tổng số dư đội', tr: 'Toplam Ekip Bakiyesi', hi: 'कुल टीम बैलेंस', id: 'Total Saldo Tim', ms: 'Jumlah Baki Pasukan', pt: 'Saldo Total da Equipe', es: 'Saldo Total del Equipo', ru: 'Общий баланс команды' },
+    'Total Team Turnover': { tl: 'Kabuuang Turnover ng Koponan', ko: '팀 총 거래량', vi: 'Tổng doanh số đội', tr: 'Toplam Ekip Cirosu', hi: 'कुल टीम टर्नओवर', id: 'Total Omzet Tim', ms: 'Jumlah Perolehan Pasukan', pt: 'Volume Total da Equipe', es: 'Volumen Total del Equipo', ru: 'Общий оборот команды' },
+    'Total Team Recharge': { tl: 'Kabuuang Recharge ng Koponan', ko: '팀 총 충전액', vi: 'Tổng nạp tiền của đội', tr: 'Toplam Ekip Yüklemesi', hi: 'कुल टीम रिचार्ज', id: 'Total Isi Ulang Tim', ms: 'Jumlah Tambah Nilai Pasukan', pt: 'Total de Recarga da Equipe', es: 'Recarga Total del Equipo', ru: 'Общее пополнение команды' },
+    'Total Team Cashout': { tl: 'Kabuuang Withdraw ng Koponan', ko: '팀 총 출금액', vi: 'Tổng rút tiền của đội', tr: 'Toplam Ekip Çekimi', hi: 'कुल टीम निकासी', id: 'Total Penarikan Tim', ms: 'Jumlah Pengeluaran Pasukan', pt: 'Total de Saque da Equipe', es: 'Retiro Total del Equipo', ru: 'Общий вывод команды' },
+    'First Recharge Count (Users)': { tl: 'Unang Recharge (Mga User)', ko: '첫 충전 인원', vi: 'Số người nạp đầu', tr: 'İlk Yükleme (Kullanıcı)', hi: 'प्रथम रिचार्ज संख्या', id: 'Jumlah Isi Ulang Pertama', ms: 'Bilangan Tambah Nilai Pertama', pt: 'Primeira Recarga (Usuários)', es: 'Primera Recarga (Usuarios)', ru: 'Первое пополнение' },
+    'Direct Referrals (Users)': { tl: 'Direktang Referral', ko: '직접 추천 인원', vi: 'Giới thiệu trực tiếp', tr: 'Doğrudan Davetler', hi: 'प्रत्यक्ष रेफरल', id: 'Referensi Langsung', ms: 'Rujukan Langsung', pt: 'Indicações Diretas', es: 'Referidos Directos', ru: 'Прямые рефералы' },
+    'Team Size (Users)': { tl: 'Laki ng Koponan', ko: '팀 규모', vi: 'Quy mô đội nhóm', tr: 'Ekip Büyüklüğü', hi: 'टीम का आकार', id: 'Ukuran Tim', ms: 'Saiz Pasukan', pt: 'Tamanho da Equipe', es: 'Tamaño del Equipo', ru: 'Размер команды' },
+    'New Members (Users)': { tl: 'Mga Bagong Miyembro', ko: '신규 회원', vi: 'Thành viên mới', tr: 'Yeni Üyeler', hi: 'नए सदस्य', id: 'Anggota Baru', ms: 'Ahli Baharu', pt: 'Novos Membros', es: 'Nuevos Miembros', ru: 'Новые участники' },
+    'Tier 1': { tl: 'Antas 1', ko: '1단계', vi: 'Cấp 1', tr: 'Seviye 1', hi: 'स्तर 1', id: 'Tingkat 1', ms: 'Tahap 1', pt: 'Nível 1', es: 'Nivel 1', ru: 'Уровень 1' },
+    'Tier 2': { tl: 'Antas 2', ko: '2단계', vi: 'Cấp 2', tr: 'Seviye 2', hi: 'स्तर 2', id: 'Tingkat 2', ms: 'Tahap 2', pt: 'Nível 2', es: 'Nivel 2', ru: 'Уровень 2' },
+    'Tier 3': { tl: 'Antas 3', ko: '3단계', vi: 'Cấp 3', tr: 'Seviye 3', hi: 'स्तर 3', id: 'Tingkat 3', ms: 'Tahap 3', pt: 'Nível 3', es: 'Nivel 3', ru: 'Уровень 3' },
+    'Total Members': { tl: 'Kabuuang Miyembro', ko: '전체 회원', vi: 'Tổng thành viên', tr: 'Toplam Üye', hi: 'कुल सदस्य', id: 'Total Anggota', ms: 'Jumlah Ahli', pt: 'Total de Membros', es: 'Total de Miembros', ru: 'Всего участников' },
+    'Recharge Amount': { tl: 'Halaga ng Recharge', ko: '충전 금액', vi: 'Số tiền nạp', tr: 'Yükleme Tutarı', hi: 'रिचार्ज राशि', id: 'Jumlah Isi Ulang', ms: 'Jumlah Tambah Nilai', pt: 'Valor da Recarga', es: 'Monto de Recarga', ru: 'Сумма пополнения' },
+    'Team Commission': { tl: 'Komisyon ng Koponan', ko: '팀 커미션', vi: 'Hoa hồng đội', tr: 'Ekip Komisyonu', hi: 'टीम कमीशन', id: 'Komisi Tim', ms: 'Komisen Pasukan', pt: 'Comissão da Equipe', es: 'Comisión del Equipo', ru: 'Комиссия команды' },
+    'Loading team data…': { tl: 'Nilo-load ang data ng koponan…', ko: '팀 데이터 불러오는 중…', vi: 'Đang tải dữ liệu đội…', tr: 'Ekip verileri yükleniyor…', hi: 'टीम डेटा लोड हो रहा है…', id: 'Memuat data tim…', ms: 'Memuatkan data pasukan…', pt: 'Carregando dados da equipe…', es: 'Cargando datos del equipo…', ru: 'Загрузка данных команды…' },
+    'Your Achievement, Your Honor': { tl: 'Iyong Tagumpay, Iyong Karangalan', ko: '당신의 성과, 당신의 명예', vi: 'Thành tựu của bạn, Danh dự của bạn', tr: 'Başarınız, Onurunuz', hi: 'आपकी उपलब्धि, आपका सम्मान', id: 'Prestasi Anda, Kehormatan Anda', ms: 'Pencapaian Anda, Penghormatan Anda', pt: 'Sua Conquista, Sua Honra', es: 'Tu Logro, Tu Honor', ru: 'Ваши достижения — ваша честь' },
+    'Reach the target milestones to unlock ranks and monthly salary.': { tl: 'Abutin ang mga target na milestone upang ma-unlock ang mga ranggo at buwanang sahod.', ko: '목표 마일스톤을 달성하여 등급과 월급을 잠금 해제하세요.', vi: 'Đạt các mốc mục tiêu để mở khóa cấp bậc và lương hàng tháng.', tr: 'Rütbeleri ve aylık maaşı açmak için hedef aşamalara ulaşın.', hi: 'रैंक और मासिक वेतन अनलॉक करने के लिए लक्ष्य मील के पत्थर तक पहुंचें।', id: 'Capai target untuk membuka peringkat dan gaji bulanan.', ms: 'Capai sasaran untuk membuka pangkat dan gaji bulanan.', pt: 'Alcance as metas para desbloquear cargos e salário mensal.', es: 'Alcanza los objetivos para desbloquear rangos y salario mensual.', ru: 'Достигайте целей, чтобы открыть ранги и ежемесячную зарплату.' },
+    'Active A-Level Members (Paid):': { tl: 'Aktibong A-Level na Miyembro (Bayad):', ko: '활성 A등급 회원 (유료):', vi: 'Thành viên cấp A hoạt động (Đã trả phí):', tr: 'Aktif A-Seviye Üyeler (Ücretli):', hi: 'सक्रिय ए-लेवल सदस्य (भुगतान किए गए):', id: 'Anggota A-Level Aktif (Berbayar):', ms: 'Ahli A-Level Aktif (Berbayar):', pt: 'Membros Nível A Ativos (Pagos):', es: 'Miembros Nivel A Activos (Pagados):', ru: 'Активные участники уровня A:' },
+    'Monthly Salary': { tl: 'Buwanang Sahod', ko: '월급', vi: 'Lương hàng tháng', tr: 'Aylık Maaş', hi: 'मासिक वेतन', id: 'Gaji Bulanan', ms: 'Gaji Bulanan', pt: 'Salário Mensal', es: 'Salario Mensual', ru: 'Ежемесячная зарплата' },
+    'Milestone Achievement Salary': { tl: 'Sahod sa Tagumpay ng Milestone', ko: '마일스톤 달성 급여', vi: 'Lương thành tích cột mốc', tr: 'Hedef Başarı Maaşı', hi: 'मील का पत्थर उपलब्धि वेतन', id: 'Gaji Pencapaian Target', ms: 'Gaji Pencapaian Sasaran', pt: 'Salário por Meta Alcançada', es: 'Salario por Logro de Meta', ru: 'Зарплата за достижение цели' },
+    'Salary Amount': { tl: 'Halaga ng Sahod', ko: '급여 금액', vi: 'Mức lương', tr: 'Maaş Tutarı', hi: 'वेतन राशि', id: 'Jumlah Gaji', ms: 'Jumlah Gaji', pt: 'Valor do Salário', es: 'Monto del Salario', ru: 'Размер зарплаты' },
+    'Required Active Members:': { tl: 'Kinakailangang Aktibong Miyembro:', ko: '필요한 활성 회원:', vi: 'Thành viên hoạt động yêu cầu:', tr: 'Gerekli Aktif Üye:', hi: 'आवश्यक सक्रिय सदस्य:', id: 'Anggota Aktif Dibutuhkan:', ms: 'Ahli Aktif Diperlukan:', pt: 'Membros Ativos Necessários:', es: 'Miembros Activos Requeridos:', ru: 'Требуется активных участников:' },
+    'Your Current Progress:': { tl: 'Iyong Kasalukuyang Progreso:', ko: '현재 진행 상황:', vi: 'Tiến độ hiện tại của bạn:', tr: 'Mevcut İlerlemeniz:', hi: 'आपकी वर्तमान प्रगति:', id: 'Progres Anda Saat Ini:', ms: 'Kemajuan Semasa Anda:', pt: 'Seu Progresso Atual:', es: 'Tu Progreso Actual:', ru: 'Ваш текущий прогресс:' },
+    'Copy Invitation Link': { tl: 'Kopyahin ang Link ng Imbitasyon', ko: '초대 링크 복사', vi: 'Sao chép liên kết mời', tr: 'Davet Bağlantısını Kopyala', hi: 'आमंत्रण लिंक कॉपी करें', id: 'Salin Tautan Undangan', ms: 'Salin Pautan Jemputan', pt: 'Copiar Link de Convite', es: 'Copiar Enlace de Invitación', ru: 'Копировать ссылку приглашения' },
+    'Your Draws': { tl: 'Iyong mga Draw', ko: '보유 추첨권', vi: 'Lượt quay của bạn', tr: 'Çekiliş Haklarınız', hi: 'आपके ड्रॉ', id: 'Undian Anda', ms: 'Cabutan Anda', pt: 'Seus Giros', es: 'Tus Giros', ru: 'Ваши попытки' },
+    'Members for today\'s win': { tl: 'Mga nanalo ngayon', ko: '오늘의 당첨 회원', vi: 'Thành viên trúng thưởng hôm nay', tr: 'Bugünün kazanan üyeleri', hi: 'आज के विजेता सदस्य', id: 'Anggota pemenang hari ini', ms: 'Ahli pemenang hari ini', pt: 'Membros vencedores de hoje', es: 'Miembros ganadores de hoy', ru: 'Победители сегодня' },
+    'Today\'s Spin Count': { tl: 'Bilang ng Ikot Ngayon', ko: '오늘의 스핀 횟수', vi: 'Số lượt quay hôm nay', tr: 'Bugünkü Çevirme Sayısı', hi: 'आज के स्पिन की संख्या', id: 'Jumlah Putaran Hari Ini', ms: 'Bilangan Putaran Hari Ini', pt: 'Giros de Hoje', es: 'Giros de Hoy', ru: 'Вращений сегодня' },
+    'Spin Now': { tl: 'Paikutin Ngayon', ko: '지금 돌리기', vi: 'Quay ngay', tr: 'Şimdi Çevir', hi: 'अभी घुमाएं', id: 'Putar Sekarang', ms: 'Putar Sekarang', pt: 'Girar Agora', es: 'Girar Ahora', ru: 'Крутить сейчас' },
+    'Invite Friends & Earn Draws': { tl: 'Mag-imbita ng Kaibigan at Makakuha ng Draw', ko: '친구 초대하고 추첨권 받기', vi: 'Mời bạn bè & Nhận lượt quay', tr: 'Arkadaş Davet Et ve Çekiliş Kazan', hi: 'दोस्तों को आमंत्रित करें और ड्रॉ जीतें', id: 'Undang Teman & Dapatkan Undian', ms: 'Jemput Rakan & Dapat Cabutan', pt: 'Convide Amigos e Ganhe Giros', es: 'Invita Amigos y Gana Giros', ru: 'Приглашай друзей и получай вращения' },
+    'Recent Spin Rewards': { tl: 'Mga Kamakailang Gantimpala sa Ikot', ko: '최근 스핀 보상', vi: 'Phần thưởng quay gần đây', tr: 'Son Çark Ödülleri', hi: 'हाल के स्पिन पुरस्कार', id: 'Hadiah Putaran Terbaru', ms: 'Ganjaran Putaran Terkini', pt: 'Recompensas Recentes da Roleta', es: 'Recompensas Recientes de la Ruleta', ru: 'Недавние награды колеса' },
+    'No lucky spin rewards yet.': { tl: 'Wala pang gantimpala sa lucky spin.', ko: '아직 럭키 스핀 보상이 없습니다.', vi: 'Chưa có phần thưởng vòng quay nào.', tr: 'Henüz şans çarkı ödülü yok.', hi: 'अभी तक कोई लकी स्पिन पुरस्कार नहीं।', id: 'Belum ada hadiah putaran keberuntungan.', ms: 'Belum ada ganjaran putaran bertuah.', pt: 'Ainda sem recompensas da roleta.', es: 'Aún no hay recompensas de la ruleta.', ru: 'Пока нет наград колеса удачи.' },
+    'Congratulations!': { tl: 'Binabati kita!', ko: '축하합니다!', vi: 'Chúc mừng!', tr: 'Tebrikler!', hi: 'बधाई हो!', id: 'Selamat!', ms: 'Tahniah!', pt: 'Parabéns!', es: '¡Felicidades!', ru: 'Поздравляем!' },
+    'Your reward has been credited directly to your main balance.': { tl: 'Ang iyong gantimpala ay direktang naidagdag sa iyong pangunahing balanse.', ko: '보상이 메인 잔액으로 직접 적립되었습니다.', vi: 'Phần thưởng của bạn đã được cộng trực tiếp vào số dư chính.', tr: 'Ödülünüz doğrudan ana bakiyenize aktarıldı.', hi: 'आपका पुरस्कार सीधे आपके मुख्य बैलेंस में जोड़ दिया गया है।', id: 'Hadiah Anda telah dikreditkan langsung ke saldo utama Anda.', ms: 'Ganjaran anda telah dikreditkan terus ke baki utama anda.', pt: 'Sua recompensa foi creditada diretamente no seu saldo principal.', es: 'Tu recompensa se acreditó directamente a tu saldo principal.', ru: 'Награда зачислена прямо на ваш основной баланс.' },
+    'Screenshot Preview': { tl: 'Preview ng Screenshot', ko: '스크린샷 미리보기', vi: 'Xem trước ảnh chụp', tr: 'Ekran Görüntüsü Önizlemesi', hi: 'स्क्रीनशॉट प्रीव्यू', id: 'Pratinjau Tangkapan Layar', ms: 'Pratonton Tangkapan Skrin', pt: 'Prévia da Captura', es: 'Vista Previa de Captura', ru: 'Просмотр скриншота' },
+    'Official Customer Manager': { tl: 'Opisyal na Customer Manager', ko: '공식 고객 매니저', vi: 'Quản lý khách hàng chính thức', tr: 'Resmi Müşteri Yöneticisi', hi: 'आधिकारिक ग्राहक प्रबंधक', id: 'Manajer Pelanggan Resmi', ms: 'Pengurus Pelanggan Rasmi', pt: 'Gerente Oficial de Clientes', es: 'Gerente Oficial de Clientes', ru: 'Официальный менеджер поддержки' },
+    'Account Manager': { tl: 'Account Manager', ko: '계정 매니저', vi: 'Quản lý tài khoản', tr: 'Hesap Yöneticisi', hi: 'खाता प्रबंधक', id: 'Manajer Akun', ms: 'Pengurus Akaun', pt: 'Gerente de Conta', es: 'Gerente de Cuenta', ru: 'Менеджер аккаунта' },
+    'Online Support Active (24/7)': { tl: 'Aktibo ang Online Support (24/7)', ko: '24시간 온라인 고객지원 운영 중', vi: 'Hỗ trợ trực tuyến 24/7', tr: '7/24 Çevrimiçi Destek Aktif', hi: 'ऑनलाइन सहायता सक्रिय (24/7)', id: 'Dukungan Online Aktif (24/7)', ms: 'Sokongan Dalam Talian Aktif (24/7)', pt: 'Suporte Online Ativo (24/7)', es: 'Soporte en Línea Activo (24/7)', ru: 'Онлайн-поддержка 24/7' },
+    'Contact your official Account Manager directly for task help, package activation, withdrawals, or deposits.': { tl: 'Makipag-ugnayan nang direkta sa iyong opisyal na Account Manager para sa tulong sa gawain, pag-activate ng package, pag-withdraw, o deposito.', ko: '작업 지원, 패키지 활성화, 출금 또는 입금 문의는 공식 계정 매니저에게 직접 연락하세요.', vi: 'Liên hệ trực tiếp với Quản lý tài khoản chính thức để được hỗ trợ nhiệm vụ, kích hoạt gói, rút tiền hoặc nạp tiền.', tr: 'Görev yardımı, paket aktivasyonu, çekim veya yatırım için resmi Hesap Yöneticinizle doğrudan iletişime geçin.', hi: 'कार्य सहायता, पैकेज सक्रियण, निकासी या जमा के लिए सीधे अपने आधिकारिक खाता प्रबंधक से संपर्क करें।', id: 'Hubungi Manajer Akun resmi Anda langsung untuk bantuan tugas, aktivasi paket, penarikan, atau deposit.', ms: 'Hubungi Pengurus Akaun rasmi anda secara terus untuk bantuan tugasan, pengaktifan pakej, pengeluaran atau deposit.', pt: 'Fale diretamente com seu Gerente de Conta oficial para ajuda com tarefas, ativação de pacotes, saques ou depósitos.', es: 'Contacta directamente a tu Gerente de Cuenta oficial para ayuda con tareas, activación de paquetes, retiros o depósitos.', ru: 'Свяжитесь с официальным менеджером по вопросам заданий, активации пакетов, вывода и пополнения.' },
+    'Manager ID': { tl: 'ID ng Manager', ko: '매니저 ID', vi: 'ID Quản lý', tr: 'Yönetici Kimliği', hi: 'मैनेजर आईडी', id: 'ID Manajer', ms: 'ID Pengurus', pt: 'ID do Gerente', es: 'ID del Gerente', ru: 'ID менеджера' },
+    'Chat with Telegram Manager': { tl: 'Makipag-chat sa Telegram Manager', ko: '텔레그램 매니저와 채팅', vi: 'Chat với quản lý Telegram', tr: 'Telegram Yöneticisi ile Sohbet Et', hi: 'टेलीग्राम मैनेजर से चैट करें', id: 'Chat dengan Manajer Telegram', ms: 'Sembang dengan Pengurus Telegram', pt: 'Conversar com Gerente no Telegram', es: 'Chatear con Gerente en Telegram', ru: 'Чат с менеджером в Telegram' },
+    'Send Live Message Online': { tl: 'Magpadala ng Live na Mensahe Online', ko: '온라인 실시간 메시지 보내기', vi: 'Gửi tin nhắn trực tuyến', tr: 'Çevrimiçi Canlı Mesaj Gönder', hi: 'ऑनलाइन लाइव संदेश भेजें', id: 'Kirim Pesan Langsung Online', ms: 'Hantar Mesej Langsung Dalam Talian', pt: 'Enviar Mensagem Online ao Vivo', es: 'Enviar Mensaje en Vivo en Línea', ru: 'Отправить онлайн-сообщение' },
+    'Inactive': { tl: 'Hindi Aktibo', ko: '비활성', vi: 'Không hoạt động', tr: 'Pasif', hi: 'निष्क्रिय', id: 'Tidak Aktif', ms: 'Tidak Aktif', pt: 'Inativo', es: 'Inactivo', ru: 'Неактивен' },
+    'Friends': { tl: 'Mga Kaibigan', ko: '친구', vi: 'Bạn bè', tr: 'Arkadaşlar', hi: 'दोस्त', id: 'Teman', ms: 'Rakan', pt: 'Amigos', es: 'Amigos', ru: 'Друзья' },
+    'Active Members': { tl: 'Aktibong Miyembro', ko: '활성 회원', vi: 'Thành viên hoạt động', tr: 'Aktif Üyeler', hi: 'सक्रिय सदस्य', id: 'Anggota Aktif', ms: 'Ahli Aktif', pt: 'Membros Ativos', es: 'Miembros Activos', ru: 'Активные участники' },
+    'Deposits': { tl: 'Mga Deposito', ko: '입금', vi: 'Tiền nạp', tr: 'Yatırımlar', hi: 'जमा राशि', id: 'Deposit', ms: 'Deposit', pt: 'Depósitos', es: 'Depósitos', ru: 'Депозиты' },
+    'Package & Balance Management': { tl: 'Pamamahala ng Package at Balanse', ko: '패키지 및 잔액 관리', vi: 'Quản lý gói & Số dư', tr: 'Paket ve Bakiye Yönetimi', hi: 'पैकेज और बैलेंस प्रबंधन', id: 'Manajemen Paket & Saldo', ms: 'Pengurusan Pakej & Baki', pt: 'Gestão de Pacote e Saldo', es: 'Gestión de Paquete y Saldo', ru: 'Управление пакетом и балансом' },
+    'Only LV0 is free · Other tiers require balance': { tl: 'Ang LV0 lamang ang libre · Kailangan ng balanse para sa iba', ko: 'LV0만 무료 · 다른 등급은 잔액 필요', vi: 'Chỉ LV0 miễn phí · Các cấp khác cần số dư', tr: 'Yalnızca LV0 ücretsizdir · Diğer seviyeler bakiye gerektirir', hi: 'केवल LV0 मुफ़्त है · अन्य स्तरों के लिए बैलेंस आवश्यक है', id: 'Hanya LV0 gratis · Tingkat lain memerlukan saldo', ms: 'Hanya LV0 percuma · Tahap lain memerlukan baki', pt: 'Apenas LV0 é grátis · Outros níveis requerem saldo', es: 'Solo LV0 es gratis · Otros niveles requieren saldo', ru: 'Только LV0 бесплатен · Для других уровней нужен баланс' },
+    'Buy Package': { tl: 'Bumili ng Package', ko: '패키지 구매', vi: 'Mua gói', tr: 'Paket Satın Al', hi: 'पैकेज खरीदें', id: 'Beli Paket', ms: 'Beli Pakej', pt: 'Comprar Pacote', es: 'Comprar Paquete', ru: 'Купить пакет' },
+    'Recharge Balance': { tl: 'Mag-recharge ng Balanse', ko: '잔액 충전', vi: 'Nạp số dư', tr: 'Bakiye Yükle', hi: 'बैलेंस रिचार्ज करें', id: 'Isi Ulang Saldo', ms: 'Tambah Nilai Baki', pt: 'Recarregar Saldo', es: 'Recargar Saldo', ru: 'Пополнить баланс' },
+    'Your Current Tier:': { tl: 'Iyong Kasalukuyang Antas:', ko: '현재 등급:', vi: 'Cấp hiện tại của bạn:', tr: 'Mevcut Seviyeniz:', hi: 'आपका वर्तमान स्तर:', id: 'Tingkat Anda Saat Ini:', ms: 'Tahap Semasa Anda:', pt: 'Seu Nível Atual:', es: 'Tu Nivel Actual:', ru: 'Ваш текущий уровень:' },
+    'Your Current Balance:': { tl: 'Iyong Kasalukuyang Balanse:', ko: '현재 잔액:', vi: 'Số dư hiện tại của bạn:', tr: 'Mevcut Bakiyeniz:', hi: 'आपका वर्तमान बैलेंस:', id: 'Saldo Anda Saat Ini:', ms: 'Baki Semasa Anda:', pt: 'Seu Saldo Atual:', es: 'Tu Saldo Actual:', ru: 'Ваш текущий баланс:' },
+    'Package Price:': { tl: 'Presyo ng Package:', ko: '패키지 가격:', vi: 'Giá gói:', tr: 'Paket Fiyatı:', hi: 'पैकेज मूल्य:', id: 'Harga Paket:', ms: 'Harga Pakej:', pt: 'Preço do Pacote:', es: 'Precio del Paquete:', ru: 'Цена пакета:' },
+    'Purchase Package with Balance': { tl: 'Bumili ng Package gamit ang Balanse', ko: '잔액으로 패키지 구매', vi: 'Mua gói bằng số dư', tr: 'Bakiye ile Paket Satın Al', hi: 'बैलेंस से पैकेज खरीदें', id: 'Beli Paket dengan Saldo', ms: 'Beli Pakej dengan Baki', pt: 'Comprar Pacote com Saldo', es: 'Comprar Paquete con Saldo', ru: 'Купить пакет с баланса' },
+    'Go to Recharge Tab': { tl: 'Pumunta sa Recharge Tab', ko: '충전 탭으로 이동', vi: 'Đi đến mục Nạp tiền', tr: 'Yükleme Sekmesine Git', hi: 'रिचार्ज टैब पर जाएं', id: 'Buka Tab Isi Ulang', ms: 'Pergi ke Tab Tambah Nilai', pt: 'Ir para Aba de Recarga', es: 'Ir a Pestaña de Recarga', ru: 'Перейти к пополнению' },
+    'Select Recharge Amount:': { tl: 'Pumili ng Halaga ng Recharge:', ko: '충전 금액 선택:', vi: 'Chọn số tiền nạp:', tr: 'Yükleme Tutarı Seçin:', hi: 'रिचार्ज राशि चुनें:', id: 'Pilih Jumlah Isi Ulang:', ms: 'Pilih Jumlah Tambah Nilai:', pt: 'Selecione o Valor da Recarga:', es: 'Selecciona el Monto de Recarga:', ru: 'Выберите сумму пополнения:' },
+    'Honest work.': { tl: 'Marangal na trabaho.', ko: '정직한 업무.', vi: 'Công việc minh bạch.', tr: 'Dürüst çalışma.', hi: 'ईमानदार काम।', id: 'Pekerjaan jujur.', ms: 'Kerja jujur.', pt: 'Trabalho honesto.', es: 'Trabajo honesto.', ru: 'Честная работа.' },
+    'Simple tasks. Real rewards.': { tl: 'Simpleng gawain. Totoong gantimpala.', ko: '간단한 작업. 실질적인 보상.', vi: 'Nhiệm vụ đơn giản. Phần thưởng thật.', tr: 'Basit görevler. Gerçek ödüller.', hi: 'सरल कार्य। वास्तविक पुरस्कार।', id: 'Tugas sederhana. Hadiah nyata.', ms: 'Tugasan mudah. Ganjaran sebenar.', pt: 'Tarefas simples. Recompensas reais.', es: 'Tareas simples. Recompensas reales.', ru: 'Простые задачи. Реальные награды.' },
+    'About our work': { tl: 'Tungkol sa aming trabaho', ko: '우리의 업무 소개', vi: 'Về công việc của chúng tôi', tr: 'Çalışmamız hakkında', hi: 'हमारे काम के बारे में', id: 'Tentang pekerjaan kami', ms: 'Tentang kerja kami', pt: 'Sobre o nosso trabalho', es: 'Sobre nuestro trabajo', ru: 'О нашей работе' },
+    'How a campaign reaches you': { tl: 'Paano nakakarating sa iyo ang kampanya', ko: '캠페인 전달 방식', vi: 'Cách chiến dịch đến với bạn', tr: 'Kampanya size nasıl ulaşır', hi: 'अभियान आप तक कैसे पहुंचता है', id: 'Bagaimana kampanye sampai ke Anda', ms: 'Bagaimana kempen sampai kepada anda', pt: 'Como uma campanha chega até você', es: 'Cómo llega una campaña a ti', ru: 'Как кампания попадает к вам' },
+    'How you do the work': { tl: 'Paano gawin ang trabaho', ko: '작업 진행 방법', vi: 'Cách bạn thực hiện công việc', tr: 'İşi nasıl yaparsınız', hi: 'आप काम कैसे करते हैं', id: 'Cara Anda melakukan pekerjaan', ms: 'Cara anda melakukan kerja', pt: 'Como você faz o trabalho', es: 'Cómo realizas el trabajo', ru: 'Как выполнять задания' },
+    'Completely free for you': { tl: 'Ganap na libre para sa iyo', ko: '완전 무료 이용', vi: 'Hoàn toàn miễn phí cho bạn', tr: 'Sizin için tamamen ücretsiz', hi: 'आपके लिए पूरी तरह मुफ़्त', id: 'Sepenuhnya gratis untuk Anda', ms: 'Sepenuhnya percuma untuk anda', pt: 'Totalmente grátis para você', es: 'Totalmente gratis para ti', ru: 'Полностью бесплатно для вас' },
+    'Certificates': { tl: 'Mga Sertipiko', ko: '인증서', vi: 'Chứng nhận', tr: 'Sertifikalar', hi: 'प्रमाणपत्र', id: 'Sertifikat', ms: 'Sijil', pt: 'Certificados', es: 'Certificados', ru: 'Сертификаты' },
+    'Questions': { tl: 'Mga Tanong', ko: '자주 묻는 질문', vi: 'Câu hỏi thường gặp', tr: 'Sorular', hi: 'प्रश्न', id: 'Pertanyaan', ms: 'Soalan', pt: 'Perguntas', es: 'Preguntas', ru: 'Вопросы' },
+    'Ready to start earning?': { tl: 'Handa ka na bang kumita?', ko: '수익 창출을 시작할 준비가 되셨나요?', vi: 'Sẵn sàng bắt đầu kiếm tiền?', tr: 'Kazanmaya başlamaya hazır mısınız?', hi: 'कमाई शुरू करने के लिए तैयार हैं?', id: 'Siap mulai menghasilkan?', ms: 'Bersedia untuk mula menjana pendapatan?', pt: 'Pronto para começar a ganhar?', es: '¿Listo para empezar a ganar?', ru: 'Готовы начать зарабатывать?' },
+    'Terms': { tl: 'Mga Tuntunin', ko: '이용약관', vi: 'Điều khoản', tr: 'Şartlar', hi: 'शर्तें', id: 'Ketentuan', ms: 'Terma', pt: 'Termos', es: 'Términos', ru: 'Условия' },
+    'Privacy': { tl: 'Privacy', ko: '개인정보', vi: 'Bảo mật', tr: 'Gizlilik', hi: 'गोपनीयता', id: 'Privasi', ms: 'Privasi', pt: 'Privacidade', es: 'Privacidad', ru: 'Конфиденциальность' },
+    'Active Partner': { tl: 'Aktibong Partner', ko: '활성 파트너', vi: 'Đối tác hoạt động', tr: 'Aktif İş Ortağı', hi: 'सक्रिय भागीदार', id: 'Mitra Aktif', ms: 'Rakan Aktif', pt: 'Parceiro Ativo', es: 'Socio Activo', ru: 'Активный партнер' },
+    'Authorized Program': { tl: 'Awtorisadong Programa', ko: '공식 인증 프로그램', vi: 'Chương trình ủy quyền', tr: 'Yetkili Program', hi: 'अधिकृत कार्यक्रम', id: 'Program Resmi', ms: 'Program Bertauliah', pt: 'Programa Autorizado', es: 'Programa Autorizado', ru: 'Авторизованная программа' },
+    'Certificate ID': { tl: 'ID ng Sertipiko', ko: '인증서 번호', vi: 'Mã chứng nhận', tr: 'Sertifika No', hi: 'प्रमाणपत्र आईडी', id: 'ID Sertifikat', ms: 'ID Sijil', pt: 'ID do Certificado', es: 'ID del Certificado', ru: 'Номер сертификата' },
+    'Year': { tl: 'Taon', ko: '연도', vi: 'Năm', tr: 'Yıl', hi: 'वर्ष', id: 'Tahun', ms: 'Tahun', pt: 'Ano', es: 'Año', ru: 'Год' },
+    'Media Campaign Partner': { tl: 'Partner sa Kampanya ng Media', ko: '미디어 캠페인 파트너', vi: 'Đối tác chiến dịch truyền thông', tr: 'Medya Kampanya Ortağı', hi: 'मीडिया अभियान भागीदार', id: 'Mitra Kampanye Media', ms: 'Rakan Kempen Media', pt: 'Parceiro de Campanha de Mídia', es: 'Socio de Campaña de Medios', ru: 'Партнер медиакампаний' },
+    'OFFICIAL COLLABORATION': { tl: 'OPISYAL NA KOLABORASYON', ko: '공식 협업', vi: 'HỢP TÁC CHÍNH THỨC', tr: 'RESMİ İŞ BİRLİĞİ', hi: 'आधिकारिक सहयोग', id: 'KOLABORASI RESMI', ms: 'KERJASAMA RASMI', pt: 'COLABORAÇÃO OFICIAL', es: 'COLABORACIÓN OFICIAL', ru: 'ОФИЦИАЛЬНОЕ СОТРУДНИЧЕСТВО' },
+    'First Time': { tl: 'Unang Beses', ko: '첫 번째', vi: 'Lần đầu', tr: 'İlk Kez', hi: 'पहली बार', id: 'Pertama Kali', ms: 'Kali Pertama', pt: 'Primeira Vez', es: 'Primera Vez', ru: 'Первый раз' },
+    'Deposit $30': { tl: 'Deposito $30', ko: '$30 입금', vi: 'Nạp $30', tr: '$30 Yatır', hi: '$30 जमा करें', id: 'Deposit $30', ms: 'Deposit $30', pt: 'Deposite $30', es: 'Deposita $30', ru: 'Депозит $30' },
+    'Bonus $2': { tl: 'Bonus na $2', ko: '$2 보너스', vi: 'Thưởng $2', tr: '$2 Bonus', hi: '$2 बोनस', id: 'Bonus $2', ms: 'Bonus $2', pt: 'Bônus de $2', es: 'Bono de $2', ru: 'Бонус $2' },
+    'First Time Deposit $30': { tl: 'Unang Deposito $30', ko: '첫 입금 $30', vi: 'Nạp lần đầu $30', tr: 'İlk Yatırım $30', hi: 'पहला जमा $30', id: 'Deposit Pertama $30', ms: 'Deposit Pertama $30', pt: 'Primeiro Depósito $30', es: 'Primer Depósito $30', ru: 'Первый депозит $30' },
+    'Log Out': { tl: 'Mag-log Out', ko: '로그아웃', vi: 'Đăng xuất', tr: 'Çıkış Yap', hi: 'लॉग आउट', id: 'Keluar', ms: 'Log Keluar', pt: 'Sair', es: 'Cerrar Sesión', ru: 'Выйти' },
+    'Task Reward': { tl: 'Gantimpala sa Gawain', ko: '작업 보상', vi: 'Thưởng nhiệm vụ', tr: 'Görev Ödülü', hi: 'कार्य पुरस्कार', id: 'Hadiah Tugas', ms: 'Ganjaran Tugasan', pt: 'Recompensa da Tarefa', es: 'Recompensa de Tarea', ru: 'Награда за задание' },
+    'Today Earnings': { tl: 'Kita Ngayon', ko: '오늘 수익', vi: 'Thu nhập hôm nay', tr: 'Bugünkü Kazanç', hi: 'आज की कमाई', id: 'Penghasilan Hari Ini', ms: 'Pendapatan Hari Ini', pt: 'Ganhos de Hoje', es: 'Ganancias de Hoy', ru: 'Доход за сегодня' },
+    'Send at least 1.00 USDT through the selected network (BEP20). Your balance updates after the transfer is detected and credited.': {
+      tl: 'Magpadala ng kahit 1.00 USDT sa napiling network (BEP20). Mag-a-update ang iyong balanse pagkatapos makumpirma ang transfer.',
+      ko: '선택한 네트워크(BEP20)로 최소 1.00 USDT를 보내세요. 송금이 감지되고 승인되면 잔액이 업데이트됩니다.',
+      vi: 'Gửi ít nhất 1.00 USDT qua mạng đã chọn (BEP20). Số dư của bạn sẽ cập nhật sau khi giao dịch được xác nhận.',
+      tr: 'Seçilen ağ (BEP20) üzerinden en az 1.00 USDT gönderin. Transfer algılanıp onaylandıktan sonra bakiyeniz güncellenir.',
+      hi: 'चयनित नेटवर्क (BEP20) के माध्यम से कम से कम 1.00 USDT भेजें। ट्रांसफर की पुष्टि होने के बाद आपका बैलेंस अपडेट हो जाएगा।',
+      id: 'Kirim minimal 1.00 USDT melalui jaringan yang dipilih (BEP20). Saldo Anda akan diperbarui setelah transfer terdeteksi dan dikonfirmasi.',
+      ms: 'Hantar sekurang-kurangnya 1.00 USDT melalui rangkaian yang dipilih (BEP20). Baki anda akan dikemas kini selepas pemindahan disahkan.',
+      pt: 'Envie pelo menos 1.00 USDT pela rede selecionada (BEP20). Seu saldo será atualizado assim que a transferência for detectada e creditada.',
+      es: 'Envía al menos 1.00 USDT a través de la red seleccionada (BEP20). Tu saldo se actualizará cuando se detecte y acredite la transferencia.',
+      ru: 'Отправьте не менее 1.00 USDT через выбранную сеть (BEP20). Баланс обновится после обнаружения и зачисления перевода.'
+    }
+  };
+
+  const multiLangUiMapLower = {};
+  Object.keys(multiLangUiMap).forEach(function(k) {
+    multiLangUiMapLower[k.toLowerCase()] = multiLangUiMap[k];
+  });
+
+  const multiLangPatternWords = {
+    memberPrefix: { tl: 'Miyembro:', ko: '회원:', vi: 'Thành viên:', tr: 'Üye:', hi: 'सदस्य:', id: 'Anggota:', ms: 'Ahli:', pt: 'Membro:', es: 'Miembro:', ru: 'Участник:' },
+    completedMissions: {
+      tl: 'Nakumpleto ang {n} misyon ngayon',
+      ko: '오늘 {n}개 미션 완료',
+      vi: 'Đã hoàn thành {n} nhiệm vụ hôm nay',
+      tr: 'Bugün {n} görev tamamlandı',
+      hi: 'आज {n} मिशन पूरे किए',
+      id: 'Menyelesaikan {n} misi hari ini',
+      ms: 'Selesai {n} misi hari ini',
+      pt: 'Concluiu {n} missões hoje',
+      es: 'Completó {n} misiones hoy',
+      ru: 'Выполнено {n} миссий сегодня'
+    },
+    daysWord: { tl: 'Araw', ko: '일', vi: 'Ngày', tr: 'Gün', hi: 'दिन', id: 'Hari', ms: 'Hari', pt: 'Dias', es: 'Días', ru: 'Дн.' },
+    tasksWord: { tl: 'Gawain', ko: '작업', vi: 'Nhiệm vụ', tr: 'Görev', hi: 'कार्य', id: 'Tugas', ms: 'Tugasan', pt: 'Tarefas', es: 'Tareas', ru: 'Задач' },
+    freeTrial: { tl: 'Libreng Pagsubok', ko: '무료 체험', vi: 'Dùng thử miễn phí', tr: 'Ücretsiz Deneme', hi: 'निःशुल्क परीक्षण', id: 'Uji Coba Gratis', ms: 'Percubaan Percuma', pt: 'Teste Grátis', es: 'Prueba Gratis', ru: 'Бесплатный тест' },
+    unlockNow: { tl: 'I-unlock Ngayon', ko: '지금 잠금 해제', vi: 'Mở khóa ngay', tr: 'Şimdi Aç', hi: 'अभी अनलॉक करें', id: 'Buka Sekarang', ms: 'Buka Sekarang', pt: 'Desbloquear Agora', es: 'Desbloquear Ahora', ru: 'Открыть сейчас' },
+    freeCurrentLevel: { tl: 'Libre · Kasalukuyang Level', ko: '무료 · 현재 등급', vi: 'Miễn phí · Cấp hiện tại', tr: 'Ücretsiz · Mevcut Seviye', hi: 'मुफ़्त · वर्तमान स्तर', id: 'Gratis · Level Saat Ini', ms: 'Percuma · Tahap Semasa', pt: 'Grátis · Nível Atual', es: 'Gratis · Nivel Actual', ru: 'Бесплатно · Текущий уровень' },
+    positionWord: { tl: 'Posisyon', ko: '직급', vi: 'Vị trí', tr: 'Pozisyon', hi: 'पद', id: 'Posisi', ms: 'Jawatan', pt: 'Posição', es: 'Posición', ru: 'Позиция' },
+    reqNotMet: { tl: 'Hindi Pa Natutugunan (Naka-lock)', ko: '조건 미충족 (잠김)', vi: 'Chưa đủ điều kiện (Đã khóa)', tr: 'Koşul Karşılanmadı (Kilitli)', hi: 'शर्त पूरी नहीं (लॉक)', id: 'Syarat Belum Terpenuhi (Terkunci)', ms: 'Syarat Tidak Dipenuhi (Dikunci)', pt: 'Requisito Não Cumprido (Bloqueado)', es: 'Requisito No Cumplido (Bloqueado)', ru: 'Условие не выполнено (Закрыто)' },
+    removeWord: { tl: 'Alisin', ko: '삭제', vi: 'Xóa', tr: 'Kaldır', hi: 'हटाएं', id: 'Hapus', ms: 'Buang', pt: 'Remover', es: 'Eliminar', ru: 'Удалить' }
   };
 
   function getLanguageDisplayLabel(code) {
@@ -1929,10 +2232,10 @@
       const isSelected = opt.code === activeCode;
       return (
         '<button type="button" data-select-lang="' + opt.code + '" class="lang-option-card w-full flex items-center justify-between px-5 py-4 rounded-xl text-left cursor-pointer active:scale-[0.985]' + (isSelected ? ' is-selected' : '') + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '">' +
-          '<span class="text-[16px] font-medium tracking-[0.01em]">' + opt.label + '</span>' +
-          '<span class="lang-radio-dot" aria-hidden="true">' +
+          '<span class="text-[16px] font-medium tracking-[0.01em] pointer-events-none">' + opt.label + '</span>' +
+          '<span class="lang-radio-dot pointer-events-none" aria-hidden="true">' +
             (isSelected
-              ? '<svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+              ? '<svg class="w-3.5 h-3.5 text-white pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
               : '') +
           '</span>' +
         '</button>'
@@ -1944,9 +2247,10 @@
     const modal = document.getElementById('language-picker-modal');
     if (!modal) return;
     renderLanguagePickerList();
+    modal.removeAttribute('hidden');
     modal.hidden = false;
     modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    modal.style.setProperty('display', 'flex', 'important');
     if (document.body) {
       document.body.dataset.prevOverflowLang = document.body.style.overflow || '';
       document.body.style.overflow = 'hidden';
@@ -1957,8 +2261,9 @@
     const modal = document.getElementById('language-picker-modal');
     if (!modal) return;
     modal.hidden = true;
+    modal.setAttribute('hidden', '');
     modal.classList.add('hidden');
-    modal.style.display = 'none';
+    modal.style.setProperty('display', 'none', 'important');
     if (document.body) {
       document.body.style.overflow = document.body.dataset.prevOverflowLang || '';
     }
@@ -2065,12 +2370,13 @@
     const cached = translationResultCache.get(cacheKey);
     if (cached) return cached;
 
-    // For the 10 additional international languages, resolve clean English first then map via multiLangUiMap (never leaks Bengali)
+    // For the 10 additional international languages, resolve clean English first then map via multiLangUiMap + dynamic patterns (never leaks Bengali)
     if (targetLang !== 'en' && targetLang !== 'ar') {
       const enRes = translateTextString(sourceStr, 'en');
       const enVal = enRes.value;
       const enTrimmed = enVal.trim();
-      const mapped = multiLangUiMap[enTrimmed] && multiLangUiMap[enTrimmed][targetLang];
+      const mapRow = multiLangUiMap[enTrimmed] || multiLangUiMapLower[enTrimmed.toLowerCase()];
+      const mapped = mapRow && mapRow[targetLang];
       let finalVal = enVal;
       let finalChanged = enRes.changed;
       if (mapped && mapped !== enTrimmed) {
@@ -2078,6 +2384,55 @@
         const trail = enVal.match(/\s*$/)[0];
         finalVal = lead + mapped + trail;
         finalChanged = true;
+      } else if (enTrimmed) {
+        let dyn = enVal;
+        const mCompleted = dyn.match(/Completed\s+(\d+)\s+missions?\s+today/i);
+        if (mCompleted && multiLangPatternWords.completedMissions[targetLang]) {
+          dyn = dyn.replace(mCompleted[0], multiLangPatternWords.completedMissions[targetLang].replace('{n}', mCompleted[1]));
+        }
+        if (/^Member:/i.test(enTrimmed) && multiLangPatternWords.memberPrefix[targetLang]) {
+          dyn = dyn.replace(/Member:/i, multiLangPatternWords.memberPrefix[targetLang]);
+        }
+        if (/My Superior:/i.test(dyn) && multiLangUiMap['My Superior:'] && multiLangUiMap['My Superior:'][targetLang]) {
+          dyn = dyn.replace(/My Superior:/i, multiLangUiMap['My Superior:'][targetLang]);
+        }
+        if (/Free Trial/i.test(dyn) && multiLangPatternWords.freeTrial[targetLang]) {
+          dyn = dyn.replace(/Free Trial/i, multiLangPatternWords.freeTrial[targetLang]);
+        }
+        if (/\b(\d+)\s+Days?\b/i.test(dyn) && multiLangPatternWords.daysWord[targetLang]) {
+          dyn = dyn.replace(/\b(\d+)\s+Days?\b/gi, '$1 ' + multiLangPatternWords.daysWord[targetLang]);
+        }
+        if (/\b(\d+)\s+Tasks?\b/i.test(dyn) && multiLangPatternWords.tasksWord[targetLang]) {
+          dyn = dyn.replace(/\b(\d+)\s+Tasks?\b/gi, '$1 ' + multiLangPatternWords.tasksWord[targetLang]);
+        }
+        if (/Unlock Now/i.test(dyn) && multiLangPatternWords.unlockNow[targetLang]) {
+          dyn = dyn.replace(/Unlock Now/gi, multiLangPatternWords.unlockNow[targetLang]);
+        }
+        if (/Free\s*·\s*Current Level/i.test(dyn) && multiLangPatternWords.freeCurrentLevel[targetLang]) {
+          dyn = dyn.replace(/Free\s*·\s*Current Level/gi, multiLangPatternWords.freeCurrentLevel[targetLang]);
+        }
+        if (/\bPosition\s+(\d+)\b/i.test(dyn) && multiLangPatternWords.positionWord[targetLang]) {
+          dyn = dyn.replace(/\bPosition\s+(\d+)\b/gi, multiLangPatternWords.positionWord[targetLang] + ' $1');
+        }
+        if (/Monthly Salary/i.test(dyn) && multiLangUiMap['Monthly Salary'] && multiLangUiMap['Monthly Salary'][targetLang]) {
+          dyn = dyn.replace(/Monthly Salary/gi, multiLangUiMap['Monthly Salary'][targetLang]);
+        }
+        if (/Active Members/i.test(dyn) && multiLangUiMap['Active Members'] && multiLangUiMap['Active Members'][targetLang]) {
+          dyn = dyn.replace(/Active Members/gi, multiLangUiMap['Active Members'][targetLang]);
+        }
+        if (/Requirement Not Met \(Locked\)/i.test(dyn) && multiLangPatternWords.reqNotMet[targetLang]) {
+          dyn = dyn.replace(/Requirement Not Met \(Locked\)/gi, multiLangPatternWords.reqNotMet[targetLang]);
+        }
+        if (/✕\s*Close/i.test(dyn) && multiLangUiMap['Close'] && multiLangUiMap['Close'][targetLang]) {
+          dyn = dyn.replace(/Close/gi, multiLangUiMap['Close'][targetLang]);
+        }
+        if (/Remove/i.test(dyn) && multiLangPatternWords.removeWord[targetLang] && dyn.length < 24) {
+          dyn = dyn.replace(/Remove/gi, multiLangPatternWords.removeWord[targetLang]);
+        }
+        if (dyn !== enVal) {
+          finalVal = dyn;
+          finalChanged = true;
+        }
       }
       const resObj = { value: finalVal, changed: finalChanged };
       if (translationResultCache.size < 6000) {
@@ -2191,7 +2546,8 @@
     const lang = normalizeLangCode(targetLang || currentLang);
     const now = Date.now();
     const isSilent = Boolean(opts && opts.silent);
-    if (isSilent && _lastTranslateDomLang === lang && (now - _lastTranslateDomAt) < 250) {
+    const isForce = Boolean(opts && opts.force);
+    if (!isForce && isSilent && _lastTranslateDomLang === lang && (now - _lastTranslateDomAt) < 250) {
       return;
     }
     _lastTranslateDomLang = lang;
@@ -2439,6 +2795,7 @@
     closeLanguagePicker: closeLanguagePicker,
     normalizeLangCode: normalizeLangCode,
     t: getTranslation,
+    translateText: function(str, lang) { return translateTextString(String(str || ''), lang || currentLang).value; },
     translateDOM: translateDOM,
     translations: translations,
     syncCountryLanguageOptions: syncCountryLanguageOptions,
@@ -2451,7 +2808,7 @@
   window.syncCountryLanguageOptions = syncCountryLanguageOptions;
   window.t = getTranslation;
 
-  // Bind change events on all language selectors
+  // Bind change events on all language selectors + direct backup triggers for picker buttons
   function bindLanguageSelectors() {
     syncCountryLanguageOptions();
     document.querySelectorAll('#landing-language-switch, #language-switch, #login-language-switch, #register-language-switch, #profile-language-switch, #personal-language-switch, .page-language-switch, .language-switcher').forEach(function(sel) {
@@ -2463,6 +2820,25 @@
       }
       if (sel && sel.value !== currentLang) sel.value = currentLang;
     });
+    document.querySelectorAll('[data-open-language-picker]').forEach(function(btn) {
+      if (btn && !btn.dataset.langPickerBound) {
+        btn.dataset.langPickerBound = 'true';
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openLanguagePicker();
+        });
+      }
+    });
+    const closeBtnEl = document.getElementById('close-language-picker-btn');
+    if (closeBtnEl && !closeBtnEl.dataset.langPickerBound) {
+      closeBtnEl.dataset.langPickerBound = 'true';
+      closeBtnEl.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeLanguagePicker();
+      });
+    }
   }
 
   // Global delegated listener ensures dynamic selects always trigger
@@ -2472,29 +2848,39 @@
     }
   });
 
-  // Global delegated click listeners for full-screen Language Picker modal
+  // Global delegated click listeners for full-screen Language Picker modal (TextNode-safe)
   document.addEventListener('click', function(e) {
-    const openTrigger = e.target && e.target.closest ? e.target.closest('[data-open-language-picker]') : null;
+    const rawTarget = e.target;
+    const targetEl = (rawTarget && rawTarget.nodeType === 1) ? rawTarget : (rawTarget && rawTarget.parentElement);
+    if (!targetEl || typeof targetEl.closest !== 'function') return;
+
+    const openTrigger = targetEl.closest('[data-open-language-picker]');
     if (openTrigger) {
       e.preventDefault();
       openLanguagePicker();
       return;
     }
 
-    const closeBtn = e.target && e.target.closest ? e.target.closest('#close-language-picker-btn') : null;
+    const closeBtn = targetEl.closest('#close-language-picker-btn');
     if (closeBtn) {
       e.preventDefault();
       closeLanguagePicker();
       return;
     }
 
-    const optionBtn = e.target && e.target.closest ? e.target.closest('[data-select-lang]') : null;
+    const optionBtn = targetEl.closest('[data-select-lang]');
     if (optionBtn) {
       e.preventDefault();
       const chosen = optionBtn.getAttribute('data-select-lang');
       setAppLanguage(chosen, { silent: false });
       renderLanguagePickerList();
       setTimeout(closeLanguagePicker, 140);
+      return;
+    }
+
+    const modalEl = document.getElementById('language-picker-modal');
+    if (modalEl && !modalEl.hidden && targetEl === modalEl) {
+      closeLanguagePicker();
     }
   });
 

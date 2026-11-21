@@ -525,8 +525,19 @@ button:active:not(:disabled), .cursor-pointer:active {
   line-height: 1.2 !important;
 }
 #language-picker-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background: rgba(4, 14, 43, 0.96) !important;
+  justify-content: center !important;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+}
+#language-picker-modal:not([hidden]) {
+  display: flex !important;
+}
+#language-picker-modal[hidden] {
+  display: none !important;
 }
 #language-picker-modal .lang-option-card {
   background: #102863;
@@ -1707,8 +1718,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                 
                 <!-- SLIDE 1: First Time Deposit $30 — Bonus $2 Video Banner -->
                 <div class="pw-banner-slide relative flex flex-col justify-center text-white overflow-hidden" style="background: #02081a;" oncontextmenu="return false;">
+                  <!-- Instant Eager Poster Backdrop so 3D gold coins are visible immediately with zero black flash -->
+                  <img id="pw-home-deposit-poster" src="/assets/deposit_banner_poster.jpg" alt="" loading="eager" decoding="async" fetchpriority="high" draggable="false" oncontextmenu="return false;" class="absolute inset-0 w-full h-full object-cover object-right pointer-events-none select-none" />
                   <!-- Full-bleed Looping 3D Gold Coin Video -->
-                  <video id="pw-home-deposit-video" src="/assets/aistudio/76e0bee4-55b4-4eee-aef9-38097b5eeb7b_39d4f919.mp4" autoplay loop muted playsinline preload="metadata" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" draggable="false" oncontextmenu="return false;" class="absolute inset-0 w-full h-full object-cover object-right pointer-events-none select-none"></video>
+                  <video id="pw-home-deposit-video" src="/assets/aistudio/76e0bee4-55b4-4eee-aef9-38097b5eeb7b_39d4f919.mp4" poster="/assets/deposit_banner_poster.jpg" autoplay loop muted playsinline webkit-playsinline="true" x5-playsinline="true" preload="auto" disablepictureinpicture controlslist="nodownload noplaybackrate noremoteplayback" draggable="false" oncontextmenu="return false;" class="absolute inset-0 w-full h-full object-cover object-right pointer-events-none select-none"><source src="/assets/aistudio/76e0bee4-55b4-4eee-aef9-38097b5eeb7b_39d4f919.mp4" type="video/mp4"></video>
                   <!-- Seamless Left Gradient Scrim preserving the 3D golden coins on the right while replacing the baked-in text cleanly -->
                   <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(90deg, #02091c 0%, #02081b 43%, rgba(2, 8, 26, 0.97) 48%, rgba(2, 8, 24, 0) 60%);"></div>
                   <!-- Transparent Anti-Download Shield -->
@@ -1732,7 +1745,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                 <!-- SLIDE 2: Futuristic Smart-City Holographic Network (Animated Video-Like Scene) -->
                 <div id="pw-home-holo-slide" class="pw-banner-slide relative overflow-hidden text-white select-none" style="background: #041236;" oncontextmenu="return false;">
                   <!-- HD Cinematic Smart-City & Holographic Executive Visual with Smooth Camera Drift -->
-                  <img src="/src/assets/images/smart_city_holo_1795279710280.jpg" alt="Global Digital Network" loading="lazy" decoding="async" referrerpolicy="no-referrer" draggable="false" oncontextmenu="return false;" class="pw-holo-bg-img absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none" />
+                  <img src="/src/assets/images/smart_city_holo_1795279710280.jpg" alt="Global Digital Network" loading="eager" decoding="async" fetchpriority="high" referrerpolicy="no-referrer" draggable="false" oncontextmenu="return false;" class="pw-holo-bg-img absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none" />
                   <!-- Transparent Anti-Download Shield -->
                   <div class="pw-media-shield absolute inset-0 z-[5]" aria-hidden="true" oncontextmenu="return false;"></div>
 
@@ -1904,18 +1917,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 
                       <div class="mt-2.5 sm:mt-3">
                         <h2 class="text-base sm:text-2xl font-black text-white leading-tight tracking-tight drop-shadow">
-                          বন্ধুদের আমন্ত্রণ জানান
+                          Invite Friends
                         </h2>
                         <span class="text-[11px] sm:text-xs font-semibold text-[#38bdf8] block mt-0.5">
-                          একসাথে আয় করুন
+                          Earn Together
                         </span>
                         <p class="text-[10px] sm:text-xs text-slate-300 mt-1.5 leading-relaxed line-clamp-2">
-                          আপনার রেফারেল লিংক শেয়ার করুন এবং আপনার টিমের কার্যক্রম দেখুন।
+                          Share your referral link and view your team activity.
                         </p>
                       </div>
 
                       <button type="button" class="mt-3 px-4 py-1.5 rounded-full bg-gradient-to-r from-[#0077ff] to-[#00c8ff] hover:brightness-110 text-white text-[11px] sm:text-xs font-bold shadow-lg shadow-[#0088ff]/30 flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all" data-panel="invite">
-                        <span>রেফার করুন</span>
+                        <span>Refer Now</span>
                         <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 fill-none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
                       </button>
                     </div>
@@ -1971,7 +1984,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
                 <!-- SLIDE 4: PW Consulting Group Corporate Team (Animated Video-Like Showcase) -->
                 <div id="pw-home-team-slide" class="pw-banner-slide relative overflow-hidden text-white select-none" style="background: #062163;" oncontextmenu="return false;">
                   <!-- Smooth Cinematic Pan & Zoom on Uploaded Corporate Team Image -->
-                  <img src="/assets/aistudio/Social-media-team-800x600_26e21dfa.jpg" alt="PW Consulting Group" loading="lazy" decoding="async" referrerpolicy="no-referrer" draggable="false" oncontextmenu="return false;" class="pw-team-bg-img absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none" />
+                  <img src="/assets/aistudio/Social-media-team-800x600_26e21dfa.jpg" alt="PW Consulting Group" loading="eager" decoding="async" fetchpriority="high" referrerpolicy="no-referrer" draggable="false" oncontextmenu="return false;" class="pw-team-bg-img absolute inset-0 w-full h-full object-cover object-center pointer-events-none select-none" />
 
                   <!-- Royal-Blue Cinematic Vignette & Center Brand Ambient Glow -->
                   <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse at 50% 50%, rgba(53, 198, 231, 0.14) 0%, rgba(7, 27, 80, 0.22) 55%, rgba(3, 13, 42, 0.68) 100%);"></div>
@@ -5767,7 +5780,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     </div>
   </div>
 
-  <script src="/i18n.js" defer></script>
-  <script src="/app.js" defer></script>
+  <script src="/i18n.js?v=20261121d" defer></script>
+  <script src="/app.js?v=20261121d" defer></script>
   </body>
 </html>

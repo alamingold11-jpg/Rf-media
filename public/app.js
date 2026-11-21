@@ -324,6 +324,9 @@ window.normalizeAppLang = normalizeAppLang;
 function tLang(lang, bnText, enText, arText) {
   const l = normalizeAppLang(lang);
   if (l === 'ar') return arText !== undefined ? arText : enText;
+  if (l !== 'en' && enText && window.aloI18n && typeof window.aloI18n.translateText === 'function') {
+    return window.aloI18n.translateText(enText, l);
+  }
   return enText;
 }
 window.tLang = tLang;
@@ -2146,7 +2149,15 @@ function updateDashboardTitleForLang(targetLang) {
     }
   };
   const set = localized[lang] || localized.en;
-  Object.assign(dashboardTitles, set);
+  if (lang !== 'en' && lang !== 'ar' && window.aloI18n && typeof window.aloI18n.translateText === 'function') {
+    const translatedSet = {};
+    Object.keys(localized.en).forEach(function(k) {
+      translatedSet[k] = window.aloI18n.translateText(localized.en[k], lang);
+    });
+    Object.assign(dashboardTitles, translatedSet);
+  } else {
+    Object.assign(dashboardTitles, set);
+  }
 
   const activePanel = document.querySelector('.dashboard-panel:not([hidden])');
   if (activePanel) {
@@ -2350,8 +2361,14 @@ function showView(viewName, style) {
     if (nextView === 'landing') {
       renderLandingCertificates();
     }
+    if (nextView === 'dashboard') {
+      const homePanel = document.getElementById('home-panel');
+      if (homePanel && !homePanel.hidden && typeof ensureHomeBannerMediaReady === 'function') {
+        ensureHomeBannerMediaReady();
+      }
+    }
     if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
-      window.aloI18n.translateDOM();
+      window.aloI18n.translateDOM(undefined, { silent: true, force: true });
     }
   };
 
@@ -3420,6 +3437,9 @@ function openDashboardPanel(panelName) {
   if (nextPanel === 'home') {
     goToPWBannerSlide(0);
     startPWBannerAutoPlay();
+    if (typeof ensureHomeBannerMediaReady === 'function') {
+      ensureHomeBannerMediaReady();
+    }
   } else {
     stopPWBannerAutoPlay();
   }
@@ -3866,12 +3886,20 @@ window.addEventListener('alo-language-changed', function(e) {
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
     if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
     if (typeof updateTeamReportMetrics === 'function') updateTeamReportMetrics();
+    if (typeof updateHomeWithdrawalTicker === 'function') updateHomeWithdrawalTicker();
+    if (typeof updateHomeMemberUpdates === 'function') updateHomeMemberUpdates();
     if (isUserInit && typeof dbSaveUser === 'function') {
       clearTimeout(_langSaveTimer);
       _langSaveTimer = setTimeout(function() {
         dbSaveUser(user).catch(function() {});
       }, 350);
     }
+  } else {
+    if (typeof updateHomeWithdrawalTicker === 'function') updateHomeWithdrawalTicker();
+    if (typeof updateHomeMemberUpdates === 'function') updateHomeMemberUpdates();
+  }
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+    window.aloI18n.translateDOM(lang, { silent: true, force: true });
   }
 });
 
@@ -9960,7 +9988,10 @@ function renderMissionSubmission() {
   const missions = readAcceptedMissions();
   const mission = missions.find(function(item) { return item.id === activeSubmissionId; });
   if (!mission) {
-    openDashboardPanel('tasks');
+    const submitPanel = document.getElementById('mission-submit-panel');
+    if (submitPanel && !submitPanel.hidden) {
+      openDashboardPanel('tasks');
+    }
     return;
   }
 
@@ -10241,10 +10272,12 @@ function refreshAllMissionsAndMetrics() {
   if (typeof renderMissionRecords === 'function') {
     renderMissionRecords(activeMissionFilter);
   }
-  if (typeof renderPackageTasks === 'function') {
+  const tasksPanelEl = document.getElementById('platform-tasks-panel');
+  if (tasksPanelEl && !tasksPanelEl.hidden && typeof renderPackageTasks === 'function') {
     renderPackageTasks(activePackageLevel);
   }
-  if (typeof renderMissionSubmission === 'function') {
+  const submitPanelEl = document.getElementById('mission-submit-panel');
+  if (submitPanelEl && !submitPanelEl.hidden && typeof renderMissionSubmission === 'function') {
     renderMissionSubmission();
   }
 }
@@ -13234,6 +13267,53 @@ let pwBannerCurrentIndex = 0;
 let pwBannerTimer = null;
 const PW_BANNER_TOTAL = 4;
 
+function ensureHomeBannerMediaReady() {
+  const depositVideo = document.getElementById('pw-home-deposit-video');
+  if (!depositVideo) return;
+
+  depositVideo.muted = true;
+  depositVideo.defaultMuted = true;
+  depositVideo.playsInline = true;
+  depositVideo.setAttribute('muted', '');
+  depositVideo.setAttribute('playsinline', '');
+  depositVideo.setAttribute('webkit-playsinline', 'true');
+
+  if (!depositVideo.dataset.pwPlayBound) {
+    depositVideo.dataset.pwPlayBound = 'true';
+    const tryPlayOnReady = function() {
+      const dash = document.getElementById('dashboard-view');
+      const home = document.getElementById('home-panel');
+      if (pwBannerCurrentIndex === 0 && dash && !dash.hidden && home && !home.hidden) {
+        depositVideo.muted = true;
+        const p = depositVideo.play();
+        if (p && typeof p.catch === 'function') p.catch(function() {});
+      }
+    };
+    depositVideo.addEventListener('loadeddata', tryPlayOnReady);
+    depositVideo.addEventListener('canplay', tryPlayOnReady);
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) tryPlayOnReady();
+    });
+    const unlockOnce = function() {
+      tryPlayOnReady();
+      window.removeEventListener('touchstart', unlockOnce);
+      window.removeEventListener('pointerdown', unlockOnce);
+    };
+    window.addEventListener('touchstart', unlockOnce, { passive: true });
+    window.addEventListener('pointerdown', unlockOnce, { passive: true });
+  }
+
+  const dash = document.getElementById('dashboard-view');
+  const home = document.getElementById('home-panel');
+  if (pwBannerCurrentIndex === 0 && dash && !dash.hidden && home && !home.hidden) {
+    if (depositVideo.readyState === 0) {
+      try { depositVideo.load(); } catch (e) {}
+    }
+    const p = depositVideo.play();
+    if (p && typeof p.catch === 'function') p.catch(function() {});
+  }
+}
+
 function goToPWBannerSlide(idx) {
   pwBannerCurrentIndex = ((idx % PW_BANNER_TOTAL) + PW_BANNER_TOTAL) % PW_BANNER_TOTAL;
   const track = document.getElementById('pw-home-banner-track');
@@ -13253,7 +13333,7 @@ function goToPWBannerSlide(idx) {
   const depositVideo = document.getElementById('pw-home-deposit-video');
   if (depositVideo) {
     if (pwBannerCurrentIndex === 0) {
-      depositVideo.play().catch(function() {});
+      ensureHomeBannerMediaReady();
     } else if (!depositVideo.paused) {
       depositVideo.pause();
     }
@@ -13583,6 +13663,7 @@ function initApp() {
     // Open HOME panel so the banner carousel is immediately visible on first load!
     openDashboardPanel('home');
     showView('dashboard');
+    ensureHomeBannerMediaReady();
 
     // Immediately pull live authoritative state from Supabase
     hydrateSessionFromSupabase();
@@ -15894,6 +15975,9 @@ window.addEventListener('alo-language-changed', function(e) {
   if (cModal && !cModal.classList.contains('hidden')) {
     const searchEl = document.getElementById('country-picker-search');
     if (typeof renderCountryList === 'function') renderCountryList(searchEl ? searchEl.value : '');
+  }
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+    window.aloI18n.translateDOM(lang, { silent: true, force: true });
   }
 });
 
