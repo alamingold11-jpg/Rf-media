@@ -1888,7 +1888,7 @@ const DEFAULT_PLATFORM_CONTROLS = {
   minWithdraw: 700,
   withdrawNetPercent: 50,
   minRecharge: 126,
-  usdtRate: 125,
+  usdtRate: 126,
   usdtAddress: '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16',
   telegramUrl: 'https://t.me/PW_Official_Manager_BD',
   managerId: '#PW-MANAGER-8802',
@@ -1897,15 +1897,16 @@ const DEFAULT_PLATFORM_CONTROLS = {
 };
 
 const PACKAGE_LEVEL_KEYS = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
+const ADMIN_USD_BASE_RATE = 126;
 
 const DEFAULT_PACKAGE_CONFIGS = {
-  LV0: { count: 5, reward: 20, price: 0, validityDays: 5, nameBn: 'LV0', nameEn: 'LV0', nameAr: 'LV0' },
-  LV1: { count: 6, reward: 30, price: 3500, validityDays: 30, nameBn: 'LV1', nameEn: 'LV1', nameAr: 'LV1' },
-  LV2: { count: 12, reward: 40, price: 7500, validityDays: 30, nameBn: 'LV2', nameEn: 'LV2', nameAr: 'LV2' },
-  LV3: { count: 15, reward: 50, price: 36000, validityDays: 30, nameBn: 'LV3', nameEn: 'LV3', nameAr: 'LV3' },
-  LV4: { count: 25, reward: 60, price: 84000, validityDays: 30, nameBn: 'LV4', nameEn: 'LV4', nameAr: 'LV4' },
-  LV5: { count: 35, reward: 70, price: 150000, validityDays: 30, nameBn: 'LV5', nameEn: 'LV5', nameAr: 'LV5' },
-  LV6: { count: 50, reward: 100, price: 300000, validityDays: 30, nameBn: 'LV6', nameEn: 'LV6', nameAr: 'LV6' }
+  LV0: { count: 5, rewardUsd: 0.16, priceUsd: 0, reward: 20, price: 0, validityDays: 5, currency: 'USD', nameBn: 'LV0', nameEn: 'LV0', nameAr: 'LV0' },
+  LV1: { count: 6, rewardUsd: 0.24, priceUsd: 27.78, reward: 30, price: 3500, validityDays: 30, currency: 'USD', nameBn: 'LV1', nameEn: 'LV1', nameAr: 'LV1' },
+  LV2: { count: 12, rewardUsd: 0.32, priceUsd: 59.52, reward: 40, price: 7500, validityDays: 30, currency: 'USD', nameBn: 'LV2', nameEn: 'LV2', nameAr: 'LV2' },
+  LV3: { count: 15, rewardUsd: 0.40, priceUsd: 285.71, reward: 50, price: 36000, validityDays: 30, currency: 'USD', nameBn: 'LV3', nameEn: 'LV3', nameAr: 'LV3' },
+  LV4: { count: 25, rewardUsd: 0.48, priceUsd: 666.67, reward: 60, price: 84000, validityDays: 30, currency: 'USD', nameBn: 'LV4', nameEn: 'LV4', nameAr: 'LV4' },
+  LV5: { count: 35, rewardUsd: 0.56, priceUsd: 1190.48, reward: 70, price: 150000, validityDays: 30, currency: 'USD', nameBn: 'LV5', nameEn: 'LV5', nameAr: 'LV5' },
+  LV6: { count: 50, rewardUsd: 0.79, priceUsd: 2380.95, reward: 100, price: 300000, validityDays: 30, currency: 'USD', nameBn: 'LV6', nameEn: 'LV6', nameAr: 'LV6' }
 };
 
 const DEFAULT_SALARY_PAGE_CONFIG = {
@@ -2115,17 +2116,34 @@ function normalizePackagesMap(rawPackages) {
     if (!src || typeof src !== 'object') return;
     const def = DEFAULT_PACKAGE_CONFIGS[lvl];
     const parsedCount = parseInt(src.count, 10);
-    const parsedReward = parseFloat(src.reward);
-    const parsedPrice = parseFloat(src.price);
+    const parsedRewardUsd = parseFloat(src.rewardUsd);
+    const parsedPriceUsd = parseFloat(src.priceUsd);
+    const parsedRewardBdt = parseFloat(src.reward);
+    const parsedPriceBdt = parseFloat(src.price);
     const parsedValidity = parseInt(src.validityDays, 10);
+
+    const rewardUsd = Number.isFinite(parsedRewardUsd) && parsedRewardUsd >= 0
+      ? Number(parsedRewardUsd.toFixed(2))
+      : (Number.isFinite(parsedRewardBdt) && parsedRewardBdt >= 0
+          ? Number((parsedRewardBdt / ADMIN_USD_BASE_RATE).toFixed(2))
+          : def.rewardUsd);
+    const priceUsd = Number.isFinite(parsedPriceUsd) && parsedPriceUsd >= 0
+      ? Number(parsedPriceUsd.toFixed(2))
+      : (Number.isFinite(parsedPriceBdt) && parsedPriceBdt >= 0
+          ? Number((parsedPriceBdt / ADMIN_USD_BASE_RATE).toFixed(2))
+          : def.priceUsd);
+
     const rawBn = String(src.nameBn || '').trim();
     const rawEn = String(src.nameEn || '').trim();
     const rawAr = String(src.nameAr || '').trim();
     out[lvl] = {
       count: Number.isFinite(parsedCount) && parsedCount >= 1 ? parsedCount : def.count,
-      reward: Number.isFinite(parsedReward) && parsedReward >= 0 ? parsedReward : def.reward,
-      price: Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : def.price,
+      rewardUsd: rewardUsd,
+      priceUsd: priceUsd,
+      reward: Number((rewardUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
+      price: Number((priceUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
       validityDays: Number.isFinite(parsedValidity) && parsedValidity >= 1 ? parsedValidity : def.validityDays,
+      currency: 'USD',
       nameBn: (rawBn && !LEGACY_ADMIN_PKG_RE.test(rawBn)) ? rawBn : def.nameBn,
       nameEn: (rawEn && !LEGACY_ADMIN_PKG_RE.test(rawEn)) ? rawEn : def.nameEn,
       nameAr: (rawAr && !LEGACY_ADMIN_PKG_RE.test(rawAr)) ? rawAr : def.nameAr
@@ -2139,13 +2157,12 @@ function syncEditUserPackageOptions(packagesObj) {
   if (!selectEl) return;
   const currentVal = selectEl.value;
   const pkgs = normalizePackagesMap(packagesObj);
-  const rate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
   PACKAGE_LEVEL_KEYS.forEach(lvl => {
     const opt = selectEl.querySelector(`option[value="${lvl}"]`);
     if (!opt) return;
     const pkg = pkgs[lvl];
-    const usdPrice = Number(pkg.price) === 0 ? 0 : Number((Number(pkg.price) / rate).toFixed(2));
-    const priceLabel = Number(pkg.price) === 0 ? 'Free' : `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+    const usdPrice = Number(pkg.priceUsd || 0);
+    const priceLabel = usdPrice === 0 ? 'Free' : `$${usdPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
     opt.textContent = `${lvl} (${pkg.nameEn} - ${priceLabel})`;
   });
   if (currentVal) selectEl.value = currentVal;
@@ -2155,79 +2172,97 @@ function renderPackageConfigEditor(packagesObj) {
   const container = document.getElementById('package-configs-editor');
   if (!container) return;
   const pkgs = normalizePackagesMap(packagesObj);
-  const rate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
 
   container.innerHTML = PACKAGE_LEVEL_KEYS.map(lvl => {
     const p = pkgs[lvl];
-    const dailyIncome = Number((p.count * p.reward).toFixed(2));
-    const dailyUsd = Number((dailyIncome / rate).toFixed(2));
-    const priceUsd = Number((Number(p.price || 0) / rate).toFixed(2));
-    const badgeColor = lvl === 'LV0'
-      ? 'bg-sky-50 text-sky-700 border-sky-200'
-      : 'bg-slate-100 text-slate-800 border-slate-200';
+    const dailyUsd = Number((p.count * p.rewardUsd).toFixed(2));
+    const totalValidityUsd = Number((dailyUsd * p.validityDays).toFixed(2));
+    const priceUsd = Number(p.priceUsd || 0);
+    const priceFmt = priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const rewardFmt = Number(p.rewardUsd || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const dailyFmt = dailyUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const totalFmt = totalValidityUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const ctaPreview = priceUsd === 0 ? `$0.00 Free` : `$${priceFmt} USD · Unlock now`;
+    const isFreeTier = lvl === 'LV0';
 
     return `
-      <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3.5 space-y-3" data-pkg-row="${lvl}">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-md border text-xs font-bold font-mono ${badgeColor}">${lvl}</span>
-            <span class="text-xs font-semibold text-slate-700">${escapeHtml(p.nameBn)} · ${escapeHtml(p.nameEn)}</span>
+      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs" data-pkg-row="${lvl}">
+        <!-- VIP-Matched Dark Royal-Blue Live Card Preview -->
+        <div class="px-4 py-3 text-white flex flex-col gap-2.5" style="background: linear-gradient(135deg, #071b50 0%, #0d2f7a 60%, #1248a8 100%);">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-md bg-sky-400/20 border border-sky-300/40 text-xs font-extrabold font-mono tracking-wide text-sky-200">${lvl}</span>
+              <span class="text-sm font-bold text-white" data-pkg-title-preview="${lvl}">${escapeHtml(p.nameEn)}</span>
+              ${isFreeTier ? '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">Free Trial</span>' : ''}
+            </div>
+            <span class="px-3 py-1 rounded-full text-[11px] font-bold font-mono text-white shadow-sm" style="background: linear-gradient(90deg, #1264c9 0%, #168bff 55%, #35c6e7 100%);" data-pkg-cta-preview="${lvl}">
+              ${ctaPreview}
+            </span>
           </div>
-          <div class="text-xs font-medium text-slate-500">
-            দৈনিক আয় (Daily):
-            <span class="font-mono font-bold text-emerald-700" data-pkg-income="${lvl}">$${dailyUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD</span>
-            <span class="mx-1.5 text-slate-300">|</span>
-            দাম: <span class="font-mono font-bold text-slate-800" data-pkg-price-usd="${lvl}">$${priceUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            <span class="mx-1.5 text-slate-300">|</span>
-            মেয়াদ: <span class="font-mono font-bold text-sky-700" data-pkg-validity-preview="${lvl}">${p.validityDays} দিন</span>
+
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[11px]">
+            <div class="rounded-lg bg-[#051238]/75 border border-sky-400/20 px-2.5 py-1.5">
+              <div class="text-sky-200/75 text-[10px]">Daily Tasks</div>
+              <div class="font-mono font-bold text-white text-xs mt-0.5" data-pkg-tasks-preview="${lvl}">${p.count}</div>
+            </div>
+            <div class="rounded-lg bg-[#051238]/75 border border-sky-400/20 px-2.5 py-1.5">
+              <div class="text-sky-200/75 text-[10px]">Per Task</div>
+              <div class="font-mono font-bold text-sky-300 text-xs mt-0.5" data-pkg-reward-preview="${lvl}">$${rewardFmt} USD</div>
+            </div>
+            <div class="rounded-lg bg-[#051238]/75 border border-sky-400/20 px-2.5 py-1.5">
+              <div class="text-sky-200/75 text-[10px]">Valid Time</div>
+              <div class="font-mono font-bold text-white text-xs mt-0.5" data-pkg-validity-preview="${lvl}">${p.validityDays} ${p.validityDays === 1 ? 'Day' : 'Days'}</div>
+            </div>
+            <div class="rounded-lg bg-[#051238]/75 border border-sky-400/20 px-2.5 py-1.5">
+              <div class="text-sky-200/75 text-[10px]">Daily Income</div>
+              <div class="font-mono font-bold text-emerald-300 text-xs mt-0.5" data-pkg-income="${lvl}">$${dailyFmt} USD</div>
+            </div>
+            <div class="rounded-lg bg-[#051238]/75 border border-sky-400/20 px-2.5 py-1.5 col-span-2 sm:col-span-1">
+              <div class="text-sky-200/75 text-[10px]">Total (${p.validityDays}d)</div>
+              <div class="font-mono font-bold text-amber-300 text-xs mt-0.5" data-pkg-total-income="${lvl}">$${totalFmt} USD</div>
+            </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">দৈনিক কর্ম (Daily Tasks)</label>
-            <input type="number" min="1" step="1" required
-              data-pkg-level="${lvl}" data-pkg-field="count" value="${p.count}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্রতি কাজের বেস (Base BDT ÷ ${rate} = USD)</label>
-            <input type="number" min="0" step="0.01" required
-              data-pkg-level="${lvl}" data-pkg-field="reward" value="${p.reward}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">প্যাকেজ দাম বেস (Base BDT ÷ ${rate} = USD)</label>
-            <input type="number" min="0" step="1" required
-              data-pkg-level="${lvl}" data-pkg-field="price" value="${p.price}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-400" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">মেয়াদ / দিন (Validity Days)</label>
-            <input type="number" min="1" step="1" required
-              data-pkg-level="${lvl}" data-pkg-field="validityDays" value="${p.validityDays}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-semibold text-sky-700 focus:outline-none focus:border-slate-400" />
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">বাংলা নাম (Bangla)</label>
-            <input type="text" required
-              data-pkg-level="${lvl}" data-pkg-field="nameBn" value="${escapeHtml(p.nameBn)}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">English Name</label>
-            <input type="text" required
-              data-pkg-level="${lvl}" data-pkg-field="nameEn" value="${escapeHtml(p.nameEn)}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-medium text-slate-600 mb-1">العربية (Arabic)</label>
-            <input type="text" required
-              data-pkg-level="${lvl}" data-pkg-field="nameAr" value="${escapeHtml(p.nameAr)}"
-              class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-slate-400" />
+        <!-- Direct USD ($) Editable Inputs -->
+        <div class="p-3.5 bg-slate-50/70 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Package Price ($ USD)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                <input type="number" min="0" step="0.01" required
+                  data-pkg-level="${lvl}" data-pkg-field="priceUsd" value="${priceUsd.toFixed(2)}"
+                  class="pkg-cfg-input w-full pl-6 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-sky-500" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Daily Tasks (দৈনিক কাজ)</label>
+              <input type="number" min="1" step="1" required
+                data-pkg-level="${lvl}" data-pkg-field="count" value="${p.count}"
+                class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-bold text-slate-900 focus:outline-none focus:border-sky-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Per Task ($ USD)</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">$</span>
+                <input type="number" min="0" step="0.01" required
+                  data-pkg-level="${lvl}" data-pkg-field="rewardUsd" value="${Number(p.rewardUsd || 0).toFixed(2)}"
+                  class="pkg-cfg-input w-full pl-6 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-bold text-emerald-700 focus:outline-none focus:border-sky-500" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">Valid Time / Days (মেয়াদ)</label>
+              <input type="number" min="1" step="1" required
+                data-pkg-level="${lvl}" data-pkg-field="validityDays" value="${p.validityDays}"
+                class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-mono font-bold text-sky-700 focus:outline-none focus:border-sky-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-600 mb-1">VIP Tier Name</label>
+              <input type="text" required
+                data-pkg-level="${lvl}" data-pkg-field="nameEn" value="${escapeHtml(p.nameEn)}"
+                class="pkg-cfg-input w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-900 focus:outline-none focus:border-sky-500" />
+            </div>
           </div>
         </div>
       </div>
@@ -2238,28 +2273,41 @@ function renderPackageConfigEditor(packagesObj) {
     inp.addEventListener('input', () => {
       const lvl = inp.dataset.pkgLevel;
       if (!lvl) return;
-      const curRate = Number(latestSystemConfig && latestSystemConfig.usdtRate) || 126;
       const countInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="count"]`);
-      const rewardInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="reward"]`);
-      const priceInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="price"]`);
+      const rewardInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="rewardUsd"]`);
+      const priceInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="priceUsd"]`);
       const valInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="validityDays"]`);
+      const nameInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="nameEn"]`);
+
+      const c = Math.max(1, parseInt(countInp?.value || '1', 10) || 1);
+      const r = Math.max(0, parseFloat(rewardInp?.value || '0') || 0);
+      const pr = Math.max(0, parseFloat(priceInp?.value || '0') || 0);
+      const v = Math.max(1, parseInt(valInp?.value || '1', 10) || 1);
+      const daily = Number((c * r).toFixed(2));
+      const totalValid = Number((daily * v).toFixed(2));
+
+      const tasksEl = container.querySelector(`[data-pkg-tasks-preview="${lvl}"]`);
+      const rewEl = container.querySelector(`[data-pkg-reward-preview="${lvl}"]`);
       const incEl = container.querySelector(`[data-pkg-income="${lvl}"]`);
-      const priceUsdEl = container.querySelector(`[data-pkg-price-usd="${lvl}"]`);
+      const totEl = container.querySelector(`[data-pkg-total-income="${lvl}"]`);
       const valPrevEl = container.querySelector(`[data-pkg-validity-preview="${lvl}"]`);
-      if (incEl && countInp && rewardInp) {
-        const c = Math.max(0, parseInt(countInp.value || '0', 10) || 0);
-        const r = Math.max(0, parseFloat(rewardInp.value || '0') || 0);
-        const incUsd = Number(((c * r) / curRate).toFixed(2));
-        incEl.textContent = `$${incUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+      const ctaEl = container.querySelector(`[data-pkg-cta-preview="${lvl}"]`);
+      const titleEl = container.querySelector(`[data-pkg-title-preview="${lvl}"]`);
+
+      if (tasksEl) tasksEl.textContent = String(c);
+      if (rewEl) rewEl.textContent = `$${r.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+      if (incEl) incEl.textContent = `$${daily.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+      if (totEl) {
+        totEl.textContent = `$${totalValid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+        if (totEl.previousElementSibling) totEl.previousElementSibling.textContent = `Total (${v}d)`;
       }
-      if (priceUsdEl && priceInp) {
-        const prUsd = Number((Math.max(0, parseFloat(priceInp.value || '0') || 0) / curRate).toFixed(2));
-        priceUsdEl.textContent = `$${prUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (valPrevEl) valPrevEl.textContent = `${v} ${v === 1 ? 'Day' : 'Days'}`;
+      if (ctaEl) {
+        ctaEl.textContent = pr === 0
+          ? '$0.00 Free'
+          : `$${pr.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD · Unlock now`;
       }
-      if (valPrevEl && valInp) {
-        const v = Math.max(1, parseInt(valInp.value || '1', 10) || 1);
-        valPrevEl.textContent = `${v} দিন`;
-      }
+      if (titleEl && nameInp) titleEl.textContent = nameInp.value.trim() || lvl;
     });
   });
 }
@@ -2275,17 +2323,28 @@ function collectPackagesFromForm() {
       return el ? el.value : '';
     };
     const countVal = parseInt(getVal('count'), 10);
-    const rewardVal = parseFloat(getVal('reward'));
-    const priceVal = parseFloat(getVal('price'));
+    const rewardUsdVal = parseFloat(getVal('rewardUsd'));
+    const priceUsdVal = parseFloat(getVal('priceUsd'));
     const validityVal = parseInt(getVal('validityDays'), 10);
+    const cleanName = String(getVal('nameEn')).trim() || def.nameEn;
+
+    const finalCount = Number.isFinite(countVal) && countVal >= 1 ? countVal : def.count;
+    const finalRewardUsd = Number.isFinite(rewardUsdVal) && rewardUsdVal >= 0 ? Number(rewardUsdVal.toFixed(2)) : def.rewardUsd;
+    const finalPriceUsd = Number.isFinite(priceUsdVal) && priceUsdVal >= 0 ? Number(priceUsdVal.toFixed(2)) : def.priceUsd;
+    const finalValidity = Number.isFinite(validityVal) && validityVal >= 1 ? validityVal : def.validityDays;
+
     out[lvl] = {
-      count: Number.isFinite(countVal) && countVal >= 1 ? countVal : def.count,
-      reward: Number.isFinite(rewardVal) && rewardVal >= 0 ? rewardVal : def.reward,
-      price: Number.isFinite(priceVal) && priceVal >= 0 ? priceVal : def.price,
-      validityDays: Number.isFinite(validityVal) && validityVal >= 1 ? validityVal : def.validityDays,
-      nameBn: String(getVal('nameBn')).trim() || def.nameBn,
-      nameEn: String(getVal('nameEn')).trim() || def.nameEn,
-      nameAr: String(getVal('nameAr')).trim() || def.nameAr
+      count: finalCount,
+      rewardUsd: finalRewardUsd,
+      priceUsd: finalPriceUsd,
+      dailyIncomeUsd: Number((finalCount * finalRewardUsd).toFixed(2)),
+      reward: Number((finalRewardUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
+      price: Number((finalPriceUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
+      validityDays: finalValidity,
+      currency: 'USD',
+      nameBn: cleanName,
+      nameEn: cleanName,
+      nameAr: cleanName
     };
   });
   return out;
@@ -2293,7 +2352,7 @@ function collectPackagesFromForm() {
 
 function resetPackageConfigsToDefault() {
   renderPackageConfigEditor(DEFAULT_PACKAGE_CONFIGS);
-  showToast('Default package values loaded in form. Click "Save Package & Task Settings" to apply live.', 'success');
+  showToast('Default USD VIP package values loaded. Click "Save Package & Task Settings" to sync live.', 'success');
 }
 
 function markSalaryEditorDirty(dirty) {
@@ -2604,6 +2663,9 @@ function hydrateSalaryPageEditor(salaryObj, force) {
 
 function broadcastSystemConfigUpdate(configObj) {
   try {
+    if (configObj && configObj.packages) {
+      localStorage.setItem('alo_system_packages_cache', JSON.stringify(configObj.packages));
+    }
     if (configObj && configObj.salaryPage) {
       localStorage.setItem('alo_system_salary_cache', JSON.stringify(configObj.salaryPage));
     }
@@ -2740,7 +2802,7 @@ async function handlePlatformControlsSave(e) {
     minWithdraw: parseFloat(document.getElementById('pc-min-withdraw').value) || 700,
     withdrawNetPercent: parseFloat(document.getElementById('pc-withdraw-ratio').value) || 50,
     minRecharge: parseFloat(document.getElementById('pc-min-recharge').value) || 126,
-    usdtRate: parseFloat(document.getElementById('pc-usdt-rate').value) || 125,
+    usdtRate: parseFloat(document.getElementById('pc-usdt-rate').value) || 126,
     usdtAddress: document.getElementById('pc-usdt-address').value.trim(),
     telegramUrl: document.getElementById('pc-telegram-url').value.trim(),
     managerId: document.getElementById('pc-manager-id').value.trim(),
@@ -2761,7 +2823,7 @@ async function handlePackageControlsSave(e) {
     salaryPage: normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage)
   });
 
-  await saveSystemConfigPayload(configObj, 'Packages, daily tasks, amounts & language names saved live!');
+  await saveSystemConfigPayload(configObj, 'VIP Packages (USD price, tasks, reward & validity days) saved and synced live!');
 }
 
 // ============================================================================

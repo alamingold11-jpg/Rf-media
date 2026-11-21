@@ -439,11 +439,13 @@ function resetTeamAndCommissionDom() {
       const el = document.getElementById(id);
       if (el) el.textContent = '0';
     });
-    const zeroMoneyIds = ['invite-total-commission', 'invite-today-commission', 'team-stat-balance', 'team-stat-flow', 'team-stat-recharge', 'team-stat-cashout', 'tier-metric-recharge', 'tier-metric-rebate'];
+    const zeroMoneyIds = ['invite-total-commission', 'invite-today-commission', 'team-stat-balance', 'team-stat-flow', 'team-stat-recharge', 'team-stat-cashout', 'tier-metric-recharge', 'tier-metric-rebate', 'tier-comm-pkg-val', 'tier-comm-task-val', 'team-comm-all-tiers-total', 'team-comm-today-total'];
     zeroMoneyIds.forEach(function(id) {
       const el = document.getElementById(id);
       if (el) el.textContent = '0.00';
     });
+    const teamCommRecords = document.getElementById('team-comm-records-list');
+    if (teamCommRecords) teamCommRecords.innerHTML = '';
     const teamAccordion = document.getElementById('team-fresh-accordion-container');
     if (teamAccordion) teamAccordion.innerHTML = '';
     const spinHistoryList = document.getElementById('lucky-spin-history-list');
@@ -488,6 +490,7 @@ function clearUserCachesOnAuthSwitch() {
     if (typeof _realTeamCache !== 'undefined') _realTeamCache.clear();
     if (typeof _realTeamInFlight !== 'undefined') _realTeamInFlight.clear();
     if (typeof cachedTeamReportData !== 'undefined') cachedTeamReportData = null;
+    if (typeof cachedTeamCommissionTxs !== 'undefined') cachedTeamCommissionTxs = null;
     if (typeof expandedTeamTiers !== 'undefined') expandedTeamTiers = { 1: true, 2: false, 3: false };
   } catch (e) {}
   resetTeamAndCommissionDom();
@@ -1850,6 +1853,7 @@ async function _computeDbGetRealTeam(normPhone) {
         .from('transactions')
         .select('id, phone, type, amount, actual, status, date, created_at, method')
         .in('phone', allPhones)
+        .in('type', ['deposit', 'withdraw', 'package', 'mission'])
         .order('created_at', { ascending: false })
         .limit(2000);
       if (!txErr && Array.isArray(txList)) {
@@ -1872,7 +1876,7 @@ async function _computeDbGetRealTeam(normPhone) {
           const rawAmt = Number(tx.amount) || 0;
           const actualAmt = Number(tx.actual) || 0;
           const depAmt = actualAmt > 0 ? actualAmt : rawAmt;
-          const amt = tx.type === 'deposit' ? depAmt : rawAmt;
+          let amt = tx.type === 'deposit' ? depAmt : rawAmt;
           if (!p) return;
           const st = String(tx.status || '').toLowerCase();
           if (st.includes('reject') || st.includes('বাতিল') || st.includes('fail') || st.includes('অসফল')) return;
@@ -1882,6 +1886,14 @@ async function _computeDbGetRealTeam(normPhone) {
 
           if (tx.type === 'package' && !st.includes('pending') && !st.includes('মুলতবি')) {
             pkgTxPhones.add(p);
+            // Guard against legacy BDT-denominated package rows being treated as USD (126x inflation)
+            const lvlMatch = String(tx.method || '').toUpperCase().match(/\b(LV[1-9]\d*)\b/);
+            if (lvlMatch && typeof packageData === 'object' && packageData[lvlMatch[1]]) {
+              const bdtPrice = Number(packageData[lvlMatch[1]].price) || 0;
+              if (bdtPrice > 0 && amt >= bdtPrice * 0.5) {
+                amt = Number((amt / BDT_PER_USD).toFixed(2));
+              }
+            }
             if (amt > 0) {
               pkgTotals[p] = (pkgTotals[p] || 0) + amt;
               if (isTodayTx) pkgTodayTotals[p] = (pkgTodayTotals[p] || 0) + amt;
@@ -2056,6 +2068,7 @@ const dashboardTitles = {
   'usdt-setup': 'USDT Account',
   'realname-setup': 'Account Binding',
   'fund-password-setup': 'Fund Password',
+  'login-password-setup': 'Login Password',
   'usdt-deposit': 'USDT Deposit',
   'bd-recharge': 'Recharge',
   'lucky-spin': 'Lucky Spin',
@@ -2087,6 +2100,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'USDT অ্যাকাউন্ট',
       'realname-setup': 'অ্যাকাউন্ট বাঁধাই',
       'fund-password-setup': 'উত্তোলন পাসওয়ার্ড',
+      'login-password-setup': 'প্রবেশের গুপ্তসংকেত',
       'usdt-deposit': 'USDT ডিপোজিট',
       'bd-recharge': 'রিচার্জ',
       'lucky-spin': 'ভাগ্যবান স্পিন',
@@ -2114,6 +2128,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'USDT Account',
       'realname-setup': 'Account Binding',
       'fund-password-setup': 'Fund Password',
+      'login-password-setup': 'Login Password',
       'usdt-deposit': 'USDT Deposit',
       'bd-recharge': 'Recharge',
       'lucky-spin': 'Lucky Spin',
@@ -2141,6 +2156,7 @@ function updateDashboardTitleForLang(targetLang) {
       'usdt-setup': 'حساب USDT',
       'realname-setup': 'ربط الحساب',
       'fund-password-setup': 'كلمة مرور السحب',
+      'login-password-setup': 'كلمة مرور الدخول',
       'usdt-deposit': 'إيداع USDT',
       'bd-recharge': 'إعادة الشحن',
       'lucky-spin': 'عجلة الحظ',
@@ -2626,7 +2642,7 @@ function renderInvitePage() {
           const memberIsUsd = String(mCurr).toUpperCase() === 'USD';
           pkgSpendRaw = uniquePaid.reduce(function(sum, lvl) {
             const bdtPrice = Number(packageData[lvl].price) || 0;
-            return sum + (memberIsUsd ? convertBetweenCurrencies(bdtPrice, 'BDT', 'USD') : bdtPrice);
+            return sum + (memberIsUsd ? getPackagePriceUsd(lvl) : bdtPrice);
           }, 0);
         }
         const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, mCurr, viewerCurr);
@@ -2878,6 +2894,10 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
     if (ev.key === 'alo_system_salary_cache' && ev.newValue) {
       try {
         applyRemoteSalaryConfig(JSON.parse(ev.newValue), true, true);
+      } catch (e) {}
+    } else if (ev.key === 'alo_system_packages_cache' && ev.newValue) {
+      try {
+        applyRemotePackageConfigs(JSON.parse(ev.newValue), true);
       } catch (e) {}
     } else if (ev.key === 'alo_system_config_updated_at') {
       loadPlatformConfigFromSupabase(true);
@@ -3422,6 +3442,7 @@ function openDashboardPanel(panelName) {
     'usdt-setup': 'profile',
     'realname-setup': 'profile',
     'fund-password-setup': 'profile',
+    'login-password-setup': 'profile',
     'customer-service': 'home',
     manager: 'home'
   };
@@ -3471,6 +3492,9 @@ function openDashboardPanel(panelName) {
   }
   if (nextPanel === 'fund-password-setup') {
     renderFundPasswordSetupPanel();
+  }
+  if (nextPanel === 'login-password-setup') {
+    renderLoginPasswordSetupPanel();
   }
   if (nextPanel === 'bkash-setup') {
     renderBkashSetupPanel();
@@ -5806,24 +5830,47 @@ if (sendSmsBtn) {
 }
 
 const packageTaskSettings = {
-  LV0: { count: 5, reward: 20 },
-  LV1: { count: 6, reward: 30 },
-  LV2: { count: 12, reward: 40 },
-  LV3: { count: 15, reward: 50 },
-  LV4: { count: 25, reward: 60 },
-  LV5: { count: 35, reward: 70 },
-  LV6: { count: 50, reward: 100 }
+  LV0: { count: 5, reward: 20, rewardUsd: 0.16 },
+  LV1: { count: 6, reward: 30, rewardUsd: 0.24 },
+  LV2: { count: 12, reward: 40, rewardUsd: 0.32 },
+  LV3: { count: 15, reward: 50, rewardUsd: 0.40 },
+  LV4: { count: 25, reward: 60, rewardUsd: 0.48 },
+  LV5: { count: 35, reward: 70, rewardUsd: 0.56 },
+  LV6: { count: 50, reward: 100, rewardUsd: 0.79 }
 };
 
 const packageData = {
-  LV0: { name: 'LV0', nameBn: 'LV0', nameAr: 'LV0', nameEn: 'LV0', price: 0, count: 5, reward: 20, dailyIncome: 100, validityDays: 5, desc: 'দৈনিক ৫টি কাজ · প্রতি কাজের আয় ২০.০০' },
-  LV1: { name: 'LV1', nameBn: 'LV1', nameAr: 'LV1', nameEn: 'LV1', price: 3500, count: 6, reward: 30, dailyIncome: 180, validityDays: 30, desc: 'দৈনিক ৬টি কাজ · প্রতি কাজের আয় ৩০.০০' },
-  LV2: { name: 'LV2', nameBn: 'LV2', nameAr: 'LV2', nameEn: 'LV2', price: 7500, count: 12, reward: 40, dailyIncome: 480, validityDays: 30, desc: 'দৈনিক ১২টি কাজ · প্রতি কাজের আয় ৪০.০০' },
-  LV3: { name: 'LV3', nameBn: 'LV3', nameAr: 'LV3', nameEn: 'LV3', price: 36000, count: 15, reward: 50, dailyIncome: 750, validityDays: 30, desc: 'দৈনিক ১৫টি কাজ · প্রতি কাজের আয় ৫০.০০' },
-  LV4: { name: 'LV4', nameBn: 'LV4', nameAr: 'LV4', nameEn: 'LV4', price: 84000, count: 25, reward: 60, dailyIncome: 1500, validityDays: 30, desc: 'দৈনিক ২৫টি কাজ · প্রতি কাজের আয় ৬০.০০' },
-  LV5: { name: 'LV5', nameBn: 'LV5', nameAr: 'LV5', nameEn: 'LV5', price: 150000, count: 35, reward: 70, dailyIncome: 2450, validityDays: 30, desc: 'দৈনিক ৩৫টি কাজ · প্রতি কাজের আয় ৭০.০০' },
-  LV6: { name: 'LV6', nameBn: 'LV6', nameAr: 'LV6', nameEn: 'LV6', price: 300000, count: 50, reward: 100, dailyIncome: 5000, validityDays: 30, desc: 'দৈনিক ৫০টি কাজ · প্রতি কাজের আয় ১০০.০০' }
+  LV0: { name: 'LV0', nameBn: 'LV0', nameAr: 'LV0', nameEn: 'LV0', price: 0, priceUsd: 0, count: 5, reward: 20, rewardUsd: 0.16, dailyIncome: 100, dailyIncomeUsd: 0.80, validityDays: 5, desc: '5 Daily Tasks · $0.16 / task' },
+  LV1: { name: 'LV1', nameBn: 'LV1', nameAr: 'LV1', nameEn: 'LV1', price: 3500, priceUsd: 27.78, count: 6, reward: 30, rewardUsd: 0.24, dailyIncome: 180, dailyIncomeUsd: 1.44, validityDays: 30, desc: '6 Daily Tasks · $0.24 / task' },
+  LV2: { name: 'LV2', nameBn: 'LV2', nameAr: 'LV2', nameEn: 'LV2', price: 7500, priceUsd: 59.52, count: 12, reward: 40, rewardUsd: 0.32, dailyIncome: 480, dailyIncomeUsd: 3.84, validityDays: 30, desc: '12 Daily Tasks · $0.32 / task' },
+  LV3: { name: 'LV3', nameBn: 'LV3', nameAr: 'LV3', nameEn: 'LV3', price: 36000, priceUsd: 285.71, count: 15, reward: 50, rewardUsd: 0.40, dailyIncome: 750, dailyIncomeUsd: 6.00, validityDays: 30, desc: '15 Daily Tasks · $0.40 / task' },
+  LV4: { name: 'LV4', nameBn: 'LV4', nameAr: 'LV4', nameEn: 'LV4', price: 84000, priceUsd: 666.67, count: 25, reward: 60, rewardUsd: 0.48, dailyIncome: 1500, dailyIncomeUsd: 12.00, validityDays: 30, desc: '25 Daily Tasks · $0.48 / task' },
+  LV5: { name: 'LV5', nameBn: 'LV5', nameAr: 'LV5', nameEn: 'LV5', price: 150000, priceUsd: 1190.48, count: 35, reward: 70, rewardUsd: 0.56, dailyIncome: 2450, dailyIncomeUsd: 19.60, validityDays: 30, desc: '35 Daily Tasks · $0.56 / task' },
+  LV6: { name: 'LV6', nameBn: 'LV6', nameAr: 'LV6', nameEn: 'LV6', price: 300000, priceUsd: 2380.95, count: 50, reward: 100, rewardUsd: 0.79, dailyIncome: 5000, dailyIncomeUsd: 39.50, validityDays: 30, desc: '50 Daily Tasks · $0.79 / task' }
 };
+
+function getPackagePriceUsd(level) {
+  const pkg = packageData[level] || packageData.LV0;
+  if (!pkg) return 0;
+  const rawUsd = Number(pkg.priceUsd);
+  if (Number.isFinite(rawUsd) && rawUsd >= 0) {
+    return Number(rawUsd.toFixed(2));
+  }
+  return Math.round(((Number(pkg.price) || 0) / BDT_PER_USD) * 100) / 100;
+}
+
+function getPackageRewardUsd(level) {
+  const pkg = packageData[level] || packageData.LV0;
+  const task = packageTaskSettings[level] || packageTaskSettings.LV0;
+  if (pkg && Number.isFinite(Number(pkg.rewardUsd)) && Number(pkg.rewardUsd) >= 0) {
+    return Number(Number(pkg.rewardUsd).toFixed(2));
+  }
+  if (task && Number.isFinite(Number(task.rewardUsd)) && Number(task.rewardUsd) >= 0) {
+    return Number(Number(task.rewardUsd).toFixed(2));
+  }
+  const bdtRew = (pkg && Number(pkg.reward)) || (task && Number(task.reward)) || 0;
+  return Math.round((bdtRew / BDT_PER_USD) * 100) / 100;
+}
 
 const LEGACY_PACKAGE_NAME_RE = /^(ফ্রি স্তর|বেসিক প্যাকেজ|স্ট্যান্ডার্ড প্যাকেজ|সিলভার প্যাকেজ|গোল্ড প্যাকেজ|প্রিমিয়াম প্যাকেজ|এলিট প্যাকেজ|Free Tier|Basic Package|Standard Package|Silver Package|Gold Package|Premium Package|Elite Package|المستوى المجاني|الباقة الأساسية|الباقة القياسية|الباقة الفضية|الباقة الذهبية|الباقة المميزة|باقة النخبة|(এলিট|Elite|إيليت|एलीट)\s*LV[0-6])$/i;
 
@@ -5852,13 +5899,34 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
       const parsedCount = parseInt(src.count, 10);
       const parsedReward = parseFloat(src.reward);
       const parsedPrice = parseFloat(src.price);
+      const hasExplicitPriceUsd = src.priceUsd !== undefined && src.priceUsd !== null && src.priceUsd !== '' && Number.isFinite(parseFloat(src.priceUsd));
+      const hasExplicitRewardUsd = src.rewardUsd !== undefined && src.rewardUsd !== null && src.rewardUsd !== '' && Number.isFinite(parseFloat(src.rewardUsd));
+      const parsedPriceUsd = hasExplicitPriceUsd ? parseFloat(src.priceUsd) : NaN;
+      const parsedRewardUsd = hasExplicitRewardUsd ? parseFloat(src.rewardUsd) : NaN;
       const parsedValidity = parseInt(src.validityDays, 10);
 
       const nextCount = Number.isFinite(parsedCount) && parsedCount >= 1 ? parsedCount : targetPkg.count;
-      const nextReward = Number.isFinite(parsedReward) && parsedReward >= 0 ? parsedReward : targetPkg.reward;
-      const nextPrice = Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : targetPkg.price;
+      const nextPriceUsd = (Number.isFinite(parsedPriceUsd) && parsedPriceUsd >= 0)
+        ? Number(parsedPriceUsd.toFixed(2))
+        : (Number.isFinite(parsedPrice) && parsedPrice >= 0
+          ? Number((parsedPrice / BDT_PER_USD).toFixed(2))
+          : getPackagePriceUsd(lvl));
+      const nextRewardUsd = (Number.isFinite(parsedRewardUsd) && parsedRewardUsd >= 0)
+        ? Number(parsedRewardUsd.toFixed(2))
+        : (Number.isFinite(parsedReward) && parsedReward >= 0
+          ? Number((parsedReward / BDT_PER_USD).toFixed(2))
+          : getPackageRewardUsd(lvl));
+
+      const nextPrice = (!hasExplicitPriceUsd && Number.isFinite(parsedPrice) && parsedPrice >= 0)
+        ? parsedPrice
+        : Math.round(nextPriceUsd * BDT_PER_USD * 100) / 100;
+      const nextReward = (!hasExplicitRewardUsd && Number.isFinite(parsedReward) && parsedReward >= 0)
+        ? parsedReward
+        : Math.round(nextRewardUsd * BDT_PER_USD * 100) / 100;
+
       const nextValidity = Number.isFinite(parsedValidity) && parsedValidity >= 1 ? parsedValidity : (targetPkg.validityDays || (lvl === 'LV0' ? 5 : 30));
       const nextDaily = Number((nextCount * nextReward).toFixed(2));
+      const nextDailyUsd = Number((nextCount * nextRewardUsd).toFixed(2));
       const rawBn = String(src.nameBn || '').trim();
       const rawEn = String(src.nameEn || '').trim();
       const rawAr = String(src.nameAr || '').trim();
@@ -5869,7 +5937,9 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
       if (
         targetPkg.count !== nextCount ||
         targetPkg.reward !== nextReward ||
+        targetPkg.rewardUsd !== nextRewardUsd ||
         targetPkg.price !== nextPrice ||
+        targetPkg.priceUsd !== nextPriceUsd ||
         targetPkg.validityDays !== nextValidity ||
         targetPkg.nameBn !== nextBn ||
         targetPkg.nameEn !== nextEn ||
@@ -5880,24 +5950,32 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
 
       targetTask.count = nextCount;
       targetTask.reward = nextReward;
+      targetTask.rewardUsd = nextRewardUsd;
 
       targetPkg.count = nextCount;
       targetPkg.reward = nextReward;
+      targetPkg.rewardUsd = nextRewardUsd;
       targetPkg.price = nextPrice;
+      targetPkg.priceUsd = nextPriceUsd;
       targetPkg.validityDays = nextValidity;
       targetPkg.dailyIncome = nextDaily;
+      targetPkg.dailyIncomeUsd = nextDailyUsd;
       targetPkg.nameBn = nextBn;
       targetPkg.nameEn = nextEn;
       targetPkg.nameAr = nextAr;
       targetPkg.name = nextEn;
-      targetPkg.desc = `দৈনিক ${nextCount}টি কাজ · প্রতি কাজের আয় ${nextReward}`;
+      targetPkg.desc = `${nextCount} Daily Tasks · $${nextRewardUsd.toFixed(2)} / task`;
     }
 
     cachePayload[lvl] = {
       count: targetPkg.count,
       reward: targetPkg.reward,
+      rewardUsd: getPackageRewardUsd(lvl),
       price: targetPkg.price,
+      priceUsd: getPackagePriceUsd(lvl),
+      dailyIncomeUsd: Number((targetPkg.count * getPackageRewardUsd(lvl)).toFixed(2)),
       validityDays: targetPkg.validityDays || (lvl === 'LV0' ? 5 : 30),
+      currency: 'USD',
       nameBn: targetPkg.nameBn,
       nameEn: targetPkg.nameEn,
       nameAr: targetPkg.nameAr
@@ -5921,6 +5999,9 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
     const detailPanel = document.getElementById('package-detail-panel');
     if (detailPanel && !detailPanel.hidden && typeof renderPackageDetailPage === 'function') {
       renderPackageDetailPage(activeDetailPackageLevel || 'LV1');
+    }
+    if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+      window.aloI18n.translateDOM(getActiveLang(), { silent: true });
     }
   }
 }
@@ -6232,9 +6313,9 @@ function updateRecordsPanelPackages() {
     const pkg = packageData[level];
     if (!pkg) return;
     const pkgName = getPackageName(level, lang);
-    const pkgPrice = toUserCurrencyAmount(pkg.price, user);
-    const pkgReward = toUserCurrencyAmount(pkg.reward, user);
-    const pkgDaily = isUsd ? Number((pkgReward * pkg.count).toFixed(2)) : pkg.dailyIncome;
+    const pkgPrice = isUsd ? getPackagePriceUsd(level) : Number(pkg.price || 0);
+    const pkgReward = isUsd ? getPackageRewardUsd(level) : Number(pkg.reward || 0);
+    const pkgDaily = Number((pkgReward * pkg.count).toFixed(2));
     const validityDays = Math.max(1, parseInt(pkg.validityDays, 10) || (level === 'LV0' ? 5 : 30));
     const isLv0ExpiredCard = (level === 'LV0' && lv0Trial.isExpired);
 
@@ -6274,7 +6355,7 @@ function updateRecordsPanelPackages() {
     }
 
     // 4. Update Centered CTA Button (Price + Action matching layout)
-    const priceLabel = pkg.price === 0
+    const priceLabel = pkgPrice === 0
       ? (isUsd ? `$0.00 ${labels.freeText}` : `${formatNumber(0, user)} ${labels.freeText}`)
       : (isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${formatNumber(pkgPrice, user)} ${curr}`);
 
@@ -6459,9 +6540,12 @@ function renderPackageDetailPage(level) {
   const sym = getUserCurrencySymbol(user);
   const userLevel = (user && user.packageLevel) || 'LV0';
   const pkgName = getPackageName(level, lang);
-  const pkgPrice = toUserCurrencyAmount(pkg.price, user);
-  const pkgReward = toUserCurrencyAmount(pkg.reward, user);
-  const pkgDaily = isUsd ? Number((pkgReward * pkg.count).toFixed(2)) : pkg.dailyIncome;
+  const pkgPrice = isUsd ? getPackagePriceUsd(level) : Number(pkg.price || 0);
+  const pkgReward = isUsd ? getPackageRewardUsd(level) : Number(pkg.reward || 0);
+  const pkgDaily = Number((pkgReward * pkg.count).toFixed(2));
+  const validityDays = Math.max(1, parseInt(pkg.validityDays, 10) || (level === 'LV0' ? 5 : 30));
+  const daysWordEn = validityDays === 1 ? 'Day' : 'Days';
+  const daysWordAr = (validityDays >= 3 && validityDays <= 10) ? 'أيام' : 'يوماً';
 
   // 1. Dynamic Professional Hero Banner per Package
   const bannerConfig = packageBanners[level] || packageBanners.LV1;
@@ -6492,17 +6576,26 @@ function renderPackageDetailPage(level) {
     }
   }
 
-  // 2. Price Display
+  // 2. Price Display & Dynamic Validity
   const priceEl = document.getElementById('page-pkg-price');
   const barPriceEl = document.getElementById('page-pkg-bar-price');
+  const priceValidityEl = document.getElementById('page-pkg-price-validity');
   const freeLabel = tLang(lang, 'ফ্রি', 'Free', 'مجاني');
-  const formattedPrice = pkg.price === 0
+  const formattedPrice = pkgPrice === 0
     ? (isUsd ? `$0.00 ${curr} (${freeLabel})` : `${formatNumber(0, user)} ${curr} (${freeLabel})`)
     : (isUsd ? `${sym}${formatMoney(pkgPrice, user)} ${curr}` : `${curr} ${formatNumber(pkgPrice, user)}`);
   if (priceEl) priceEl.textContent = formattedPrice;
   if (barPriceEl) barPriceEl.textContent = formattedPrice;
+  if (priceValidityEl) {
+    priceValidityEl.textContent = tLang(
+      lang,
+      `/ ${formatBanglaNumber(validityDays)} দিন মেয়াদ`,
+      `/ ${validityDays} ${daysWordEn} Validity`,
+      `/ صلاحية ${validityDays} ${daysWordAr}`
+    );
+  }
 
-  // 3. Rate and Metrics Calculation
+  // 3. Rate and Metrics Calculation (Dynamic Validity Days)
   let rateStr = '0.00';
   if (pkgPrice > 0 && pkgDaily > 0) {
     rateStr = ((pkgDaily / pkgPrice) * 100).toFixed(2);
@@ -6513,19 +6606,39 @@ function renderPackageDetailPage(level) {
     metricDailyEl.textContent = isUsd ? `${sym}${formatMoney(pkgDaily, user)} ${curr}` : `${curr} ${formatMoney(pkgDaily, user)}`;
   }
 
-  const monthlyProfit = Number(((pkgDaily || 0) * 30).toFixed(2));
+  const totalProfit = Number(((pkgDaily || 0) * validityDays).toFixed(2));
+  const metricMonthlyLabelEl = document.getElementById('page-pkg-metric-monthly-label');
+  if (metricMonthlyLabelEl) {
+    metricMonthlyLabelEl.textContent = tLang(
+      lang,
+      `মোট লভ্যাংশ (${formatBanglaNumber(validityDays)} দিন)`,
+      `Total Profit (${validityDays} ${daysWordEn})`,
+      `إجمالي الربح (${validityDays} ${daysWordAr})`
+    );
+  }
+
   const metricMonthlyEl = document.getElementById('page-pkg-metric-monthly');
   if (metricMonthlyEl) {
-    metricMonthlyEl.textContent = isUsd ? `${sym}${formatMoney(monthlyProfit, user)} ${curr}` : `${curr} ${formatNumber(monthlyProfit, user)}`;
+    metricMonthlyEl.textContent = isUsd ? `${sym}${formatMoney(totalProfit, user)} ${curr}` : `${curr} ${formatNumber(totalProfit, user)}`;
   }
 
   const metricRateEl = document.getElementById('page-pkg-metric-rate');
   if (metricRateEl) {
-    if (pkg.price === 0) {
+    if (pkgPrice === 0) {
       metricRateEl.textContent = tLang(lang, '১০০% ফ্রি', '100% Free', 'مجاني 100%');
     } else {
       metricRateEl.textContent = lang === 'bn' ? `${formatBanglaNumber(rateStr)}%` : `${rateStr}%`;
     }
+  }
+
+  const metricValidityEl = document.getElementById('page-pkg-metric-validity');
+  if (metricValidityEl) {
+    metricValidityEl.textContent = tLang(
+      lang,
+      `${formatBanglaNumber(validityDays)} দিন`,
+      `${validityDays} ${daysWordEn}`,
+      `${validityDays} ${daysWordAr}`
+    );
   }
 
   const metricTasksEl = document.getElementById('page-pkg-metric-tasks');
@@ -6546,7 +6659,7 @@ function renderPackageDetailPage(level) {
     const pTxt = isUsd ? `${sym}${formatMoney(pkgPrice, user)}` : `${curr} ${formatNumber(pkgPrice, user)}`;
     const rTxt = isUsd ? `${sym}${formatMoney(pkgReward, user)}` : `${curr} ${formatMoney(pkgReward, user)}`;
     const dTxt = isUsd ? `${sym}${formatMoney(pkgDaily, user)}` : `${curr} ${formatMoney(pkgDaily, user)}`;
-    if (pkg.price === 0) {
+    if (pkgPrice === 0) {
       calcLine1El.textContent = lang === 'bn'
         ? `${formatBanglaNumber(pkg.count)}টি কাজ × ${rTxt} = ${dTxt}`
         : `${pkg.count} × ${rTxt} = ${dTxt}`;
@@ -6557,18 +6670,28 @@ function renderPackageDetailPage(level) {
     }
   }
 
+  const calcLine2LabelEl = document.getElementById('page-pkg-calc-line2-label');
+  if (calcLine2LabelEl) {
+    calcLine2LabelEl.textContent = tLang(
+      lang,
+      `মোট আয় (${formatBanglaNumber(validityDays)} দিন):`,
+      `Total Income (${validityDays} ${daysWordEn}):`,
+      `إجمالي الدخل (${validityDays} ${daysWordAr}):`
+    );
+  }
+
   const calcLine2El = document.getElementById('page-pkg-calc-line2');
   if (calcLine2El) {
     const dTxt = isUsd ? `${sym}${formatMoney(pkgDaily, user)}` : `${curr} ${formatMoney(pkgDaily, user)}`;
-    const mTxt = isUsd ? `${sym}${formatMoney(monthlyProfit, user)}` : `${curr} ${formatNumber(monthlyProfit, user)}`;
+    const mTxt = isUsd ? `${sym}${formatMoney(totalProfit, user)}` : `${curr} ${formatNumber(totalProfit, user)}`;
     calcLine2El.textContent = lang === 'bn'
-      ? `${dTxt} × ৩০ দিন = ${mTxt}`
-      : `${dTxt} × 30 = ${mTxt}`;
+      ? `${dTxt} × ${formatBanglaNumber(validityDays)} দিন = ${mTxt}`
+      : `${dTxt} × ${validityDays} = ${mTxt}`;
   }
 
   const calcLine3El = document.getElementById('page-pkg-calc-line3');
   if (calcLine3El) {
-    const mTxt = isUsd ? `${sym}${formatMoney(monthlyProfit, user)} ${curr}` : `${curr} ${formatNumber(monthlyProfit, user)}`;
+    const mTxt = isUsd ? `${sym}${formatMoney(totalProfit, user)} ${curr}` : `${curr} ${formatNumber(totalProfit, user)}`;
     calcLine3El.textContent = tLang(
       lang,
       `${mTxt} লাভ (প্রতিদিন উত্তোলনযোগ্য)`,
@@ -6613,6 +6736,16 @@ function renderPackageDetailPage(level) {
     );
   }
 
+  const descP3El = document.getElementById('page-pkg-desc-p3');
+  if (descP3El) {
+    descP3El.textContent = tLang(
+      lang,
+      `প্যাকেজের মেয়াদ ${formatBanglaNumber(validityDays)} দিন। এই ${formatBanglaNumber(validityDays)} দিন আপনি প্রতিদিন নিয়মমাফিক কাজ করে নিশ্চিত আয় করতে পারবেন।`,
+      `This package is valid for ${validityDays} ${daysWordEn}. During these ${validityDays} ${daysWordEn}, you can complete daily tasks regularly and earn steady income.`,
+      `صلاحية هذه الباقة ${validityDays} ${daysWordAr}. خلال هذه المدة يمكنك إكمال المهام اليومية بانتظام وتحقيق دخل ثابت.`
+    );
+  }
+
   const step4El = document.getElementById('page-pkg-earn-step4');
   if (step4El) {
     step4El.textContent = tLang(
@@ -6621,6 +6754,10 @@ function renderPackageDetailPage(level) {
       'No hidden charges or complex terms. You can withdraw your daily earnings immediately via USDT (BEP20 / Binance).',
       'لا توجد رسوم خفية أو شروط معقدة. يمكنك سحب أرباحك اليومية فوراً عبر USDT (BEP20 / Binance).'
     );
+  }
+
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+    window.aloI18n.translateDOM(lang, { silent: true });
   }
 }
 
@@ -6723,7 +6860,7 @@ function handlePackagePurchase(level, triggerBtn) {
       const userBal = Number(freshUser.balance || 0);
       const rechargeBal = Number(freshUser.rechargeFrozenBalance || 0);
       const spendableForPkg = Number((userBal + rechargeBal).toFixed(2));
-      const price = toUserCurrencyAmount(Number(pkg.price || 0), freshUser);
+      const price = isUsd ? getPackagePriceUsd(level) : Number(pkg.price || 0);
 
       if (spendableForPkg < price) {
         if (btn) {
@@ -8207,6 +8344,267 @@ function saveFundPasswordDetails() {
   }, 1400);
 }
 window.saveFundPasswordDetails = saveFundPasswordDetails;
+
+// ==========================================
+// LOGIN PASSWORD CHANGE PAGE ("প্রবেশের গুপ্তসংকেত" / "Login Password")
+// ==========================================
+function setLoginPasswordStatusMessage(text, type) {
+  const statusEl = document.getElementById('login-password-status-msg');
+  if (!statusEl) return;
+  if (!text) {
+    statusEl.textContent = '';
+    statusEl.className = 'hidden p-3.5 rounded-xl text-xs sm:text-sm font-semibold shadow-md';
+    return;
+  }
+  statusEl.textContent = text;
+  if (type === 'success') {
+    statusEl.className = 'p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs sm:text-sm font-semibold shadow-md';
+  } else if (type === 'info') {
+    statusEl.className = 'p-3.5 rounded-xl bg-sky-500/15 border border-sky-400/40 text-sky-200 text-xs sm:text-sm font-semibold shadow-md';
+  } else {
+    statusEl.className = 'p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs sm:text-sm font-semibold shadow-md';
+  }
+}
+
+function renderLoginPasswordSetupPanel() {
+  const lang = getActiveLang();
+  const oldInput = document.getElementById('login-password-old-input');
+  const newInput = document.getElementById('login-password-new-input');
+  const confirmInput = document.getElementById('login-password-confirm-input');
+  const submitBtn = document.getElementById('login-password-submit-btn');
+
+  [oldInput, newInput, confirmInput].forEach(function(inp) {
+    if (!inp) return;
+    inp.value = '';
+    inp.type = 'password';
+    inp.disabled = false;
+  });
+
+  setLoginPasswordStatusMessage('', '');
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.classList.remove('opacity-70', 'cursor-wait');
+    submitBtn.textContent = tLang(lang, 'জমা দিন', 'Submit', 'إرسال');
+  }
+
+  const panel = document.getElementById('login-password-setup-panel');
+  if (panel) {
+    panel.querySelectorAll('.fund-toggle-eye-btn').forEach(function(btn) {
+      const showIcon = btn.querySelector('.eye-icon-show');
+      const hideIcon = btn.querySelector('.eye-icon-hide');
+      if (showIcon) showIcon.classList.remove('hidden');
+      if (hideIcon) hideIcon.classList.add('hidden');
+    });
+  }
+
+  if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+    window.aloI18n.translateDOM(lang, { silent: true });
+  }
+}
+window.renderLoginPasswordSetupPanel = renderLoginPasswordSetupPanel;
+
+let _isSavingLoginPassword = false;
+async function saveLoginPasswordDetails() {
+  if (_isSavingLoginPassword) return;
+  const lang = getActiveLang();
+  const tr = function(bnTxt, enTxt, arTxt) {
+    const base = tLang(lang, bnTxt, enTxt, arTxt);
+    if (lang !== 'bn' && lang !== 'en' && lang !== 'ar' && window.aloI18n && typeof window.aloI18n.translateText === 'function') {
+      return window.aloI18n.translateText(enTxt, lang);
+    }
+    return base;
+  };
+
+  const user = getCurrentUser();
+  const phoneKey = user ? (user.phone || user.accountNumber) : '';
+  if (!user || !phoneKey) {
+    const loginErr = tr('অনুগ্রহ করে প্রথমে লগইন করুন।', 'Please log in first.', 'يرجى تسجيل الدخول أولاً.');
+    setLoginPasswordStatusMessage(loginErr, 'error');
+    showToastNotification(loginErr);
+    return;
+  }
+
+  const oldInput = document.getElementById('login-password-old-input');
+  const newInput = document.getElementById('login-password-new-input');
+  const confirmInput = document.getElementById('login-password-confirm-input');
+  const submitBtn = document.getElementById('login-password-submit-btn');
+
+  const oldPass = oldInput ? oldInput.value : '';
+  const newPass = newInput ? newInput.value.trim() : '';
+  const confirmPass = confirmInput ? confirmInput.value.trim() : '';
+
+  if (!oldPass) {
+    const msg = tr('অনুগ্রহ করে পুরানো পাসওয়ার্ড লিখুন।', 'Please enter your old password.', 'يرجى إدخال كلمة المرور القديمة.');
+    setLoginPasswordStatusMessage(msg, 'error');
+    showToastNotification(msg);
+    if (oldInput) oldInput.focus();
+    return;
+  }
+  if (!newPass) {
+    const msg = tr('অনুগ্রহ করে নতুন পাসওয়ার্ড লিখুন।', 'Please enter a new password.', 'يرجى إدخال كلمة مرور جديدة.');
+    setLoginPasswordStatusMessage(msg, 'error');
+    showToastNotification(msg);
+    if (newInput) newInput.focus();
+    return;
+  }
+  if (newPass.length < 6) {
+    const msg = tr('নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।', 'New password must be at least 6 characters.', 'يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل.');
+    setLoginPasswordStatusMessage(msg, 'error');
+    showToastNotification(msg);
+    if (newInput) newInput.focus();
+    return;
+  }
+  if (!confirmPass) {
+    const msg = tr('অনুগ্রহ করে কনফার্ম পাসওয়ার্ড লিখুন।', 'Please confirm your new password.', 'يرجى تأكيد كلمة المرور الجديدة.');
+    setLoginPasswordStatusMessage(msg, 'error');
+    showToastNotification(msg);
+    if (confirmInput) confirmInput.focus();
+    return;
+  }
+  if (newPass !== confirmPass) {
+    const msg = tr('নতুন পাসওয়ার্ড এবং কনফার্ম পাসওয়ার্ড মিলছে না।', 'New password and confirm password do not match.', 'كلمة المرور الجديدة وتأكيد كلمة المرور غير متطابقين.');
+    setLoginPasswordStatusMessage(msg, 'error');
+    showToastNotification(msg);
+    if (confirmInput) confirmInput.focus();
+    return;
+  }
+  if (oldPass === newPass) {
+    const msg = tr('নতুন পাসওয়ার্ড পুরানো পাসওয়ার্ডের চেয়ে আলাদা হতে হবে।', 'New password must be different from old password.', 'يجب أن تكون كلمة المرور الجديدة مختلفة عن القديمة.');
+    setLoginPasswordStatusMessage(msg, 'error');
+    showToastNotification(msg);
+    if (newInput) newInput.focus();
+    return;
+  }
+
+  _isSavingLoginPassword = true;
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.classList.add('opacity-70', 'cursor-wait');
+    submitBtn.textContent = tr('যাচাই ও আপডেট হচ্ছে…', 'Verifying & updating…', 'جاري التحقق والتحديث…');
+  }
+  setLoginPasswordStatusMessage(tr('পুরানো পাসওয়ার্ড যাচাই করা হচ্ছে…', 'Verifying old password…', 'جاري التحقق من كلمة المرور القديمة…'), 'info');
+
+  try {
+    const normPhone = normalizeBdPhone(phoneKey);
+    const liveAccount = (await dbGetUser(normPhone)) || user;
+    const oldHash = await hashPassword(oldPass);
+    const oldTrimmedHash = oldPass.trim() !== oldPass ? await hashPassword(oldPass.trim()) : oldHash;
+
+    const hashMatches = Boolean(
+      liveAccount.passwordHash &&
+      (liveAccount.passwordHash === oldHash || liveAccount.passwordHash === oldTrimmedHash)
+    );
+    const plainMatches = Boolean(
+      liveAccount.plainPassword &&
+      (liveAccount.plainPassword === oldPass || liveAccount.plainPassword === oldPass.trim())
+    );
+
+    if (!hashMatches && !plainMatches) {
+      const wrongMsg = tr('পুরানো পাসওয়ার্ড সঠিক নয়।', 'Old password is incorrect.', 'كلمة المرور القديمة غير صحيحة.');
+      setLoginPasswordStatusMessage(wrongMsg, 'error');
+      showToastNotification(wrongMsg);
+      if (oldInput) {
+        oldInput.value = '';
+        oldInput.focus();
+      }
+      return;
+    }
+
+    const newHash = await hashPassword(newPass);
+    const nowIso = new Date().toISOString();
+
+    // Update authoritative server record first (hashed only, clearing any legacy plaintext)
+    let dbUpdated = false;
+    if (window.aloSupabase && normPhone) {
+      const { error: updateErr } = await window.aloSupabase
+        .from('users')
+        .update({
+          password_hash: newHash,
+          plain_password: '',
+          updated_at: nowIso
+        })
+        .eq('phone', normPhone);
+      if (!updateErr) {
+        dbUpdated = true;
+      } else {
+        console.warn('Login password update warning:', updateErr);
+      }
+    }
+
+    const updatedUser = Object.assign({}, liveAccount, user, {
+      passwordHash: newHash,
+      plainPassword: '',
+      updatedAt: nowIso
+    });
+
+    if (!dbUpdated) {
+      dbUpdated = await dbSaveUser(updatedUser);
+    }
+
+    if (!dbUpdated && window.aloSupabase) {
+      const netErr = tr('পাসওয়ার্ড আপডেট করা যায়নি। পুনরায় চেষ্টা করুন।', 'Unable to update password. Please try again.', 'تعذر تحديث كلمة المرور. يرجى المحاولة مرة أخرى.');
+      setLoginPasswordStatusMessage(netErr, 'error');
+      showToastNotification(netErr);
+      return;
+    }
+
+    try {
+      localStorage.setItem('aloSignedInUser', JSON.stringify(updatedUser));
+    } catch (e) {}
+
+    [oldInput, newInput, confirmInput].forEach(function(inp) {
+      if (inp) {
+        inp.value = '';
+        inp.type = 'password';
+      }
+    });
+
+    const successMsg = tr('লগইন পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে।', 'Login password changed successfully.', 'تم تغيير كلمة مرور الدخول بنجاح.');
+    setLoginPasswordStatusMessage(successMsg, 'success');
+
+    const successModal = document.getElementById('fund-password-success-modal');
+    if (successModal) {
+      const txtEl = successModal.querySelector('.leading-relaxed');
+      const prevText = txtEl ? txtEl.textContent : '';
+      if (txtEl) txtEl.textContent = successMsg;
+      successModal.style.display = 'flex';
+      successModal.removeAttribute('hidden');
+      setTimeout(function() {
+        successModal.style.display = 'none';
+        successModal.setAttribute('hidden', '');
+        if (txtEl && prevText) txtEl.textContent = prevText;
+        openDashboardPanel('personal');
+      }, 1400);
+    } else {
+      showToastNotification(successMsg);
+      setTimeout(function() {
+        openDashboardPanel('personal');
+      }, 900);
+    }
+  } catch (err) {
+    console.warn('saveLoginPasswordDetails error:', err);
+    const errMsg = tr('পাসওয়ার্ড পরিবর্তনে সমস্যা হয়েছে। আবার চেষ্টা করুন।', 'Error updating password. Please try again.', 'حدث خطأ أثناء تحديث كلمة المرور. يرجى المحاولة مرة أخرى.');
+    setLoginPasswordStatusMessage(errMsg, 'error');
+    showToastNotification(errMsg);
+  } finally {
+    _isSavingLoginPassword = false;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove('opacity-70', 'cursor-wait');
+      submitBtn.textContent = tr('জমা দিন', 'Submit', 'إرسال');
+    }
+  }
+}
+window.saveLoginPasswordDetails = saveLoginPasswordDetails;
+
+const loginPasswordChangeForm = document.getElementById('login-password-change-form');
+if (loginPasswordChangeForm) {
+  loginPasswordChangeForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    saveLoginPasswordDetails();
+  });
+}
 
 // ==========================================
 // BKASH ACCOUNT SETTINGS ("বিকাশ অ্যাকাউন্ট")
@@ -9906,7 +10304,7 @@ function renderPackageTasks(level) {
     const typeLabel = tLang(lang, 'প্রয়োজন:', 'Required:', 'المطلوب:');
     const tierLabel = tLang(lang, 'স্তর:', 'Tier:', 'المستوى:');
     const rewHeading = tLang(lang, 'একক দাম', 'Unit Price', 'سعر الوحدة');
-    const rewAmt = toUserCurrencyAmount(Number(settings.reward || 20), user);
+    const rewAmt = isUsd ? getPackageRewardUsd(activePackageLevel) : Number(settings.reward || 20);
     const rewVal = rewAmt.toFixed(2);
     const progressLabel = tLang(lang, 'পরিমাণ:', 'Quantity:', 'الكمية:');
     const progressTargets = [90852, 91043, 91244, 91419, 91651];
@@ -10012,8 +10410,10 @@ function renderMissionSubmission() {
   // Reward formatted in user's active currency
   const rewardEl = document.getElementById('mission-submit-reward');
   if (rewardEl) {
-    const rawRew = Number(mission.reward || (packageTaskSettings[mission.level || 'LV0']?.reward || 20));
-    const rew = (isUsd && mission.currency !== 'USD') ? toUserCurrencyAmount(rawRew, user) : rawRew;
+    const hasMissionRew = Number(mission.reward) > 0;
+    const rew = hasMissionRew
+      ? ((isUsd && mission.currency !== 'USD') ? toUserCurrencyAmount(Number(mission.reward), user) : Number(mission.reward))
+      : (isUsd ? getPackageRewardUsd(mission.level || 'LV0') : Number(packageTaskSettings[mission.level || 'LV0']?.reward || 20));
     rewardEl.textContent = isUsd ? `${sym}${rew.toFixed(2)} ${curr}` : `${rew.toFixed(2)} ${curr}`;
   }
 
@@ -10556,7 +10956,7 @@ function checkPendingReviews() {
             const mLevel = String(m.level || 'LV0').toUpperCase();
             let mReward = Number(m.reward);
             if (!mReward || isNaN(mReward)) {
-              mReward = toUserCurrencyAmount(packageTaskSettings[mLevel]?.reward || 20, u);
+              mReward = isUsdOnlyUser(u) ? getPackageRewardUsd(mLevel) : Number(packageTaskSettings[mLevel]?.reward || 20);
             } else if (isUsdOnlyUser(u) && m.currency !== 'USD') {
               mReward = toUserCurrencyAmount(mReward, u);
             }
@@ -10600,21 +11000,50 @@ function checkPendingReviews() {
           user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
 
           const dNow = new Date();
-          const methodDesc = lv0Reward > 0 && paidReward === 0
-            ? `LV0 Free Task Reward (${completedInBatch} tasks)`
-            : `Task Reward (${completedInBatch} tasks)`;
-          dbRecordTransaction({
-            phone: curPhone,
-            type: 'mission',
-            amount: totalReward,
-            ratio: '100%',
-            actual: totalReward,
-            status: 'অনুমোদিত',
-            method: methodDesc,
-            date: dNow.toISOString().split('T')[0],
-            time: dNow.toTimeString().split(' ')[0],
-            newBalance: user.balance
-          }).catch(function() {});
+          const dDate = dNow.toISOString().split('T')[0];
+          const dTime = dNow.toTimeString().split(' ')[0];
+          if (lv0Reward > 0 && paidReward > 0) {
+            dbRecordTransaction({
+              phone: curPhone,
+              type: 'mission',
+              amount: Number(lv0Reward.toFixed(2)),
+              ratio: '100%',
+              actual: Number(lv0Reward.toFixed(2)),
+              status: 'অনুমোদিত',
+              method: 'LV0 Free Task Reward',
+              date: dDate,
+              time: dTime,
+              newBalance: user.balance
+            }).catch(function() {});
+            dbRecordTransaction({
+              phone: curPhone,
+              type: 'mission',
+              amount: Number(paidReward.toFixed(2)),
+              ratio: '100%',
+              actual: Number(paidReward.toFixed(2)),
+              status: 'অনুমোদিত',
+              method: `Task Reward (${completedInBatch} tasks)`,
+              date: dDate,
+              time: dTime,
+              newBalance: user.balance
+            }).catch(function() {});
+          } else {
+            const methodDesc = lv0Reward > 0 && paidReward === 0
+              ? `LV0 Free Task Reward (${completedInBatch} tasks)`
+              : `Task Reward (${completedInBatch} tasks)`;
+            dbRecordTransaction({
+              phone: curPhone,
+              type: 'mission',
+              amount: totalReward,
+              ratio: '100%',
+              actual: totalReward,
+              status: 'অনুমোদিত',
+              method: methodDesc,
+              date: dDate,
+              time: dTime,
+              newBalance: user.balance
+            }).catch(function() {});
+          }
         }
         user.acceptedMissions = compactMissionsForCloud(allMissions.filter(function(m) {
           return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
@@ -11116,6 +11545,134 @@ function closeTeamMemberDetailModal() {
 window.closeTeamMemberDetailModal = closeTeamMemberDetailModal;
 
 let currentTeamTierTab = '1';
+let cachedTeamCommissionTxs = null;
+
+function parseTeamCommissionTxsByTier(commTxs, viewerUser) {
+  const result = {
+    1: { pkg: 0, task: 0, other: 0, today: 0, records: [] },
+    2: { pkg: 0, task: 0, other: 0, today: 0, records: [] },
+    3: { pkg: 0, task: 0, other: 0, today: 0, records: [] }
+  };
+  if (!Array.isArray(commTxs) || commTxs.length === 0) return result;
+
+  const ownerCreatedMs = (viewerUser && viewerUser.createdAt) ? new Date(viewerUser.createdAt).getTime() : NaN;
+  const minValidTxTs = !isNaN(ownerCreatedMs) ? (ownerCreatedMs - 15 * 60 * 1000) : null;
+  const nowObj = new Date();
+  const nowDateStr = nowObj.toDateString();
+  const todayLocalIso = `${nowObj.getFullYear()}-${String(nowObj.getMonth() + 1).padStart(2, '0')}-${String(nowObj.getDate()).padStart(2, '0')}`;
+
+  commTxs.forEach(function(tx) {
+    if (!tx) return;
+    if (minValidTxTs !== null && tx.createdAt) {
+      const txTs = new Date(tx.createdAt).getTime();
+      if (!isNaN(txTs) && txTs < minValidTxTs) return;
+    }
+    const st = String(tx.status || '').toLowerCase();
+    if (st.includes('reject') || st.includes('বাতিল') || st.includes('fail') || st.includes('অসফল')) return;
+    let amt = Number(tx.actual || tx.amount || 0);
+    if (amt <= 0) return;
+
+    const methodRaw = String(tx.method || '');
+    const methodStr = methodRaw.toLowerCase();
+    // Exclude Lucky Spin prizes stored under type='commission'
+    if (methodStr.includes('lucky spin') || methodStr.includes('ভাগ্যবান স্পিন') || methodStr.includes('লটারি')) {
+      return;
+    }
+
+    // Detect tier 1 / 2 / 3 from method label or ratio
+    let tierNum = 1;
+    const tierMatch = methodRaw.match(/(?:tier|স্তর|level)\s*([123])/i);
+    if (tierMatch) {
+      tierNum = Number(tierMatch[1]);
+    } else {
+      const ratioStr = String(tx.ratio || '').trim();
+      if (ratioStr.startsWith('2')) tierNum = 2;
+      else if (ratioStr.startsWith('1%') || ratioStr === '1') tierNum = 3;
+      else tierNum = 1;
+    }
+    if (tierNum < 1 || tierNum > 3) tierNum = 1;
+
+    const isPkgTx = methodStr.includes('প্যাকেজ') || methodStr.includes('package');
+    const isTaskTx = methodStr.includes('দৈনিক') || methodStr.includes('task') || methodStr.includes('কাজের');
+
+    // Guard legacy BDT-denominated package commission rows against 126x USD inflation
+    if (isPkgTx && /[\u0980-\u09FF]/.test(methodRaw)) {
+      const lvlMatch = methodRaw.toUpperCase().match(/\b(LV[1-9]\d*)\b/);
+      if (lvlMatch && typeof packageData === 'object' && packageData[lvlMatch[1]]) {
+        const bdtExpected = (Number(packageData[lvlMatch[1]].price) || 0) * (PACKAGE_COMMISSION_RATES[tierNum] || 0.01);
+        if (bdtExpected > 0 && amt >= bdtExpected * 0.5) {
+          amt = Number((amt / BDT_PER_USD).toFixed(2));
+        }
+      }
+    }
+
+    const bucket = result[tierNum];
+    if (isPkgTx) bucket.pkg += amt;
+    else if (isTaskTx) bucket.task += amt;
+    else bucket.other += amt;
+
+    const isTodayTx = tx.createdAt
+      ? (new Date(tx.createdAt).toDateString() === nowDateStr)
+      : Boolean(tx.date && String(tx.date) === todayLocalIso);
+    if (isTodayTx) {
+      bucket.today += amt;
+    }
+
+    bucket.records.push({
+      amount: amt,
+      kind: isPkgTx ? 'package' : (isTaskTx ? 'task' : 'other'),
+      method: methodRaw || 'Team Commission',
+      ratio: String(tx.ratio || ''),
+      date: tx.date || (tx.createdAt ? String(tx.createdAt).slice(0, 10) : ''),
+      time: tx.time || ''
+    });
+  });
+
+  return result;
+}
+
+function computeTierEstimatedCommission(memberList, tierNum, viewerCurr) {
+  const pkgRate = PACKAGE_COMMISSION_RATES[tierNum] || 0.01;
+  const taskRate = DAILY_TASK_COMMISSION_RATES[tierNum] || 0.01;
+  let estPkg = 0;
+  let estTask = 0;
+  let estToday = 0;
+
+  (memberList || []).forEach(function(m) {
+    const mCurr = m.currency || 'USD';
+    let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
+    if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
+      const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
+      const uniquePaid = Array.from(new Set(paidPkgs.map(function(p) { return String(p || '').toUpperCase().trim(); })))
+        .filter(function(p) { return p && p !== 'LV0' && packageData[p] && Number(packageData[p].price) > 0; });
+      const memberIsUsd = String(mCurr).toUpperCase() === 'USD';
+      pkgSpendRaw = uniquePaid.reduce(function(acc, lvl) {
+        const bdtPrice = Number(packageData[lvl].price) || 0;
+        return acc + (memberIsUsd ? getPackagePriceUsd(lvl) : bdtPrice);
+      }, 0);
+    }
+    const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, mCurr, viewerCurr);
+    const pkgSpendToday = convertBetweenCurrenciesExact(Number(m.packageSpendToday) || 0, mCurr, viewerCurr);
+
+    const memberHasPaidLvl = String(m.level || 'LV0').toUpperCase() !== 'LV0' ||
+      (Array.isArray(m.purchasedPackages) && m.purchasedPackages.some(function(p) { return String(p || '').toUpperCase() !== 'LV0'; }));
+    const taskEarnRaw = m._hasTxLoaded
+      ? (Number(m.taskEarningsTotal) || 0)
+      : (Number(m.taskEarningsTotal) || (memberHasPaidLvl ? (Number(m.totalIncome) || 0) : 0));
+    const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, mCurr, viewerCurr);
+    const taskEarnToday = convertBetweenCurrenciesExact(Number(m.taskEarningsToday) || 0, mCurr, viewerCurr);
+
+    estPkg += pkgSpend * pkgRate;
+    estTask += taskEarn * taskRate;
+    estToday += (pkgSpendToday * pkgRate) + (taskEarnToday * taskRate);
+  });
+
+  return {
+    pkg: Math.round(estPkg * 100) / 100,
+    task: Math.round(estTask * 100) / 100,
+    today: Math.round(estToday * 100) / 100
+  };
+}
 
 async function updateTeamReportMetrics(forceRefresh) {
   const user = getCurrentUser();
@@ -11124,11 +11681,19 @@ async function updateTeamReportMetrics(forceRefresh) {
   const expectedNormPhone = normalizeBdPhone(phone);
 
   const viewerCurr = getUserCurrency(user);
-  const teamData = await dbGetRealTeam(phone, { force: Boolean(forceRefresh) });
+  const results = await Promise.all([
+    dbGetRealTeam(phone, { force: Boolean(forceRefresh) }),
+    dbGetTransactions(phone, 'commission').catch(function() { return []; })
+  ]);
+  const teamData = results[0];
+  const commTxs = Array.isArray(results[1]) ? results[1] : [];
+
   const activeAfter = getCurrentUser();
   const activeNormAfter = activeAfter ? normalizeBdPhone(activeAfter.phone || activeAfter.accountNumber) : '';
   if (expectedNormPhone && activeNormAfter !== expectedNormPhone) return;
+
   cachedTeamReportData = teamData;
+  cachedTeamCommissionTxs = commTxs;
   const all = teamData.all || [];
   const tier1 = teamData.tier1 || [];
 
@@ -11171,78 +11736,133 @@ async function updateTeamReportMetrics(forceRefresh) {
   if (elSize) elSize.textContent = String(teamSize);
   if (elNew) elNew.textContent = String(newMembersCount);
 
-  updateActiveTierMetrics(teamData);
+  updateActiveTierMetrics(teamData, commTxs);
 }
 window.updateTeamReportMetrics = updateTeamReportMetrics;
 
-function updateActiveTierMetrics(cachedTeamData) {
+function updateActiveTierMetrics(cachedTeamData, commTxsArg) {
   const mEl = document.getElementById('tier-metric-members');
   const rEl = document.getElementById('tier-metric-recharge');
   const bEl = document.getElementById('tier-metric-rebate');
 
+  const user = getCurrentUser();
   if (!cachedTeamData) {
     if (cachedTeamReportData) {
       cachedTeamData = cachedTeamReportData;
     } else {
-      const user = getCurrentUser();
       if (!user) return;
-      dbGetRealTeam(user.phone || user.accountNumber).then(function(data) {
-        cachedTeamReportData = data;
-        updateActiveTierMetrics(data);
-      });
+      updateTeamReportMetrics(false);
       return;
     }
   }
 
-  const viewerCurr = getUserCurrency(getCurrentUser());
-  const tier1 = cachedTeamData.tier1 || [];
-  const tier2 = cachedTeamData.tier2 || [];
-  const tier3 = cachedTeamData.tier3 || [];
+  const commTxs = Array.isArray(commTxsArg)
+    ? commTxsArg
+    : (Array.isArray(cachedTeamCommissionTxs) ? cachedTeamCommissionTxs : []);
 
-  let targetList = tier1;
+  const viewerCurr = getUserCurrency(user);
+  const viewerSym = getUserCurrencySymbol(user);
+  const lang = getActiveLang(user);
+  const tierLists = {
+    1: cachedTeamData.tier1 || [],
+    2: cachedTeamData.tier2 || [],
+    3: cachedTeamData.tier3 || []
+  };
+
   let tierNum = 1;
-  if (currentTeamTierTab === '2') {
-    targetList = tier2;
-    tierNum = 2;
-  } else if (currentTeamTierTab === '3') {
-    targetList = tier3;
-    tierNum = 3;
-  }
+  if (currentTeamTierTab === '2') tierNum = 2;
+  else if (currentTeamTierTab === '3') tierNum = 3;
 
-  const pkgRate = PACKAGE_COMMISSION_RATES[tierNum] || 0.01;
-  const taskRate = DAILY_TASK_COMMISSION_RATES[tierNum] || 0.01;
+  const targetList = tierLists[tierNum] || [];
+  const txByTier = parseTeamCommissionTxsByTier(commTxs, user);
+
+  // Reconcile all 3 tiers (real credited commission ledger + team member calculation)
+  const reconciledByTier = {};
+  let allTiersTotal = 0;
+  let allTiersToday = 0;
+
+  [1, 2, 3].forEach(function(t) {
+    const est = computeTierEstimatedCommission(tierLists[t], t, viewerCurr);
+    const txB = txByTier[t] || { pkg: 0, task: 0, other: 0, today: 0, records: [] };
+    const pkgComm = Math.round(Math.max(txB.pkg, est.pkg) * 100) / 100;
+    const taskComm = Math.round(Math.max(txB.task, est.task) * 100) / 100;
+    const otherComm = Math.round(txB.other * 100) / 100;
+    const total = Math.round((pkgComm + taskComm + otherComm) * 100) / 100;
+    const today = Math.round(Math.max(txB.today, est.today) * 100) / 100;
+    reconciledByTier[t] = {
+      pkg: pkgComm,
+      task: taskComm,
+      other: otherComm,
+      total: total,
+      today: today,
+      records: txB.records || []
+    };
+    allTiersTotal += total;
+    allTiersToday += today;
+  });
+
+  const activeData = reconciledByTier[tierNum] || { pkg: 0, task: 0, other: 0, total: 0, today: 0, records: [] };
+  const pkgRatePct = Math.round((PACKAGE_COMMISSION_RATES[tierNum] || 0.01) * 100);
+  const taskRatePct = Math.round((DAILY_TASK_COMMISSION_RATES[tierNum] || 0.01) * 100);
 
   const count = targetList.length;
   const rechargeSum = targetList.reduce(function(sum, m) {
     return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'USD', viewerCurr);
   }, 0);
-  const rebateSumRaw = targetList.reduce(function(sum, m) {
-    const mCurr = m.currency || 'USD';
-    let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
-    if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
-      const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
-      const uniquePaid = Array.from(new Set(paidPkgs.map(function(p) { return String(p || '').toUpperCase().trim(); })))
-        .filter(function(p) { return p && p !== 'LV0' && packageData[p] && Number(packageData[p].price) > 0; });
-      const memberIsUsd = String(mCurr).toUpperCase() === 'USD';
-      pkgSpendRaw = uniquePaid.reduce(function(acc, lvl) {
-        const bdtPrice = Number(packageData[lvl].price) || 0;
-        return acc + (memberIsUsd ? convertBetweenCurrencies(bdtPrice, 'BDT', 'USD') : bdtPrice);
-      }, 0);
-    }
-    const pkgSpend = convertBetweenCurrenciesExact(pkgSpendRaw, mCurr, viewerCurr);
-    const memberHasPaidLvl = String(m.level || 'LV0').toUpperCase() !== 'LV0' ||
-      (Array.isArray(m.purchasedPackages) && m.purchasedPackages.some(function(p) { return String(p || '').toUpperCase() !== 'LV0'; }));
-    const taskEarnRaw = m._hasTxLoaded
-      ? (Number(m.taskEarningsTotal) || 0)
-      : (Number(m.taskEarningsTotal) || (memberHasPaidLvl ? (Number(m.totalIncome) || 0) : 0));
-    const taskEarn = convertBetweenCurrenciesExact(taskEarnRaw, mCurr, viewerCurr);
-    return sum + (pkgSpend * pkgRate) + (taskEarn * taskRate);
-  }, 0);
-  const rebateSum = Math.round(rebateSumRaw * 100) / 100;
 
   if (mEl) mEl.textContent = String(count);
   if (rEl) rEl.textContent = rechargeSum.toFixed(2);
-  if (bEl) bEl.textContent = rebateSum.toFixed(2);
+  if (bEl) bEl.textContent = activeData.total.toFixed(2);
+
+  // Update per-tier breakdown & total commission summary card in Team Report
+  const pkgRateEl = document.getElementById('tier-comm-pkg-rate');
+  const taskRateEl = document.getElementById('tier-comm-task-rate');
+  const pkgValEl = document.getElementById('tier-comm-pkg-val');
+  const taskValEl = document.getElementById('tier-comm-task-val');
+  const allTotalEl = document.getElementById('team-comm-all-tiers-total');
+  const todayTotalEl = document.getElementById('team-comm-today-total');
+
+  if (pkgRateEl) pkgRateEl.textContent = `${pkgRatePct}%`;
+  if (taskRateEl) taskRateEl.textContent = `${taskRatePct}%`;
+  if (pkgValEl) pkgValEl.textContent = activeData.pkg.toFixed(2);
+  if (taskValEl) taskValEl.textContent = activeData.task.toFixed(2);
+  if (allTotalEl) allTotalEl.textContent = allTiersTotal.toFixed(2);
+  if (todayTotalEl) todayTotalEl.textContent = allTiersToday.toFixed(2);
+
+  // Render recent credited commission records for the selected tier
+  const recordsListEl = document.getElementById('team-comm-records-list');
+  if (recordsListEl) {
+    const recs = activeData.records || [];
+    if (recs.length === 0) {
+      const emptyTxt = 'No commission records in this tier yet';
+      recordsListEl.innerHTML = `<div class="py-5 text-center text-xs text-slate-400">${emptyTxt}</div>`;
+    } else {
+      recordsListEl.innerHTML = recs.slice(0, 15).map(function(rec) {
+        const typeLabel = rec.kind === 'package'
+          ? 'Package Commission'
+          : (rec.kind === 'task' ? 'Daily Task Commission' : 'Team Commission');
+        const ratioBadge = rec.ratio ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#0c2666] text-[#38bdf8] border border-[#1d4ed8]/40">${rec.ratio}</span>` : '';
+        const dateTime = [rec.date, rec.time].filter(Boolean).join(' · ');
+        return `
+          <div class="flex items-center justify-between py-2.5 px-3 bg-[#040f2e]/85 rounded-lg border border-[#102966]/70">
+            <div class="min-w-0 pr-2">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-white truncate">${typeLabel}</span>
+                ${ratioBadge}
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono mt-0.5">${dateTime || '—'}</div>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="text-xs sm:text-sm font-bold text-emerald-400 font-mono tabular-nums">+${viewerSym}${Number(rec.amount || 0).toFixed(2)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    if (window.aloI18n && typeof window.aloI18n.translateDOM === 'function') {
+      window.aloI18n.translateDOM(lang, { silent: true });
+    }
+  }
 }
 window.updateActiveTierMetrics = updateActiveTierMetrics;
 
@@ -11286,7 +11906,9 @@ document.addEventListener('click', function(event) {
     pendingPurchaseLevel = currentPurchaseLevel;
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
-    const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
+    const pkgPrice = pkg
+      ? (isUsdOnlyUser(user) ? getPackagePriceUsd(currentPurchaseLevel) : Number(pkg.price || 0))
+      : (isUsdOnlyUser(user) ? getPackagePriceUsd('LV1') : 3500);
     const pkgBal = Number(((Number(user && user.balance) || 0) + (Number(user && user.rechargeFrozenBalance) || 0)).toFixed(2));
     const deficit = Number(Math.max(0, pkgPrice - pkgBal).toFixed(2));
     const customInputs = document.querySelectorAll('#custom-deposit-amount, #inline-custom-deposit-amount');
@@ -11805,6 +12427,23 @@ document.addEventListener('click', function(event) {
     return;
   }
 
+  // Login Password Profile row click ("প্রবেশের গুপ্তসংকেত" / "Login Password" -> full page)
+  const loginPassProfileRow = event.target.closest('#personal-login-password-row, [data-profile-edit="login-password"]');
+  if (loginPassProfileRow) {
+    event.preventDefault();
+    previousDashboardPanel = 'personal';
+    openDashboardPanel('login-password-setup');
+    return;
+  }
+
+  // Login Password setup back button
+  const loginPassBackBtn = event.target.closest('#login-password-setup-back-btn');
+  if (loginPassBackBtn) {
+    event.preventDefault();
+    openDashboardPanel('personal');
+    return;
+  }
+
   // Fund Password Profile row click ("ফান্ড পাসওয়ার্ড" -> "উত্তোলন পাসওয়ার্ড" পেজ)
   const fundPassProfileRow = event.target.closest('#personal-fund-password-row, [data-profile-edit="fund-password"]');
   if (fundPassProfileRow) {
@@ -11851,7 +12490,7 @@ document.addEventListener('click', function(event) {
 
   // Personal message buttons for other rows
   const personalMsgBtn = event.target.closest('[data-personal-message]');
-  if (personalMsgBtn && !personalMsgBtn.closest('#personal-bkash-row, [data-profile-edit="bkash"], #bkash-setup-panel, #personal-nagad-row, [data-profile-edit="nagad"], #nagad-setup-panel, #personal-usdt-row, [data-profile-edit="usdt"], #usdt-setup-panel, #personal-account-row, [data-profile-edit="account"], #realname-setup-panel, #personal-fund-password-row, [data-profile-edit="fund-password"], #fund-password-setup-panel')) {
+  if (personalMsgBtn && !personalMsgBtn.closest('#personal-bkash-row, [data-profile-edit="bkash"], #bkash-setup-panel, #personal-nagad-row, [data-profile-edit="nagad"], #nagad-setup-panel, #personal-usdt-row, [data-profile-edit="usdt"], #usdt-setup-panel, #personal-account-row, [data-profile-edit="account"], #realname-setup-panel, #personal-fund-password-row, [data-profile-edit="fund-password"], #fund-password-setup-panel, #personal-login-password-row, [data-profile-edit="login-password"], #login-password-setup-panel')) {
     event.preventDefault();
     const msg = personalMsgBtn.dataset.personalMessage;
     const l = getActiveLang();
@@ -12477,7 +13116,7 @@ document.addEventListener('click', function(event) {
       const taskTitle = `${activePlatform} · ${tLang(lang, 'কাজ', 'Task', 'مهمة')} ${taskIndex + 1}`;
       const desc = getPlatformTaskDescription(activePlatform, taskIndex, lang);
       const baseReward = (packageTaskSettings[activePackageLevel] && packageTaskSettings[activePackageLevel].reward) || 20;
-      const reward = toUserCurrencyAmount(baseReward, user);
+      const reward = isUsdOnlyUser(user) ? getPackageRewardUsd(activePackageLevel) : Number(baseReward);
       const taskLink = getUniqueRandomTaskUrl(activePlatform, taskIndex, readAcceptedMissions());
 
       saveAcceptedMission({
@@ -13128,7 +13767,9 @@ if (openDepositFromPurchaseBtn) {
     pendingPurchaseLevel = currentPurchaseLevel;
     const pkg = packageData[currentPurchaseLevel];
     const user = getCurrentUser();
-    const pkgPrice = pkg ? toUserCurrencyAmount(pkg.price, user) : toUserCurrencyAmount(3500, user);
+    const pkgPrice = pkg
+      ? (isUsdOnlyUser(user) ? getPackagePriceUsd(currentPurchaseLevel) : Number(pkg.price || 0))
+      : (isUsdOnlyUser(user) ? getPackagePriceUsd('LV1') : 3500);
     const pkgBal = Number(((Number(user && user.balance) || 0) + (Number(user && user.rechargeFrozenBalance) || 0)).toFixed(2));
     const deficit = Number(Math.max(0, pkgPrice - pkgBal).toFixed(2));
     const customInput = document.getElementById('custom-deposit-amount');
@@ -13248,6 +13889,7 @@ function handleLogout() {
   if (_liveTxDebounceTimer) clearTimeout(_liveTxDebounceTimer);
   if (typeof _realTeamCache !== 'undefined') _realTeamCache.clear();
   cachedTeamReportData = null;
+  cachedTeamCommissionTxs = null;
   clearUserCachesOnAuthSwitch();
   localStorage.removeItem('aloSignedInUser');
   showToastNotification(tLang(l, 'সফলভাবে সাইন আউট করা হয়েছে।', 'Signed out successfully.', 'تم تسجيل الخروج بنجاح.'));
@@ -15954,6 +16596,10 @@ window.addEventListener('alo-language-changed', function(e) {
     }
     if (typeof renderFreshTeamView === 'function' && teamMembersContent && !teamMembersContent.classList.contains('hidden')) {
       renderFreshTeamView();
+    }
+    const teamReportPanelEl = document.getElementById('team-report-panel');
+    if (teamReportPanelEl && !teamReportPanelEl.hidden && typeof updateActiveTierMetrics === 'function' && cachedTeamReportData) {
+      updateActiveTierMetrics(cachedTeamReportData, cachedTeamCommissionTxs);
     }
     const taskPanel = document.getElementById('platform-tasks-panel');
     if (taskPanel && !taskPanel.hidden && typeof renderPackageTasks === 'function') {

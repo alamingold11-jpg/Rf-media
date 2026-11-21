@@ -1684,7 +1684,12 @@
     "Select country": { en: "Select country", ar: "اختر الدولة" },
     "Task Reward": { en: "Task Reward", ar: "مكافأة المهمة" },
     "Today Earnings": { en: "Today Earnings", ar: "أرباح اليوم" },
-    "Log Out": { en: "Log Out", ar: "تسجيل الخروج" }
+    "Log Out": { en: "Log Out", ar: "تسجيل الخروج" },
+    "Total Team Commission": { en: "Total Team Commission", ar: "إجمالي عمولة الفريق" },
+    "Package Commission": { en: "Package Commission", ar: "عمولة الباقات" },
+    "Daily Task Commission": { en: "Daily Task Commission", ar: "عمولة المهام اليومية" },
+    "Commission Records": { en: "Commission Records", ar: "سجلات العمولات" },
+    "No commission records in this tier yet": { en: "No commission records in this tier yet", ar: "لا توجد سجلات عمولات في هذا المستوى بعد" }
   };
 
   // Placeholders dictionary
@@ -1798,6 +1803,21 @@
       bn: '৬ ডিজিটের পাসওয়ার্ড কনফার্ম করুন',
       en: 'Confirm 6-digit password',
       ar: 'تأكيد كلمة المرور من 6 أرقام'
+    },
+    'login-password-old-input': {
+      bn: 'পুরানো পাসওয়ার্ড লিখুন',
+      en: 'Enter old password',
+      ar: 'أدخل كلمة المرور القديمة'
+    },
+    'login-password-new-input': {
+      bn: 'নতুন পাসওয়ার্ড লিখুন',
+      en: 'Enter new password',
+      ar: 'أدخل كلمة المرور الجديدة'
+    },
+    'login-password-confirm-input': {
+      bn: 'নতুন পাসওয়ার্ড কনফার্ম করুন',
+      en: 'Confirm new password',
+      ar: 'تأكيد كلمة المرور الجديدة'
     },
     'savings-deposit-input': {
       bn: 'আপনার সঞ্চয় লিখুন (যেমন: ৩৫০০)',
@@ -1921,7 +1941,24 @@
     'Company Profile': { tl: 'Profile ng Kumpanya', ko: '회사 소개', vi: 'Hồ sơ công ty', tr: 'Şirket Profili', hi: 'कंपनी प्रोफ़ाइल', id: 'Profil Perusahaan', ms: 'Profil Syarikat', pt: 'Perfil da Empresa', es: 'Perfil de la Empresa', ru: 'О компании' },
     'Security Center': { tl: 'Sentro ng Seguridad', ko: '보안 센터', vi: 'Trung tâm bảo mật', tr: 'Güvenlik Merkezi', hi: 'सुरक्षा केंद्र', id: 'Pusat Keamanan', ms: 'Pusat Keselamatan', pt: 'Centro de Segurança', es: 'Centro de Seguridad', ru: 'Центр безопасности' },
     'Fund Password': { tl: 'Password ng Pondo', ko: '자금 비밀번호', vi: 'Mật khẩu quỹ', tr: 'Fon Şifresi', hi: 'फंड पासवर्ड', id: 'Kata Sandi Dana', ms: 'Kata Laluan Dana', pt: 'Senha de Fundos', es: 'Contraseña de Fondos', ru: 'Платежный пароль' },
-    'Login Password': { tl: 'Password sa Pag-login', ko: '로그인 비밀번호', vi: 'Mật khẩu đăng nhập', tr: 'Giriş Şifresi', hi: 'लॉगिन पासवर्ड', id: 'Kata Sandi Masuk', ms: 'Kata Laluan Log Masuk', pt: 'Senha de Login', es: 'Contraseña de Acceso', ru: 'Пароль входа' },
+    'Login Password': { tl: 'Password sa Pag-login', ko: '로그인 비밀번호', vi: 'Mật khẩu đăng nhập', tr: 'Giriş Şifresi', hi: 'लॉगिन पासवर्ड', id: 'Kata Sandi Masuk', ms: 'Kata Laluan Log Masuk', pt: 'Senha de Login', es: 'Contraseña de Acceso', ru: 'Пароль входа', ar: 'كلمة مرور الدخول' },
+    'Old Password': { tl: 'Lumang Password', ko: '기존 비밀번호', vi: 'Mật khẩu cũ', tr: 'Eski Şifre', hi: 'पुराना पासवर्ड', id: 'Kata Sandi Lama', ms: 'Kata Laluan Lama', pt: 'Senha Antiga', es: 'Contraseña Anterior', ru: 'Старый пароль', ar: 'كلمة المرور القديمة' },
+    'New Password': { tl: 'Bagong Password', ko: '새 비밀번호', vi: 'Mật khẩu mới', tr: 'Yeni Şifre', hi: 'नया पासवर्ड', id: 'Kata Sandi Baru', ms: 'Kata Laluan Baharu', pt: 'Nova Senha', es: 'Nueva Contraseña', ru: 'Новый пароль', ar: 'كلمة المرور الجديدة' },
+    'Confirm Password': { tl: 'Kumpirmahin ang Password', ko: '비밀번호 확인', vi: 'Xác nhận mật khẩu', tr: 'Şifreyi Onayla', hi: 'पासवर्ड की पुष्टि करें', id: 'Konfirmasi Kata Sandi', ms: 'Sahkan Kata Laluan', pt: 'Confirmar Senha', es: 'Confirmar Contraseña', ru: 'Подтвердите пароль', ar: 'تأكيد كلمة المرور' },
+    'Enter old password': { tl: 'Ilagay ang lumang password', ko: '기존 비밀번호 입력', vi: 'Nhập mật khẩu cũ', tr: 'Eski şifreyi girin', hi: 'पुराना पासवर्ड दर्ज करें', id: 'Masukkan kata sandi lama', ms: 'Masukkan kata laluan lama', pt: 'Digite a senha antiga', es: 'Ingrese la contraseña anterior', ru: 'Введите старый пароль', ar: 'أدخل كلمة المرور القديمة' },
+    'Enter new password': { tl: 'Ilagay ang bagong password', ko: '새 비밀번호 입력', vi: 'Nhập mật khẩu mới', tr: 'Yeni şifreyi girin', hi: 'नया पासवर्ड दर्ज करें', id: 'Masukkan kata sandi baru', ms: 'Masukkan kata laluan baharu', pt: 'Digite a nova senha', es: 'Ingrese la nueva contraseña', ru: 'Введите новый пароль', ar: 'أدخل كلمة المرور الجديدة' },
+    'Confirm new password': { tl: 'Kumpirmahin ang bagong password', ko: '새 비밀번호 확인', vi: 'Xác nhận mật khẩu mới', tr: 'Yeni şifreyi onaylayın', hi: 'नए पासवर्ड की पुष्टि करें', id: 'Konfirmasi kata sandi baru', ms: 'Sahkan kata laluan baharu', pt: 'Confirme a nova senha', es: 'Confirme la nueva contraseña', ru: 'Подтвердите новый пароль', ar: 'تأكيد كلمة المرور الجديدة' },
+    'Please enter your old password.': { tl: 'Pakilagay ang iyong lumang password.', ko: '기존 비밀번호를 입력하세요.', vi: 'Vui lòng nhập mật khẩu cũ.', tr: 'Lütfen eski şifrenizi girin.', hi: 'कृपया अपना पुराना पासवर्ड दर्ज करें।', id: 'Silakan masukkan kata sandi lama Anda.', ms: 'Sila masukkan kata laluan lama anda.', pt: 'Por favor, digite sua senha antiga.', es: 'Por favor, ingrese su contraseña anterior.', ru: 'Пожалуйста, введите старый пароль.', ar: 'يرجى إدخال كلمة المرور القديمة.' },
+    'Please enter a new password.': { tl: 'Pakilagay ang bagong password.', ko: '새 비밀번호를 입력하세요.', vi: 'Vui lòng nhập mật khẩu mới.', tr: 'Lütfen yeni şifrenizi girin.', hi: 'कृपया नया पासवर्ड दर्ज करें।', id: 'Silakan masukkan kata sandi baru.', ms: 'Sila masukkan kata laluan baharu.', pt: 'Por favor, digite uma nova senha.', es: 'Por favor, ingrese una nueva contraseña.', ru: 'Пожалуйста, введите новый пароль.', ar: 'يرجى إدخال كلمة مرور جديدة.' },
+    'New password must be at least 6 characters.': { tl: 'Ang bagong password ay dapat hindi bababa sa 6 na karakter.', ko: '새 비밀번호는 최소 6자 이상이어야 합니다.', vi: 'Mật khẩu mới phải có ít nhất 6 ký tự.', tr: 'Yeni şifre en az 6 karakter olmalıdır.', hi: 'नया पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।', id: 'Kata sandi baru minimal 6 karakter.', ms: 'Kata laluan baharu mestilah sekurang-kurangnya 6 aksara.', pt: 'A nova senha deve ter pelo menos 6 caracteres.', es: 'La nueva contraseña debe tener al menos 6 caracteres.', ru: 'Новый пароль должен содержать не менее 6 символов.', ar: 'يجب أن تتكون كلمة المرور الجديدة من 6 أحرف على الأقل.' },
+    'Please confirm your new password.': { tl: 'Pakikumpirma ang iyong bagong password.', ko: '새 비밀번호를 확인하세요.', vi: 'Vui lòng xác nhận mật khẩu mới.', tr: 'Lütfen yeni şifrenizi onaylayın.', hi: 'कृपया अपने नए पासवर्ड की पुष्टि करें।', id: 'Silakan konfirmasi kata sandi baru Anda.', ms: 'Sila sahkan kata laluan baharu anda.', pt: 'Por favor, confirme sua nova senha.', es: 'Por favor, confirme su nueva contraseña.', ru: 'Пожалуйста, подтвердите новый пароль.', ar: 'يرجى تأكيد كلمة المرور الجديدة.' },
+    'New password and confirm password do not match.': { tl: 'Hindi tugma ang bagong password at kumpirmasyon.', ko: '새 비밀번호와 확인 비밀번호가 일치하지 않습니다.', vi: 'Mật khẩu mới và xác nhận mật khẩu không khớp.', tr: 'Yeni şifre ve onay şifresi eşleşmiyor.', hi: 'नया पासवर्ड और पुष्टि पासवर्ड मेल नहीं खाते।', id: 'Kata sandi baru dan konfirmasi tidak cocok.', ms: 'Kata laluan baharu dan pengesahan tidak sepadan.', pt: 'A nova senha e a confirmação não coincidem.', es: 'La nueva contraseña y la confirmación no coinciden.', ru: 'Новый пароль и подтверждение не совпадают.', ar: 'كلمة المرور الجديدة وتأكيد كلمة المرور غير متطابقين.' },
+    'New password must be different from old password.': { tl: 'Ang bagong password ay dapat iba sa lumang password.', ko: '새 비밀번호는 기존 비밀번호와 달라야 합니다.', vi: 'Mật khẩu mới phải khác mật khẩu cũ.', tr: 'Yeni şifre eski şifreden farklı olmalıdır.', hi: 'नया पासवर्ड पुराने पासवर्ड से अलग होना चाहिए।', id: 'Kata sandi baru harus berbeda dari kata sandi lama.', ms: 'Kata laluan baharu mesti berbeza daripada kata laluan lama.', pt: 'A nova senha deve ser diferente da senha antiga.', es: 'La nueva contraseña debe ser diferente de la anterior.', ru: 'Новый пароль должен отличаться от старого.', ar: 'يجب أن تكون كلمة المرور الجديدة مختلفة عن القديمة.' },
+    'Old password is incorrect.': { tl: 'Mali ang lumang password.', ko: '기존 비밀번호가 올바르지 않습니다.', vi: 'Mật khẩu cũ không đúng.', tr: 'Eski şifre yanlış.', hi: 'पुराना पासवर्ड गलत है।', id: 'Kata sandi lama salah.', ms: 'Kata laluan lama tidak betul.', pt: 'A senha antiga está incorreta.', es: 'La contraseña anterior es incorrecta.', ru: 'Старый пароль неверен.', ar: 'كلمة المرور القديمة غير صحيحة.' },
+    'Verifying old password…': { tl: 'Bineberipika ang lumang password…', ko: '기존 비밀번호 확인 중…', vi: 'Đang xác minh mật khẩu cũ…', tr: 'Eski şifre doğrulanıyor…', hi: 'पुराना पासवर्ड सत्यापित किया जा रहा है…', id: 'Memverifikasi kata sandi lama…', ms: 'Mengesahkan kata laluan lama…', pt: 'Verificando senha antiga…', es: 'Verificando contraseña anterior…', ru: 'Проверка старого пароля…', ar: 'جاري التحقق من كلمة المرور القديمة…' },
+    'Verifying & updating…': { tl: 'Bineberipika at ina-update…', ko: '확인 및 업데이트 중…', vi: 'Đang xác minh & cập nhật…', tr: 'Doğrulanıyor ve güncelleniyor…', hi: 'सत्यापन और अपडेट हो रहा है…', id: 'Memverifikasi & memperbarui…', ms: 'Mengesahkan & mengemas kini…', pt: 'Verificando e atualizando…', es: 'Verificando y actualizando…', ru: 'Проверка и обновление…', ar: 'جاري التحقق والتحديث…' },
+    'Login password changed successfully.': { tl: 'Matagumpay na napalitan ang password sa pag-login.', ko: '로그인 비밀번호가 성공적으로 변경되었습니다.', vi: 'Đã đổi mật khẩu đăng nhập thành công.', tr: 'Giriş şifresi başarıyla değiştirildi.', hi: 'लॉगिन पासवर्ड सफलतापूर्वक बदल गया है।', id: 'Kata sandi masuk berhasil diubah.', ms: 'Kata laluan log masuk berjaya ditukar.', pt: 'Senha de login alterada com sucesso.', es: 'Contraseña de acceso cambiada con éxito.', ru: 'Пароль входа успешно изменен.', ar: 'تم تغيير كلمة مرور الدخول بنجاح.' },
+    'Unable to update password. Please try again.': { tl: 'Hindi ma-update ang password. Pakisubukan muli.', ko: '비밀번호를 업데이트할 수 없습니다. 다시 시도하세요.', vi: 'Không thể cập nhật mật khẩu. Vui lòng thử lại.', tr: 'Şifre güncellenemedi. Lütfen tekrar deneyin.', hi: 'पासवर्ड अपडेट करने में असमर्थ। कृपया पुनः प्रयास करें।', id: 'Tidak dapat memperbarui kata sandi. Silakan coba lagi.', ms: 'Tidak dapat mengemas kini kata laluan. Sila cuba lagi.', pt: 'Não foi possível atualizar a senha. Tente novamente.', es: 'No se pudo actualizar la contraseña. Inténtelo de nuevo.', ru: 'Не удалось обновить пароль. Попробуйте еще раз.', ar: 'تعذر تحديث كلمة المرور. يرجى المحاولة مرة أخرى.' },
     'Real Name': { tl: 'Tunay na Pangalan', ko: '실명', vi: 'Họ và tên thật', tr: 'Gerçek Ad', hi: 'असली नाम', id: 'Nama Asli', ms: 'Nama Sebenar', pt: 'Nome Real', es: 'Nombre Real', ru: 'Настоящее имя' },
     'Account Number:': { tl: 'Numero ng Account:', ko: '계정 번호:', vi: 'Số tài khoản:', tr: 'Hesap Numarası:', hi: 'खाता संख्या:', id: 'Nomor Akun:', ms: 'Nombor Akaun:', pt: 'Número da Conta:', es: 'Número de Cuenta:', ru: 'Номер счета:' },
     'Invite Code:': { tl: 'Code ng Imbitasyon:', ko: '초대 코드:', vi: 'Mã mời:', tr: 'Davet Kodu:', hi: 'आमंत्रण कोड:', id: 'Kode Undangan:', ms: 'Kod Jemputan:', pt: 'Código de Convite:', es: 'Código de Invitación:', ru: 'Код приглашения:' },
@@ -2187,7 +2224,12 @@
       pt: 'Envie pelo menos 1.00 USDT pela rede selecionada (BEP20). Seu saldo será atualizado assim que a transferência for detectada e creditada.',
       es: 'Envía al menos 1.00 USDT a través de la red seleccionada (BEP20). Tu saldo se actualizará cuando se detecte y acredite la transferencia.',
       ru: 'Отправьте не менее 1.00 USDT через выбранную сеть (BEP20). Баланс обновится после обнаружения и зачисления перевода.'
-    }
+    },
+    'Total Team Commission': { tl: 'Kabuuang Komisyon ng Koponan', ko: '총 팀 커미션', vi: 'Tổng hoa hồng đội', tr: 'Toplam Ekip Komisyonu', hi: 'कुल टीम कमीशन', id: 'Total Komisi Tim', ms: 'Jumlah Komisen Pasukan', pt: 'Comissão Total da Equipe', es: 'Comisión Total del Equipo', ru: 'Общая комиссия команды' },
+    'Package Commission': { tl: 'Komisyon sa Package', ko: '패키지 커미션', vi: 'Hoa hồng gói', tr: 'Paket Komisyonu', hi: 'पैकेज कमीशन', id: 'Komisi Paket', ms: 'Komisen Pakej', pt: 'Comissão de Pacote', es: 'Comisión de Paquete', ru: 'Комиссия за пакеты' },
+    'Daily Task Commission': { tl: 'Komisyon sa Pang-araw-araw na Gawain', ko: '일일 작업 커미션', vi: 'Hoa hồng nhiệm vụ ngày', tr: 'Günlük Görev Komisyonu', hi: 'दैनिक कार्य कमीशन', id: 'Komisi Tugas Harian', ms: 'Komisen Tugasan Harian', pt: 'Comissão de Tarefas Diárias', es: 'Comisión de Tareas Diarias', ru: 'Комиссия за задания' },
+    'Commission Records': { tl: 'Mga Tala ng Komisyon', ko: '커미션 내역', vi: 'Lịch sử hoa hồng', tr: 'Komisyon Kayıtları', hi: 'कमीशन रिकॉर्ड', id: 'Riwayat Komisi', ms: 'Rekod Komisen', pt: 'Registros de Comissão', es: 'Registros de Comisión', ru: 'История комиссий' },
+    'No commission records in this tier yet': { tl: 'Wala pang tala ng komisyon sa antas na ito', ko: '이 등급에 아직 커미션 내역이 없습니다', vi: 'Chưa có lịch sử hoa hồng ở cấp này', tr: 'Bu seviyede henüz komisyon kaydı yok', hi: 'इस स्तर में अभी तक कोई कमीशन रिकॉर्ड नहीं है', id: 'Belum ada riwayat komisi di tingkat ini', ms: 'Belum ada rekod komisen di tahap ini', pt: 'Ainda não há registros de comissão neste nível', es: 'Aún no hay registros de comisión en este nivel', ru: 'На этом уровне пока нет записей комиссий' }
   };
 
   const multiLangUiMapLower = {};
