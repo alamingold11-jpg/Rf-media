@@ -10639,11 +10639,10 @@ function renderMissionRecords(filter) {
       const compTimeLabel = tLang(lang, 'সম্পন্নের সময়:', 'Completed at:', 'وقت الإكمال:');
 
       actionsHtml = `
-        <div class="mission-card-complete-bar mt-2.5 pt-2 flex items-center justify-between text-xs">
+        <div class="mission-card-complete-bar mt-2.5 pt-2 flex items-center text-xs">
           <span class="font-bold flex items-center gap-1.5" style="color: #34d399;">
             <span>✓</span> ${compSuccessLabel}
           </span>
-          <span class="font-bold font-mono" style="color: var(--color-profile-cyan);">+${rewFormatted} ${curr}</span>
         </div>
         <p class="text-[11px] mt-1" style="color: var(--color-muted);">${compTimeLabel} ${compDateText}</p>
       `;
