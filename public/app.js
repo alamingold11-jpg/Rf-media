@@ -10008,10 +10008,23 @@ function isMissionIn24hQuotaWindow(mission, refMs) {
   return Number.isFinite(ts) && ts > 0 && (nowMs - ts) < DAILY_QUOTA_RESET_MS && (nowMs - ts) >= -60000;
 }
 
+function isLv0MissionLevel(level) {
+  return String(level || 'LV0').toUpperCase().trim() === 'LV0';
+}
+
+function doesMissionCountForDailyPool(mission, targetLevel) {
+  if (!mission || mission.status === 'failed') return false;
+  const targetIsLv0 = isLv0MissionLevel(targetLevel);
+  const missionIsLv0 = isLv0MissionLevel(mission.level);
+  // Keep LV0 free trial tasks completely separate from paid VIP (LV1-LV6) daily quotas
+  if (targetIsLv0) return missionIsLv0;
+  return !missionIsLv0;
+}
+
 function getActive24hQuotaKey(missions, userLevel, refMs) {
   const nowMs = typeof refMs === 'number' ? refMs : Date.now();
   const activeCount = (missions || []).filter(function(m) {
-    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
+    return doesMissionCountForDailyPool(m, userLevel) && isMissionIn24hQuotaWindow(m, nowMs);
   }).length;
   const compCount = (missions || []).filter(function(m) {
     if (m.status !== 'complete') return false;
@@ -10174,11 +10187,11 @@ function updateProfileMetrics() {
     return diff >= -60000 && diff < DAILY_QUOTA_RESET_MS;
   }).length;
 
+  const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
   const acceptedIn24hCount = missions.filter(function(m) {
-    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
+    return doesMissionCountForDailyPool(m, currentLevel) && isMissionIn24hQuotaWindow(m, nowMs);
   }).length;
 
-  const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
   const currentLevelSetting = packageTaskSettings[currentLevel] || packageTaskSettings.LV0;
   const totalDailyQuota = currentLevelSetting ? currentLevelSetting.count : 5;
   let remainingTodayCount = Math.max(0, totalDailyQuota - acceptedIn24hCount);
@@ -10299,7 +10312,7 @@ function refreshDailyMissionLimit(level) {
     return m.level === level && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const allTodayAccepted = missions.filter(function(m) {
-    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
+    return doesMissionCountForDailyPool(m, level) && isMissionIn24hQuotaWindow(m, nowMs);
   });
 
   const quotaLimit = (packageTaskSettings[level] && packageTaskSettings[level].count) || 5;
@@ -10675,7 +10688,7 @@ function renderPackageTasks(level) {
     return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const allTodayAccepted = missions.filter(function(m) {
-    return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
+    return doesMissionCountForDailyPool(m, activePackageLevel) && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const quotaLimit = settings.count;
   const lv0QuotaSt = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
@@ -13549,7 +13562,7 @@ document.addEventListener('click', function(event) {
       return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
     });
     const allTodayAccepted = readAcceptedMissions().filter(function(m) {
-      return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
+      return doesMissionCountForDailyPool(m, activePackageLevel) && isMissionIn24hQuotaWindow(m, nowMs);
     });
 
     const lv0AcceptSt = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
@@ -13598,7 +13611,7 @@ document.addEventListener('click', function(event) {
         return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, doneNowMs);
       });
       const allMissionsToday = readAcceptedMissions().filter(function(m) {
-        return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, doneNowMs);
+        return doesMissionCountForDailyPool(m, activePackageLevel) && isMissionIn24hQuotaWindow(m, doneNowMs);
       });
       const newAcceptedCount = currentMissions.length;
       const postLv0St = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
@@ -13663,9 +13676,10 @@ document.addEventListener('click', function(event) {
           (packageTaskSettings[target.level || 'LV0'] && packageTaskSettings[target.level || 'LV0'].count) || 5
         );
         const missionDay = new Date(target.acceptedAt || Date.now()).toDateString();
+        const targetLvl = target.level || 'LV0';
         const nonFailedSameDay = allMissions.filter(function(m) {
           const belongs = !m.userPhone || !curPhone || normalizeBdPhone(m.userPhone) === curPhone;
-          return belongs && m.id !== target.id && m.status !== 'failed' && new Date(m.acceptedAt || Date.now()).toDateString() === missionDay;
+          return belongs && m.id !== target.id && doesMissionCountForDailyPool(m, targetLvl) && new Date(m.acceptedAt || Date.now()).toDateString() === missionDay;
         });
         if (nonFailedSameDay.length >= maxDayQuota) {
           showToastNotification(tLang(l, 'সেই দিনের দৈনিক কাজের কোটা অন্য কাজের মাধ্যমে পূর্ণ হয়ে গেছে।', 'Daily task limit is already filled by other tasks for that day.', 'تم استيفاء حد المهام اليومي بمهام أخرى في ذلك اليوم.'));
@@ -13791,9 +13805,10 @@ if (confirmSubmitBtn) {
         (packageTaskSettings[mission.level || 'LV0'] && packageTaskSettings[mission.level || 'LV0'].count) || 5
       );
       const missionDay = new Date(mission.acceptedAt || Date.now()).toDateString();
+      const targetMissionLvl = mission.level || 'LV0';
       const nonFailedSameDay = allMissions.filter(function(m) {
         const belongs = !m.userPhone || !curPhone || normalizeBdPhone(m.userPhone) === curPhone;
-        return belongs && m.id !== mission.id && m.status !== 'failed' && new Date(m.acceptedAt || Date.now()).toDateString() === missionDay;
+        return belongs && m.id !== mission.id && doesMissionCountForDailyPool(m, targetMissionLvl) && new Date(m.acceptedAt || Date.now()).toDateString() === missionDay;
       });
       if (nonFailedSameDay.length >= maxDayQuota) {
         const quotaMsg = tLang(l, 'সেই দিনের দৈনিক কাজের কোটা ইতিমধ্যেই পূর্ণ হয়েছে।', 'Daily task limit is already filled for that day.', 'تم استيفاء حد المهام اليومي لذلك اليوم.');
