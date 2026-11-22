@@ -136,6 +136,23 @@ html, body {
 #lucky-spin-wheel-svg text {
   font-family: 'Inter', 'Hind Siliguri', system-ui, sans-serif !important;
 }
+.lucky-win-viewport {
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 14px, #000 calc(100% - 14px), transparent 100%);
+}
+.lucky-win-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: lucky-win-marquee 38s linear infinite;
+}
+.lucky-win-track:hover {
+  animation-play-state: paused;
+}
+@keyframes lucky-win-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
 #employee-benefits-panel {
   overflow: visible !important;
   overscroll-behavior-y: auto !important;
@@ -5310,9 +5327,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         </button>
       </header>
 
-      <div class="px-4 pt-2 pb-6 space-y-5 max-w-md mx-auto w-full flex-1 flex flex-col items-center">
+      <div class="px-4 pt-2 pb-6 space-y-4 max-w-md mx-auto w-full flex-1 flex flex-col items-center">
+        <!-- Live Member Win Marquee Above Lucky Wheel -->
+        <div id="lucky-spin-winner-ticker" class="w-full rounded-xl bg-[#0b1730] px-3 py-2 flex items-center gap-2.5 overflow-hidden select-none border-0" aria-label="Member Wins">
+          <div class="shrink-0 w-6 h-6 rounded-lg bg-[#12244a] flex items-center justify-center text-[#fbbf24]">
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+          </div>
+          <div class="lucky-win-viewport flex-1 min-w-0 overflow-hidden" dir="ltr">
+            <div id="lucky-spin-winner-track" class="lucky-win-track items-center whitespace-nowrap">
+              <div class="lucky-win-group flex items-center gap-5 pr-5"></div>
+              <div class="lucky-win-group flex items-center gap-5 pr-5" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- Spin Wheel Stage FIRST (Vibrant Multi-Color Slices & Fixed Neutral Top Pointer) -->
-        <div id="lucky-spin-wheel-wrapper" class="relative w-full max-w-[316px] aspect-square flex items-center justify-center mt-2 select-none border-0">
+        <div id="lucky-spin-wheel-wrapper" class="relative w-full max-w-[316px] aspect-square flex items-center justify-center mt-1 select-none border-0">
           <!-- Fixed Top Center Pointer (12 o'clock, sits cleanly on outer rim — neutral before spin) -->
           <div class="absolute top-[-14px] left-1/2 -translate-x-1/2 z-20 pointer-events-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.65)]">
             <svg viewBox="0 0 44 46" class="w-10 h-10">
@@ -5856,6 +5890,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   </div>
 
   <script src="/i18n.js?v=20261121q" defer></script>
-  <script src="/app.js?v=20261121r" defer></script>
+  <script src="/app.js?v=20261121t" defer></script>
   </body>
 </html>

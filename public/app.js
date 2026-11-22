@@ -17408,8 +17408,129 @@ async function computeLuckySpinStats(user) {
   };
 }
 
+let _luckyWinFeedCache = [];
+let _luckyWinFeedFetchedAt = 0;
+
+function maskLuckyWinnerPhone(rawPhone) {
+  const raw = String(rawPhone || '').trim();
+  const digits = raw.replace(/\D/g, '');
+  if (!digits) return '+14****4821';
+  if (digits.length === 10 && digits.startsWith('1')) {
+    return `+8801${digits.slice(1, 2)}****${digits.slice(-4)}`;
+  }
+  if (digits.length >= 11 && digits.startsWith('880')) {
+    return `+880${digits.slice(3, 5)}****${digits.slice(-4)}`;
+  }
+  if (digits.length >= 9) {
+    return `+${digits.slice(0, 3)}****${digits.slice(-4)}`;
+  }
+  return `+${digits.slice(0, 2)}****${digits.slice(-2)}`;
+}
+
+function renderLuckySpinWinnerTicker(extraRealEntries) {
+  const groups = document.querySelectorAll('#lucky-spin-winner-track .lucky-win-group');
+  if (!groups || groups.length === 0) return;
+
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const lang = getActiveLang(user);
+  const isUsd = isUsdOnlyUser(user);
+
+  // Use exact wheel slice prizes so every displayed win matches what is on the wheel
+  const formatWheelPrizeByIdx = function(idx) {
+    const item = LUCKY_SPIN_PRIZES[idx] || LUCKY_SPIN_PRIZES[0];
+    return getLuckySpinPrizeLabelForUser(item, user, lang);
+  };
+
+  const presetFeed = [
+    { phone: '+14****8219', prizeIdx: 0 },   // USA - $0.10
+    { phone: '+44****3904', prizeIdx: 1 },   // UK - $3.97
+    { phone: '+971****5138', prizeIdx: 10 }, // UAE - $0.33
+    { phone: '+88017****4512', prizeIdx: 0 },// Bangladesh - $0.10
+    { phone: '+966****7420', prizeIdx: 6 },  // Saudi Arabia - $0.52
+    { phone: '+91****6385', prizeIdx: 2 },   // India - $0.75
+    { phone: '+60****6471', prizeIdx: 0 },   // Malaysia - $0.10
+    { phone: '+65****9022', prizeIdx: 8 },   // Singapore - $1.19
+    { phone: '+92****2849', prizeIdx: 4 },   // Pakistan - $1.75
+    { phone: '+49****1463', prizeIdx: 1 },   // Germany - $3.97
+    { phone: '+61****5714', prizeIdx: 0 },   // Australia - $0.10
+    { phone: '+90****8306', prizeIdx: 7 },   // Turkey - $11.90
+    { phone: '+62****4918', prizeIdx: 10 },  // Indonesia - $0.33
+    { phone: '+20****7165', prizeIdx: 2 },   // Egypt - $0.75
+    { phone: '+33****6209', prizeIdx: 0 },   // France - $0.10
+    { phone: '+82****3590', prizeIdx: 4 }    // South Korea - $1.75
+  ];
+
+  const mergedEntries = [];
+  const seenKeys = new Set();
+
+  const pushEntry = function(maskedPhone, prizeText, isHigh) {
+    const key = `${maskedPhone}|${prizeText}`;
+    if (seenKeys.has(key)) return;
+    seenKeys.add(key);
+    mergedEntries.push({ phone: maskedPhone, prize: prizeText, isHigh: Boolean(isHigh) });
+  };
+
+  const realSource = Array.isArray(extraRealEntries) && extraRealEntries.length > 0
+    ? extraRealEntries
+    : _luckyWinFeedCache;
+
+  if (Array.isArray(realSource)) {
+    realSource.slice(0, 6).forEach(function(item) {
+      const amtNum = Number(item && item.amount) || 0;
+      if (amtNum <= 0) return;
+      const prizeStr = isUsd
+        ? (amtNum >= 100 ? `$${Math.round(amtNum)}` : `$${amtNum.toFixed(2)}`)
+        : `${amtNum}৳`;
+      pushEntry(maskLuckyWinnerPhone(item.phone), prizeStr, amtNum >= 3);
+    });
+  }
+
+  presetFeed.forEach(function(row) {
+    const pObj = LUCKY_SPIN_PRIZES[row.prizeIdx] || LUCKY_SPIN_PRIZES[0];
+    const pText = formatWheelPrizeByIdx(row.prizeIdx);
+    const pAmt = getLuckySpinPrizeAmountForUser(pObj, user);
+    pushEntry(row.phone, pText, pAmt >= 3);
+  });
+
+  const wonWord = tLang(lang, 'জিতেছেন', 'won', 'ربح');
+  const html = mergedEntries.map(function(entry) {
+    const amtClass = entry.isHigh ? 'text-[#fbbf24]' : 'text-[#38bdf8]';
+    return `<span class="inline-flex items-center gap-1.5 text-[12.5px] leading-none">` +
+      `<span class="font-mono font-semibold text-[#e2e8f0]">${entry.phone}</span>` +
+      `<span class="text-[#94a3b8]">${wonWord}</span>` +
+      `<span class="font-mono font-extrabold ${amtClass}">${entry.prize}</span>` +
+      `<span class="text-[#233b6e] ml-2.5" aria-hidden="true">•</span>` +
+    `</span>`;
+  }).join('');
+
+  groups.forEach(function(g) {
+    g.innerHTML = html;
+  });
+
+  // Non-blocking refresh of latest real Lucky Wheel wins from Supabase (cached 45s)
+  const nowMs = Date.now();
+  if (window.aloSupabase && (nowMs - _luckyWinFeedFetchedAt) > 45000) {
+    _luckyWinFeedFetchedAt = nowMs;
+    window.aloSupabase
+      .from('transactions')
+      .select('phone, amount, created_at')
+      .or('method.ilike.%Lucky Wheel%,method.ilike.%স্পিন%,method.ilike.%Spin%')
+      .order('created_at', { ascending: false })
+      .limit(8)
+      .then(function(res) {
+        if (res && Array.isArray(res.data) && res.data.length > 0) {
+          _luckyWinFeedCache = res.data;
+          renderLuckySpinWinnerTicker(res.data);
+        }
+      })
+      .catch(function() {});
+  }
+}
+window.renderLuckySpinWinnerTicker = renderLuckySpinWinnerTicker;
+
 async function renderLuckySpinPanel() {
   buildLuckySpinWheelSvg();
+  renderLuckySpinWinnerTicker();
 
   const user = getCurrentUser();
   const isUsd = isUsdOnlyUser(user);
@@ -17645,6 +17766,13 @@ async function executeLuckySpin() {
       winModal.classList.remove('hidden');
       winModal.classList.add('flex');
     }
+
+    _luckyWinFeedCache.unshift({
+      phone: normPhone,
+      amount: wonAmount,
+      created_at: new Date().toISOString()
+    });
+    _luckyWinFeedCache = _luckyWinFeedCache.slice(0, 8);
 
     await renderLuckySpinPanel();
   } catch (err) {
