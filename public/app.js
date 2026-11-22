@@ -868,13 +868,19 @@ function initSupabaseLiveSync(user) {
               return;
             }
 
-            const updated = Object.assign({}, currentUser, mapped || {});
+            const prevCreatedMs = currentUser && currentUser.createdAt ? new Date(currentUser.createdAt).getTime() : NaN;
+            const liveCreatedMs = mapped && mapped.createdAt ? new Date(mapped.createdAt).getTime() : NaN;
+            const accountRecreated = Number.isFinite(prevCreatedMs) && Number.isFinite(liveCreatedMs) && Math.abs(prevCreatedMs - liveCreatedMs) > 60000;
+            if (accountRecreated) {
+              clearUserCachesOnAuthSwitch();
+            }
+            const updated = accountRecreated ? Object.assign({}, mapped || {}) : Object.assign({}, currentUser, mapped || {});
             const localManual = localStorage.getItem('alo_lang_manual') === '1';
             const resolvedLang = (mapped && mapped.languageManual)
               ? normalizeAppLang(mapped.language || 'en')
               : (localManual ? normalizeAppLang(localStorage.getItem('alo_lang') || currentUser.language || 'en') : 'en');
             updated.language = resolvedLang;
-            updated.languageManual = Boolean((mapped && mapped.languageManual) || localManual || currentUser.languageManual);
+            updated.languageManual = Boolean((mapped && mapped.languageManual) || localManual || (!accountRecreated && currentUser.languageManual));
             hydrateUserCachesFromCloud(updated);
             localStorage.setItem('aloSignedInUser', JSON.stringify(updated));
             if (typeof setAppLanguage === 'function' && window.aloI18n && window.aloI18n.getLanguage() !== resolvedLang) {
@@ -1206,8 +1212,10 @@ function compactMissionsForCloud(missions) {
   });
 }
 
-async function dbSaveUser(account) {
+async function dbSaveUser(account, options) {
   if (!account) return false;
+  const opts = (options && typeof options === 'object') ? options : {};
+  const preserveFinancials = Boolean(opts.preserveFinancials);
   const normPhone = normalizeBdPhone(account.phone || account.accountNumber);
   if (!normPhone) return false;
   let saved = false;
@@ -1215,15 +1223,27 @@ async function dbSaveUser(account) {
   if (window.aloSupabase) {
     try {
       let baseOpt = (account._rawOpt && typeof account._rawOpt === 'object') ? Object.assign({}, account._rawOpt) : {};
+      let existingRow = null;
       let preservedCreatedAt = account.createdAt || baseOpt.created_at || (account._isNewRegistration ? new Date().toISOString() : '');
       if (!account._isNewRegistration) {
         try {
-          const { data: existingRow } = await window.aloSupabase
+          const { data: fetchedRow } = await window.aloSupabase
             .from('users')
-            .select('bkash_optional,created_at')
+            .select('balance,package_level,member_id,invite_code,superior_id,bkash_optional,created_at,updated_at')
             .eq('phone', normPhone)
             .maybeSingle();
+          existingRow = fetchedRow || null;
           if (existingRow && existingRow.created_at) {
+            // Guard against a stale browser session from a deleted/older account with the same phone overwriting a recreated account
+            const incomingCreatedMs = account.createdAt ? new Date(account.createdAt).getTime() : NaN;
+            const dbCreatedMs = new Date(existingRow.created_at).getTime();
+            if (Number.isFinite(incomingCreatedMs) && Number.isFinite(dbCreatedMs) && Math.abs(incomingCreatedMs - dbCreatedMs) > 60000) {
+              console.warn('[dbSaveUser] Blocked stale session overwrite for recreated account:', normPhone);
+              if (typeof hydrateSessionFromSupabase === 'function') {
+                hydrateSessionFromSupabase(true);
+              }
+              return false;
+            }
             preservedCreatedAt = existingRow.created_at;
             account.createdAt = existingRow.created_at;
           }
@@ -1243,37 +1263,106 @@ async function dbSaveUser(account) {
       }
       if (!preservedCreatedAt) preservedCreatedAt = new Date().toISOString();
       const nowIso = new Date().toISOString();
+      const dbOpt = (function() {
+        if (!existingRow || !existingRow.bkash_optional) return {};
+        try {
+          return typeof existingRow.bkash_optional === 'string'
+            ? JSON.parse(existingRow.bkash_optional)
+            : (existingRow.bkash_optional || {});
+        } catch (e) {
+          return {};
+        }
+      })();
+      const refOpt = Object.assign({}, baseOpt, dbOpt);
 
-      const purchasedPkgs = Array.isArray(account.purchasedPackages) && account.purchasedPackages.length > 0
-        ? account.purchasedPackages
-        : (Array.isArray(baseOpt.purchased_packages) ? baseOpt.purchased_packages : ['LV0']);
-      if (!purchasedPkgs.includes('LV0')) purchasedPkgs.unshift('LV0');
+      // Union purchased_packages so live packages are never accidentally dropped by a stale client
+      const purchasedSet = new Set(['LV0']);
+      if (Array.isArray(refOpt.purchased_packages)) {
+        refOpt.purchased_packages.forEach(function(p) { if (p) purchasedSet.add(p); });
+      }
+      if (!preserveFinancials && Array.isArray(account.purchasedPackages)) {
+        account.purchasedPackages.forEach(function(p) { if (p) purchasedSet.add(p); });
+      }
+      const purchasedPkgs = Array.from(purchasedSet);
 
-      const extraMeta = Object.assign({}, baseOpt, {
-        nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || baseOpt.nagad_name || '',
-        nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || baseOpt.nagad_phone || '',
-        usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || baseOpt.usdt_name || '',
-        usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || baseOpt.usdt_address || '',
-        real_name: account.realName || (account.name && account.name !== 'সদস্য' && account.name !== 'Member' && account.name !== 'عضو' && account.name !== 'सदस्य' ? account.name : baseOpt.real_name || ''),
-        fund_password: account.fundPassword || baseOpt.fund_password || '',
-        account_status: account.accountStatus || baseOpt.account_status || 'active',
-        frozen_balance: typeof account.frozenBalance === 'number' ? account.frozenBalance : (Number(baseOpt.frozen_balance) || 0),
-        lv0_frozen_balance: typeof account.lv0FrozenBalance === 'number' ? account.lv0FrozenBalance : (Number(baseOpt.lv0_frozen_balance) || 0),
-        admin_unfrozen_balance: typeof account.adminUnfrozenBalance === 'number' ? account.adminUnfrozenBalance : (Number(baseOpt.admin_unfrozen_balance) || 0),
-        recharge_frozen_balance: typeof account.rechargeFrozenBalance === 'number' ? account.rechargeFrozenBalance : (baseOpt.recharge_frozen_balance !== undefined ? (Number(baseOpt.recharge_frozen_balance) || 0) : 0),
-        lifetime_earnings: typeof account.lifetimeEarnings === 'number' ? account.lifetimeEarnings : (Number(baseOpt.lifetime_earnings) || 0),
-        today_income: typeof account.todayIncome === 'number' ? account.todayIncome : (Number(baseOpt.today_income) || 0),
-        total_income: typeof account.totalIncome === 'number' ? account.totalIncome : (Number(baseOpt.total_income) || 0),
-        completed_missions: typeof account.completedMissions === 'number' ? account.completedMissions : (Number(baseOpt.completed_missions) || 0),
-        lv0_completed_tasks: typeof account.lv0CompletedTasks === 'number' ? account.lv0CompletedTasks : (Number(baseOpt.lv0_completed_tasks) || 0),
-        recharge_amount: typeof account.rechargeAmount === 'number' ? account.rechargeAmount : (Number(baseOpt.recharge_amount) || 0),
-        cashout_amount: typeof account.cashoutAmount === 'number' ? account.cashoutAmount : (Number(baseOpt.cashout_amount) || 0),
+      const mergedPkgDates = Object.assign(
+        {},
+        (refOpt.package_purchase_dates && typeof refOpt.package_purchase_dates === 'object') ? refOpt.package_purchase_dates : {},
+        (!preserveFinancials && account.packagePurchaseDates && typeof account.packagePurchaseDates === 'object') ? account.packagePurchaseDates : {}
+      );
+
+      // Union claimed_rewards and spin_history so historical records are never wiped to []
+      const mergedClaimedRewards = Array.from(new Set(
+        (Array.isArray(refOpt.claimed_rewards) ? refOpt.claimed_rewards : [])
+          .concat(!preserveFinancials && Array.isArray(account.claimedInviteRewards) ? account.claimedInviteRewards : [])
+      ));
+
+      const mergedSpinHistory = (function() {
+        const dbSpins = Array.isArray(refOpt.spin_history) ? refOpt.spin_history : [];
+        const incSpins = (!preserveFinancials && Array.isArray(account.spinHistory)) ? account.spinHistory : [];
+        const seen = new Set();
+        const combined = [];
+        incSpins.concat(dbSpins).forEach(function(item) {
+          if (!item || typeof item !== 'object') return;
+          const k = `${item.date || ''}|${item.time || ''}|${item.amount || 0}`;
+          if (!seen.has(k)) {
+            seen.add(k);
+            combined.push(item);
+          }
+        });
+        return combined.slice(0, 25);
+      })();
+
+      const useDbFinancials = Boolean(preserveFinancials && existingRow);
+      const dbBalNum = existingRow ? (typeof existingRow.balance === 'number' ? existingRow.balance : (parseFloat(existingRow.balance) || 0)) : 0;
+      const incomingBalNum = typeof account.balance === 'number' ? account.balance : (parseFloat(account.balance) || 0);
+      const safeBalance = useDbFinancials ? dbBalNum : incomingBalNum;
+
+      const extraMeta = Object.assign({}, refOpt, {
+        nagad_name: (account.nagad && account.nagad.fullName) || account.nagadName || refOpt.nagad_name || '',
+        nagad_phone: (account.nagad && account.nagad.phone) || account.nagadPhone || refOpt.nagad_phone || '',
+        usdt_name: (account.usdt && account.usdt.fullName) || account.usdtName || refOpt.usdt_name || '',
+        usdt_address: (account.usdt && account.usdt.address) || account.usdtAddress || refOpt.usdt_address || '',
+        real_name: account.realName || (account.name && account.name !== 'সদস্য' && account.name !== 'Member' && account.name !== 'عضو' && account.name !== 'सदस्य' ? account.name : refOpt.real_name || ''),
+        fund_password: account.fundPassword || refOpt.fund_password || '',
+        account_status: refOpt.account_status || account.accountStatus || 'active',
+        frozen_balance: useDbFinancials
+          ? (Number(refOpt.frozen_balance) || 0)
+          : (typeof account.frozenBalance === 'number' ? account.frozenBalance : (Number(refOpt.frozen_balance) || 0)),
+        lv0_frozen_balance: useDbFinancials
+          ? (Number(refOpt.lv0_frozen_balance) || 0)
+          : (typeof account.lv0FrozenBalance === 'number' ? account.lv0FrozenBalance : (Number(refOpt.lv0_frozen_balance) || 0)),
+        admin_unfrozen_balance: useDbFinancials
+          ? (Number(refOpt.admin_unfrozen_balance) || 0)
+          : Math.max(Number(refOpt.admin_unfrozen_balance) || 0, typeof account.adminUnfrozenBalance === 'number' ? account.adminUnfrozenBalance : 0),
+        recharge_frozen_balance: useDbFinancials
+          ? (Number(refOpt.recharge_frozen_balance) || 0)
+          : (typeof account.rechargeFrozenBalance === 'number' ? account.rechargeFrozenBalance : (refOpt.recharge_frozen_balance !== undefined ? (Number(refOpt.recharge_frozen_balance) || 0) : 0)),
+        lifetime_earnings: useDbFinancials
+          ? (Number(refOpt.lifetime_earnings) || 0)
+          : Math.max(Number(refOpt.lifetime_earnings) || 0, typeof account.lifetimeEarnings === 'number' ? account.lifetimeEarnings : 0),
+        today_income: useDbFinancials
+          ? (Number(refOpt.today_income) || 0)
+          : (typeof account.todayIncome === 'number' ? account.todayIncome : (Number(refOpt.today_income) || 0)),
+        total_income: useDbFinancials
+          ? (Number(refOpt.total_income) || 0)
+          : Math.max(Number(refOpt.total_income) || 0, typeof account.totalIncome === 'number' ? account.totalIncome : 0),
+        completed_missions: useDbFinancials
+          ? (Number(refOpt.completed_missions) || 0)
+          : Math.max(Number(refOpt.completed_missions) || 0, typeof account.completedMissions === 'number' ? account.completedMissions : 0),
+        lv0_completed_tasks: useDbFinancials
+          ? (Number(refOpt.lv0_completed_tasks) || 0)
+          : Math.max(Number(refOpt.lv0_completed_tasks) || 0, typeof account.lv0CompletedTasks === 'number' ? account.lv0CompletedTasks : 0),
+        recharge_amount: useDbFinancials
+          ? (Number(refOpt.recharge_amount) || 0)
+          : Math.max(Number(refOpt.recharge_amount) || 0, typeof account.rechargeAmount === 'number' ? account.rechargeAmount : 0),
+        cashout_amount: useDbFinancials
+          ? (Number(refOpt.cashout_amount) || 0)
+          : Math.max(Number(refOpt.cashout_amount) || 0, typeof account.cashoutAmount === 'number' ? account.cashoutAmount : 0),
         purchased_packages: purchasedPkgs,
-        package_purchase_dates: (account.packagePurchaseDates && typeof account.packagePurchaseDates === 'object')
-          ? account.packagePurchaseDates
-          : ((baseOpt.package_purchase_dates && typeof baseOpt.package_purchase_dates === 'object') ? baseOpt.package_purchase_dates : {}),
+        package_purchase_dates: mergedPkgDates,
         accepted_missions: (function() {
-          const existingCloud = Array.isArray(baseOpt.accepted_missions) ? baseOpt.accepted_missions : [];
+          const existingCloud = Array.isArray(refOpt.accepted_missions) ? refOpt.accepted_missions : [];
           const incomingLocal = Array.isArray(account.acceptedMissions) ? account.acceptedMissions : null;
           if (!incomingLocal) return existingCloud;
           const mergedAll = typeof mergeMissionLists === 'function'
@@ -1281,25 +1370,23 @@ async function dbSaveUser(account) {
             : incomingLocal;
           return compactMissionsForCloud(mergedAll);
         })(),
-        savings_plan: account.savingsPlan !== undefined ? account.savingsPlan : (baseOpt.savings_plan || null),
-        claimed_rewards: Array.isArray(account.claimedInviteRewards)
-          ? account.claimedInviteRewards
-          : (Array.isArray(baseOpt.claimed_rewards) ? baseOpt.claimed_rewards : []),
-        claimed_usdt_onchain: typeof account.claimedUsdtOnchain === 'number'
-          ? account.claimedUsdtOnchain
-          : (Number(baseOpt.claimed_usdt_onchain) || 0),
-        used_spins: typeof account.usedSpins === 'number'
-          ? account.usedSpins
-          : (Number(baseOpt.used_spins) || 0),
-        bonus_spins: typeof account.bonusSpins === 'number'
-          ? account.bonusSpins
-          : (Number(baseOpt.bonus_spins) || 0),
-        spin_history: Array.isArray(account.spinHistory)
-          ? account.spinHistory.slice(0, 25)
-          : (Array.isArray(baseOpt.spin_history) ? baseOpt.spin_history : []),
+        savings_plan: useDbFinancials
+          ? (refOpt.savings_plan || null)
+          : (account.savingsPlan !== undefined ? account.savingsPlan : (refOpt.savings_plan || null)),
+        claimed_rewards: mergedClaimedRewards,
+        claimed_usdt_onchain: useDbFinancials
+          ? (Number(refOpt.claimed_usdt_onchain) || 0)
+          : Math.max(Number(refOpt.claimed_usdt_onchain) || 0, typeof account.claimedUsdtOnchain === 'number' ? account.claimedUsdtOnchain : 0),
+        used_spins: useDbFinancials
+          ? (Number(refOpt.used_spins) || 0)
+          : Math.max(Number(refOpt.used_spins) || 0, typeof account.usedSpins === 'number' ? account.usedSpins : 0),
+        bonus_spins: useDbFinancials
+          ? (Number(refOpt.bonus_spins) || 0)
+          : Math.max(Number(refOpt.bonus_spins) || 0, typeof account.bonusSpins === 'number' ? account.bonusSpins : 0),
+        spin_history: mergedSpinHistory,
         country: (function() {
-          const candCountry = String(account.country || baseOpt.country || 'BD').trim().toUpperCase();
-          const candDial = String(account.dialCode || baseOpt.dial_code || '').trim();
+          const candCountry = String(account.country || refOpt.country || 'BD').trim().toUpperCase();
+          const candDial = String(account.dialCode || refOpt.dial_code || '').trim();
           if ((candCountry === 'US' || !candCountry) && (candDial === '+880' || (candDial !== '+1' && isBangladeshPhoneDigits(normPhone)))) {
             return 'BD';
           }
@@ -1307,25 +1394,32 @@ async function dbSaveUser(account) {
         })(),
         currency: 'USD',
         dial_code: (function() {
-          const candCountry = String(account.country || baseOpt.country || 'BD').trim().toUpperCase();
-          const candDial = String(account.dialCode || baseOpt.dial_code || '').trim();
+          const candCountry = String(account.country || refOpt.country || 'BD').trim().toUpperCase();
+          const candDial = String(account.dialCode || refOpt.dial_code || '').trim();
           if (candCountry === 'BD' || ((candCountry === 'US' || !candCountry) && (candDial === '+880' || (candDial !== '+1' && isBangladeshPhoneDigits(normPhone))))) {
             return '+880';
           }
           return candDial || '+880';
         })(),
-        commission_dust: typeof account.commissionDust === 'number'
-          ? Number(account.commissionDust.toFixed(6))
-          : (Number(baseOpt.commission_dust) || 0),
-        superior_phone: account.superiorPhone || baseOpt.superior_phone || '',
+        commission_dust: useDbFinancials
+          ? (Number(refOpt.commission_dust) || 0)
+          : (typeof account.commissionDust === 'number' ? Number(account.commissionDust.toFixed(6)) : (Number(refOpt.commission_dust) || 0)),
+        superior_phone: refOpt.superior_phone || account.superiorPhone || '',
         created_at: preservedCreatedAt,
         updated_at: nowIso,
-        language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || baseOpt.language || 'en'),
-        language_manual: Boolean(account.languageManual || (account.profileData && account.profileData.languageManual) || baseOpt.language_manual)
+        language: normalizeAppLang(account.language || (account.profileData && account.profileData.language) || refOpt.language || 'en'),
+        language_manual: Boolean(account.languageManual || (account.profileData && account.profileData.languageManual) || refOpt.language_manual)
       });
 
       account._rawOpt = extraMeta;
       account.updatedAt = nowIso;
+      if (useDbFinancials) {
+        account.balance = safeBalance;
+      }
+
+      const safePackageLevel = useDbFinancials
+        ? (existingRow.package_level || account.packageLevel || 'LV0')
+        : (account.packageLevel || (existingRow && existingRow.package_level) || 'LV0');
 
       const payload = {
         phone: normPhone,
@@ -1333,11 +1427,13 @@ async function dbSaveUser(account) {
         name: account.realName || account.name || tLang(extraMeta.language, 'সদস্য', 'Member', 'عضو'),
         password_hash: account.passwordHash || '',
         plain_password: account.plainPassword || '',
-        member_id: account.memberId || ('AL' + Date.now().toString().slice(-8)),
-        invite_code: account.inviteCode || '',
-        superior_id: account.superiorId || '11',
-        package_level: account.packageLevel || 'LV0',
-        balance: typeof account.balance === 'number' ? account.balance : (parseFloat(account.balance) || 0),
+        member_id: (existingRow && existingRow.member_id) || account.memberId || ('AL' + Date.now().toString().slice(-8)),
+        invite_code: (existingRow && existingRow.invite_code) || account.inviteCode || '',
+        superior_id: (existingRow && existingRow.superior_id && existingRow.superior_id !== '11')
+          ? existingRow.superior_id
+          : (account.superiorId || '11'),
+        package_level: safePackageLevel,
+        balance: safeBalance,
         bkash_name: (account.bkash && account.bkash.fullName) || account.bkashName || '',
         bkash_phone: (account.bkash && account.bkash.phone) || account.bkashPhone || '',
         bkash_optional: JSON.stringify(extraMeta),
@@ -4140,7 +4236,10 @@ window.addEventListener('alo-language-changed', function(e) {
     if (isUserInit && typeof dbSaveUser === 'function') {
       clearTimeout(_langSaveTimer);
       _langSaveTimer = setTimeout(function() {
-        dbSaveUser(user).catch(function() {});
+        const latestLangUser = getCurrentUser() || user;
+        latestLangUser.language = lang;
+        latestLangUser.languageManual = true;
+        dbSaveUser(latestLangUser, { preserveFinancials: true }).catch(function() {});
       }, 350);
     }
   } else {
@@ -5000,7 +5099,7 @@ if (loginForm) {
       hydrateUserCachesFromCloud(signedInUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(signedInUser));
       if (healedCorruptedCountry || (account._rawOpt && String(account._rawOpt.country || '').trim().toUpperCase() !== signedInUser.country)) {
-        dbSaveUser(signedInUser).catch(function() {});
+        dbSaveUser(signedInUser, { preserveFinancials: true }).catch(function() {});
       }
 
       if (typeof setAppLanguage === 'function') {
@@ -8546,7 +8645,7 @@ function saveRealNameDetails() {
       user.realName = realName;
       user.name = realName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      dbSaveUser(user).catch(function() {});
+      dbSaveUser(user, { preserveFinancials: true }).catch(function() {});
     }
   } catch(e) {}
 
@@ -8705,7 +8804,7 @@ function saveFundPasswordDetails() {
       user.fundPassword = newPass;
       user.fundPasswordLocked = true;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      dbSaveUser(user).catch(function() {});
+      dbSaveUser(user, { preserveFinancials: true }).catch(function() {});
     }
   } catch(e) {}
 
@@ -8930,7 +9029,7 @@ async function saveLoginPasswordDetails() {
     const needsCountrySync = Boolean(rawStoredCountry && rawStoredCountry !== String(updatedUser.country || '').trim().toUpperCase());
 
     if (!dbUpdated || needsCountrySync) {
-      dbUpdated = await dbSaveUser(updatedUser);
+      dbUpdated = await dbSaveUser(updatedUser, { preserveFinancials: true });
     }
 
     if (!dbUpdated && window.aloSupabase) {
@@ -9141,7 +9240,7 @@ function saveBkashAccountDetails() {
       user.realName = user.realName || fullName;
       if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      dbSaveUser(user).catch(function() {});
+      dbSaveUser(user, { preserveFinancials: true }).catch(function() {});
     }
   } catch(e) {}
 
@@ -9304,7 +9403,7 @@ function saveNagadAccountDetails() {
       user.realName = user.realName || fullName;
       if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
       localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-      dbSaveUser(user).catch(function() {});
+      dbSaveUser(user, { preserveFinancials: true }).catch(function() {});
     }
   } catch(e) {}
 
@@ -9630,7 +9729,7 @@ async function saveUsdtAccountDetails() {
         user.realName = user.realName || fullName;
         if (!user.name || user.name === 'সদস্য' || user.name === 'Member' || user.name === 'عضو') user.name = fullName;
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
-        await dbSaveUser(user).catch(function() {});
+        await dbSaveUser(user, { preserveFinancials: true }).catch(function() {});
       }
     } catch (e) {}
 
@@ -9929,7 +10028,7 @@ function saveAllMissionsRaw(allMissions) {
       if (missionCloudSyncTimer) clearTimeout(missionCloudSyncTimer);
       missionCloudSyncTimer = setTimeout(function() {
         const latestU = getCurrentUser() || u;
-        dbSaveUser(latestU).catch(function() {});
+        dbSaveUser(latestU, { preserveFinancials: true }).catch(function() {});
       }, 300);
     }
   } catch (e) {}
@@ -14576,7 +14675,13 @@ async function hydrateSessionFromSupabase(force) {
         return;
       }
 
-      const updated = Object.assign({}, user, dbUser);
+      const prevHydCreatedMs = user && user.createdAt ? new Date(user.createdAt).getTime() : NaN;
+      const dbHydCreatedMs = dbUser && dbUser.createdAt ? new Date(dbUser.createdAt).getTime() : NaN;
+      const hydRecreated = Number.isFinite(prevHydCreatedMs) && Number.isFinite(dbHydCreatedMs) && Math.abs(prevHydCreatedMs - dbHydCreatedMs) > 60000;
+      if (hydRecreated) {
+        clearUserCachesOnAuthSwitch();
+      }
+      const updated = hydRecreated ? Object.assign({}, dbUser) : Object.assign({}, user, dbUser);
       const localManual = localStorage.getItem('alo_lang_manual') === '1';
       if (localManual) {
         updated.language = normalizeAppLang(localStorage.getItem('alo_lang') || user.language || 'en');

@@ -1354,6 +1354,9 @@ async function applyRealtimeBalanceDelta(phoneKey, rawDelta, walletType = 'avail
     let nextAvail = Number(userRow.balance) || 0;
     let nextFrozen = Number(rawOpt.frozen_balance) || 0;
 
+    const shouldCountAsRecharge = delta > 0 && options.isRechargeCredit !== false;
+    const shouldLogDepositTx = delta > 0 && options.logRechargeTx !== false;
+
     if (walletType === 'frozen') {
       prevVal = nextFrozen;
       nextFrozen = Math.max(0, Number((prevVal + delta).toFixed(2)));
@@ -1362,7 +1365,7 @@ async function applyRealtimeBalanceDelta(phoneKey, rawDelta, walletType = 'avail
       const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
       rawOpt.frozen_balance = nextFrozen;
       rawOpt.recharge_frozen_balance = Math.max(0, Number((curRechargeFrozen + actualDiff).toFixed(2)));
-      if (options.isRechargeCredit && actualDiff > 0) {
+      if (shouldCountAsRecharge && actualDiff > 0) {
         rawOpt.recharge_amount = Number(((Number(rawOpt.recharge_amount) || 0) + actualDiff).toFixed(2));
       }
       updatePayload.bkash_optional = JSON.stringify(rawOpt);
@@ -1370,7 +1373,12 @@ async function applyRealtimeBalanceDelta(phoneKey, rawDelta, walletType = 'avail
       prevVal = nextAvail;
       nextAvail = Math.max(0, Number((prevVal + delta).toFixed(2)));
       nextVal = nextAvail;
+      const actualDiff = Number((nextAvail - prevVal).toFixed(2));
       updatePayload.balance = nextAvail;
+      if (shouldCountAsRecharge && actualDiff > 0) {
+        rawOpt.recharge_amount = Number(((Number(rawOpt.recharge_amount) || 0) + actualDiff).toFixed(2));
+        updatePayload.bkash_optional = JSON.stringify(rawOpt);
+      }
     }
 
     const { error: uErr } = await supabaseClient
@@ -1383,22 +1391,25 @@ async function applyRealtimeBalanceDelta(phoneKey, rawDelta, walletType = 'avail
       return false;
     }
 
-    if (options.logRechargeTx && delta > 0) {
+    if (shouldLogDepositTx) {
       const orderId = 'ADM' + Date.now();
-      await supabaseClient.from('transactions').insert({
+      const baseMethod = String(options.method || 'Admin Recharge').trim();
+      const methodLabel = baseMethod.includes('#') ? baseMethod : `${baseMethod} · #${orderId}`;
+      const { error: txInsErr } = await supabaseClient.from('transactions').insert({
         phone: userRow.phone,
         type: 'deposit',
-        amount: Math.abs(delta),
-        actual: Math.abs(delta),
+        amount: Number(Math.abs(delta).toFixed(2)),
+        actual: Number(Math.abs(delta).toFixed(2)),
         ratio: '100%',
         status: 'অনুমোদিত',
-        method: options.method || 'Admin Real-Time Credit',
-        order_id: orderId,
-        out_trade_no: orderId,
+        method: methodLabel,
         date: getTodayDateString(),
         time: now.toTimeString().split(' ')[0],
         created_at: now.toISOString()
       });
+      if (txInsErr) {
+        console.warn('[Admin] Failed to insert recharge transaction record:', txInsErr.message);
+      }
     }
 
     const editKey = document.getElementById('edit-user-phone-key')?.value;
@@ -1574,6 +1585,11 @@ async function handleSaveUserForm(e) {
     }
   }
 
+  const netAddedBalance = Number(Math.max(0, availIncrease - unlockedDelta).toFixed(2));
+  const nextRechargeAmount = netAddedBalance > 0
+    ? Number(((Number(rawOpt.recharge_amount) || 0) + netAddedBalance).toFixed(2))
+    : (Number(rawOpt.recharge_amount) || 0);
+
   const updatedMeta = Object.assign({}, rawOpt, {
     nagad_name: existingMeta.nagadName || newName,
     nagad_phone: document.getElementById('edit-user-nagad-phone').value.trim(),
@@ -1584,6 +1600,7 @@ async function handleSaveUserForm(e) {
     account_status: document.getElementById('edit-user-status').value || 'active',
     frozen_balance: Number(nextFrozen.toFixed(2)),
     recharge_frozen_balance: Number(nextRechargeFrozen.toFixed(2)),
+    recharge_amount: nextRechargeAmount,
     admin_unfrozen_balance: Number(((Number(rawOpt.admin_unfrozen_balance) || 0) + unlockedDelta).toFixed(2)),
     purchased_packages: nextPurchasedPkgs,
     package_purchase_dates: nextPurchaseDates
@@ -1615,6 +1632,23 @@ async function handleSaveUserForm(e) {
     if (error) {
       showToast('Failed to update user: ' + error.message, 'error');
       return;
+    }
+
+    if (netAddedBalance > 0) {
+      const nowEdit = new Date();
+      const orderIdEdit = 'ADM' + Date.now();
+      await supabaseClient.from('transactions').insert({
+        phone: existing.phone,
+        type: 'deposit',
+        amount: netAddedBalance,
+        actual: netAddedBalance,
+        ratio: '100%',
+        status: 'অনুমোদিত',
+        method: `Admin Recharge · #${orderIdEdit}`,
+        date: getTodayDateString(),
+        time: nowEdit.toTimeString().split(' ')[0],
+        created_at: nowEdit.toISOString()
+      });
     }
 
     showToast(`Updated account ${existing.phone} successfully.`, 'success');
@@ -1840,10 +1874,10 @@ async function handleManualAdjustSubmit(e) {
   }
 
   const signedDelta = op === 'subtract' ? -Math.abs(amount) : Math.abs(amount);
-  const isRechargeMethod = op === 'add' && (method.includes('bKash') || method.includes('Nagad') || method.includes('USDT'));
+  const isCreditOp = op === 'add';
   const ok = await applyRealtimeBalanceDelta(normPhone, signedDelta, walletType, {
-    logRechargeTx: isRechargeMethod,
-    isRechargeCredit: isRechargeMethod,
+    logRechargeTx: isCreditOp,
+    isRechargeCredit: isCreditOp,
     method: method
   });
 
