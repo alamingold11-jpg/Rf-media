@@ -599,20 +599,23 @@ function hydrateUserCachesFromCloud(user) {
     }
 
     if (Array.isArray(user.acceptedMissions)) {
-      // Preserve existing screenshots from local browser cache if ID matches and cloud stripped heavy base64
+      // Merge cloud missions with same-user local missions so Completed tasks and active screenshots are never lost
       let localList = [];
       try { localList = JSON.parse(localStorage.getItem('aloAcceptedMissions') || '[]'); } catch(e) {}
-      const localMap = new Map();
-      if (Array.isArray(localList)) {
-        localList.forEach(function(lm) { if (lm && lm.id) localMap.set(lm.id, lm); });
+      const sameUserLocal = Array.isArray(localList)
+        ? localList.filter(function(lm) {
+            return lm && lm.id && (!lm.userPhone || !normPhone || normalizeBdPhone(lm.userPhone) === normPhone);
+          })
+        : [];
+      const mergedMissions = typeof mergeMissionLists === 'function'
+        ? mergeMissionLists(user.acceptedMissions, sameUserLocal)
+        : user.acceptedMissions;
+      if (typeof writeMissionsToLocalStorageSafe === 'function') {
+        writeMissionsToLocalStorageSafe(mergedMissions);
+      } else {
+        localStorage.setItem('aloAcceptedMissions', JSON.stringify(mergedMissions));
       }
-      const hydratedMissions = user.acceptedMissions.map(function(cm) {
-        if (!cm.screenshot && localMap.has(cm.id) && localMap.get(cm.id).screenshot) {
-          return Object.assign({}, cm, { screenshot: localMap.get(cm.id).screenshot });
-        }
-        return cm;
-      });
-      localStorage.setItem('aloAcceptedMissions', JSON.stringify(hydratedMissions));
+      user.acceptedMissions = mergedMissions;
     }
 
     if (user.savingsPlan && normPhone) {
@@ -1033,13 +1036,171 @@ async function dbGetUser(normPhone) {
   return null;
 }
 
+window._missionScreenshotCache = window._missionScreenshotCache || {};
+
+function mergeSingleMissionRecord(a, b) {
+  if (!a) return b ? Object.assign({}, b) : null;
+  if (!b) return Object.assign({}, a);
+  const rankStatus = function(m) {
+    if (!m) return 0;
+    if (m.status === 'complete') return 4;
+    if (m.status === 'review') return 3;
+    if (m.status === 'failed') return 2;
+    return 1;
+  };
+  const aRank = rankStatus(a);
+  const bRank = rankStatus(b);
+  let base, other;
+  if (a.status === 'complete' && b.status !== 'complete') {
+    base = a; other = b;
+  } else if (b.status === 'complete' && a.status !== 'complete') {
+    base = b; other = a;
+  } else if ((Number(b.appealCount) || 0) > (Number(a.appealCount) || 0)) {
+    base = b; other = a;
+  } else if ((Number(a.appealCount) || 0) > (Number(b.appealCount) || 0)) {
+    base = a; other = b;
+  } else if (bRank > aRank) {
+    base = b; other = a;
+  } else if (aRank > bRank) {
+    base = a; other = b;
+  } else {
+    const verifyPriority = { valid: 4, invalid: 3, service_unavailable: 2, error: 1, pending: 0 };
+    const aVer = (Number(a.likeVerifyVersion) || 0) * 10 + (verifyPriority[a.likeVerifyStatus] || 0);
+    const bVer = (Number(b.likeVerifyVersion) || 0) * 10 + (verifyPriority[b.likeVerifyStatus] || 0);
+    if (bVer > aVer) {
+      base = b; other = a;
+    } else {
+      base = a; other = b;
+    }
+  }
+  const merged = Object.assign({}, other, base);
+  // Permanently lock completed status and reward credit once achieved
+  if (a.status === 'complete' || b.status === 'complete') {
+    merged.status = 'complete';
+    merged.completedAt = base.completedAt || other.completedAt || new Date().toISOString();
+    merged.rewardCredited = Boolean(a.rewardCredited || b.rewardCredited);
+  }
+  // Never lose an uploaded screenshot or hasScreenshot flag during sync
+  const memShot = (window._missionScreenshotCache && merged.id && window._missionScreenshotCache[merged.id]) || '';
+  const bestShot = base.screenshot || other.screenshot || memShot || '';
+  if (bestShot) {
+    merged.screenshot = bestShot;
+    merged.hasScreenshot = true;
+    if (merged.id) window._missionScreenshotCache[merged.id] = bestShot;
+  } else if (a.hasScreenshot || b.hasScreenshot) {
+    merged.hasScreenshot = true;
+  }
+  return merged;
+}
+
+function mergeMissionLists(primaryList, secondaryList) {
+  const byId = new Map();
+  const ingest = function(list) {
+    if (!Array.isArray(list)) return;
+    list.forEach(function(item) {
+      if (!item || !item.id) return;
+      if (item.screenshot && item.id) {
+        window._missionScreenshotCache[item.id] = item.screenshot;
+      }
+      if (!byId.has(item.id)) {
+        byId.set(item.id, Object.assign({}, item));
+      } else {
+        byId.set(item.id, mergeSingleMissionRecord(byId.get(item.id), item));
+      }
+    });
+  };
+  ingest(primaryList);
+  ingest(secondaryList);
+  const merged = Array.from(byId.values());
+  merged.sort(function(x, y) {
+    const tx = new Date(x.completedAt || x.submittedAt || x.acceptedAt || 0).getTime() || 0;
+    const ty = new Date(y.completedAt || y.submittedAt || y.acceptedAt || 0).getTime() || 0;
+    return ty - tx;
+  });
+  return merged;
+}
+
+function writeMissionsToLocalStorageSafe(missions) {
+  const list = Array.isArray(missions) ? missions : [];
+  list.forEach(function(m) {
+    if (m && m.id && m.screenshot) {
+      window._missionScreenshotCache[m.id] = m.screenshot;
+    }
+  });
+  // Keep full screenshots for all active/review tasks and most recent 10 archived tasks to prevent QuotaExceededError
+  let archivedWithShot = 0;
+  const prepared = list.map(function(m) {
+    if (!m) return m;
+    const copy = Object.assign({}, m);
+    if (copy.screenshot) {
+      copy.hasScreenshot = true;
+      if (copy.status === 'complete' || copy.status === 'failed') {
+        archivedWithShot += 1;
+        if (archivedWithShot > 10) {
+          delete copy.screenshot;
+        }
+      }
+    }
+    return copy;
+  });
+  try {
+    localStorage.setItem('aloAcceptedMissions', JSON.stringify(prepared));
+    return true;
+  } catch (e) {
+    // Fallback 1: strip screenshots from all complete/failed tasks, keep active/review screenshots
+    const lighter = prepared.map(function(m) {
+      if (!m) return m;
+      const copy = Object.assign({}, m);
+      if (copy.screenshot && copy.status !== 'review' && copy.status !== 'active') {
+        copy.hasScreenshot = true;
+        delete copy.screenshot;
+      }
+      return copy;
+    });
+    try {
+      localStorage.setItem('aloAcceptedMissions', JSON.stringify(lighter));
+      return true;
+    } catch (e2) {
+      // Fallback 2: strip all base64 screenshots from localStorage (screenshots stay in window._missionScreenshotCache)
+      const metadataOnly = lighter.map(function(m) {
+        if (!m) return m;
+        const copy = Object.assign({}, m);
+        if (copy.screenshot) {
+          copy.hasScreenshot = true;
+          delete copy.screenshot;
+        }
+        return copy;
+      });
+      try {
+        localStorage.setItem('aloAcceptedMissions', JSON.stringify(metadataOnly));
+        return true;
+      } catch (e3) {
+        return false;
+      }
+    }
+  }
+}
+
 function compactMissionsForCloud(missions) {
   if (!Array.isArray(missions)) return [];
-  return missions.slice(0, 60).map(function(m) {
+  const activeOrReview = [];
+  const completed = [];
+  const failed = [];
+  missions.forEach(function(m) {
+    if (!m || !m.id) return;
+    if (m.status === 'complete') completed.push(m);
+    else if (m.status === 'failed') failed.push(m);
+    else activeOrReview.push(m);
+  });
+  // Permanently retain ALL completed tasks (up to 2000 lightweight records) and all active/review tasks
+  const combined = activeOrReview.concat(completed.slice(0, 2000), failed.slice(0, 120));
+  return combined.map(function(m) {
     const copy = Object.assign({}, m);
-    if (copy.screenshot && String(copy.screenshot).length > 18000) {
+    if (copy.screenshot) {
       copy.hasScreenshot = true;
-      delete copy.screenshot;
+      if (String(copy.screenshot).length > 16000) {
+        delete copy.screenshot;
+      }
     }
     return copy;
   });
@@ -1111,9 +1272,15 @@ async function dbSaveUser(account) {
         package_purchase_dates: (account.packagePurchaseDates && typeof account.packagePurchaseDates === 'object')
           ? account.packagePurchaseDates
           : ((baseOpt.package_purchase_dates && typeof baseOpt.package_purchase_dates === 'object') ? baseOpt.package_purchase_dates : {}),
-        accepted_missions: Array.isArray(account.acceptedMissions)
-          ? compactMissionsForCloud(account.acceptedMissions)
-          : (Array.isArray(baseOpt.accepted_missions) ? baseOpt.accepted_missions : []),
+        accepted_missions: (function() {
+          const existingCloud = Array.isArray(baseOpt.accepted_missions) ? baseOpt.accepted_missions : [];
+          const incomingLocal = Array.isArray(account.acceptedMissions) ? account.acceptedMissions : null;
+          if (!incomingLocal) return existingCloud;
+          const mergedAll = typeof mergeMissionLists === 'function'
+            ? mergeMissionLists(incomingLocal, existingCloud)
+            : incomingLocal;
+          return compactMissionsForCloud(mergedAll);
+        })(),
         savings_plan: account.savingsPlan !== undefined ? account.savingsPlan : (baseOpt.savings_plan || null),
         claimed_rewards: Array.isArray(account.claimedInviteRewards)
           ? account.claimedInviteRewards
@@ -9739,9 +9906,13 @@ let missionCloudSyncTimer = null;
 
 function saveAllMissionsRaw(allMissions) {
   const cleanList = Array.isArray(allMissions) ? allMissions : [];
-  try {
-    localStorage.setItem('aloAcceptedMissions', JSON.stringify(cleanList));
-  } catch (e) {}
+  if (typeof writeMissionsToLocalStorageSafe === 'function') {
+    writeMissionsToLocalStorageSafe(cleanList);
+  } else {
+    try {
+      localStorage.setItem('aloAcceptedMissions', JSON.stringify(cleanList));
+    } catch (e) {}
+  }
 
   try {
     const u = getCurrentUser();
@@ -9750,7 +9921,10 @@ function saveAllMissionsRaw(allMissions) {
       const userMissions = cleanList.filter(function(m) {
         return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
       });
-      u.acceptedMissions = compactMissionsForCloud(userMissions);
+      const mergedForUser = typeof mergeMissionLists === 'function'
+        ? mergeMissionLists(userMissions, Array.isArray(u.acceptedMissions) ? u.acceptedMissions : [])
+        : userMissions;
+      u.acceptedMissions = compactMissionsForCloud(mergedForUser);
       localStorage.setItem('aloSignedInUser', JSON.stringify(u));
       if (missionCloudSyncTimer) clearTimeout(missionCloudSyncTimer);
       missionCloudSyncTimer = setTimeout(function() {
@@ -11053,7 +11227,7 @@ function handleCopyTaskLink() {
 window._likeVerifyInFlight = window._likeVerifyInFlight || {};
 window._likeVerifyLastTry = window._likeVerifyLastTry || {};
 
-async function verifyMissionScreenshotLike(missionId) {
+async function verifyMissionScreenshotLike(missionId, directScreenshot) {
   if (!missionId) return null;
   if (window._likeVerifyInFlight[missionId]) return null;
   const lastTry = window._likeVerifyLastTry[missionId] || 0;
@@ -11063,7 +11237,26 @@ async function verifyMissionScreenshotLike(missionId) {
   const target = list.find(function(item) { return item.id === missionId; });
   if (!target || target.status !== 'review') return null;
 
-  if (!target.screenshot) {
+  const cachedShot = (window._missionScreenshotCache && window._missionScreenshotCache[missionId]) || '';
+  const screenshotData = directScreenshot || target.screenshot || cachedShot || '';
+  if (screenshotData) {
+    target.screenshot = screenshotData;
+    target.hasScreenshot = true;
+    window._missionScreenshotCache[missionId] = screenshotData;
+  }
+
+  if (!screenshotData) {
+    // If screenshot was already uploaded (e.g., stripped in cloud sync on another device/session), never falsely mark invalid
+    if (target.hasScreenshot) {
+      if (!target.likeVerifyStatus || target.likeVerifyStatus === 'pending' || (target.likeVerifyStatus === 'invalid' && /No screenshot uploaded|স্ক্রিনশট আপলোড করা হয়নি/i.test(String(target.likeVerifyReasonEn || target.likeVerifyReason || '')))) {
+        target.likeVerifyStatus = 'service_unavailable';
+        target.likeVerifyReason = 'স্ক্রিনশট পর্যালোচনায় রয়েছে';
+        target.likeVerifyReasonEn = 'Screenshot queued for timed review';
+        target.likeVerifyReasonAr = 'لقطة الشاشة قيد المراجعة المجدولة';
+        saveAllMissionsRaw(list);
+      }
+      return target.likeVerifyStatus;
+    }
     target.likeVerifyStatus = 'invalid';
     target.likeVerifyReason = 'স্ক্রিনশট আপলোড করা হয়নি';
     target.likeVerifyReasonEn = 'No screenshot uploaded';
@@ -11079,7 +11272,7 @@ async function verifyMissionScreenshotLike(missionId) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        image: target.screenshot,
+        image: screenshotData,
         platform: target.platform || 'TikTok'
       })
     });
@@ -11089,9 +11282,14 @@ async function verifyMissionScreenshotLike(missionId) {
     const freshTarget = freshList.find(function(item) { return item.id === missionId; });
     if (!freshTarget || freshTarget.status !== 'review') return null;
 
+    if (screenshotData && !freshTarget.screenshot) {
+      freshTarget.screenshot = screenshotData;
+    }
+    freshTarget.hasScreenshot = true;
+
     if (resp.ok && data && data.success) {
       freshTarget.likeVerifyStatus = data.isLiked ? 'valid' : 'invalid';
-      freshTarget.likeVerifyVersion = 3;
+      freshTarget.likeVerifyVersion = 4;
       freshTarget.likeVerifyReason = data.reasonBn || (data.isLiked ? 'স্ক্রিনশটে লাইক শনাক্ত হয়েছে' : 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি');
       freshTarget.likeVerifyReasonEn = data.reasonEn || (data.isLiked ? 'Active Like confirmed' : 'Valid Like not found in screenshot');
       freshTarget.likeVerifyReasonAr = data.reasonAr || (data.isLiked ? 'تم تأكيد الإعجاب بنجاح' : 'لم يتم العثور على إعجاب صالح في لقطة الشاشة');
@@ -11169,30 +11367,37 @@ function checkPendingReviews() {
           m.reviewEndsAt = subTime + 15 * 60 * 1000;
         }
 
-        const isLegacyInvalid = m.likeVerifyStatus === 'invalid' && (Number(m.likeVerifyVersion) || 0) < 3;
+        const effectiveShot = m.screenshot || (window._missionScreenshotCache && window._missionScreenshotCache[m.id]) || '';
+        const hasProof = Boolean(effectiveShot || m.hasScreenshot);
+        const isLegacyInvalid = m.likeVerifyStatus === 'invalid' && (Number(m.likeVerifyVersion) || 0) < 4;
         const needsVerification = !m.likeVerifyStatus || m.likeVerifyStatus === 'pending' || isLegacyInvalid || (m.likeVerifyStatus === 'error' && (Number(m.likeVerifyAttempts) || 0) < 3);
 
         if (now < m.reviewEndsAt) {
-          if (needsVerification && m.screenshot && !window._likeVerifyInFlight[m.id]) {
+          if (needsVerification && effectiveShot && !window._likeVerifyInFlight[m.id]) {
             toVerifyIds.push(m.id);
-          } else if (!m.screenshot && m.likeVerifyStatus !== 'invalid') {
+          } else if (!hasProof && m.likeVerifyStatus !== 'invalid') {
             m.likeVerifyStatus = 'invalid';
             m.likeVerifyReason = 'স্ক্রিনশট আপলোড করা হয়নি';
             m.likeVerifyReasonEn = 'No screenshot uploaded';
+            changed = true;
+          } else if (!effectiveShot && m.hasScreenshot && (m.likeVerifyStatus === 'invalid' && /No screenshot uploaded|স্ক্রিনশট আপলোড করা হয়নি/i.test(String(m.likeVerifyReasonEn || m.likeVerifyReason || '')))) {
+            m.likeVerifyStatus = 'service_unavailable';
+            m.likeVerifyReason = 'স্ক্রিনশট পর্যালোচনায় রয়েছে';
+            m.likeVerifyReasonEn = 'Screenshot queued for timed review';
             changed = true;
           }
           return;
         }
 
         // 15 minutes elapsed: settle based on Like verification result
-        if (needsVerification && m.screenshot) {
+        if (needsVerification && effectiveShot) {
           if (!window._likeVerifyInFlight[m.id]) {
             toVerifyIds.push(m.id);
           }
           return;
         }
 
-        const canApproveByTimer = Boolean(m.screenshot) && (m.likeVerifyStatus === 'valid' || m.likeVerifyStatus === 'service_unavailable' || m.likeVerifyStatus === 'error');
+        const canApproveByTimer = hasProof && (m.likeVerifyStatus === 'valid' || m.likeVerifyStatus === 'service_unavailable' || m.likeVerifyStatus === 'error' || (!effectiveShot && m.hasScreenshot && (!m.likeVerifyStatus || m.likeVerifyStatus === 'pending')));
         if (canApproveByTimer) {
           m.status = 'complete';
           m.completedAt = new Date().toISOString();
@@ -13657,6 +13862,11 @@ if (confirmSubmitBtn) {
       commentEl.value = '';
     }
     mission.screenshot = screenshotToUse;
+    mission.hasScreenshot = Boolean(screenshotToUse);
+    if (screenshotToUse && mission.id) {
+      window._missionScreenshotCache = window._missionScreenshotCache || {};
+      window._missionScreenshotCache[mission.id] = screenshotToUse;
+    }
     activeSubmissionImage = '';
     window._screenshotRemovedInEditor = false;
     window._screenshotUpdatedInEditor = false;
@@ -13706,7 +13916,7 @@ if (confirmSubmitBtn) {
     }
 
     // Start AI Like-screenshot verification right away during the 15-minute window
-    verifyMissionScreenshotLike(mission.id);
+    verifyMissionScreenshotLike(mission.id, screenshotToUse);
 
     // Keep page clean: no extra message callouts or border layers
     const taskMsg = document.getElementById('task-message');
@@ -13801,7 +14011,7 @@ function handleScreenshotFile(file) {
     const img = new Image();
     img.onload = function() {
       try {
-        const maxSide = 1200;
+        const maxSide = 900;
         let w = img.naturalWidth || img.width;
         let h = img.naturalHeight || img.height;
         if (w > maxSide || h > maxSide) {
@@ -13819,7 +14029,7 @@ function handleScreenshotFile(file) {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.drawImage(img, 0, 0, w, h);
-          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          const compressed = canvas.toDataURL('image/jpeg', 0.72);
           applyScreenshot(compressed);
           return;
         }

@@ -144,7 +144,7 @@ Respond strictly using the JSON schema.`;
           ]
         },
         config: {
-          thinkingConfig: { thinkingLevel: ThinkingLevel.MEDIUM },
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           responseMimeType: 'application/json',
           responseSchema: {
             type: Type.OBJECT,
@@ -205,7 +205,7 @@ Respond strictly using the JSON schema.`;
       }
 
       if (attempt === 0) {
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 300));
       }
     }
   }
