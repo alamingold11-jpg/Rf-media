@@ -64,19 +64,24 @@ export default async function handler(req, res) {
       // Payment Successful!
       const supabase = getSupabaseAdminClient();
       if (supabase) {
-        // Find phone from transactions if not present in callback attach
+        // Find phone & existing status from transactions to guarantee idempotency
         let targetPhone = phone;
         let matchedTxId = null;
+        let alreadyApproved = false;
         if (outTradeNo) {
           try {
             const { data: txRecords } = await supabase
               .from('transactions')
-              .select('id, phone, amount')
+              .select('id, phone, amount, status')
               .eq('type', 'deposit')
               .ilike('method', `%${outTradeNo}%`)
               .limit(1);
             if (Array.isArray(txRecords) && txRecords[0]) {
               matchedTxId = txRecords[0].id;
+              const existingStatus = String(txRecords[0].status || '').toLowerCase();
+              if (existingStatus.includes('অনুমোদিত') || existingStatus.includes('approv') || existingStatus.includes('success') || existingStatus.includes('complete')) {
+                alreadyApproved = true;
+              }
               if (!targetPhone && txRecords[0].phone) {
                 targetPhone = txRecords[0].phone;
               }
@@ -84,6 +89,11 @@ export default async function handler(req, res) {
           } catch (lookupErr) {
             console.warn('[WPay Callback] Transaction phone lookup warning:', lookupErr.message);
           }
+        }
+
+        if (alreadyApproved) {
+          console.log(`[WPay Callback] Order ${outTradeNo} already approved; skipping duplicate credit.`);
+          return res.status(200).send('success');
         }
 
         // Update transaction in Supabase

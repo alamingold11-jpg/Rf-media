@@ -388,6 +388,7 @@ function mapSupabaseUser(d) {
     todayIncome: Number(opt.today_income) || 0,
     totalIncome: Number(opt.total_income) || 0,
     completedMissions: Number(opt.completed_missions) || 0,
+    lv0CompletedTasks: Number(opt.lv0_completed_tasks) || 0,
     rechargeAmount: Number(opt.recharge_amount) || 0,
     cashoutAmount: Number(opt.cashout_amount) || 0,
     acceptedMissions: Array.isArray(opt.accepted_missions) ? opt.accepted_missions : [],
@@ -1103,6 +1104,7 @@ async function dbSaveUser(account) {
         today_income: typeof account.todayIncome === 'number' ? account.todayIncome : (Number(baseOpt.today_income) || 0),
         total_income: typeof account.totalIncome === 'number' ? account.totalIncome : (Number(baseOpt.total_income) || 0),
         completed_missions: typeof account.completedMissions === 'number' ? account.completedMissions : (Number(baseOpt.completed_missions) || 0),
+        lv0_completed_tasks: typeof account.lv0CompletedTasks === 'number' ? account.lv0CompletedTasks : (Number(baseOpt.lv0_completed_tasks) || 0),
         recharge_amount: typeof account.rechargeAmount === 'number' ? account.rechargeAmount : (Number(baseOpt.recharge_amount) || 0),
         cashout_amount: typeof account.cashoutAmount === 'number' ? account.cashoutAmount : (Number(baseOpt.cashout_amount) || 0),
         purchased_packages: purchasedPkgs,
@@ -5635,6 +5637,9 @@ if (registerForm) {
         if (message) message.textContent = tLang(targetLang, 'এই নম্বরে আগে থেকেই অ্যাকাউন্ট আছে। লগইন পেজে যান।', 'An account with this number already exists. Redirecting to login…', 'يوجد حساب بهذا الرقم بالفعل. جاري التوجيه لتسجيل الدخول…');
         const loginEmail = document.getElementById('login-email');
         if (loginEmail) loginEmail.value = registeredNumber;
+        if (typeof selectLoginCountry === 'function') {
+          selectLoginCountry(dbUser.country || countryCode);
+        }
         setTimeout(function() { showView('login'); }, 1400);
         return;
       }
@@ -6196,23 +6201,69 @@ function getLv0TrialStatus(user) {
     return Boolean(up && up !== 'LV0' && /^LV[1-9]\d*$/.test(up));
   }));
   const validityDays = Math.max(1, parseInt((packageData.LV0 && packageData.LV0.validityDays) || 5, 10) || 5);
+  const dailyQuota = Math.max(1, parseInt((packageData.LV0 && packageData.LV0.count) || (packageTaskSettings.LV0 && packageTaskSettings.LV0.count) || 5, 10) || 5);
+  const totalAllowedTasks = dailyQuota * validityDays;
+
   if (!user) {
-    return { isLv0Only: false, isExpired: false, validityDays: validityDays, daysLeft: validityDays };
+    return {
+      isLv0Only: false,
+      isExpired: false,
+      validityDays: validityDays,
+      daysLeft: validityDays,
+      dailyQuota: dailyQuota,
+      totalAllowedTasks: totalAllowedTasks,
+      finishedTasks: 0,
+      remainingTasks: totalAllowedTasks,
+      remainingAcceptableTasks: totalAllowedTasks
+    };
   }
-  const createdTs = new Date(user.createdAt || user.created_at || Date.now()).getTime();
-  if (!Number.isFinite(createdTs) || createdTs <= 0) {
-    return { isLv0Only: !hasPaidPkg, isExpired: false, validityDays: validityDays, daysLeft: validityDays };
+
+  let userMissions = [];
+  try {
+    const curU = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    const targetPhone = normalizeBdPhone((user && (user.phone || user.accountNumber)) || '');
+    const curPhone = normalizeBdPhone((curU && (curU.phone || curU.accountNumber)) || '');
+    if (targetPhone && targetPhone === curPhone && typeof readAcceptedMissions === 'function') {
+      userMissions = readAcceptedMissions();
+    } else if (Array.isArray(user.acceptedMissions)) {
+      userMissions = user.acceptedMissions;
+    }
+  } catch (e) {
+    userMissions = Array.isArray(user.acceptedMissions) ? user.acceptedMissions : [];
   }
-  const totalMs = validityDays * 24 * 60 * 60 * 1000;
-  const elapsedMs = Math.max(0, Date.now() - createdTs);
-  const remainingMs = totalMs - elapsedMs;
-  const isExpired = remainingMs <= 0;
-  const daysLeft = isExpired ? 0 : Math.max(1, Math.ceil(remainingMs / (24 * 60 * 60 * 1000)));
+
+  let completedInList = 0;
+  let reviewInList = 0;
+  let activeInList = 0;
+  userMissions.forEach(function(m) {
+    if (!m) return;
+    const mLvl = String(m.level || 'LV0').toUpperCase().trim();
+    if (mLvl !== 'LV0') return;
+    if (m.status === 'complete') completedInList += 1;
+    else if (m.status === 'review') reviewInList += 1;
+    else if (m.status === 'active') activeInList += 1;
+  });
+
+  const persistedCompleted = Number(user.lv0CompletedTasks) || 0;
+  const totalCompleted = Math.max(completedInList, persistedCompleted);
+  // LV0 expires strictly after finishing validityDays days of tasks (dailyQuota * validityDays), without 24h registration clock expiry
+  const finishedTasks = totalCompleted + reviewInList;
+  const totalInUseTasks = finishedTasks + activeInList;
+  const isExpired = finishedTasks >= totalAllowedTasks;
+  const remainingTasks = Math.max(0, totalAllowedTasks - finishedTasks);
+  const remainingAcceptableTasks = Math.max(0, totalAllowedTasks - totalInUseTasks);
+  const daysLeft = isExpired ? 0 : Math.max(1, Math.ceil(remainingTasks / dailyQuota));
+
   return {
     isLv0Only: !hasPaidPkg,
     isExpired: isExpired,
     validityDays: validityDays,
-    daysLeft: daysLeft
+    daysLeft: daysLeft,
+    dailyQuota: dailyQuota,
+    totalAllowedTasks: totalAllowedTasks,
+    finishedTasks: finishedTasks,
+    remainingTasks: remainingTasks,
+    remainingAcceptableTasks: remainingAcceptableTasks
   };
 }
 window.getLv0TrialStatus = getLv0TrialStatus;
@@ -7036,7 +7087,8 @@ function handlePackagePurchase(level, triggerBtn) {
 
             setTimeout(function() {
               const checkUser = getCurrentUser();
-              if (!checkUser || (checkUser.packageLevel !== level && !(checkUser.purchasedPackages && checkUser.purchasedPackages.includes(level)))) {
+              const checkStatus = checkUser ? getPackageValidityStatus(level, checkUser) : { isActive: false };
+              if (!checkUser || !checkStatus.isActive) {
                 btn.disabled = false;
                 btn.className = origClass || 'px-8 py-3 rounded-xl bg-[#35c6e7] hover:bg-[#2bb4d4] text-[#030d24] font-black text-sm shadow-lg transition-all duration-500 active:scale-95 cursor-pointer';
                 btn.innerHTML = origHtml || tLang(lang, 'ক্রয় করুন', 'Buy Now', 'اشترِ الآن');
@@ -7055,7 +7107,13 @@ function handlePackagePurchase(level, triggerBtn) {
       freshUser.rechargeFrozenBalance = Number(Math.max(0, rechargeBal - usedFromRecharge).toFixed(2));
       freshUser.balance = Number(Math.max(0, userBal - usedFromAvail).toFixed(2));
       freshUser.frozenBalance = Number(((Number(freshUser.frozenBalance) || 0) + usedFromAvail).toFixed(2));
-      freshUser.packageLevel = level;
+      const prevActiveLevel = String(freshUser.packageLevel || 'LV0').toUpperCase().trim();
+      const prevActiveStatus = getPackageValidityStatus(prevActiveLevel, freshUser);
+      const prevIdx = LEVEL_ORDER.indexOf(prevActiveLevel);
+      const nextIdx = LEVEL_ORDER.indexOf(level);
+      if (!prevActiveStatus.isActive || nextIdx >= prevIdx) {
+        freshUser.packageLevel = level;
+      }
       if (!Array.isArray(freshUser.purchasedPackages)) freshUser.purchasedPackages = ['LV0'];
       if (!freshUser.purchasedPackages.includes(level)) {
         freshUser.purchasedPackages.push(level);
@@ -7444,7 +7502,9 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
 window.distributeTeamCommission = distributeTeamCommission;
 window.distributeTeamRebate = distributeTeamCommission;
 
+let _isConfirmingDeposit = false;
 async function confirmDeposit() {
+  if (_isConfirmingDeposit) return;
   const user = getCurrentUser();
   const langPre = getActiveLang(user);
   if (!user || (!user.phone && !user.accountNumber)) {
@@ -7459,6 +7519,7 @@ async function confirmDeposit() {
     || document.getElementById('custom-deposit-amount');
   const statusMsg = document.getElementById(isInlineOpen ? 'inline-deposit-status-message' : 'deposit-status-message')
     || document.getElementById('deposit-status-message');
+  const submitDepBtn = document.getElementById(isInlineOpen ? 'inline-confirm-deposit-btn' : 'confirm-deposit-btn');
   let amount = selectedDepositAmount;
   if (customInput && customInput.value && parseFloat(customInput.value) > 0) {
     amount = parseFloat(customInput.value);
@@ -7487,68 +7548,75 @@ async function confirmDeposit() {
     return;
   }
 
-  const now = new Date();
-  const dateStr = now.toISOString().split('T')[0];
-  const hours = String(now.getHours()).padStart(2, '0');
-  const mins = String(now.getMinutes()).padStart(2, '0');
-  const orderId = 'DEP' + Date.now() + Math.floor(100 + Math.random() * 900);
-  const depPhone = user.phone || user.accountNumber;
-  const depMethod = 'USDT (BEP20)';
+  _isConfirmingDeposit = true;
+  if (submitDepBtn) submitDepBtn.disabled = true;
+  try {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    const orderId = 'DEP' + Date.now() + Math.floor(100 + Math.random() * 900);
+    const depPhone = user.phone || user.accountNumber;
+    const depMethod = 'USDT (BEP20)';
 
-  if (typeof upsertLocalDepositOrder === 'function') {
-    upsertLocalDepositOrder(depPhone, {
-      orderId: orderId,
+    if (typeof upsertLocalDepositOrder === 'function') {
+      upsertLocalDepositOrder(depPhone, {
+        orderId: orderId,
+        type: 'deposit',
+        amount: amount,
+        ratio: '0%',
+        actual: amount,
+        status: 'মুলতবি (Pending)',
+        method: depMethod,
+        date: dateStr,
+        time: `${hours}:${mins}`,
+        createdAt: now.toISOString()
+      });
+    }
+
+    await dbRecordTransaction({
+      phone: depPhone,
       type: 'deposit',
       amount: amount,
       ratio: '0%',
       actual: amount,
       status: 'মুলতবি (Pending)',
       method: depMethod,
+      order_id: orderId,
       date: dateStr,
       time: `${hours}:${mins}`,
-      createdAt: now.toISOString()
+      newBalance: user.balance || 0
     });
-  }
+    if (typeof renderAccountChangeHistory === 'function') renderAccountChangeHistory();
 
-  await dbRecordTransaction({
-    phone: depPhone,
-    type: 'deposit',
-    amount: amount,
-    ratio: '0%',
-    actual: amount,
-    status: 'মুলতবি (Pending)',
-    method: depMethod,
-    order_id: orderId,
-    date: dateStr,
-    time: `${hours}:${mins}`,
-    newBalance: user.balance || 0
-  });
-  if (typeof renderAccountChangeHistory === 'function') renderAccountChangeHistory();
+    const curr = getUserCurrency(user);
+    const lang = getActiveLang(user);
 
-  const curr = getUserCurrency(user);
-  const lang = getActiveLang(user);
-
-  if (statusMsg) {
-    statusMsg.className = 'text-center font-bold text-xs text-amber-300';
-    statusMsg.textContent = tLang(
-      lang,
-      `⏳ ${formatMoney(amount, user)} ${curr} রিচার্জ আবেদন জমা হয়েছে — অ্যাডমিন যাচাইয়ের পর ব্যালেন্সে যোগ হবে!`,
-      `⏳ ${formatMoney(amount, user)} ${curr} deposit request submitted (awaiting Admin approval)`,
-      `⏳ تم إرسال طلب إيداع ${formatMoney(amount, user)} ${curr} (بانتظار موافقة الإدارة)`
-    );
-  }
-
-  setTimeout(function() {
-    closeActionSheet();
-    showToastNotification(
-      tLang(
+    if (statusMsg) {
+      statusMsg.className = 'text-center font-bold text-xs text-amber-300';
+      statusMsg.textContent = tLang(
         lang,
-        `⏳ ${formatMoney(amount, user)} ${curr} ডিপোজিট অনুরোধ জমা হয়েছে (যাচাই চলমান)।`,
-        `⏳ ${formatMoney(amount, user)} ${curr} deposit submitted for Admin review.`,
-        `⏳ تم إرسال طلب الإيداع ${formatMoney(amount, user)} ${curr} لمراجعة الإدارة.`
-      )
-    );
-  }, 650);
+        `⏳ ${formatMoney(amount, user)} ${curr} রিচার্জ আবেদন জমা হয়েছে — অ্যাডমিন যাচাইয়ের পর ব্যালেন্সে যোগ হবে!`,
+        `⏳ ${formatMoney(amount, user)} ${curr} deposit request submitted (awaiting Admin approval)`,
+        `⏳ تم إرسال طلب إيداع ${formatMoney(amount, user)} ${curr} (بانتظار موافقة الإدارة)`
+      );
+    }
+
+    setTimeout(function() {
+      closeActionSheet();
+      showToastNotification(
+        tLang(
+          lang,
+          `⏳ ${formatMoney(amount, user)} ${curr} ডিপোজিট অনুরোধ জমা হয়েছে (যাচাই চলমান)।`,
+          `⏳ ${formatMoney(amount, user)} ${curr} deposit submitted for Admin review.`,
+          `⏳ تم إرسال طلب الإيداع ${formatMoney(amount, user)} ${curr} لمراجعة الإدارة.`
+        )
+      );
+    }, 650);
+  } finally {
+    _isConfirmingDeposit = false;
+    if (submitDepBtn) submitDepBtn.disabled = false;
+  }
 }
 
 function showToastNotification(messageText) {
@@ -9939,7 +10007,15 @@ function updateProfileMetrics() {
   const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
   const currentLevelSetting = packageTaskSettings[currentLevel] || packageTaskSettings.LV0;
   const totalDailyQuota = currentLevelSetting ? currentLevelSetting.count : 5;
-  const remainingTodayCount = Math.max(0, totalDailyQuota - acceptedIn24hCount);
+  let remainingTodayCount = Math.max(0, totalDailyQuota - acceptedIn24hCount);
+  if (currentLevel === 'LV0' && typeof getLv0TrialStatus === 'function') {
+    const lv0St = getLv0TrialStatus(currentUser);
+    if (lv0St.isExpired) {
+      remainingTodayCount = 0;
+    } else if (typeof lv0St.remainingAcceptableTasks === 'number') {
+      remainingTodayCount = Math.min(remainingTodayCount, lv0St.remainingAcceptableTasks);
+    }
+  }
 
   window._lastActive24hQuotaKey = `${currentLevel}:${acceptedIn24hCount}:${completedTodayCount}`;
 
@@ -10054,7 +10130,9 @@ function refreshDailyMissionLimit(level) {
 
   const quotaLimit = (packageTaskSettings[level] && packageTaskSettings[level].count) || 5;
   const currentCount = acceptedToday.length;
-  const reached = currentCount >= quotaLimit || allTodayAccepted.length >= userMaxQuota;
+  const lv0QuotaSt = (level === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
+  const reachedLv0Total = Boolean(lv0QuotaSt && lv0QuotaSt.remainingAcceptableTasks <= 0);
+  const reached = currentCount >= quotaLimit || allTodayAccepted.length >= userMaxQuota || reachedLv0Total;
 
   const lang = getActiveLang(user);
 
@@ -10426,7 +10504,9 @@ function renderPackageTasks(level) {
     return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
   });
   const quotaLimit = settings.count;
-  const isLimitReached = acceptedToday.length >= quotaLimit || allTodayAccepted.length >= userMaxQuota;
+  const lv0QuotaSt = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
+  const reachedLv0Total = Boolean(lv0QuotaSt && lv0QuotaSt.remainingAcceptableTasks <= 0);
+  const isLimitReached = acceptedToday.length >= quotaLimit || allTodayAccepted.length >= userMaxQuota || reachedLv0Total;
 
   const TOTAL_TASKS_TO_DISPLAY = Math.max(30, (settings.count || 5) + 5);
   const rows = [];
@@ -11011,7 +11091,7 @@ async function verifyMissionScreenshotLike(missionId) {
 
     if (resp.ok && data && data.success) {
       freshTarget.likeVerifyStatus = data.isLiked ? 'valid' : 'invalid';
-      freshTarget.likeVerifyVersion = 2;
+      freshTarget.likeVerifyVersion = 3;
       freshTarget.likeVerifyReason = data.reasonBn || (data.isLiked ? 'স্ক্রিনশটে লাইক শনাক্ত হয়েছে' : 'স্ক্রিনশটে সঠিক লাইক পাওয়া যায়নি');
       freshTarget.likeVerifyReasonEn = data.reasonEn || (data.isLiked ? 'Active Like confirmed' : 'Valid Like not found in screenshot');
       freshTarget.likeVerifyReasonAr = data.reasonAr || (data.isLiked ? 'تم تأكيد الإعجاب بنجاح' : 'لم يتم العثور على إعجاب صالح في لقطة الشاشة');
@@ -11074,6 +11154,7 @@ function checkPendingReviews() {
     let lv0Reward = 0;
     let paidReward = 0;
     let completedInBatch = 0;
+    let lv0CompletedInBatch = 0;
     let failedInBatch = 0;
     let lastFailReason = '';
     const now = Date.now();
@@ -11088,8 +11169,8 @@ function checkPendingReviews() {
           m.reviewEndsAt = subTime + 15 * 60 * 1000;
         }
 
-        const isLegacyYoutubeInvalid = String(m.platform || '').toLowerCase().includes('youtube') && m.likeVerifyStatus === 'invalid' && (Number(m.likeVerifyVersion) || 0) < 2;
-        const needsVerification = !m.likeVerifyStatus || m.likeVerifyStatus === 'pending' || isLegacyYoutubeInvalid || (m.likeVerifyStatus === 'error' && (Number(m.likeVerifyAttempts) || 0) < 3);
+        const isLegacyInvalid = m.likeVerifyStatus === 'invalid' && (Number(m.likeVerifyVersion) || 0) < 3;
+        const needsVerification = !m.likeVerifyStatus || m.likeVerifyStatus === 'pending' || isLegacyInvalid || (m.likeVerifyStatus === 'error' && (Number(m.likeVerifyAttempts) || 0) < 3);
 
         if (now < m.reviewEndsAt) {
           if (needsVerification && m.screenshot && !window._likeVerifyInFlight[m.id]) {
@@ -11129,6 +11210,7 @@ function checkPendingReviews() {
             m.currency = userCurr;
             if (mLevel === 'LV0') {
               lv0Reward += mReward;
+              lv0CompletedInBatch += 1;
             } else {
               paidReward += mReward;
             }
@@ -11163,6 +11245,13 @@ function checkPendingReviews() {
           user.totalIncome = Number(((Number(user.totalIncome) || 0) + totalReward).toFixed(2));
           user.lifetimeEarnings = Number(((Number(user.lifetimeEarnings) || 0) + totalReward).toFixed(2));
           user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
+          if (lv0CompletedInBatch > 0) {
+            const lv0DoneNow = allMissions.filter(function(mm) {
+              const belongs = !mm.userPhone || normalizeBdPhone(mm.userPhone) === curPhone;
+              return belongs && String(mm.level || 'LV0').toUpperCase().trim() === 'LV0' && mm.status === 'complete';
+            }).length;
+            user.lv0CompletedTasks = Math.max((Number(user.lv0CompletedTasks) || 0) + lv0CompletedInBatch, lv0DoneNow);
+          }
 
           const dNow = new Date();
           const dDate = dNow.toISOString().split('T')[0];
@@ -11210,13 +11299,39 @@ function checkPendingReviews() {
             }).catch(function() {});
           }
         }
-        user.acceptedMissions = compactMissionsForCloud(allMissions.filter(function(m) {
+        const compactedMissions = compactMissionsForCloud(allMissions.filter(function(m) {
           return !m.userPhone || normalizeBdPhone(m.userPhone) === curPhone;
         }));
+        user.acceptedMissions = compactedMissions;
         localStorage.setItem('my_pass_available_bal', (Number(user.balance) || 0).toFixed(2));
         localStorage.setItem('aloSignedInUser', JSON.stringify(user));
 
-        const savePromise = dbSaveUser(user).catch(function() {});
+        const savePromise = (async function() {
+          try {
+            let targetToSave = user;
+            if (curPhone && totalReward > 0 && typeof dbGetUser === 'function') {
+              const freshCloud = await dbGetUser(curPhone).catch(function() { return null; });
+              if (freshCloud) {
+                const cloudBal = Number(freshCloud.balance) || 0;
+                const mergedBal = Number((cloudBal + totalReward).toFixed(2));
+                targetToSave = Object.assign({}, user, freshCloud, {
+                  balance: mergedBal,
+                  todayIncome: Number(((Number(freshCloud.todayIncome) || 0) + totalReward).toFixed(2)),
+                  totalIncome: Number(((Number(freshCloud.totalIncome) || 0) + totalReward).toFixed(2)),
+                  lifetimeEarnings: Number(((Number(freshCloud.lifetimeEarnings) || 0) + totalReward).toFixed(2)),
+                  completedMissions: (Number(freshCloud.completedMissions) || 0) + completedInBatch,
+                  lv0CompletedTasks: Math.max((Number(freshCloud.lv0CompletedTasks) || 0) + lv0CompletedInBatch, Number(user.lv0CompletedTasks) || 0),
+                  acceptedMissions: compactedMissions
+                });
+                localStorage.setItem('my_pass_available_bal', mergedBal.toFixed(2));
+                localStorage.setItem('aloSignedInUser', JSON.stringify(targetToSave));
+              }
+            }
+            await dbSaveUser(targetToSave);
+            updateUserDetails(targetToSave);
+            updateProfileMetrics();
+          } catch (e) {}
+        })();
         updateUserDetails(user);
         updateProfileMetrics();
 
@@ -11257,6 +11372,8 @@ function checkPendingReviews() {
       if (typeof refreshDailyMissionLimit === 'function') {
         refreshDailyMissionLimit(activePackageLevel || 'LV0');
       }
+      if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+      if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
       renderMissionRecords(activeMissionFilter);
     }
 
@@ -12687,7 +12804,8 @@ document.addEventListener('click', function(event) {
     if (!savedFundPass) {
       const needSetupMsg = tLang(lang, '⚠️ অনুগ্রহ করে প্রথমে ৬ ডিজিটের উত্তোলন পাসওয়ার্ড সেট করুন', '⚠️ Please set up your 6-digit withdrawal password first', '⚠️ يرجى إعداد كلمة مرور السحب المكونة من 6 أرقام أولاً');
       showToastNotification(needSetupMsg);
-      closeActionSheet();
+      closeWithdrawSheet();
+      previousDashboardPanel = 'my-pass';
       openDashboardPanel('fund-password-setup');
       return;
     }
@@ -13229,7 +13347,9 @@ document.addEventListener('click', function(event) {
       return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
     });
 
-    if (acceptedToday.length >= quota || allTodayAccepted.length >= userMaxQuota) {
+    const lv0AcceptSt = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
+    const lv0TotalLimitHit = Boolean(lv0AcceptSt && lv0AcceptSt.remainingAcceptableTasks <= 0);
+    if (acceptedToday.length >= quota || allTodayAccepted.length >= userMaxQuota || lv0TotalLimitHit) {
       showTaskCenterToast(tLang(lang, 'দৈনিক কোটা পূর্ণ', 'Daily Limit Reached', 'تم بلوغ الحد اليومي'));
       refreshDailyMissionLimit(activePackageLevel);
       return;
@@ -13276,7 +13396,8 @@ document.addEventListener('click', function(event) {
         return m.status !== 'failed' && isMissionIn24hQuotaWindow(m, doneNowMs);
       });
       const newAcceptedCount = currentMissions.length;
-      const reached = newAcceptedCount >= quota || allMissionsToday.length >= userMaxQuota;
+      const postLv0St = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
+      const reached = newAcceptedCount >= quota || allMissionsToday.length >= userMaxQuota || Boolean(postLv0St && postLv0St.remainingAcceptableTasks <= 0);
 
       if (reached) {
         // Immediately update all other unaccepted buttons in the list to 'সীমা পূর্ণ'
@@ -13380,6 +13501,8 @@ document.addEventListener('click', function(event) {
         showToastNotification(tLang(lang, 'কাজটি বাতিল করা হয়েছে এবং রেকর্ডে এককালীন সংরক্ষিত থাকবে', 'Task cancelled and archived', 'تم إلغاء المهمة وحفظها في السجل'));
         renderMissionRecords(activeMissionFilter);
         refreshDailyMissionLimit(activePackageLevel);
+        if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+        if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
       }
     }
     return;
@@ -13568,6 +13691,8 @@ if (confirmSubmitBtn) {
     if (typeof refreshDailyMissionLimit === 'function') {
       refreshDailyMissionLimit(activePackageLevel);
     }
+    if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
+    if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
 
     if (isAppealMode && typeof showToastNotification === 'function') {
       showToastNotification(
@@ -14913,7 +15038,9 @@ function renderSavingsPlanPanel() {
 window.renderSavingsPlanPanel = renderSavingsPlanPanel;
 window.getUserSavingsPlan = getUserSavingsPlan;
 
+let _isSubmittingSavings = false;
 function handleSavingsSubmission() {
+  if (_isSubmittingSavings) return;
   const inputEl = document.getElementById('savings-deposit-input');
   const btn = document.getElementById('savings-submit-btn');
   if (!inputEl || !btn) return;
@@ -14954,6 +15081,7 @@ function handleSavingsSubmission() {
     return;
   }
 
+  _isSubmittingSavings = true;
   const origHtml = btn.innerHTML;
   const origClass = btn.className;
   btn.disabled = true;
@@ -15097,7 +15225,7 @@ function handleSavingsSubmission() {
       showToastNotification(
         tLang(
           lang,
-          `🎉 অভিনন্দন! ৳ ${formatBanglaNumber(amount)} টাকার সঞ্চয় পরিকল্পনা সফলভাবে শুরু হয়েছে!`,
+          `🎉 অভিনন্দন! ${amtDisp} সঞ্চয় পরিকল্পনা সফলভাবে শুরু হয়েছে!`,
           `🎉 Congratulations! Your ${amtDisp} Savings Plan is now active!`,
           `🎉 تهانينا! تم تفعيل خطة الادخار بمبلغ ${amtDisp} بنجاح!`
         )
@@ -15106,6 +15234,8 @@ function handleSavingsSubmission() {
       btn.disabled = false;
       btn.className = origClass;
       btn.innerHTML = origHtml;
+    } finally {
+      _isSubmittingSavings = false;
     }
   }, 500);
 }
@@ -17074,8 +17204,9 @@ async function renderLuckySpinPanel() {
 }
 window.renderLuckySpinPanel = renderLuckySpinPanel;
 
+let _isLuckySpinRequesting = false;
 async function executeLuckySpin() {
-  if (isLuckySpinAnimating) return;
+  if (_isLuckySpinRequesting || isLuckySpinAnimating) return;
   const user = getCurrentUser();
   if (!user) {
     const l = getActiveLang();
@@ -17084,6 +17215,7 @@ async function executeLuckySpin() {
     return;
   }
 
+  _isLuckySpinRequesting = true;
   const lang = getActiveLang(user);
   const startBtn = document.getElementById('lucky-spin-start-btn');
   if (startBtn) startBtn.disabled = true;
@@ -17097,7 +17229,6 @@ async function executeLuckySpin() {
         'No draws available! Refer a Level 1 friend who recharges or purchases a package to unlock 1 spin.',
         'لا توجد محاولات متاحة! قم بدعوة صديق في المستوى الأول يقوم بالإيداع أو شراء باقة لفتح محاولة واحدة.'
       ));
-      if (startBtn) startBtn.disabled = false;
       return;
     }
 
@@ -17190,6 +17321,7 @@ async function executeLuckySpin() {
     console.error('Lucky Spin error:', err);
     showToastNotification(tLang(lang, 'স্পিন সম্পন্ন করতে সমস্যা হয়েছে, আবার চেষ্টা করুন।', 'Unable to complete spin, please try again.', 'تعذر إتمام السحب، يرجى المحاولة مرة أخرى.'));
   } finally {
+    _isLuckySpinRequesting = false;
     isLuckySpinAnimating = false;
     if (startBtn) startBtn.disabled = false;
   }

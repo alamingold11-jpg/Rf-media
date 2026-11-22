@@ -740,11 +740,30 @@ function renderRechargesTable() {
   }).join('');
 }
 
+const _inFlightTxActions = new Set();
+
 async function handleRechargeAction(txId, targetState) {
+  const lockKey = 'rc_' + String(txId);
+  if (_inFlightTxActions.has(lockKey)) return;
   const tx = getRechargeList().find(t => String(t.id) === String(txId)) || allTransactions.find(t => String(t.id) === String(txId));
   if (!tx) return;
 
-  const prevState = classifyStatus(tx.status);
+  _inFlightTxActions.add(lockKey);
+  try {
+  // Re-fetch authoritative transaction status from DB to prevent stale double-crediting
+  let liveTxStatus = tx.status;
+  try {
+    const { data: liveTxRow } = await supabaseClient
+      .from('transactions')
+      .select('status')
+      .eq('id', tx.id)
+      .maybeSingle();
+    if (liveTxRow && liveTxRow.status !== undefined) {
+      liveTxStatus = liveTxRow.status;
+    }
+  } catch (e) {}
+
+  const prevState = classifyStatus(liveTxStatus);
   if (prevState === targetState) {
     showToast(`Recharge is already marked as ${targetState}.`);
     return;
@@ -763,8 +782,6 @@ async function handleRechargeAction(txId, targetState) {
     actual: targetState === 'approved' ? amt : 0,
     updated_at: new Date().toISOString()
   };
-
-  try {
     // 1. Update transaction status (all rows matching this order_id/out_trade_no so deduped duplicates stay in sync)
     let txErr = null;
     if (orderKey) {
@@ -832,6 +849,8 @@ async function handleRechargeAction(txId, targetState) {
     await refreshAllData(false);
   } catch (err) {
     showToast('Error updating recharge: ' + (err.message || 'Unknown'), 'error');
+  } finally {
+    _inFlightTxActions.delete(lockKey);
   }
 }
 
@@ -960,23 +979,39 @@ function renderWithdrawalsTable() {
 }
 
 async function handleWithdrawAction(txId, targetState) {
+  const lockKey = 'wd_' + String(txId);
+  if (_inFlightTxActions.has(lockKey)) return;
   const tx = allTransactions.find(t => String(t.id) === String(txId));
   if (!tx) return;
 
-  const prevState = classifyStatus(tx.status);
-  if (prevState === targetState) {
-    showToast(`Withdrawal is already marked as ${targetState}.`);
-    return;
-  }
-
-  const newStatusStr = targetState === 'approved'
-    ? 'অনুমোদিত'
-    : (targetState === 'rejected' ? 'বাতিল (Rejected)' : 'মুলতবি (Pending)');
-
-  const amt = Number(tx.amount) || 0;
-  const normPhone = normalizePhone(tx.phone);
-
+  _inFlightTxActions.add(lockKey);
   try {
+    // Re-fetch authoritative status from DB to prevent stale double-refund or double-deduct
+    let liveTxStatus = tx.status;
+    try {
+      const { data: liveTxRow } = await supabaseClient
+        .from('transactions')
+        .select('status')
+        .eq('id', tx.id)
+        .maybeSingle();
+      if (liveTxRow && liveTxRow.status !== undefined) {
+        liveTxStatus = liveTxRow.status;
+      }
+    } catch (e) {}
+
+    const prevState = classifyStatus(liveTxStatus);
+    if (prevState === targetState) {
+      showToast(`Withdrawal is already marked as ${targetState}.`);
+      return;
+    }
+
+    const newStatusStr = targetState === 'approved'
+      ? 'অনুমোদিত'
+      : (targetState === 'rejected' ? 'বাতিল (Rejected)' : 'মুলতবি (Pending)');
+
+    const amt = Number(tx.amount) || 0;
+    const normPhone = normalizePhone(tx.phone);
+
     const { error: txErr } = await supabaseClient
       .from('transactions')
       .update({ status: newStatusStr, updated_at: new Date().toISOString() })
@@ -993,10 +1028,12 @@ async function handleWithdrawAction(txId, targetState) {
     // Transitioning rejected -> pending/approved re-deducts `amt`.
     let note = '';
     if (normPhone && amt > 0) {
+      const matchedUser = usersByPhone.get(normPhone) || allUsers.find(u => normalizePhone(u.phone || u.account_number) === normPhone);
+      const dbPhone = matchedUser ? matchedUser.phone : normPhone;
       const { data: userRow } = await supabaseClient
         .from('users')
         .select('*')
-        .eq('phone', normPhone)
+        .eq('phone', dbPhone)
         .maybeSingle();
 
       if (userRow) {
@@ -1023,7 +1060,7 @@ async function handleWithdrawAction(txId, targetState) {
               bkash_optional: JSON.stringify(rawOpt),
               updated_at: new Date().toISOString()
             })
-            .eq('phone', normPhone);
+            .eq('phone', userRow.phone);
         }
       }
     }
@@ -1033,6 +1070,8 @@ async function handleWithdrawAction(txId, targetState) {
     await refreshAllData(false);
   } catch (err) {
     showToast('Error updating withdrawal: ' + (err.message || 'Unknown'), 'error');
+  } finally {
+    _inFlightTxActions.delete(lockKey);
   }
 }
 

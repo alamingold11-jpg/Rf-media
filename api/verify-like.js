@@ -67,6 +67,9 @@ export default async function handler(req, res) {
   if (isYouTubeTask) {
     platformRules = `YOUTUBE / YOUTUBE SHORTS VERIFICATION RULES (READ CAREFULLY):
 - First confirm the screenshot shows a real YouTube or YouTube Shorts video screen (e.g., YouTube logo, youtube.com / m.youtube.com URL bar, Shorts right-side action bar with Like/Comment/Share & Subscribe button, or YouTube watch page).
+- CRITICAL — BLACK / DARK / LOADING VIDEO FRAMES ARE 100% VALID:
+  - A pitch-black, dark, dim, paused, buffering, or loading video frame behind the YouTube UI is completely normal and MUST BE ACCEPTED as long as the YouTube UI and an active Like icon are visible.
+  - NEVER return isLiked = false just because the video background is black or dark!
 - YouTube uses TWO valid Like icon styles depending on App vs Mobile Web (m.youtube.com/shorts) vs Desktop:
   1) HEART icon (commonly shown on m.youtube.com/shorts mobile web & newer YouTube Shorts right action bar above the like count and Comment icon):
      - LIKED (isLiked = true): A SOLID FILLED WHITE heart (completely opaque solid white interior, NOT hollow), or a solid filled red/pink/blue heart.
@@ -75,40 +78,50 @@ export default async function handler(req, res) {
      - LIKED (isLiked = true): A SOLID FILLED thumbs-up — solid WHITE on dark mode / Shorts overlay, OR solid BLUE, OR solid BLACK/DARK on light mode (completely filled interior).
      - NOT LIKED (isLiked = false): A HOLLOW / OUTLINED thumbs-up (thin outline only with empty/transparent interior).
 - CRITICAL: Unlike TikTok (where liked hearts turn red), on YouTube Shorts and YouTube Dark Mode the ACTIVE LIKED icon is SOLID WHITE! Do NOT mark isLiked = false just because the filled heart or thumbs-up is white.
-- If the screenshot is clearly a YouTube / YouTube Shorts video and the Like icon (heart OR thumbs-up) is solidly filled (solid white, blue, dark, or red), return isLiked = true.
+- If the screenshot shows the YouTube / YouTube Shorts UI (even over a black/dark/loading video frame) and the Like icon (heart OR thumbs-up) is solidly filled (solid white, blue, dark, or red), return isLiked = true.
 - Return isLiked = false ONLY if:
   - The Like icon is clearly a hollow unfilled outline (transparent center), OR
   - No Like icon is visible, OR
-  - It is NOT a YouTube / YouTube Shorts video screen (e.g., blank screen, random photo, selfie, chat screen, or home feed without an open video).
+  - There is NO YouTube UI at all (e.g., an empty image with zero UI controls, random photo, selfie, chat screen, or home feed without an open video).
 - Subscribe / Follow is optional — ONLY verify the Like icon state.`;
   } else if (isTikTokTask) {
-    platformRules = `TIKTOK VERIFICATION RULES:
-- Confirm this is a real TikTok video/reel screen.
+    platformRules = `TIKTOK VERIFICATION RULES (READ CAREFULLY):
+- Confirm the screenshot shows real TikTok video/reel player UI (e.g., right-side action bar with profile avatar / heart / comment / bookmark / share icons, top "Following / For You" tabs, video caption/username, or bottom TikTok navigation bar).
+- CRITICAL — BLACK / DARK / LOADING VIDEO FRAMES ARE 100% VALID:
+  - Many TikTok videos have a completely black, dark, fading, paused, or still-loading video background while the TikTok UI overlay (tabs, right-side icons, caption, bottom bar) is clearly visible.
+  - A black or dark video frame is 100% VALID and MUST PASS if the TikTok UI is visible and the Like heart is red/pink!
+  - NEVER reject a screenshot just because the video area is black, dark, or blank! Only reject an empty image with ZERO TikTok UI controls.
 - Check ONLY the Like heart icon on the right action bar:
-  - LIKED (isLiked = true): The heart icon MUST be filled/colored RED or PINK (active liked state).
+  - LIKED (isLiked = true): The heart icon is filled/colored RED, PINK, or CORAL-RED (active liked state), regardless of whether the video behind it is black, dark, or bright.
   - NOT LIKED (isLiked = false): A white, grey, or hollow/outlined heart means NOT liked.
-- Return isLiked = false if the heart is not red/pink, or if it is a blank screen, random photo, chat screen, or no active Like heart is visible.
-- Follow is optional — ONLY verify whether the Like heart is actively colored red/pink.`;
+- Return isLiked = false ONLY if the heart is NOT red/pink/coral, OR no Like heart is visible, OR there is no TikTok UI at all (e.g., empty image with no icons/text, random photo, chat screen).
+- Follow is optional — ONLY verify whether the Like heart is actively colored red/pink/coral.`;
   } else if (isFacebookTask) {
-    platformRules = `FACEBOOK VERIFICATION RULES:
-- Confirm this is a real Facebook post, video, or Reels screen.
+    platformRules = `FACEBOOK VERIFICATION RULES (READ CAREFULLY):
+- Confirm the screenshot shows real Facebook post, video, or Reels UI (e.g., Facebook action bar with Like/Comment/Share buttons, Reels right-side action icons, or Facebook post chrome).
+- CRITICAL — BLACK / DARK / LOADING VIDEO FRAMES ARE 100% VALID:
+  - A black, dark, paused, buffering, or loading video background behind the Facebook/Reels UI is 100% VALID and MUST PASS as long as the Facebook UI and an active Like/Reaction icon are visible.
+  - NEVER reject a screenshot just because the video area is black or dark!
 - Check ONLY the Like / Reaction button:
-  - LIKED (isLiked = true): The thumbs-up "Like" icon/text MUST be colored/highlighted BLUE (or an active colored Facebook reaction like red Love heart / Care / Haha).
+  - LIKED (isLiked = true): The thumbs-up "Like" icon/text is colored/highlighted BLUE (or an active colored Facebook reaction like red Love heart / Care / Haha / Wow).
   - NOT LIKED (isLiked = false): A plain grey or hollow white outline thumbs-up means NOT liked.
-- Return isLiked = false if the Like icon is uncolored/inactive, or if it is a blank screen, random photo, chat screen, or no active Like icon is visible.
+- Return isLiked = false ONLY if the Like icon is uncolored/inactive, OR no Like icon is visible, OR there is no Facebook UI at all (e.g., empty image with no icons/text, random photo, chat screen).
 - Follow is optional — ONLY verify whether the Like/reaction button is actively pressed.`;
   } else {
-    platformRules = `SOCIAL MEDIA VERIFICATION RULES:
-- Confirm this is an authentic social media post/video/reel/shorts screen (${expectedPlatform}).
+    platformRules = `SOCIAL MEDIA VERIFICATION RULES (READ CAREFULLY):
+- Confirm the screenshot shows authentic social media post/video/reel/shorts UI (${expectedPlatform}).
+- CRITICAL — BLACK / DARK / LOADING VIDEO FRAMES ARE 100% VALID:
+  - A black, dark, dim, paused, or loading video background behind the social media UI overlay is completely normal and MUST BE ACCEPTED whenever the app UI and an active Like icon are clearly visible.
+  - NEVER reject a screenshot just because the video content itself is black/dark!
 - Check ONLY the Like button state:
-  - TikTok: Heart icon on the right action bar MUST be filled RED or PINK (white/grey heart = false).
-  - Facebook: Thumbs-up "Like" button (or reaction like Love/Care) MUST be colored BLUE or active colored reaction (plain grey/white outline = false).
-  - YouTube / YouTube Shorts: The Like icon (either a HEART on m.youtube.com/shorts or a THUMBS-UP on YouTube app/web) MUST be SOLID/FILLED — including SOLID WHITE on dark mode/Shorts, solid blue, or solid dark on light mode (only a hollow unfilled outline = false).
-- Return isLiked = false if the Like icon is unliked/hollow, missing, or if it is a blank screen, random photo, selfie, or chat screen.
+  - TikTok: Heart icon on the right action bar is filled RED, PINK, or CORAL (white/grey heart = false).
+  - Facebook: Thumbs-up "Like" button (or reaction like Love/Care) is colored BLUE or active colored reaction (plain grey/white outline = false).
+  - YouTube / YouTube Shorts: The Like icon (either a HEART on m.youtube.com/shorts or a THUMBS-UP on YouTube app/web) is SOLID/FILLED — including SOLID WHITE on dark mode/Shorts, solid blue, or solid dark on light mode (only a hollow unfilled outline = false).
+- Return isLiked = false ONLY if the Like icon is unliked/hollow, missing, or there is no social media UI at all (random photo, selfie, chat screen, or completely empty image with no UI).
 - Follow/subscribe is optional — ONLY verify whether the LIKE icon itself is clearly active/pressed.`;
   }
 
-  const promptText = `You are a precise automated screenshot verifier checking ONLY whether the user clicked "Like" on a ${expectedPlatform} video/post screenshot.
+  const promptText = `You are a precise automated screenshot verifier checking ONLY whether the user clicked "Like" on a ${expectedPlatform} video/post screenshot. A black/dark/loading video frame with visible app UI and an active Like button is ALWAYS VALID (isLiked = true).
 
 ${platformRules}
 
