@@ -296,11 +296,21 @@ let _isRefreshingData = false;
 let _pendingRefreshAfterCurrent = false;
 let _realtimeRefreshTimer = null;
 
+function isAdminFormFocused() {
+  const active = document.activeElement;
+  if (!active) return false;
+  const tag = String(active.tagName || '').toUpperCase();
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') return false;
+  return Boolean(active.closest('#package-controls-form, #platform-controls-form, #salary-page-form, #edit-user-modal, #manual-adjust-modal'));
+}
+
 function scheduleRealtimeRefresh() {
   if (_realtimeRefreshTimer) clearTimeout(_realtimeRefreshTimer);
   _realtimeRefreshTimer = setTimeout(() => {
     _realtimeRefreshTimer = null;
-    if (isAuthenticated()) refreshAllData(false);
+    if (!isAuthenticated()) return;
+    if (isAdminFormFocused()) return;
+    refreshAllData(false);
   }, 1500);
 }
 
@@ -773,31 +783,36 @@ async function handleRechargeAction(txId, targetState) {
     ? 'অনুমোদিত'
     : (targetState === 'rejected' ? 'অসফল (Failed)' : 'মুলতবি (Pending)');
 
+  const extractOrderToken = str => {
+    const s = String(str || '');
+    const hashM = s.match(/#([A-Za-z0-9_-]{4,}|0x[a-fA-F0-9]{64})/);
+    if (hashM && hashM[1]) return hashM[1];
+    const tokM = s.match(/\b((?:ORD|USDT|WD|VIP|ADM)\d+|onchain_\d+|0x[a-fA-F0-9]{64})\b/);
+    return tokM ? tokM[1] : '';
+  };
   const amt = Number(tx.amount) || 0;
   const normPhone = normalizePhone(tx.phone);
-  const orderKey = String(tx.order_id || tx.out_trade_no || '').trim();
+  const orderKey = String(tx.order_id || tx.out_trade_no || extractOrderToken(tx.method || '') || '').trim();
   const txUpdatePayload = {
     status: newStatusStr,
     ratio: targetState === 'approved' ? '100%' : '0%',
-    actual: targetState === 'approved' ? amt : 0,
-    updated_at: new Date().toISOString()
+    actual: targetState === 'approved' ? amt : 0
   };
-    // 1. Update transaction status (all rows matching this order_id/out_trade_no so deduped duplicates stay in sync)
-    let txErr = null;
+    // 1. Update transaction status using real columns only (transactions table has no updated_at/order_id columns)
+    const matchingIds = [tx.id];
     if (orderKey) {
-      const resByOrd = await supabaseClient
-        .from('transactions')
-        .update(txUpdatePayload)
-        .eq('type', 'deposit')
-        .or(`order_id.eq.${orderKey},out_trade_no.eq.${orderKey}`);
-      txErr = resByOrd.error;
-    } else {
-      const resById = await supabaseClient
-        .from('transactions')
-        .update(txUpdatePayload)
-        .eq('id', tx.id);
-      txErr = resById.error;
+      allTransactions.forEach(row => {
+        if (!row || String(row.id) === String(tx.id)) return;
+        if (String(row.type || '').toLowerCase() !== 'deposit') return;
+        if (normalizePhone(row.phone) !== normPhone) return;
+        const rowTok = String(row.order_id || row.out_trade_no || extractOrderToken(row.method || '') || '').trim();
+        if (rowTok && rowTok === orderKey) matchingIds.push(row.id);
+      });
     }
+    const txRes = matchingIds.length > 1
+      ? await supabaseClient.from('transactions').update(txUpdatePayload).in('id', matchingIds)
+      : await supabaseClient.from('transactions').update(txUpdatePayload).eq('id', tx.id);
+    const txErr = txRes.error;
 
     if (txErr) {
       showToast('Failed to update recharge status: ' + txErr.message, 'error');
@@ -1014,7 +1029,7 @@ async function handleWithdrawAction(txId, targetState) {
 
     const { error: txErr } = await supabaseClient
       .from('transactions')
-      .update({ status: newStatusStr, updated_at: new Date().toISOString() })
+      .update({ status: newStatusStr })
       .eq('id', tx.id);
 
     if (txErr) {
@@ -2224,10 +2239,30 @@ function syncEditUserPackageOptions(packagesObj) {
   if (currentVal) selectEl.value = currentVal;
 }
 
-function renderPackageConfigEditor(packagesObj) {
+let packageEditorDirty = false;
+let platformControlsDirty = false;
+let _lastRenderedPackagesJson = '';
+
+function isEditingInsideForm(formId) {
+  const active = document.activeElement;
+  if (!active) return false;
+  const tag = String(active.tagName || '').toUpperCase();
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') return false;
+  return Boolean(active.closest('#' + formId));
+}
+
+function renderPackageConfigEditor(packagesObj, force = false) {
   const container = document.getElementById('package-configs-editor');
   if (!container) return;
   const pkgs = normalizePackagesMap(packagesObj);
+  const nextJson = JSON.stringify(pkgs);
+  if (!force && (packageEditorDirty || isEditingInsideForm('package-controls-form'))) {
+    return;
+  }
+  if (!force && container.querySelector('.pkg-cfg-input') && nextJson === _lastRenderedPackagesJson) {
+    return;
+  }
+  _lastRenderedPackagesJson = nextJson;
 
   container.innerHTML = PACKAGE_LEVEL_KEYS.map(lvl => {
     const p = pkgs[lvl];
@@ -2326,7 +2361,8 @@ function renderPackageConfigEditor(packagesObj) {
   }).join('');
 
   container.querySelectorAll('.pkg-cfg-input').forEach(inp => {
-    inp.addEventListener('input', () => {
+    const onPkgInput = () => {
+      packageEditorDirty = true;
       const lvl = inp.dataset.pkgLevel;
       if (!lvl) return;
       const countInp = container.querySelector(`[data-pkg-level="${lvl}"][data-pkg-field="count"]`);
@@ -2364,7 +2400,9 @@ function renderPackageConfigEditor(packagesObj) {
           : `$${pr.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD · Unlock now`;
       }
       if (titleEl && nameInp) titleEl.textContent = nameInp.value.trim() || lvl;
-    });
+    };
+    inp.addEventListener('input', onPkgInput);
+    inp.addEventListener('change', () => { packageEditorDirty = true; });
   });
 }
 
@@ -2407,7 +2445,8 @@ function collectPackagesFromForm() {
 }
 
 function resetPackageConfigsToDefault() {
-  renderPackageConfigEditor(DEFAULT_PACKAGE_CONFIGS);
+  renderPackageConfigEditor(DEFAULT_PACKAGE_CONFIGS, true);
+  packageEditorDirty = true;
   showToast('Default USD VIP package values loaded. Click "Save Package & Task Settings" to sync live.', 'success');
 }
 
@@ -2759,7 +2798,7 @@ async function handleSalaryPageSave(e) {
   }
 }
 
-function hydratePlatformControlsForm(sysRow) {
+function hydratePlatformControlsForm(sysRow, force = false) {
   let parsed = {};
   if (sysRow && sysRow.bkash_optional) {
     try {
@@ -2776,21 +2815,23 @@ function hydratePlatformControlsForm(sysRow) {
   });
   latestSystemConfig = cfg;
 
-  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-  setVal('pc-withdraw-enabled', cfg.withdrawEnabled === false ? 'false' : 'true');
-  setVal('pc-min-withdraw', cfg.minWithdraw);
-  setVal('pc-withdraw-ratio', cfg.withdrawNetPercent);
-  setVal('pc-min-recharge', cfg.minRecharge);
-  setVal('pc-usdt-rate', cfg.usdtRate);
-  setVal('pc-usdt-address', cfg.usdtAddress);
-  setVal('pc-telegram-url', cfg.telegramUrl);
-  setVal('pc-manager-id', cfg.managerId);
-  setVal('pc-bd-real-otp-enabled', cfg.bdRealOtpEnabled === false ? 'false' : 'true');
-  setVal('pc-cpanel-otp-url', cfg.cpanelOtpUrl || '');
+  if (force || (!platformControlsDirty && !isEditingInsideForm('platform-controls-form'))) {
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+    setVal('pc-withdraw-enabled', cfg.withdrawEnabled === false ? 'false' : 'true');
+    setVal('pc-min-withdraw', cfg.minWithdraw);
+    setVal('pc-withdraw-ratio', cfg.withdrawNetPercent);
+    setVal('pc-min-recharge', cfg.minRecharge);
+    setVal('pc-usdt-rate', cfg.usdtRate);
+    setVal('pc-usdt-address', cfg.usdtAddress);
+    setVal('pc-telegram-url', cfg.telegramUrl);
+    setVal('pc-manager-id', cfg.managerId);
+    setVal('pc-bd-real-otp-enabled', cfg.bdRealOtpEnabled === false ? 'false' : 'true');
+    setVal('pc-cpanel-otp-url', cfg.cpanelOtpUrl || '');
+  }
 
-  renderPackageConfigEditor(normalizedPkgs);
+  renderPackageConfigEditor(normalizedPkgs, force);
   syncEditUserPackageOptions(normalizedPkgs);
-  hydrateSalaryPageEditor(normalizedSalary, false);
+  hydrateSalaryPageEditor(normalizedSalary, force);
 }
 
 async function saveSystemConfigPayload(configObj, successMsg) {
@@ -2868,7 +2909,10 @@ async function handlePlatformControlsSave(e) {
     salaryPage: normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage)
   });
 
-  await saveSystemConfigPayload(configObj, 'Platform rules saved and synced to live website.');
+  const saved = await saveSystemConfigPayload(configObj, 'Platform rules saved and synced to live website.');
+  if (saved) {
+    platformControlsDirty = false;
+  }
 }
 
 async function handlePackageControlsSave(e) {
@@ -2879,7 +2923,11 @@ async function handlePackageControlsSave(e) {
     salaryPage: normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage)
   });
 
-  await saveSystemConfigPayload(configObj, 'VIP Packages (USD price, tasks, reward & validity days) saved and synced live!');
+  const saved = await saveSystemConfigPayload(configObj, 'VIP Packages (USD price, tasks, reward & validity days) saved and synced live!');
+  if (saved) {
+    packageEditorDirty = false;
+    renderPackageConfigEditor(packagesObj, true);
+  }
 }
 
 // ============================================================================
@@ -2940,7 +2988,7 @@ async function enterAdminShell(username) {
   const setUserInp = document.getElementById('settings-admin-username');
   if (setUserInp) setUserInp.value = creds.username;
 
-  renderPackageConfigEditor(latestSystemConfig.packages);
+  renderPackageConfigEditor(latestSystemConfig.packages, true);
   syncEditUserPackageOptions(latestSystemConfig.packages);
   hydrateSalaryPageEditor(latestSystemConfig.salaryPage, true);
   initSupabaseClient();
@@ -2950,7 +2998,8 @@ async function enterAdminShell(username) {
   autoRefreshTimer = setInterval(() => {
     if (document.hidden || !isAuthenticated()) return;
     const editModalOpen = !document.getElementById('edit-user-modal')?.classList.contains('hidden');
-    if (editModalOpen) return;
+    const adjustModalOpen = !document.getElementById('manual-adjust-modal')?.classList.contains('hidden');
+    if (editModalOpen || adjustModalOpen || isAdminFormFocused()) return;
     refreshAllData(false);
   }, 45000);
 }
@@ -2959,7 +3008,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-login-form')?.addEventListener('submit', handleLoginSubmit);
   document.getElementById('edit-user-form')?.addEventListener('submit', handleSaveUserForm);
   document.getElementById('manual-adjust-form')?.addEventListener('submit', handleManualAdjustSubmit);
-  document.getElementById('platform-controls-form')?.addEventListener('submit', handlePlatformControlsSave);
+  const platformForm = document.getElementById('platform-controls-form');
+  platformForm?.addEventListener('submit', handlePlatformControlsSave);
+  platformForm?.addEventListener('input', () => { platformControlsDirty = true; });
+  platformForm?.addEventListener('change', () => { platformControlsDirty = true; });
   document.getElementById('package-controls-form')?.addEventListener('submit', handlePackageControlsSave);
   document.getElementById('salary-page-form')?.addEventListener('submit', handleSalaryPageSave);
   document.querySelectorAll('.sal-meta-inp').forEach(el => {
