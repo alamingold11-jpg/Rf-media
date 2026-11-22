@@ -109,12 +109,12 @@ export default async function handler(req, res) {
       return res.status(403).json({ success: false, message: 'Forbidden origin' });
     }
 
-    const sweepSecret = String(process.env.CRYPTO_SWEEP_SECRET || '').trim();
+    const sweepSecret = String(process.env.CRYPTO_SWEEP_SECRET || process.env.SWEEP_SECRET || '').trim();
     if (!sweepSecret) {
       return res.status(503).json({
         success: false,
         skipped: true,
-        message: 'CRYPTO_SWEEP_SECRET is not configured on server'
+        message: 'CRYPTO_SWEEP_SECRET / SWEEP_SECRET is not configured on server'
       });
     }
 
