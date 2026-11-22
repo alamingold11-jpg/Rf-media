@@ -321,9 +321,13 @@
               <button type="button" data-filter="rejected" onclick="setRechargeFilter('rejected')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Rejected</button>
               <button type="button" data-filter="today" onclick="setRechargeFilter('today')" class="rc-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Today</button>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <input id="recharge-search-input" type="text" oninput="renderRechargesTable()" placeholder="Search phone, order ID..."
-                class="w-full sm:w-64 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
+                class="flex-1 min-w-[160px] sm:w-56 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-slate-400" />
+              <button type="button" onclick="openUsdtWalletsModal()"
+                class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-xs font-semibold text-white cursor-pointer">
+                USDT Wallets
+              </button>
               <button type="button" onclick="openManualAdjustModal('deposit')"
                 class="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
                 + Add Recharge
@@ -1112,10 +1116,47 @@
     </div>
   </div>
 
+  <!-- =========================================================
+       MODAL: USDT DEPOSIT WALLETS & AUTO-SWEEP TO TRUST WALLET
+  ========================================================== -->
+  <div id="usdt-wallets-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-900/45">
+    <div class="w-full max-w-2xl max-h-[88vh] bg-white rounded-xl shadow-xl overflow-hidden flex flex-col">
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">USDT Deposit Wallets (BEP20)</h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">Check live on-chain USDT balance per user &amp; collect to Trust Wallet</p>
+        </div>
+        <button type="button" onclick="closeUsdtWalletsModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="px-5 py-3 bg-slate-50/80 border-b border-slate-100 space-y-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+          <input id="usdt-wallet-search-input" type="text" oninput="renderUsdtWalletsList()" placeholder="Search phone, member ID, or 0x address..."
+            class="flex-1 min-w-[170px] px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400" />
+          <button type="button" id="usdt-scan-all-btn" onclick="scanAllUsdtWallets()"
+            class="shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-xs font-semibold text-white cursor-pointer">
+            Scan All
+          </button>
+          <button type="button" id="usdt-sweep-all-btn" onclick="adminSweepAllUsdtWallets()"
+            class="hidden shrink-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold text-white cursor-pointer">
+            Collect All to Trust Wallet
+          </button>
+        </div>
+        <div id="usdt-wallets-summary" class="text-[11px] font-medium text-slate-600 flex flex-wrap items-center justify-between gap-2">
+          <span>Ready to scan user BEP20 wallets...</span>
+        </div>
+      </div>
+
+      <div id="usdt-wallets-list" class="p-4 overflow-y-auto flex-1 space-y-2.5 text-xs"></div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="admin-toast" class="fixed bottom-5 right-5 z-[60] hidden max-w-sm bg-slate-900 text-white px-4 py-2.5 rounded-lg shadow-lg text-xs font-medium"></div>
 
   <script src="/admin-config.js?v=20261121p"></script>
-  <script src="/admin-panel.js?v=20261121q"></script>
+  <script src="/admin-panel.js?v=20261121r"></script>
 </body>
 </html>

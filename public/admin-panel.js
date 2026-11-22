@@ -3067,6 +3067,316 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ============================================================================
+// USDT DEPOSIT WALLETS MONITOR & COLLECT TO TRUST WALLET
+// ============================================================================
+let usdtWalletEntries = [];
+let usdtWalletScanRunning = false;
+
+function getAdminCryptoUserId(u) {
+  if (!u) return 1;
+  if (u.member_id) {
+    const digits = String(u.member_id).replace(/\D/g, '');
+    if (digits.length >= 1) return parseInt(digits.slice(-9), 10) || 1;
+  }
+  const rawPhone = u.phone || u.account_number || '';
+  const phoneDigits = String(rawPhone).replace(/\D/g, '');
+  if (phoneDigits.length >= 4) return parseInt(phoneDigits.slice(-9), 10) || 1;
+  return 1;
+}
+
+function buildInitialUsdtWalletEntries() {
+  const realUsers = (Array.isArray(allUsers) ? allUsers : []).filter(u => {
+    const p = String((u && u.phone) || '').trim();
+    return p && p !== 'SYSTEM_CONFIG';
+  });
+  const existingMap = new Map(usdtWalletEntries.map(e => [String(e.phone), e]));
+  usdtWalletEntries = realUsers.map(u => {
+    const prev = existingMap.get(String(u.phone));
+    const cryptoUserId = getAdminCryptoUserId(u);
+    return {
+      phone: String(u.phone || ''),
+      name: String(u.name || 'Member'),
+      memberId: String(u.member_id || ''),
+      cryptoUserId,
+      address: prev ? prev.address : '',
+      usdtBalance: prev ? prev.usdtBalance : null,
+      checked: prev ? prev.checked : false,
+      sweeping: false,
+      error: ''
+    };
+  });
+}
+
+function openUsdtWalletsModal() {
+  const modal = document.getElementById('usdt-wallets-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  buildInitialUsdtWalletEntries();
+  renderUsdtWalletsList();
+  scanAllUsdtWallets();
+}
+
+function closeUsdtWalletsModal() {
+  const modal = document.getElementById('usdt-wallets-modal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function updateUsdtWalletsSummary(progressText) {
+  const summaryEl = document.getElementById('usdt-wallets-summary');
+  const sweepAllBtn = document.getElementById('usdt-sweep-all-btn');
+  const checkedCount = usdtWalletEntries.filter(e => e.checked).length;
+  const funded = usdtWalletEntries.filter(e => (Number(e.usdtBalance) || 0) >= 0.01);
+  const sweepable = usdtWalletEntries.filter(e => (Number(e.usdtBalance) || 0) >= 1);
+  const totalUsdt = funded.reduce((acc, e) => acc + (Number(e.usdtBalance) || 0), 0);
+
+  if (summaryEl) {
+    const leftText = progressText || `Checked ${checkedCount}/${usdtWalletEntries.length} users · ${funded.length} wallet(s) holding USDT`;
+    summaryEl.innerHTML = `
+      <span>${escapeHtml(leftText)}</span>
+      <span class="font-mono font-bold ${totalUsdt > 0 ? 'text-emerald-700' : 'text-slate-600'}">Unswept Total: ${totalUsdt.toFixed(2)} USDT</span>
+    `;
+  }
+  if (sweepAllBtn) {
+    if (sweepable.length > 0) {
+      sweepAllBtn.classList.remove('hidden');
+      sweepAllBtn.textContent = `Collect All (${sweepable.length}) to Trust Wallet`;
+    } else {
+      sweepAllBtn.classList.add('hidden');
+    }
+  }
+}
+
+function renderUsdtWalletsList() {
+  const listEl = document.getElementById('usdt-wallets-list');
+  if (!listEl) return;
+  const q = String((document.getElementById('usdt-wallet-search-input') && document.getElementById('usdt-wallet-search-input').value) || '').trim().toLowerCase();
+
+  const filtered = usdtWalletEntries.filter(e => {
+    if (!q) return true;
+    return (
+      e.phone.toLowerCase().includes(q) ||
+      e.memberId.toLowerCase().includes(q) ||
+      String(e.cryptoUserId).includes(q) ||
+      e.address.toLowerCase().includes(q)
+    );
+  });
+
+  // Always show wallets with on-chain USDT balance at the very top
+  filtered.sort((a, b) => {
+    const ba = Number(a.usdtBalance) || 0;
+    const bb = Number(b.usdtBalance) || 0;
+    if (bb !== ba) return bb - ba;
+    return a.phone.localeCompare(b.phone);
+  });
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div class="py-8 text-center text-slate-400 text-xs">No matching user wallets found.</div>`;
+    updateUsdtWalletsSummary();
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(e => {
+    const bal = e.usdtBalance === null ? null : (Number(e.usdtBalance) || 0);
+    const hasFunds = bal !== null && bal >= 1;
+    const hasDust = bal !== null && bal > 0 && bal < 1;
+    const shortAddr = e.address ? `${e.address.slice(0, 8)}...${e.address.slice(-6)}` : 'Not checked yet';
+    const bscHref = /^0x[a-fA-F0-9]{40}$/.test(e.address) ? `https://bscscan.com/address/${e.address}` : '';
+    const balBadge = bal === null
+      ? `<span class="text-slate-400 font-mono">--</span>`
+      : `<span class="font-mono font-bold ${hasFunds ? 'text-emerald-700' : (hasDust ? 'text-amber-600' : 'text-slate-600')}">${bal.toFixed(2)} USDT</span>`;
+
+    return `
+      <div class="p-3 rounded-lg border ${hasFunds ? 'border-emerald-300 bg-emerald-50/40' : 'border-slate-200 bg-white'} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div class="min-w-0 space-y-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-mono font-bold text-slate-900">${escapeHtml(e.phone)}</span>
+            <span class="text-[11px] text-slate-500">ID: ${escapeHtml(e.memberId || ('#' + e.cryptoUserId))} (#${e.cryptoUserId})</span>
+            ${e.error ? `<span class="text-[11px] text-rose-600">${escapeHtml(e.error)}</span>` : ''}
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-mono">
+            <span>${escapeHtml(shortAddr)}</span>
+            ${e.address ? `<button type="button" onclick="copyToClipboard('${escapeHtml(e.address)}')" class="text-blue-600 hover:underline font-sans cursor-pointer">Copy</button>` : ''}
+            ${bscHref ? `<a href="${bscHref}" target="_blank" rel="noopener noreferrer" class="text-amber-600 hover:underline font-sans">BscScan ↗</a>` : ''}
+          </div>
+        </div>
+        <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+          <div class="text-right">${balBadge}</div>
+          <button type="button" onclick="adminRecheckSingleUsdtWallet(${e.cryptoUserId}, '${escapeHtml(e.phone)}')"
+            class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold cursor-pointer">
+            Check
+          </button>
+          ${hasFunds ? `
+            <button type="button" ${e.sweeping ? 'disabled' : ''} onclick="adminSweepUsdtWallet(${e.cryptoUserId}, '${escapeHtml(e.phone)}')"
+              class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-[11px] font-semibold cursor-pointer">
+              ${e.sweeping ? 'Collecting...' : 'Collect to Trust Wallet'}
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateUsdtWalletsSummary();
+}
+
+async function fetchSingleUsdtWalletEntry(entry) {
+  try {
+    const resp = await fetch(`/api/crypto?action=check&userId=${entry.cryptoUserId}`);
+    if (!resp.ok) {
+      entry.error = `HTTP ${resp.status}`;
+      return entry;
+    }
+    const data = await resp.json();
+    if (data && data.success) {
+      entry.address = String(data.address || entry.address || '');
+      entry.usdtBalance = parseFloat(data.usdt_balance || 0) || 0;
+      entry.checked = true;
+      entry.error = '';
+    } else {
+      entry.error = (data && (data.error || data.message)) || 'Check failed';
+    }
+  } catch (err) {
+    entry.error = 'Network error';
+  }
+  return entry;
+}
+
+async function scanAllUsdtWallets() {
+  if (usdtWalletScanRunning) return;
+  buildInitialUsdtWalletEntries();
+  if (usdtWalletEntries.length === 0) {
+    renderUsdtWalletsList();
+    return;
+  }
+  usdtWalletScanRunning = true;
+  const scanBtn = document.getElementById('usdt-scan-all-btn');
+  if (scanBtn) {
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'Scanning...';
+  }
+
+  try {
+    const batchSize = 5;
+    for (let i = 0; i < usdtWalletEntries.length; i += batchSize) {
+      const batch = usdtWalletEntries.slice(i, i + batchSize);
+      updateUsdtWalletsSummary(`Scanning ${Math.min(i + batchSize, usdtWalletEntries.length)}/${usdtWalletEntries.length} wallets...`);
+      await Promise.all(batch.map(entry => fetchSingleUsdtWalletEntry(entry)));
+      renderUsdtWalletsList();
+    }
+    updateUsdtWalletsSummary();
+  } finally {
+    usdtWalletScanRunning = false;
+    if (scanBtn) {
+      scanBtn.disabled = false;
+      scanBtn.textContent = 'Scan All';
+    }
+  }
+}
+
+async function adminRecheckSingleUsdtWallet(cryptoUserId, phone) {
+  const entry = usdtWalletEntries.find(e => e.phone === String(phone) || e.cryptoUserId === Number(cryptoUserId));
+  if (!entry) return;
+  entry.error = 'Checking...';
+  renderUsdtWalletsList();
+  await fetchSingleUsdtWalletEntry(entry);
+  renderUsdtWalletsList();
+  showToast(`${entry.phone}: ${(Number(entry.usdtBalance) || 0).toFixed(2)} USDT on-chain`, 'info');
+}
+
+async function resetUserClaimedUsdtOnchain(phone) {
+  if (!supabaseClient || !phone) return;
+  try {
+    const { data: uRow } = await supabaseClient
+      .from('users')
+      .select('id, bkash_optional')
+      .eq('phone', String(phone))
+      .maybeSingle();
+    if (!uRow) return;
+    let opt = {};
+    if (uRow.bkash_optional) {
+      try {
+        opt = typeof uRow.bkash_optional === 'string' ? JSON.parse(uRow.bkash_optional) : Object.assign({}, uRow.bkash_optional);
+      } catch (e) { opt = {}; }
+    }
+    opt.claimed_usdt_onchain = 0;
+    await supabaseClient
+      .from('users')
+      .update({
+        bkash_optional: JSON.stringify(opt),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', uRow.id);
+  } catch (e) {}
+}
+
+async function adminSweepUsdtWallet(cryptoUserId, phone) {
+  const entry = usdtWalletEntries.find(e => e.phone === String(phone) || e.cryptoUserId === Number(cryptoUserId));
+  if (!entry || entry.sweeping) return false;
+  entry.sweeping = true;
+  entry.error = '';
+  renderUsdtWalletsList();
+
+  try {
+    const resp = await fetch(`/api/crypto?action=sweep&userId=${entry.cryptoUserId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ userId: entry.cryptoUserId })
+    });
+    const data = await resp.json().catch(() => ({ success: false, message: 'Invalid response' }));
+    if (resp.ok && data && data.success) {
+      const sweptAmt = data.swept_usdt || entry.usdtBalance;
+      entry.usdtBalance = 0;
+      entry.error = '';
+      await resetUserClaimedUsdtOnchain(entry.phone);
+      showToast(`Collected ${sweptAmt} USDT from ${entry.phone} to Trust Wallet!`, 'success');
+      return true;
+    } else {
+      const errMsg = (data && (data.message || data.error)) || `Sweep failed (${resp.status})`;
+      entry.error = errMsg;
+      showToast(errMsg, 'error');
+      return false;
+    }
+  } catch (err) {
+    entry.error = 'Network error';
+    showToast('Sweep request failed: ' + (err.message || 'Network error'), 'error');
+    return false;
+  } finally {
+    entry.sweeping = false;
+    renderUsdtWalletsList();
+  }
+}
+
+async function adminSweepAllUsdtWallets() {
+  const targets = usdtWalletEntries.filter(e => (Number(e.usdtBalance) || 0) >= 1 && !e.sweeping);
+  if (targets.length === 0) {
+    showToast('No wallets with >= 1.00 USDT to collect.', 'info');
+    return;
+  }
+  const btn = document.getElementById('usdt-sweep-all-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Collecting...';
+  }
+  let okCount = 0;
+  try {
+    for (const entry of targets) {
+      const ok = await adminSweepUsdtWallet(entry.cryptoUserId, entry.phone);
+      if (ok) okCount++;
+    }
+    showToast(`Collected ${okCount}/${targets.length} wallet(s) to Trust Wallet.`, okCount > 0 ? 'success' : 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+    updateUsdtWalletsSummary();
+  }
+}
+
 // Expose inline handlers on window cleanly
 window.switchSection = switchSection;
 window.toggleMobileSidebar = toggleMobileSidebar;
@@ -3104,3 +3414,10 @@ window.resetPackageConfigsToDefault = resetPackageConfigsToDefault;
 window.resetDatabaseDefaults = resetDatabaseDefaults;
 window.exportCsv = exportCsv;
 window.copyToClipboard = copyToClipboard;
+window.openUsdtWalletsModal = openUsdtWalletsModal;
+window.closeUsdtWalletsModal = closeUsdtWalletsModal;
+window.scanAllUsdtWallets = scanAllUsdtWallets;
+window.renderUsdtWalletsList = renderUsdtWalletsList;
+window.adminRecheckSingleUsdtWallet = adminRecheckSingleUsdtWallet;
+window.adminSweepUsdtWallet = adminSweepUsdtWallet;
+window.adminSweepAllUsdtWallets = adminSweepAllUsdtWallets;
