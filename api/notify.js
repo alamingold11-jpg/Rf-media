@@ -96,13 +96,57 @@ export default async function handler(req, res) {
           return res.status(200).send('success');
         }
 
+        // Resolve live BDT -> USD conversion rate from SYSTEM_CONFIG (fallback 126)
+        let bdtPerUsd = 126;
+        try {
+          const { data: sysRow } = await supabase
+            .from('users')
+            .select('bkash_optional')
+            .eq('phone', 'SYSTEM_CONFIG')
+            .maybeSingle();
+          if (sysRow && sysRow.bkash_optional) {
+            const cfg = typeof sysRow.bkash_optional === 'string'
+              ? JSON.parse(sysRow.bkash_optional)
+              : sysRow.bkash_optional;
+            const cfgRate = Number(cfg && cfg.usdtRate);
+            if (Number.isFinite(cfgRate) && cfgRate > 0) bdtPerUsd = cfgRate;
+          }
+        } catch (rateErr) {}
+
+        // WPay sends amount in BDT; site accounts operate in USD
+        const creditUsd = amount > 0 ? Number((amount / bdtPerUsd).toFixed(2)) : 0;
+
+        // Build phone lookup variants so 1886036259 / 01886036259 / 8801886036259 all match reliably
+        const buildPhoneCandidates = (rawP) => {
+          const s = String(rawP || '').trim();
+          if (!s) return [];
+          const digits = s.replace(/\D/g, '');
+          const set = new Set([s]);
+          if (digits) {
+            set.add(digits);
+            if (digits.startsWith('880') && digits.length >= 13) {
+              const ten = digits.slice(3);
+              set.add(ten);
+              set.add('0' + ten);
+            } else if (digits.length === 11 && digits.startsWith('01')) {
+              set.add(digits.slice(1));
+              set.add('880' + digits.slice(1));
+            } else if (digits.length === 10 && digits.startsWith('1')) {
+              set.add('0' + digits);
+              set.add('880' + digits);
+            }
+          }
+          return Array.from(set);
+        };
+
         // Update transaction in Supabase
         const txUpdatePayload = {
           status: 'অনুমোদিত',
           ratio: '100%'
         };
-        if (amount > 0) {
-          txUpdatePayload.actual = amount;
+        if (creditUsd > 0) {
+          txUpdatePayload.amount = creditUsd;
+          txUpdatePayload.actual = creditUsd;
         }
         try {
           if (matchedTxId) {
@@ -122,13 +166,15 @@ export default async function handler(req, res) {
         }
 
         // Credit deposit directly into available balance (only package purchases freeze balance)
-        if (targetPhone) {
+        if (targetPhone && creditUsd > 0) {
+          const phoneCandidates = buildPhoneCandidates(targetPhone);
           try {
-            const { data: uData } = await supabase
+            const { data: uRows } = await supabase
               .from('users')
               .select('id, balance, phone, bkash_optional')
-              .eq('phone', targetPhone)
-              .maybeSingle();
+              .in('phone', phoneCandidates)
+              .limit(1);
+            const uData = Array.isArray(uRows) ? uRows[0] : null;
 
             if (uData) {
               let opt = {};
@@ -140,9 +186,9 @@ export default async function handler(req, res) {
                 }
               }
               const prevBal = parseFloat(uData.balance || 0);
-              const nextBal = Number((prevBal + amount).toFixed(2));
+              const nextBal = Number((prevBal + creditUsd).toFixed(2));
               const prevRechargeAmt = parseFloat(opt.recharge_amount || 0);
-              opt.recharge_amount = Number((prevRechargeAmt + amount).toFixed(2));
+              opt.recharge_amount = Number((prevRechargeAmt + creditUsd).toFixed(2));
               await supabase
                 .from('users')
                 .update({
@@ -151,33 +197,16 @@ export default async function handler(req, res) {
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', uData.id);
-              console.log(`[WPay Callback] User ${targetPhone} available balance updated: ${prevBal} -> ${nextBal}`);
+              console.log(`[WPay Callback] User ${uData.phone} available balance updated: $${prevBal} -> $${nextBal} (+$${creditUsd} from ${amount} BDT)`);
+            } else {
+              console.warn(`[WPay Callback] No user matched phone candidates:`, phoneCandidates);
             }
           } catch (userErr) {
             console.warn('[WPay Callback] Users table update warning:', userErr.message);
           }
-
-          // Also credit available balance in 'profiles' table if it exists
-          try {
-            const { data: userProfile } = await supabase
-              .from('profiles')
-              .select('id, balance')
-              .eq('phone', targetPhone)
-              .maybeSingle();
-
-            if (userProfile) {
-              await supabase
-                .from('profiles')
-                .update({
-                  balance: Number((parseFloat(userProfile.balance || 0) + amount).toFixed(2)),
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', userProfile.id);
-            }
-          } catch (pErr) {}
         }
       }
-      console.log(`[WPay Callback] Order ${outTradeNo} successfully credited ${amount} BDT!`);
+      console.log(`[WPay Callback] Order ${outTradeNo} successfully processed (${amount} BDT)!`);
       // Crucial: Respond 'success' to notify gateway not to retry
       return res.status(200).send('success');
     }

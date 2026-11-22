@@ -1376,7 +1376,9 @@ async function dbSaveUser(account, options) {
         claimed_rewards: mergedClaimedRewards,
         claimed_usdt_onchain: useDbFinancials
           ? (Number(refOpt.claimed_usdt_onchain) || 0)
-          : Math.max(Number(refOpt.claimed_usdt_onchain) || 0, typeof account.claimedUsdtOnchain === 'number' ? account.claimedUsdtOnchain : 0),
+          : (opts.allowClaimedUsdtReset && typeof account.claimedUsdtOnchain === 'number'
+              ? Math.max(0, Number(account.claimedUsdtOnchain) || 0)
+              : Math.max(Number(refOpt.claimed_usdt_onchain) || 0, typeof account.claimedUsdtOnchain === 'number' ? account.claimedUsdtOnchain : 0)),
         used_spins: useDbFinancials
           ? (Number(refOpt.used_spins) || 0)
           : Math.max(Number(refOpt.used_spins) || 0, typeof account.usedSpins === 'number' ? account.usedSpins : 0),
@@ -14713,6 +14715,11 @@ async function hydrateSessionFromSupabase(force) {
       if (typeof renderSavingsPlanPanel === 'function') renderSavingsPlanPanel();
       if (typeof renderMissionRecords === 'function') renderMissionRecords(activeMissionFilter);
       if (typeof initSupabaseLiveSync === 'function') initSupabaseLiveSync(updated);
+      if (typeof checkUserUsdtDepositBalance === 'function') {
+        setTimeout(function() {
+          checkUserUsdtDepositBalance({ showToast: false, silent: true });
+        }, 1200);
+      }
     } catch (e) {
       console.warn('Supabase session hydration notice:', e);
     } finally {
@@ -14952,7 +14959,11 @@ function initApp() {
             const creditedKey = `alo_recharge_credited_${pendingOrder.orderId}`;
             const currentUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
             if (!localStorage.getItem(creditedKey) && currentUser && pendingOrder.orderId) {
-              const creditedAmt = Number(pendingOrder.amount || 0);
+              const activeRateRet = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 126);
+              const rawOrderAmt = Number(pendingOrder.amountUsd || 0) > 0
+                ? Number(pendingOrder.amountUsd)
+                : Number(((Number(pendingOrder.amount || 0)) / (activeRateRet > 0 ? activeRateRet : 126)).toFixed(2));
+              const creditedAmt = Number(rawOrderAmt.toFixed(2));
               let alreadyApprovedOnServer = false;
 
               if (window.aloSupabase) {
@@ -15898,8 +15909,18 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
 }
 window.loadUserCryptoDepositAddress = loadUserCryptoDepositAddress;
 
+let _isCheckingUsdtBalance = false;
+let _lastUsdtSilentCheckAt = 0;
 async function checkUserUsdtDepositBalance(options = { showToast: true }) {
+  const isSilentBg = Boolean(options && options.silent);
+  if (_isCheckingUsdtBalance) return;
   const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if (!user || (!user.phone && !user.accountNumber)) return;
+  if (isSilentBg && _lastUsdtSilentCheckAt > 0 && (Date.now() - _lastUsdtSilentCheckAt) < 30000) {
+    return;
+  }
+  if (isSilentBg) _lastUsdtSilentCheckAt = Date.now();
+  _isCheckingUsdtBalance = true;
   const userId = getCryptoUserId(user);
 
   const balanceText = document.getElementById('usdt-live-balance-text');
@@ -15907,9 +15928,11 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
   const refreshText = document.getElementById('usdt-balance-refresh-text');
   const btn = document.getElementById('usdt-refresh-balance-btn');
 
-  if (spinner) spinner.classList.remove('hidden');
-  if (refreshText) refreshText.textContent = 'Checking...';
-  if (btn) btn.disabled = true;
+  if (!isSilentBg) {
+    if (spinner) spinner.classList.remove('hidden');
+    if (refreshText) refreshText.textContent = 'Checking...';
+    if (btn) btn.disabled = true;
+  }
 
   try {
     let res = null;
@@ -15936,33 +15959,54 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
           balanceText.textContent = `${rawBalance.toFixed(2)} USDT`;
         }
 
+        // Re-fetch authoritative user state from Supabase to prevent stale overwrite or double-crediting
+        const userPhoneNorm = user ? normalizeBdPhone(user.phone || user.accountNumber) : '';
+        const freshCloudUser = (userPhoneNorm && typeof dbGetUser === 'function')
+          ? await dbGetUser(userPhoneNorm).catch(function() { return null; })
+          : null;
+        const activeTargetUser = freshCloudUser ? Object.assign({}, user, freshCloudUser) : user;
+
         // Track credited on-chain balance in Supabase & local cache to prevent double crediting across devices
         const creditedKey = `alo_usdt_credited_${userId}`;
         const localCredited = parseFloat(localStorage.getItem(creditedKey) || '0') || 0;
-        const cloudCredited = Number(user && user.claimedUsdtOnchain) || 0;
-        const lastCredited = Math.max(localCredited, cloudCredited);
+        const cloudCredited = Number(activeTargetUser && activeTargetUser.claimedUsdtOnchain) || 0;
+        let lastCredited = Math.max(localCredited, cloudCredited);
+
+        // If admin swept previously credited USDT out of this HD wallet (confirmed 0 by BOTH cPanel + BSC RPC),
+        // safely reset claimedUsdtOnchain to 0 so the user's subsequent USDT deposits auto-credit cleanly.
+        if (rawBalance === 0 && lastCredited > 0 && data.verified_zero_onchain === true && activeTargetUser) {
+          activeTargetUser.claimedUsdtOnchain = 0;
+          lastCredited = 0;
+          localStorage.setItem(creditedKey, '0');
+          localStorage.setItem('aloSignedInUser', JSON.stringify(activeTargetUser));
+          if (typeof dbSaveUser === 'function') {
+            await dbSaveUser(activeTargetUser, { allowClaimedUsdtReset: true });
+          }
+        }
 
         if (rawBalance > lastCredited) {
           const newUsdt = rawBalance - lastCredited;
           if (newUsdt >= 1) {
-            const isUsd = isUsdOnlyUser(user);
+            const isUsd = isUsdOnlyUser(activeTargetUser);
             const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
             const creditAmt = isUsd ? Number(newUsdt.toFixed(2)) : Number((newUsdt * activeRate).toFixed(2));
 
-            if (user) {
-              // Credit USDT deposit directly into Balance (only freezes upon purchasing a VIP package)
-              user.balance = Number(((Number(user.balance) || 0) + creditAmt).toFixed(2));
-              user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmt).toFixed(2));
-              user.claimedUsdtOnchain = rawBalance;
-              localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
-              if (typeof saveUser === 'function') saveUser(user);
-              if (typeof dbSaveUser === 'function') await dbSaveUser(user);
-              if (typeof updateUserDetails === 'function') updateUserDetails(user);
+            if (activeTargetUser) {
+              activeTargetUser.balance = Number(((Number(activeTargetUser.balance) || 0) + creditAmt).toFixed(2));
+              activeTargetUser.rechargeAmount = Number(((Number(activeTargetUser.rechargeAmount) || 0) + creditAmt).toFixed(2));
+              activeTargetUser.claimedUsdtOnchain = rawBalance;
+              localStorage.setItem('my_pass_available_bal', activeTargetUser.balance.toFixed(2));
+              localStorage.setItem('aloSignedInUser', JSON.stringify(activeTargetUser));
+              let dbCreditSaved = false;
+              if (typeof dbSaveUser === 'function') {
+                dbCreditSaved = await dbSaveUser(activeTargetUser);
+              }
+              if (typeof updateUserDetails === 'function') updateUserDetails(activeTargetUser);
               if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
               if (typeof updateRecordsPanelPackages === 'function') updateRecordsPanelPackages();
               if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
 
-              const userPhone = user.phone || user.accountNumber;
+              const userPhone = activeTargetUser.phone || activeTargetUser.accountNumber;
               const now = new Date();
               const onchainOrderId = `onchain_${Date.now()}`;
               let updatedPendingUsdt = false;
@@ -16038,7 +16082,7 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
                   order_id: onchainOrderId,
                   date: now.toISOString().split('T')[0],
                   time: now.toTimeString().split(' ')[0],
-                  newBalance: user.balance
+                  newBalance: activeTargetUser.balance
                 });
               }
 
@@ -16055,6 +16099,11 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
               }
               if (typeof renderAccountChangeHistory === 'function') {
                 renderAccountChangeHistory();
+              }
+
+              // Automatically sweep deposited USDT to master Trust Wallet ONLY AFTER user balance is safely saved in Supabase
+              if (dbCreditSaved && typeof triggerAutoSweepUsdtToMaster === 'function') {
+                triggerAutoSweepUsdtToMaster(userId, activeTargetUser, creditedKey);
               }
             }
 
@@ -16087,8 +16136,12 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
               `الحد الأدنى للإيداع بالعملات الرقمية هو 1.00 USDT ($1). المبلغ المعلق حالياً: ${newUsdt.toFixed(2)} USDT`
             ));
           }
-        } else if (options && options.showToast) {
-          if (typeof showToastNotification === 'function') {
+        } else {
+          // If funds were already credited to user earlier but still sitting on child address unswept, retry sweep silently
+          if (rawBalance >= 1 && lastCredited >= rawBalance && activeTargetUser && typeof triggerAutoSweepUsdtToMaster === 'function') {
+            triggerAutoSweepUsdtToMaster(userId, activeTargetUser, creditedKey);
+          }
+          if (options && options.showToast && typeof showToastNotification === 'function') {
             const l = getActiveLang(user);
             showToastNotification(tLang(
               l,
@@ -16107,13 +16160,58 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
       showToastNotification(tLang(l, 'ব্যালেন্স চেক সম্পন্ন হতে পারেনি, আবার চেষ্টা করুন', 'Unable to check balance, please try again.', 'تعذر التحقق من الرصيد، يرجى المحاولة مرة أخرى.'));
     }
   } finally {
-    const lFin = getActiveLang(user);
-    if (spinner) spinner.classList.add('hidden');
-    if (refreshText) refreshText.textContent = tLang(lFin, 'ব্যালেন্স চেক ↺', 'Check Balance ↺', 'فحص الرصيد ↺');
-    if (btn) btn.disabled = false;
+    _isCheckingUsdtBalance = false;
+    if (!isSilentBg) {
+      const lFin = getActiveLang(user);
+      if (spinner) spinner.classList.add('hidden');
+      if (refreshText) refreshText.textContent = tLang(lFin, 'ব্যালেন্স চেক ↺', 'Check Balance ↺', 'فحص الرصيد ↺');
+      if (btn) btn.disabled = false;
+    }
   }
 }
 window.checkUserUsdtDepositBalance = checkUserUsdtDepositBalance;
+
+const _usdtSweepCooldownByUser = {};
+const _usdtSweepInFlight = {};
+async function triggerAutoSweepUsdtToMaster(userId, activeTargetUser, creditedKey) {
+  const cleanId = parseInt(String(userId || '').replace(/\D/g, ''), 10);
+  if (!Number.isInteger(cleanId) || cleanId < 1) return;
+  if (_usdtSweepInFlight[cleanId]) return;
+  const lastTry = _usdtSweepCooldownByUser[cleanId] || 0;
+  if (lastTry > 0 && (Date.now() - lastTry) < 90000) return;
+
+  _usdtSweepInFlight[cleanId] = true;
+  _usdtSweepCooldownByUser[cleanId] = Date.now();
+  try {
+    const resp = await fetch(`/api/crypto?action=sweep&userId=${cleanId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ userId: cleanId })
+    });
+    if (!resp.ok) return;
+    const sweepData = await resp.json().catch(function() { return null; });
+    if (sweepData && sweepData.success) {
+      if (activeTargetUser) {
+        activeTargetUser.claimedUsdtOnchain = 0;
+        if (creditedKey) localStorage.setItem(creditedKey, '0');
+        localStorage.setItem('aloSignedInUser', JSON.stringify(activeTargetUser));
+        if (typeof dbSaveUser === 'function') {
+          await dbSaveUser(activeTargetUser, { allowClaimedUsdtReset: true });
+        }
+      }
+      const balanceText = document.getElementById('usdt-live-balance-text');
+      if (balanceText) balanceText.textContent = '0.00 USDT';
+    }
+  } catch (sweepErr) {
+    console.warn('[Crypto Auto-Sweep] Deferred:', sweepErr && sweepErr.message ? sweepErr.message : sweepErr);
+  } finally {
+    delete _usdtSweepInFlight[cleanId];
+  }
+}
+window.triggerAutoSweepUsdtToMaster = triggerAutoSweepUsdtToMaster;
 
 let usdtBalancePollInterval = null;
 
@@ -17014,10 +17112,14 @@ async function handleBdRechargeSubmit() {
   const orderId = 'ORD' + Date.now() + Math.floor(100 + Math.random() * 900);
   const payType = currentBdPaymentMethod; // 'BKASH' or 'NAGAD'
 
+  const activeBdtRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 126);
+  const amountUsd = Number((amount / (activeBdtRate > 0 ? activeBdtRate : 126)).toFixed(2));
+
   try {
     localStorage.setItem('alo_pending_recharge_order', JSON.stringify({
       orderId: orderId,
       amount: amount,
+      amountUsd: amountUsd,
       payType: payType,
       phone: userPhone,
       timestamp: Date.now()
@@ -17034,7 +17136,7 @@ async function handleBdRechargeSubmit() {
       upsertLocalDepositOrder(userPhone, {
         orderId: orderId,
         type: 'deposit',
-        amount: amount,
+        amount: amountUsd,
         actual: 0,
         ratio: '0%',
         status: 'মুলতবি (Pending)',
@@ -17051,7 +17153,7 @@ async function handleBdRechargeSubmit() {
           window.aloSupabase.from('transactions').insert({
             phone: normalizeBdPhone(userPhone),
             type: 'deposit',
-            amount: amount,
+            amount: amountUsd,
             actual: 0,
             ratio: '0%',
             status: 'মুলতবি (Pending)',

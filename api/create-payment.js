@@ -42,8 +42,8 @@ export default async function handler(req, res) {
 function normalizeBdPhone(raw) {
   if (!raw) return '';
   let digits = String(raw).replace(/\D/g, '');
-  if (digits.startsWith('880') && digits.length >= 13) digits = '0' + digits.slice(3);
-  if (digits.length === 10 && digits.startsWith('1')) digits = '0' + digits;
+  if (digits.startsWith('880') && digits.length >= 13) digits = digits.slice(3);
+  if (digits.length === 11 && digits.startsWith('01')) digits = digits.slice(1);
   return digits || String(raw).trim();
 }
 
@@ -74,10 +74,26 @@ function normalizeBdPhone(raw) {
           .maybeSingle();
 
         if (!existingOrder) {
+          let bdtRate = 126;
+          try {
+            const { data: sysRow } = await supabase
+              .from('users')
+              .select('bkash_optional')
+              .eq('phone', 'SYSTEM_CONFIG')
+              .maybeSingle();
+            if (sysRow && sysRow.bkash_optional) {
+              const cfg = typeof sysRow.bkash_optional === 'string'
+                ? JSON.parse(sysRow.bkash_optional)
+                : sysRow.bkash_optional;
+              const r = Number(cfg && cfg.usdtRate);
+              if (Number.isFinite(r) && r > 0) bdtRate = r;
+            }
+          } catch (e) {}
+          const usdAmount = Number((rawAmount / bdtRate).toFixed(2));
           await supabase.from('transactions').insert({
             phone: phone,
             type: 'deposit',
-            amount: rawAmount,
+            amount: usdAmount,
             actual: 0,
             ratio: '0%',
             status: 'মুলতবি (Pending)',
