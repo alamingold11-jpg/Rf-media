@@ -484,6 +484,10 @@ function resetTeamAndCommissionDom() {
     if (teamAccordion) teamAccordion.innerHTML = '';
     const spinHistoryList = document.getElementById('lucky-spin-history-list');
     if (spinHistoryList) spinHistoryList.innerHTML = '';
+    const profitHistList = document.getElementById('profit-history-list');
+    if (profitHistList) profitHistList.innerHTML = '';
+    if (typeof _cachedProfitHistoryItems !== 'undefined') _cachedProfitHistoryItems = [];
+    if (typeof _cachedProfitHistoryPhone !== 'undefined') _cachedProfitHistoryPhone = '';
     document.querySelectorAll('.salary-row').forEach(function(row) {
       row.classList.remove('done');
       const fillEl = row.querySelector('.fill');
@@ -1011,6 +1015,10 @@ function initSupabaseLiveSync(user) {
             if (typeof renderWithdrawalHistory === 'function') renderWithdrawalHistory();
             if (typeof renderAccountChangeHistory === 'function') renderAccountChangeHistory();
             if (typeof renderRecentUsdtDeposits === 'function') renderRecentUsdtDeposits();
+            const profitHistPanel = document.getElementById('profit-history-panel');
+            if (profitHistPanel && !profitHistPanel.hidden && typeof renderProfitHistoryPanel === 'function') {
+              renderProfitHistoryPanel({ forceRefresh: true });
+            }
             const spinPanel = document.getElementById('lucky-spin-panel');
             if (spinPanel && !spinPanel.hidden && typeof renderLuckySpinPanel === 'function') {
               renderLuckySpinPanel();
@@ -2440,6 +2448,7 @@ const dashboardTitles = {
   personal: 'Personal Info',
   'my-pass': 'My Pass',
   'account-change': 'Account Record',
+  'profit-history': 'Profit History',
   invite: 'Invite Friends',
   'platform-tasks': 'Missions',
   'mission-submit': 'Submit Mission',
@@ -2472,6 +2481,7 @@ function updateDashboardTitleForLang(targetLang) {
       personal: 'ব্যক্তিগত তথ্য',
       'my-pass': 'আমার পার্স',
       'account-change': 'অ্যাকাউন্ট রেকর্ড',
+      'profit-history': 'প্রফিট হিস্ট্রি',
       invite: 'বন্ধুদের আমন্ত্রণ করুন',
       'platform-tasks': 'মিশন',
       'mission-submit': 'মিশন জমা',
@@ -2500,6 +2510,7 @@ function updateDashboardTitleForLang(targetLang) {
       personal: 'Personal Info',
       'my-pass': 'My Pass',
       'account-change': 'Account Record',
+      'profit-history': 'Profit History',
       invite: 'Invite Friends',
       'platform-tasks': 'Missions',
       'mission-submit': 'Submit Mission',
@@ -2528,6 +2539,7 @@ function updateDashboardTitleForLang(targetLang) {
       personal: 'المعلومات الشخصية',
       'my-pass': 'محفظتي',
       'account-change': 'سجل الحساب',
+      'profit-history': 'سجل الأرباح',
       invite: 'دعوة الأصدقاء',
       'platform-tasks': 'المهام',
       'mission-submit': 'إرسال المهمة',
@@ -3811,6 +3823,7 @@ function openDashboardPanel(panelName) {
     personal: 'profile',
     'my-pass': 'profile',
     'account-change': 'profile',
+    'profit-history': 'profile',
     invite: 'profile',
     'payment-method': 'profile',
     'usdt-deposit': 'profile',
@@ -3905,6 +3918,12 @@ function openDashboardPanel(panelName) {
     }
   } else if (typeof stopAccountChangePolling === 'function') {
     stopAccountChangePolling();
+  }
+  if (nextPanel === 'profit-history') {
+    updateProfileMetrics();
+    if (typeof renderProfitHistoryPanel === 'function') {
+      renderProfitHistoryPanel({ forceRefresh: true });
+    }
   }
   if (nextPanel === 'vip') {
     if (typeof updateVipHallRooms === 'function') updateVipHallRooms();
@@ -18256,6 +18275,369 @@ function openTawkToLiveChat() {
   (document.head || document.body).appendChild(s1);
 }
 window.openTawkToLiveChat = openTawkToLiveChat;
+
+// ==========================================
+// A-TO-Z PROFIT HISTORY LEDGER PANEL
+// ==========================================
+let _activeProfitHistoryFilter = 'all';
+let _cachedProfitHistoryItems = [];
+let _cachedProfitHistoryPhone = '';
+let _profitHistoryFetchInFlight = false;
+
+function escapeProfitHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function classifyProfitTransaction(tx) {
+  if (!tx) return null;
+  const rawType = String(tx.type || '').toLowerCase().trim();
+  const method = String(tx.method || '').trim();
+  const methodLower = method.toLowerCase();
+  const statusStr = String(tx.status || '').toLowerCase().trim();
+
+  // Exclude rejected / failed / cancelled records
+  if (/reject|fail|cancel|expired|বাতিল|প্রত্যাখ্যাত|ব্যর্থ/.test(statusStr)) return null;
+
+  const amt = Number(tx.actual || tx.amount || 0);
+  if (!Number.isFinite(amt) || amt <= 0) return null;
+
+  if (rawType === 'mission' || rawType === 'task') {
+    return { category: 'task', amount: amt, title: method || 'Task Reward', ratio: tx.ratio || '100%' };
+  }
+
+  if (rawType === 'commission') {
+    if (/lucky\s*wheel|spin|স্পিন|ভাগ্যবান/.test(methodLower)) {
+      return { category: 'spin', amount: amt, title: method || 'Lucky Wheel Reward', ratio: tx.ratio || '100%' };
+    }
+    return { category: 'commission', amount: amt, title: method || 'Team Commission', ratio: tx.ratio || '' };
+  }
+
+  if (rawType === 'vip_reward' || rawType === 'salary' || rawType === 'bonus' || rawType === 'reward' || rawType === 'profit' || rawType === 'admin_credit') {
+    return { category: 'vip', amount: amt, title: method || 'VIP / Bonus Reward', ratio: tx.ratio || '100%' };
+  }
+
+  if (rawType === 'savings') {
+    // Only include maturity/return profit payouts, NOT initial principal deposit locks
+    if (/return|maturity|profit|রিটার্ন|মেয়াদপূর্তি|লাভ/.test(methodLower)) {
+      return { category: 'savings', amount: amt, title: method || 'Savings Plan Return', ratio: tx.ratio || '100%' };
+    }
+    return null;
+  }
+
+  // Include admin-credited bonus/reward/salary/commission rows even if logged under deposit type
+  if (rawType === 'deposit' && /bonus|reward|salary|commission|profit|rebate|বোনাস|পুরস্কার|বেতন|কমিশন|প্রফিট/.test(methodLower)) {
+    return { category: 'vip', amount: amt, title: method, ratio: tx.ratio || '100%' };
+  }
+
+  return null;
+}
+
+function getProfitTxTimestampMs(item) {
+  if (item && item.createdAt) {
+    const ms = new Date(item.createdAt).getTime();
+    if (Number.isFinite(ms) && ms > 0) return ms;
+  }
+  if (item && item.date) {
+    const dtStr = item.time ? `${item.date}T${item.time}` : `${item.date}T00:00:00`;
+    const ms = new Date(dtStr).getTime();
+    if (Number.isFinite(ms) && ms > 0) return ms;
+  }
+  return 0;
+}
+
+function formatProfitTxDateLabel(item) {
+  const d = String(item.date || '').trim();
+  const t = String(item.time || '').trim();
+  if (d && t) return `${d} ${t.slice(0, 5)}`;
+  if (d) return d;
+  if (item.createdAt) {
+    const dt = new Date(item.createdAt);
+    if (!Number.isNaN(dt.getTime())) {
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth() + 1).padStart(2, '0');
+      const day = String(dt.getDate()).padStart(2, '0');
+      const hh = String(dt.getHours()).padStart(2, '0');
+      const mm = String(dt.getMinutes()).padStart(2, '0');
+      return `${y}-${m}-${day} ${hh}:${mm}`;
+    }
+  }
+  return '--';
+}
+
+function isProfitItemFromToday(item) {
+  const now = new Date();
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  if (item.date && String(item.date).slice(0, 10) === todayIso) return true;
+  const ms = getProfitTxTimestampMs(item);
+  if (!ms) return false;
+  const dt = new Date(ms);
+  return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth() && dt.getDate() === now.getDate();
+}
+
+function getProfitCategoryMeta(category, lang) {
+  switch (category) {
+    case 'task':
+      return { label: tLang(lang, 'টাস্ক প্রফিট', 'Task Profit', 'أرباح المهام') };
+    case 'commission':
+      return { label: tLang(lang, 'টিম কমিশন', 'Team Commission', 'عمولة الفريق') };
+    case 'vip':
+      return { label: tLang(lang, 'VIP ও বোনাস', 'VIP & Bonus', 'VIP والمكافآت') };
+    case 'spin':
+      return { label: tLang(lang, 'লাকি স্পিন', 'Lucky Wheel', 'عجلة الحظ') };
+    case 'savings':
+      return { label: tLang(lang, 'সঞ্চয় প্রফিট', 'Savings Profit', 'أرباح الادخار') };
+    default:
+      return { label: tLang(lang, 'প্রফিট', 'Profit', 'ربح') };
+  }
+}
+
+function renderProfitHistoryView(items, user) {
+  const listEl = document.getElementById('profit-history-list');
+  const emptyEl = document.getElementById('profit-history-empty');
+  if (!listEl) return;
+
+  const lang = getActiveLang(user);
+  const allItems = Array.isArray(items) ? items : [];
+
+  let totalTask = 0;
+  let totalCommission = 0;
+  let totalVip = 0;
+  let totalOther = 0;
+  let totalToday = 0;
+
+  allItems.forEach(function(it) {
+    const a = Number(it.amount) || 0;
+    if (it.category === 'task') totalTask += a;
+    else if (it.category === 'commission') totalCommission += a;
+    else if (it.category === 'vip') totalVip += a;
+    else totalOther += a;
+    if (isProfitItemFromToday(it)) totalToday += a;
+  });
+
+  const ledgerSum = Number((totalTask + totalCommission + totalVip + totalOther).toFixed(2));
+  const userLifetime = Number(user && (user.lifetimeEarnings || user.totalIncome) || 0);
+  const displayTotal = Number(Math.max(ledgerSum, userLifetime).toFixed(2));
+  const userDaily = Number(user && user.dailyIncome || 0);
+  const displayToday = Number(Math.max(totalToday, userDaily).toFixed(2));
+
+  const setTxt = function(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('profit-history-total-val', `$${displayTotal.toFixed(2)}`);
+  setTxt('profit-history-today-val', `+$${displayToday.toFixed(2)}`);
+  setTxt('profit-history-count-val', tLang(lang, `${allItems.length} টি রেকর্ড`, `${allItems.length} records`, `${allItems.length} سجل`));
+  setTxt('profit-cat-task-val', `$${totalTask.toFixed(2)}`);
+  setTxt('profit-cat-commission-val', `$${totalCommission.toFixed(2)}`);
+  setTxt('profit-cat-vip-val', `$${totalVip.toFixed(2)}`);
+  setTxt('profit-cat-other-val', `$${totalOther.toFixed(2)}`);
+
+  // Native underline tab active state (zero pill buttons)
+  document.querySelectorAll('#profit-history-filters .profit-filter-btn').forEach(function(btn) {
+    const isAct = btn.getAttribute('data-profit-filter') === _activeProfitHistoryFilter;
+    btn.className = isAct
+      ? 'profit-filter-btn shrink-0 whitespace-nowrap min-h-[44px] py-2.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer bg-transparent border-[#38bdf8] text-white'
+      : 'profit-filter-btn shrink-0 whitespace-nowrap min-h-[44px] py-2.5 text-[13px] font-medium border-b-2 transition-colors cursor-pointer bg-transparent border-transparent text-[#7f95be] hover:text-[#cbd5e1]';
+  });
+
+  const filtered = _activeProfitHistoryFilter === 'all'
+    ? allItems
+    : allItems.filter(function(it) { return it.category === _activeProfitHistoryFilter; });
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '';
+    if (emptyEl) {
+      emptyEl.classList.remove('hidden');
+      emptyEl.classList.add('flex');
+    }
+    return;
+  }
+
+  if (emptyEl) {
+    emptyEl.classList.add('hidden');
+    emptyEl.classList.remove('flex');
+  }
+
+  const creditedLabel = tLang(lang, 'জমা হয়েছে', 'Credited', 'تمت الإضافة');
+  listEl.innerHTML = filtered.map(function(it) {
+    const meta = getProfitCategoryMeta(it.category, lang);
+    const titleSafe = escapeProfitHtml(it.title || meta.label);
+    const catSafe = escapeProfitHtml(meta.label);
+    const dateSafe = escapeProfitHtml(formatProfitTxDateLabel(it));
+    const ratioSafe = it.ratio ? escapeProfitHtml(String(it.ratio)) : '';
+    const orderSafe = it.orderId ? escapeProfitHtml(String(it.orderId)) : '';
+    const amtStr = `+$${(Number(it.amount) || 0).toFixed(2)}`;
+    const metaParts = [catSafe, dateSafe];
+    if (orderSafe) metaParts.push('#' + orderSafe);
+    const metaLine = metaParts.join(' · ');
+    const subRight = ratioSafe ? `${creditedLabel} · ${ratioSafe}` : creditedLabel;
+    return `
+      <div class="px-5 py-3.5 min-h-[64px] flex items-center justify-between gap-4 hover:bg-white/[0.025] transition-colors">
+        <div class="min-w-0 flex-1">
+          <p class="text-[14px] font-medium text-[#f1f5f9] leading-snug truncate">${titleSafe}</p>
+          <p class="mt-1 text-[12px] text-[#7c92bc] leading-tight truncate">${metaLine}</p>
+        </div>
+        <div class="text-right shrink-0">
+          <p class="profit-num text-[15px] font-semibold text-[#22c55e] leading-snug">${amtStr}</p>
+          <p class="mt-1 text-[11px] text-[#6d84b0] leading-tight">${subRight}</p>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function renderProfitHistoryPanel(options = {}) {
+  const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const loadingEl = document.getElementById('profit-history-loading');
+  if (!user || (!user.phone && !user.accountNumber)) {
+    _cachedProfitHistoryItems = [];
+    renderProfitHistoryView([], null);
+    return;
+  }
+
+  const userPhone = user.phone || user.accountNumber;
+  if (_cachedProfitHistoryPhone !== String(userPhone)) {
+    _cachedProfitHistoryPhone = String(userPhone);
+    _cachedProfitHistoryItems = [];
+    _activeProfitHistoryFilter = 'all';
+  }
+
+  // Render cached data immediately if available while fetching fresh cloud records
+  if (_cachedProfitHistoryItems.length > 0 && !options.silent) {
+    renderProfitHistoryView(_cachedProfitHistoryItems, user);
+  } else if (loadingEl) {
+    loadingEl.classList.remove('hidden');
+  }
+
+  if (_profitHistoryFetchInFlight) return;
+  _profitHistoryFetchInFlight = true;
+
+  try {
+    const allTx = await dbGetTransactions(userPhone);
+    const txRows = Array.isArray(allTx) ? allTx : [];
+
+    const profitItems = [];
+    let hasMissionTx = false;
+    let hasSpinTx = false;
+    let hasSavingsReturnTx = false;
+
+    txRows.forEach(function(tx) {
+      const classified = classifyProfitTransaction(tx);
+      if (!classified) return;
+      if (classified.category === 'task') hasMissionTx = true;
+      if (classified.category === 'spin') hasSpinTx = true;
+      if (classified.category === 'savings') hasSavingsReturnTx = true;
+      profitItems.push({
+        id: tx.id || `${classified.category}_${tx.date || ''}_${tx.time || ''}_${classified.amount}`,
+        category: classified.category,
+        title: classified.title,
+        amount: Number(classified.amount.toFixed(2)),
+        ratio: classified.ratio || '',
+        orderId: tx.orderId || '',
+        date: tx.date || '',
+        time: tx.time || '',
+        createdAt: tx.createdAt || ''
+      });
+    });
+
+    // Fallback: include local completed missions ONLY if Supabase transactions has no mission rows yet
+    if (!hasMissionTx && typeof readAcceptedMissions === 'function') {
+      const missions = readAcceptedMissions() || [];
+      missions.forEach(function(m) {
+        if (!m || m.status !== 'complete') return;
+        const r = Number(m.reward || 0);
+        if (!Number.isFinite(r) || r <= 0) return;
+        const ts = m.completedAt || m.acceptedAt || '';
+        const dt = ts ? new Date(ts) : null;
+        const dateStr = (dt && !Number.isNaN(dt.getTime())) ? dt.toISOString().split('T')[0] : '';
+        const timeStr = (dt && !Number.isNaN(dt.getTime())) ? dt.toTimeString().split(' ')[0] : '';
+        profitItems.push({
+          id: 'mission_local_' + (m.id || Math.random()),
+          category: 'task',
+          title: `${String(m.level || 'VIP').toUpperCase()} Task Reward${m.title ? ` · ${m.title}` : ''}`,
+          amount: Number(r.toFixed(2)),
+          ratio: '100%',
+          orderId: '',
+          date: dateStr,
+          time: timeStr,
+          createdAt: ts
+        });
+      });
+    }
+
+    // Fallback: include user.spinHistory ONLY if Supabase transactions has no spin rows yet
+    if (!hasSpinTx && Array.isArray(user.spinHistory)) {
+      user.spinHistory.forEach(function(sp, idx) {
+        const amt = Number(sp && sp.amount || 0);
+        if (!Number.isFinite(amt) || amt <= 0) return;
+        profitItems.push({
+          id: 'spin_local_' + idx,
+          category: 'spin',
+          title: (sp && sp.label) ? `Lucky Wheel · ${sp.label}` : 'Lucky Wheel Reward',
+          amount: Number(amt.toFixed(2)),
+          ratio: '100%',
+          orderId: '',
+          date: (sp && sp.date) || '',
+          time: (sp && sp.time) || '',
+          createdAt: ''
+        });
+      });
+    }
+
+    // Fallback: include settled savings plan profit if not already recorded in transactions
+    if (!hasSavingsReturnTx && user.savingsPlan && user.savingsPlan.status === 'settled') {
+      const spPlan = user.savingsPlan;
+      const prof = Number(spPlan.totalProfit || Math.max(0, (Number(spPlan.totalReturn) || 0) - (Number(spPlan.amount) || 0)) || 0);
+      if (prof > 0) {
+        profitItems.push({
+          id: 'savings_local_settled',
+          category: 'savings',
+          title: 'Savings Plan Maturity Profit (45 Days)',
+          amount: Number(prof.toFixed(2)),
+          ratio: '100%',
+          orderId: '',
+          date: String(spPlan.settledAt || spPlan.createdAt || '').slice(0, 10),
+          time: '',
+          createdAt: spPlan.settledAt || spPlan.createdAt || ''
+        });
+      }
+    }
+
+    // Sort newest first
+    profitItems.sort(function(a, b) {
+      return getProfitTxTimestampMs(b) - getProfitTxTimestampMs(a);
+    });
+
+    _cachedProfitHistoryItems = profitItems;
+    renderProfitHistoryView(profitItems, user);
+  } catch (err) {
+    console.warn('[ProfitHistory] Load error:', err);
+    renderProfitHistoryView(_cachedProfitHistoryItems, user);
+  } finally {
+    _profitHistoryFetchInFlight = false;
+    if (loadingEl) loadingEl.classList.add('hidden');
+  }
+}
+window.renderProfitHistoryPanel = renderProfitHistoryPanel;
+
+if (typeof document !== 'undefined' && !window._profitHistoryEventsBound) {
+  window._profitHistoryEventsBound = true;
+  document.addEventListener('click', function(event) {
+    const filterBtn = event.target.closest('#profit-history-filters .profit-filter-btn');
+    if (filterBtn) {
+      const nextFilter = filterBtn.getAttribute('data-profit-filter') || 'all';
+      _activeProfitHistoryFilter = nextFilter;
+      renderProfitHistoryView(_cachedProfitHistoryItems, (typeof getCurrentUser === 'function') ? getCurrentUser() : null);
+      return;
+    }
+    const refreshBtn = event.target.closest('#profit-history-refresh-btn');
+    if (refreshBtn) {
+      renderProfitHistoryPanel({ forceRefresh: true });
+    }
+  });
+}
 
 if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', initApp);
