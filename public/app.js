@@ -646,11 +646,12 @@ window.saveUser = function(u) {
 // LIVE PLATFORM CONTROLS (SYNCED FROM CPANEL ADMIN PANEL)
 // ==========================================
 const DEFAULT_CPANEL_OTP_URL = 'https://imcagro.top/send-api/send-otp';
+const DEFAULT_TAWK_TO_URL = 'https://embed.tawk.to/6b046757c932e53cdfbe5b74/default';
 
 window.aloPlatformConfig = {
   currencyMode: 'USD',
   telegramUrl: 'https://t.me/PW_Official_Manager_BD',
-  tawkToUrl: '',
+  tawkToUrl: DEFAULT_TAWK_TO_URL,
   managerId: '#PW-MANAGER-8802',
   usdtAddress: '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16',
   minWithdraw: 5.00,
@@ -712,7 +713,7 @@ function applyPlatformConfigData(rawOpt) {
   const isUsdMode = parsed.currencyMode === 'USD';
   window.aloPlatformConfig.currencyMode = 'USD';
   if (parsed.telegramUrl) window.aloPlatformConfig.telegramUrl = String(parsed.telegramUrl).trim();
-  if (typeof parsed.tawkToUrl === 'string') window.aloPlatformConfig.tawkToUrl = parsed.tawkToUrl.trim();
+  if (typeof parsed.tawkToUrl === 'string' && parsed.tawkToUrl.trim()) window.aloPlatformConfig.tawkToUrl = parsed.tawkToUrl.trim();
   if (parsed.managerId) window.aloPlatformConfig.managerId = String(parsed.managerId).trim();
   if (parsed.usdtAddress) window.aloPlatformConfig.usdtAddress = String(parsed.usdtAddress).trim();
 
@@ -18148,7 +18149,7 @@ function syncTawkVisitorIdentity() {
 
 function openTawkToLiveChat() {
   const l = getActiveLang();
-  const cfgUrl = (window.aloPlatformConfig && window.aloPlatformConfig.tawkToUrl) || '';
+  const cfgUrl = (window.aloPlatformConfig && window.aloPlatformConfig.tawkToUrl) || DEFAULT_TAWK_TO_URL;
   const ids = parseTawkToConfigIds(cfgUrl);
 
   if (!ids) {

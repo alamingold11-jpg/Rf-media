@@ -2015,7 +2015,7 @@ const DEFAULT_PLATFORM_CONTROLS = {
   minRechargeUsd: 1.00,
   usdtAddress: '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16',
   telegramUrl: 'https://t.me/PW_Official_Manager_BD',
-  tawkToUrl: '',
+  tawkToUrl: 'https://embed.tawk.to/6b046757c932e53cdfbe5b74/default',
   managerId: '#PW-MANAGER-8802',
   bdRealOtpEnabled: true,
   cpanelOtpUrl: 'https://imcagro.top/send-api/send-otp'
@@ -2924,7 +2924,7 @@ function hydratePlatformControlsForm(sysRow, force = false) {
     setVal('pc-min-recharge', Number(cfg.minRechargeUsd || 1).toFixed(2));
     setVal('pc-usdt-address', cfg.usdtAddress);
     setVal('pc-telegram-url', cfg.telegramUrl);
-    setVal('pc-tawk-url', cfg.tawkToUrl || '');
+    setVal('pc-tawk-url', cfg.tawkToUrl || DEFAULT_PLATFORM_CONTROLS.tawkToUrl);
     setVal('pc-manager-id', cfg.managerId);
     setVal('pc-bd-real-otp-enabled', cfg.bdRealOtpEnabled === false ? 'false' : 'true');
     setVal('pc-cpanel-otp-url', cfg.cpanelOtpUrl || '');
