@@ -112,8 +112,10 @@ function parseExternalOtpEndpoint(rawUrl) {
   };
 }
 
+const EPHEMERAL_OTP_FALLBACK_KEY = crypto.randomBytes(32).toString('hex');
+
 function getOtpSecret() {
-  return process.env.OTP_SECRET || process.env.BD_SMS_API_KEY || 'pw-bd-otp-imcagro-hmac-2026';
+  return process.env.OTP_SECRET || process.env.BD_SMS_API_KEY || EPHEMERAL_OTP_FALLBACK_KEY;
 }
 
 function signToken(payload) {
@@ -214,7 +216,6 @@ export default async function handler(req, res) {
 
   const targetEndpoint =
     parseExternalOtpEndpoint(process.env.CPANEL_OTP_URL) ||
-    parseExternalOtpEndpoint(body.cpanelOtpUrl) ||
     parseExternalOtpEndpoint(DEFAULT_CPANEL_OTP_URL);
 
   if (!targetEndpoint) {

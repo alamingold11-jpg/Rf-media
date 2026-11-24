@@ -407,12 +407,26 @@ function getRechargeStatusPriority(rawStatus) {
   return 1;
 }
 
+function extractDepositOrderToken(tx) {
+  if (!tx) return '';
+  const direct = String(tx.order_id || tx.out_trade_no || '').trim();
+  if (direct) return direct;
+  const s = String(tx.method || '');
+  const hashM = s.match(/#([A-Za-z0-9_-]{4,}|0x[a-fA-F0-9]{64})/);
+  if (hashM && hashM[1]) return hashM[1];
+  const tokM = s.match(/\b((?:ORD|USDT|WD|VIP|ADM)\d+|onchain_\d+|0x[a-fA-F0-9]{64})\b/);
+  return tokM ? tokM[1] : '';
+}
+
 function getRechargeList() {
   const txDeposits = allTransactions.filter(t => String(t.type || '').toLowerCase() === 'deposit');
-  // Deduplicate rows sharing the same order_id / out_trade_no, preferring approved > rejected > pending and non-zero amount
+  // Deduplicate rows sharing the same order token (embedded in method as #ORD... / #USDT...) for the same user
   const dedupMap = new Map();
   txDeposits.forEach(t => {
-    const key = String(t.order_id || t.out_trade_no || t.id || '');
+    const token = extractDepositOrderToken(t);
+    const key = token
+      ? `${normalizePhone(t.phone)}:${token}`
+      : String(t.id || '');
     if (!key) return;
     const prev = dedupMap.get(key);
     if (!prev) {
@@ -430,23 +444,27 @@ function getRechargeList() {
   });
 
   const merged = Array.from(dedupMap.values());
-  // Merge extra `deposits` rows if any aren't already represented
+  // Merge extra `deposits` rows if any aren't already represented (pure USDT = USD)
   if (allExtraDeposits && allExtraDeposits.length > 0) {
     allExtraDeposits.forEach(d => {
-      const hash = String(d.tx_hash || '');
-      const dup = merged.some(m => String(m.order_id || m.out_trade_no || '') === hash);
+      const hash = String(d.tx_hash || '').trim().toLowerCase();
+      const dup = hash && merged.some(m => {
+        const mTok = extractDepositOrderToken(m).toLowerCase();
+        return mTok === hash || String(m.method || '').toLowerCase().includes(hash);
+      });
       if (!dup) {
+        const usdAmt = Number((Number(d.amount_usdt) || 0).toFixed(2));
         merged.push({
           id: 'dep_' + d.id,
           _sourceTable: 'deposits',
           _rawId: d.id,
           phone: d.user_id ? String(d.user_id).slice(0, 12) : 'USDT User',
           type: 'deposit',
-          amount: Number(d.amount_bdt || 0),
-          actual: Number(d.amount_bdt || 0),
+          amount: usdAmt,
+          actual: usdAmt,
           ratio: '100%',
           status: d.status || 'approved',
-          method: `USDT (BEP20) · ${d.amount_usdt || 0} USDT`,
+          method: `USDT (BEP20) · ${usdAmt.toFixed(2)} USDT${d.tx_hash ? ' · #' + d.tx_hash : ''}`,
           order_id: d.tx_hash || '',
           date: (d.created_at || '').split('T')[0],
           time: (d.created_at || '').split('T')[1]?.slice(0, 8) || '',
@@ -493,16 +511,18 @@ function updateKpiMetrics() {
   const pendingRecharges = recharges.filter(r => classifyStatus(r.status) === 'pending');
   const todayApprovedRecharges = approvedRecharges.filter(r => isSameLocalDay(r.created_at || r.date));
 
-  const totalRechargeSum = approvedRecharges.reduce((s, r) => s + (Number(r.amount) || 0), 0);
-  const todayRechargeSum = todayApprovedRecharges.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const totalRechargeSum = Number(approvedRecharges.reduce((s, r) => s + (Number(r.amount) || 0), 0).toFixed(2));
+  const todayRechargeSum = Number(todayApprovedRecharges.reduce((s, r) => s + (Number(r.amount) || 0), 0).toFixed(2));
 
   const withdrawals = getWithdrawalList();
+  const approvedWithdrawals = withdrawals.filter(w => classifyStatus(w.status) === 'approved');
   const nonRejectedWithdrawals = withdrawals.filter(w => classifyStatus(w.status) !== 'rejected');
   const pendingWithdrawals = withdrawals.filter(w => classifyStatus(w.status) === 'pending');
+  const todayApprovedWithdrawals = approvedWithdrawals.filter(w => isSameLocalDay(w.created_at || w.date));
   const todayWithdrawals = nonRejectedWithdrawals.filter(w => isSameLocalDay(w.created_at || w.date));
 
-  const totalWithdrawSum = nonRejectedWithdrawals.reduce((s, w) => s + (Number(w.amount) || 0), 0);
-  const todayWithdrawSum = todayWithdrawals.reduce((s, w) => s + (Number(w.amount) || 0), 0);
+  const totalWithdrawSum = Number(approvedWithdrawals.reduce((s, w) => s + (Number(w.amount) || 0), 0).toFixed(2));
+  const todayWithdrawSum = Number(todayApprovedWithdrawals.reduce((s, w) => s + (Number(w.amount) || 0), 0).toFixed(2));
 
   // Update DOM KPIs
   const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
@@ -886,24 +906,16 @@ function setWithdrawFilter(filter) {
 function getUserPayoutSummary(tx, u) {
   const meta = parseUserMeta(u);
   const methodStr = String(tx.method || 'USDT (BEP20)');
-  let targetWallet = '';
-  let holderName = meta.realName;
+  let targetWallet = meta.usdtAddress || '';
+  const holderName = meta.usdtName || meta.realName;
 
-  if (methodStr.toLowerCase().includes('usdt')) {
-    targetWallet = meta.usdtAddress || '';
-    holderName = meta.usdtName || meta.realName;
-  } else if (methodStr.includes('নগদ') || methodStr.toLowerCase().includes('nagad')) {
-    targetWallet = meta.nagadPhone || '';
-    holderName = meta.nagadName || meta.realName;
-  } else {
-    targetWallet = u?.bkash_phone || '';
-    holderName = u?.bkash_name || meta.realName;
-  }
-
-  // Extract inline account from tx.method if present e.g. "বিকাশ (017...)"
-  const parenMatch = methodStr.match(/\(([^)]+)\)/);
+  // Extract inline wallet from tx.method if present e.g. "USDT BEP20 (0x...)"
+  const parenMatch = methodStr.match(/\((0x[a-fA-F0-9]{40}|[^)]+)\)/);
   if (!targetWallet && parenMatch && parenMatch[1]) {
-    targetWallet = parenMatch[1];
+    const candidate = parenMatch[1].trim();
+    if (candidate.toUpperCase() !== 'BEP20') {
+      targetWallet = candidate;
+    }
   }
 
   return { methodStr, targetWallet, holderName, meta };
@@ -942,7 +954,14 @@ function renderWithdrawalsTable() {
     const statusKey = classifyStatus(tx.status);
     const u = usersByPhone.get(normalizePhone(tx.phone));
     const { methodStr, targetWallet, holderName } = getUserPayoutSummary(tx, u);
-    const netAmount = Number(tx.actual) || (Number(tx.amount) * 0.5);
+    const defaultNetPct = Number(latestSystemConfig && latestSystemConfig.withdrawNetPercent) || 95;
+    const parsedRatioPct = parseFloat(String(tx.ratio || ''));
+    const effectiveRatioPct = Number.isFinite(parsedRatioPct) && parsedRatioPct > 0 ? parsedRatioPct : defaultNetPct;
+    const hasExplicitActual = tx.actual !== undefined && tx.actual !== null && tx.actual !== '' && Number.isFinite(Number(tx.actual));
+    const netAmount = hasExplicitActual
+      ? Number(Number(tx.actual).toFixed(2))
+      : Number(((Number(tx.amount) || 0) * (effectiveRatioPct / 100)).toFixed(2));
+    const ratioDisp = tx.ratio || `${effectiveRatioPct}%`;
 
     return `
       <tr class="hover:bg-slate-50 transition">
@@ -965,7 +984,7 @@ function renderWithdrawalsTable() {
         </td>
         <td class="py-3.5 px-4 text-right">
           <div class="font-mono font-semibold text-slate-900 tabular-nums">${formatMoney(tx.amount)}</div>
-          <div class="font-mono text-[11px] text-emerald-700 tabular-nums">Net: ${formatMoney(netAmount)} (${escapeHtml(tx.ratio || '50%')})</div>
+          <div class="font-mono text-[11px] text-emerald-700 tabular-nums">Net: ${formatMoney(netAmount)} (${escapeHtml(ratioDisp)})</div>
         </td>
         <td class="py-3.5 px-4">${renderStatusBadge(statusKey)}</td>
         <td class="py-3.5 px-4 text-right">
@@ -1096,7 +1115,14 @@ function openInspectModal(txId) {
   const u = usersByPhone.get(normalizePhone(tx.phone));
   const { methodStr, targetWallet, holderName, meta } = getUserPayoutSummary(tx, u);
   const statusKey = classifyStatus(tx.status);
-  const netAmount = Number(tx.actual) || (Number(tx.amount) * 0.5);
+  const defaultNetPct = Number(latestSystemConfig && latestSystemConfig.withdrawNetPercent) || 95;
+  const parsedRatioPct = parseFloat(String(tx.ratio || ''));
+  const effectiveRatioPct = Number.isFinite(parsedRatioPct) && parsedRatioPct > 0 ? parsedRatioPct : defaultNetPct;
+  const hasExplicitActual = tx.actual !== undefined && tx.actual !== null && tx.actual !== '' && Number.isFinite(Number(tx.actual));
+  const netAmount = hasExplicitActual
+    ? Number(Number(tx.actual).toFixed(2))
+    : Number(((Number(tx.amount) || 0) * (effectiveRatioPct / 100)).toFixed(2));
+  const ratioDisp = tx.ratio || `${effectiveRatioPct}%`;
 
   const sub = document.getElementById('inspect-wd-subtitle');
   const body = document.getElementById('inspect-wd-body');
@@ -1109,7 +1135,7 @@ function openInspectModal(txId) {
           <div class="text-lg font-bold font-mono text-slate-900 tabular-nums mt-0.5">${formatMoney(tx.amount)}</div>
         </div>
         <div>
-          <div class="text-[11px] uppercase text-slate-500 font-medium">Net Payable (${escapeHtml(tx.ratio || '50%')})</div>
+          <div class="text-[11px] uppercase text-slate-500 font-medium">Net Payable (${escapeHtml(ratioDisp)})</div>
           <div class="text-lg font-bold font-mono text-emerald-700 tabular-nums mt-0.5">${formatMoney(netAmount)}</div>
         </div>
       </div>
@@ -1128,8 +1154,6 @@ function openInspectModal(txId) {
             ${targetWallet ? `<button type="button" onclick="copyToClipboard('${escapeHtml(targetWallet)}', 'Payout Account')" class="px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-sans font-semibold cursor-pointer">Copy</button>` : ''}
           </span>
         </div>
-        <div class="flex justify-between text-xs"><span class="text-slate-500">Bound bKash</span><span class="font-mono text-slate-700">${escapeHtml(u?.bkash_phone || '-')}</span></div>
-        <div class="flex justify-between text-xs"><span class="text-slate-500">Bound Nagad</span><span class="font-mono text-slate-700">${escapeHtml(meta.nagadPhone || '-')}</span></div>
         <div class="flex justify-between text-xs"><span class="text-slate-500">Bound USDT BEP20</span><span class="font-mono text-slate-700 truncate max-w-[230px]">${escapeHtml(meta.usdtAddress || '-')}</span></div>
         <div class="flex justify-between text-xs"><span class="text-slate-500">Current Status</span><span>${renderStatusBadge(statusKey)}</span></div>
       </div>
@@ -1208,11 +1232,7 @@ function renderUsersTable() {
   tbody.innerHTML = list.map(u => {
     const meta = parseUserMeta(u);
     const joinedDate = u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
-    const payouts = [
-      u.bkash_phone ? `bKash: ${u.bkash_phone}` : '',
-      meta.nagadPhone ? `Nagad: ${meta.nagadPhone}` : '',
-      meta.usdtAddress ? `USDT: ${meta.usdtAddress.slice(0, 8)}...` : ''
-    ].filter(Boolean).join(' · ') || 'None';
+    const payouts = meta.usdtAddress ? `USDT: ${meta.usdtAddress.slice(0, 10)}...` : 'Not bound';
 
     const isBanned = meta.accountStatus === 'banned';
     return `
@@ -1282,9 +1302,6 @@ function openEditUserModal(phoneKey) {
   document.getElementById('edit-user-status').value = meta.accountStatus || 'active';
   document.getElementById('edit-user-password').value = u.plain_password || '';
   document.getElementById('edit-user-fundpass').value = meta.fundPassword || '';
-  document.getElementById('edit-user-bkash-phone').value = u.bkash_phone || '';
-  document.getElementById('edit-user-bkash-name').value = u.bkash_name || '';
-  document.getElementById('edit-user-nagad-phone').value = meta.nagadPhone || '';
   document.getElementById('edit-user-usdt-address').value = meta.usdtAddress || '';
 
   resetEditUserDeleteButton();
@@ -1364,7 +1381,10 @@ async function applyRealtimeBalanceDelta(phoneKey, rawDelta, walletType = 'avail
       const actualDiff = Number((nextFrozen - prevVal).toFixed(2));
       const curRechargeFrozen = Number(rawOpt.recharge_frozen_balance) || 0;
       rawOpt.frozen_balance = nextFrozen;
-      rawOpt.recharge_frozen_balance = Math.max(0, Number((curRechargeFrozen + actualDiff).toFixed(2)));
+      // Only decrement legacy recharge_frozen_balance when reducing frozen balance; never increment it on admin frozen credit (prevents client auto-unfreeze)
+      if (actualDiff < 0) {
+        rawOpt.recharge_frozen_balance = Math.max(0, Number((curRechargeFrozen + actualDiff).toFixed(2)));
+      }
       if (shouldCountAsRecharge && actualDiff > 0) {
         rawOpt.recharge_amount = Number(((Number(rawOpt.recharge_amount) || 0) + actualDiff).toFixed(2));
       }
@@ -1591,8 +1611,6 @@ async function handleSaveUserForm(e) {
     : (Number(rawOpt.recharge_amount) || 0);
 
   const updatedMeta = Object.assign({}, rawOpt, {
-    nagad_name: existingMeta.nagadName || newName,
-    nagad_phone: document.getElementById('edit-user-nagad-phone').value.trim(),
     usdt_name: existingMeta.usdtName || newName,
     usdt_address: document.getElementById('edit-user-usdt-address').value.trim(),
     real_name: newName,
@@ -1612,8 +1630,6 @@ async function handleSaveUserForm(e) {
     package_level: nextLevel,
     superior_id: document.getElementById('edit-user-superior').value.trim() || '11',
     plain_password: newPlainPass,
-    bkash_phone: document.getElementById('edit-user-bkash-phone').value.trim(),
-    bkash_name: document.getElementById('edit-user-bkash-name').value.trim(),
     bkash_optional: JSON.stringify(updatedMeta),
     updated_at: new Date().toISOString()
   };
@@ -1962,15 +1978,15 @@ function exportCsv(kind) {
 
   if (kind === 'users') {
     filename = `users-${getTodayDateString()}.csv`;
-    rows.push(['Phone', 'Name', 'MemberID', 'PackageLevel', 'Balance', 'InviteCode', 'SuperiorID', 'bKash', 'Nagad', 'USDT', 'JoinedAt']);
+    rows.push(['Phone', 'Name', 'MemberID', 'PackageLevel', 'BalanceUSD', 'InviteCode', 'SuperiorID', 'USDT_BEP20', 'JoinedAt']);
     allUsers.forEach(u => {
       const m = parseUserMeta(u);
-      rows.push([u.phone, m.realName, u.member_id, u.package_level, u.balance, u.invite_code, u.superior_id, u.bkash_phone || '', m.nagadPhone || '', m.usdtAddress || '', u.created_at]);
+      rows.push([u.phone, m.realName, u.member_id, u.package_level, u.balance, u.invite_code, u.superior_id, m.usdtAddress || '', u.created_at]);
     });
   } else {
     const typeFilter = kind === 'withdraw' ? 'withdraw' : 'deposit';
     filename = `${typeFilter}s-${getTodayDateString()}.csv`;
-    rows.push(['ID', 'Phone', 'Type', 'Amount', 'Net', 'Method', 'OrderID', 'Status', 'Date', 'Time']);
+    rows.push(['ID', 'Phone', 'Type', 'AmountUSD', 'NetUSD', 'Method', 'OrderID', 'Status', 'Date', 'Time']);
     const list = typeFilter === 'withdraw' ? getWithdrawalList() : getRechargeList();
     list.forEach(tx => {
       rows.push([tx.id, tx.phone, tx.type, tx.amount, tx.actual, tx.method, tx.order_id || '', tx.status, tx.date || '', tx.time || '']);
@@ -1986,32 +2002,71 @@ function exportCsv(kind) {
 }
 
 // ============================================================================
-// PLATFORM CONTROLS (SYNCED TO LIVE WEBSITE)
+// PLATFORM CONTROLS (100% USD / USDT — SYNCED TO LIVE WEBSITE)
 // ============================================================================
 const DEFAULT_PLATFORM_CONTROLS = {
+  currencyMode: 'USD',
   withdrawEnabled: true,
-  minWithdraw: 700,
-  withdrawNetPercent: 50,
-  minRecharge: 126,
-  usdtRate: 126,
+  minWithdraw: 5.00,
+  minWithdrawUsd: 5.00,
+  withdrawNetPercent: 95,
+  withdrawFeeMigratedV2: true,
+  minRecharge: 1.00,
+  minRechargeUsd: 1.00,
   usdtAddress: '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16',
   telegramUrl: 'https://t.me/PW_Official_Manager_BD',
+  tawkToUrl: '',
   managerId: '#PW-MANAGER-8802',
   bdRealOtpEnabled: true,
   cpanelOtpUrl: 'https://imcagro.top/send-api/send-otp'
 };
 
+function normalizeTawkToInput(rawVal) {
+  const s = String(rawVal || '').trim();
+  if (!s) return '';
+  const mEmbed = s.match(/embed\.tawk\.to\/([a-fA-F0-9]{16,32})\/([a-zA-Z0-9_-]{4,32})/);
+  if (mEmbed) return `https://embed.tawk.to/${mEmbed[1]}/${mEmbed[2]}`;
+  const mChat = s.match(/tawk\.to\/chat\/([a-fA-F0-9]{16,32})\/([a-zA-Z0-9_-]{4,32})/);
+  if (mChat) return `https://embed.tawk.to/${mChat[1]}/${mChat[2]}`;
+  const mPair = s.match(/^([a-fA-F0-9]{16,32})\/([a-zA-Z0-9_-]{4,32})$/);
+  if (mPair) return `https://embed.tawk.to/${mPair[1]}/${mPair[2]}`;
+  return '';
+}
+
+function resolveConfigUsdLimits(parsed) {
+  const src = (parsed && typeof parsed === 'object') ? parsed : {};
+  const isUsdMode = src.currencyMode === 'USD';
+  let minWithdrawUsd = DEFAULT_PLATFORM_CONTROLS.minWithdrawUsd;
+  let minRechargeUsd = DEFAULT_PLATFORM_CONTROLS.minRechargeUsd;
+
+  if (Number.isFinite(Number(src.minWithdrawUsd)) && Number(src.minWithdrawUsd) > 0) {
+    minWithdrawUsd = Number(Number(src.minWithdrawUsd).toFixed(2));
+  } else if (Number.isFinite(Number(src.minWithdraw)) && Number(src.minWithdraw) > 0) {
+    const rawW = Number(src.minWithdraw);
+    // One-time migration if an old BDT config row (e.g. 700) is loaded before re-saving in USD mode
+    minWithdrawUsd = (!isUsdMode && rawW >= 100) ? Number((rawW / 126).toFixed(2)) : Number(rawW.toFixed(2));
+  }
+
+  if (Number.isFinite(Number(src.minRechargeUsd)) && Number(src.minRechargeUsd) > 0) {
+    minRechargeUsd = Number(Number(src.minRechargeUsd).toFixed(2));
+  } else if (Number.isFinite(Number(src.minRecharge)) && Number(src.minRecharge) > 0) {
+    const rawR = Number(src.minRecharge);
+    minRechargeUsd = (!isUsdMode && rawR >= 50) ? Number((rawR / 126).toFixed(2)) : Number(rawR.toFixed(2));
+  }
+
+  return { minWithdrawUsd, minRechargeUsd };
+}
+
 const PACKAGE_LEVEL_KEYS = ['LV0', 'LV1', 'LV2', 'LV3', 'LV4', 'LV5', 'LV6'];
-const ADMIN_USD_BASE_RATE = 126;
 
 const DEFAULT_PACKAGE_CONFIGS = {
-  LV0: { count: 5, rewardUsd: 0.16, priceUsd: 0, reward: 20, price: 0, validityDays: 5, currency: 'USD', nameBn: 'LV0', nameEn: 'LV0', nameAr: 'LV0' },
-  LV1: { count: 6, rewardUsd: 0.24, priceUsd: 27.78, reward: 30, price: 3500, validityDays: 30, currency: 'USD', nameBn: 'LV1', nameEn: 'LV1', nameAr: 'LV1' },
-  LV2: { count: 12, rewardUsd: 0.32, priceUsd: 59.52, reward: 40, price: 7500, validityDays: 30, currency: 'USD', nameBn: 'LV2', nameEn: 'LV2', nameAr: 'LV2' },
-  LV3: { count: 15, rewardUsd: 0.40, priceUsd: 285.71, reward: 50, price: 36000, validityDays: 30, currency: 'USD', nameBn: 'LV3', nameEn: 'LV3', nameAr: 'LV3' },
-  LV4: { count: 25, rewardUsd: 0.48, priceUsd: 666.67, reward: 60, price: 84000, validityDays: 30, currency: 'USD', nameBn: 'LV4', nameEn: 'LV4', nameAr: 'LV4' },
-  LV5: { count: 35, rewardUsd: 0.56, priceUsd: 1190.48, reward: 70, price: 150000, validityDays: 30, currency: 'USD', nameBn: 'LV5', nameEn: 'LV5', nameAr: 'LV5' },
-  LV6: { count: 50, rewardUsd: 0.79, priceUsd: 2380.95, reward: 100, price: 300000, validityDays: 30, currency: 'USD', nameBn: 'LV6', nameEn: 'LV6', nameAr: 'LV6' }
+  LV0: { count: 5, rewardUsd: 0.16, priceUsd: 0, reward: 0.16, price: 0, validityDays: 5, currency: 'USD', nameBn: 'LV0', nameEn: 'LV0', nameAr: 'LV0' },
+  LV1: { count: 6, rewardUsd: 0.24, priceUsd: 27.78, reward: 0.24, price: 27.78, validityDays: 30, currency: 'USD', nameBn: 'LV1', nameEn: 'LV1', nameAr: 'LV1' },
+  LV2: { count: 12, rewardUsd: 0.32, priceUsd: 59.52, reward: 0.32, price: 59.52, validityDays: 30, currency: 'USD', nameBn: 'LV2', nameEn: 'LV2', nameAr: 'LV2' },
+  LV3: { count: 15, rewardUsd: 0.40, priceUsd: 285.71, reward: 0.40, price: 285.71, validityDays: 30, currency: 'USD', nameBn: 'LV3', nameEn: 'LV3', nameAr: 'LV3' },
+  LV4: { count: 25, rewardUsd: 0.48, priceUsd: 666.67, reward: 0.48, price: 666.67, validityDays: 30, currency: 'USD', nameBn: 'LV4', nameEn: 'LV4', nameAr: 'LV4' },
+  LV5: { count: 35, rewardUsd: 0.56, priceUsd: 1190.48, reward: 0.56, price: 1190.48, validityDays: 30, currency: 'USD', nameBn: 'LV5', nameEn: 'LV5', nameAr: 'LV5' },
+  LV6: { count: 50, rewardUsd: 0.79, priceUsd: 2380.95, reward: 0.79, price: 2380.95, validityDays: 30, currency: 'USD', nameBn: 'LV6', nameEn: 'LV6', nameAr: 'LV6' }
 };
 
 const DEFAULT_SALARY_PAGE_CONFIG = {
@@ -2230,12 +2285,12 @@ function normalizePackagesMap(rawPackages) {
     const rewardUsd = Number.isFinite(parsedRewardUsd) && parsedRewardUsd >= 0
       ? Number(parsedRewardUsd.toFixed(2))
       : (Number.isFinite(parsedRewardBdt) && parsedRewardBdt >= 0
-          ? Number((parsedRewardBdt / ADMIN_USD_BASE_RATE).toFixed(2))
+          ? Number(parsedRewardBdt.toFixed(2))
           : def.rewardUsd);
     const priceUsd = Number.isFinite(parsedPriceUsd) && parsedPriceUsd >= 0
       ? Number(parsedPriceUsd.toFixed(2))
       : (Number.isFinite(parsedPriceBdt) && parsedPriceBdt >= 0
-          ? Number((parsedPriceBdt / ADMIN_USD_BASE_RATE).toFixed(2))
+          ? Number(parsedPriceBdt.toFixed(2))
           : def.priceUsd);
 
     const rawBn = String(src.nameBn || '').trim();
@@ -2245,8 +2300,8 @@ function normalizePackagesMap(rawPackages) {
       count: Number.isFinite(parsedCount) && parsedCount >= 1 ? parsedCount : def.count,
       rewardUsd: rewardUsd,
       priceUsd: priceUsd,
-      reward: Number((rewardUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
-      price: Number((priceUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
+      reward: rewardUsd,
+      price: priceUsd,
       validityDays: Number.isFinite(parsedValidity) && parsedValidity >= 1 ? parsedValidity : def.validityDays,
       currency: 'USD',
       nameBn: (rawBn && !LEGACY_ADMIN_PKG_RE.test(rawBn)) ? rawBn : def.nameBn,
@@ -2466,8 +2521,8 @@ function collectPackagesFromForm() {
       rewardUsd: finalRewardUsd,
       priceUsd: finalPriceUsd,
       dailyIncomeUsd: Number((finalCount * finalRewardUsd).toFixed(2)),
-      reward: Number((finalRewardUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
-      price: Number((finalPriceUsd * ADMIN_USD_BASE_RATE).toFixed(4)),
+      reward: finalRewardUsd,
+      price: finalPriceUsd,
       validityDays: finalValidity,
       currency: 'USD',
       nameBn: cleanName,
@@ -2843,7 +2898,19 @@ function hydratePlatformControlsForm(sysRow, force = false) {
   }
   const normalizedPkgs = normalizePackagesMap(parsed.packages);
   const normalizedSalary = normalizeAdminSalaryPageConfig(parsed.salaryPage);
+  const { minWithdrawUsd, minRechargeUsd } = resolveConfigUsdLimits(parsed);
+  const rawSavedNetPct = Number(parsed.withdrawNetPercent);
+  const resolvedNetPct = (Number.isFinite(rawSavedNetPct) && rawSavedNetPct >= 1 && rawSavedNetPct <= 100)
+    ? ((rawSavedNetPct === 50 && !parsed.withdrawFeeMigratedV2) ? 95 : rawSavedNetPct)
+    : 95;
   const cfg = Object.assign({}, DEFAULT_PLATFORM_CONTROLS, parsed, {
+    currencyMode: 'USD',
+    minWithdraw: minWithdrawUsd,
+    minWithdrawUsd: minWithdrawUsd,
+    withdrawNetPercent: resolvedNetPct,
+    withdrawFeeMigratedV2: Boolean(parsed.withdrawFeeMigratedV2),
+    minRecharge: minRechargeUsd,
+    minRechargeUsd: minRechargeUsd,
     packages: normalizedPkgs,
     salaryPage: normalizedSalary
   });
@@ -2852,12 +2919,12 @@ function hydratePlatformControlsForm(sysRow, force = false) {
   if (force || (!platformControlsDirty && !isEditingInsideForm('platform-controls-form'))) {
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
     setVal('pc-withdraw-enabled', cfg.withdrawEnabled === false ? 'false' : 'true');
-    setVal('pc-min-withdraw', cfg.minWithdraw);
+    setVal('pc-min-withdraw', Number(cfg.minWithdrawUsd || 5).toFixed(2));
     setVal('pc-withdraw-ratio', cfg.withdrawNetPercent);
-    setVal('pc-min-recharge', cfg.minRecharge);
-    setVal('pc-usdt-rate', cfg.usdtRate);
+    setVal('pc-min-recharge', Number(cfg.minRechargeUsd || 1).toFixed(2));
     setVal('pc-usdt-address', cfg.usdtAddress);
     setVal('pc-telegram-url', cfg.telegramUrl);
+    setVal('pc-tawk-url', cfg.tawkToUrl || '');
     setVal('pc-manager-id', cfg.managerId);
     setVal('pc-bd-real-otp-enabled', cfg.bdRealOtpEnabled === false ? 'false' : 'true');
     setVal('pc-cpanel-otp-url', cfg.cpanelOtpUrl || '');
@@ -2928,14 +2995,32 @@ async function saveSystemConfigPayload(configObj, successMsg) {
 async function handlePlatformControlsSave(e) {
   e.preventDefault();
   const rawOtpUrl = (document.getElementById('pc-cpanel-otp-url')?.value || '').trim().replace(/\/+$/, '');
+  const rawMinW = parseFloat(document.getElementById('pc-min-withdraw').value);
+  const rawMinR = parseFloat(document.getElementById('pc-min-recharge').value);
+  const minWUsd = Number.isFinite(rawMinW) && rawMinW > 0 ? Number(rawMinW.toFixed(2)) : 5.00;
+  const minRUsd = Number.isFinite(rawMinR) && rawMinR > 0 ? Number(rawMinR.toFixed(2)) : 1.00;
+  const rawNetPct = parseFloat(document.getElementById('pc-withdraw-ratio').value);
+  const netPct = Number.isFinite(rawNetPct) ? Math.min(100, Math.max(1, rawNetPct)) : 95;
+
+  const rawTawkInput = (document.getElementById('pc-tawk-url')?.value || '').trim();
+  const normalizedTawkUrl = normalizeTawkToInput(rawTawkInput);
+  if (rawTawkInput && !normalizedTawkUrl) {
+    showToast('Invalid Tawk.to link/script. Paste your tawk.to Direct Chat Link, Embed URL, or full Widget Script.', 'error');
+    return;
+  }
+
   const configObj = Object.assign({}, latestSystemConfig, {
+    currencyMode: 'USD',
     withdrawEnabled: document.getElementById('pc-withdraw-enabled').value !== 'false',
-    minWithdraw: parseFloat(document.getElementById('pc-min-withdraw').value) || 700,
-    withdrawNetPercent: parseFloat(document.getElementById('pc-withdraw-ratio').value) || 50,
-    minRecharge: parseFloat(document.getElementById('pc-min-recharge').value) || 126,
-    usdtRate: parseFloat(document.getElementById('pc-usdt-rate').value) || 126,
+    minWithdraw: minWUsd,
+    minWithdrawUsd: minWUsd,
+    withdrawNetPercent: netPct,
+    withdrawFeeMigratedV2: true,
+    minRecharge: minRUsd,
+    minRechargeUsd: minRUsd,
     usdtAddress: document.getElementById('pc-usdt-address').value.trim(),
     telegramUrl: document.getElementById('pc-telegram-url').value.trim(),
+    tawkToUrl: normalizedTawkUrl,
     managerId: document.getElementById('pc-manager-id').value.trim(),
     bdRealOtpEnabled: (document.getElementById('pc-bd-real-otp-enabled')?.value || 'true') !== 'false',
     cpanelOtpUrl: rawOtpUrl,
@@ -2943,7 +3028,7 @@ async function handlePlatformControlsSave(e) {
     salaryPage: normalizeAdminSalaryPageConfig(latestSystemConfig.salaryPage)
   });
 
-  const saved = await saveSystemConfigPayload(configObj, 'Platform rules saved and synced to live website.');
+  const saved = await saveSystemConfigPayload(configObj, 'Platform USD rules saved and synced to live website.');
   if (saved) {
     platformControlsDirty = false;
   }
@@ -3225,7 +3310,10 @@ function renderUsdtWalletsList() {
 
 async function fetchSingleUsdtWalletEntry(entry) {
   try {
-    const resp = await fetch(`/api/crypto?action=check&userId=${entry.cryptoUserId}`);
+    const addrHint = (entry.address && /^0x[a-fA-F0-9]{40}$/.test(entry.address))
+      ? `&address=${encodeURIComponent(entry.address)}`
+      : '';
+    const resp = await fetch(`/api/crypto?action=check&userId=${entry.cryptoUserId}${addrHint}`);
     if (!resp.ok) {
       entry.error = `HTTP ${resp.status}`;
       return entry;

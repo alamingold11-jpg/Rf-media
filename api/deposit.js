@@ -13,8 +13,8 @@ const TRANSFER_EVENT_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a116
 // 4. Required Minimum On-chain Confirmations
 const MIN_CONFIRMATIONS = 15;
 
-// 5. Conversion Rate (1 USDT = 125 BDT)
-const USDT_TO_BDT_RATE = 125;
+// 5. Pure USD/USDT Mode (1 USDT = $1.00 USD)
+const USDT_TO_USD_RATE = 1;
 
 // Public high-reliability BSC RPC endpoints
 const BSC_RPC_URLS = [
@@ -59,8 +59,17 @@ function getSupabaseAdminClient() {
  * POST /api/deposit
  */
 export default async function handler(req, res) {
-  // CORS Configuration
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS Configuration (same-origin only for authenticated Bearer route)
+  const reqOrigin = String(req.headers.origin || '').trim();
+  const reqHost = String(req.headers['x-forwarded-host'] || req.headers.host || '').trim().toLowerCase();
+  if (reqOrigin && reqHost) {
+    try {
+      if (new URL(reqOrigin).host.toLowerCase() === reqHost) {
+        res.setHeader('Access-Control-Allow-Origin', reqOrigin);
+        res.setHeader('Vary', 'Origin');
+      }
+    } catch (e) {}
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -210,6 +219,34 @@ export default async function handler(req, res) {
       });
     }
 
+    // Load live company wallet address & minimum deposit USD from Admin SYSTEM_CONFIG (with safe defaults)
+    let activeCompanyAddress = COMPANY_BEP20_ADDRESS;
+    let minDepositUsdt = 1.0;
+    try {
+      const { data: cfgRow } = await supabaseAdmin
+        .from('users')
+        .select('bkash_optional')
+        .eq('phone', 'SYSTEM_CONFIG')
+        .maybeSingle();
+      if (cfgRow && cfgRow.bkash_optional) {
+        const cfgObj = typeof cfgRow.bkash_optional === 'string'
+          ? JSON.parse(cfgRow.bkash_optional)
+          : cfgRow.bkash_optional;
+        if (cfgObj && typeof cfgObj === 'object') {
+          const cfgAddr = String(cfgObj.usdtAddress || '').trim().toLowerCase();
+          if (ethers.isAddress(cfgAddr)) {
+            activeCompanyAddress = cfgAddr;
+          }
+          const cfgMinUsd = Number(cfgObj.minRechargeUsd);
+          if (Number.isFinite(cfgMinUsd) && cfgMinUsd >= 0.01) {
+            minDepositUsdt = Number(cfgMinUsd.toFixed(2));
+          } else if (cfgObj.currencyMode === 'USD' && Number.isFinite(Number(cfgObj.minRecharge)) && Number(cfgObj.minRecharge) >= 0.01) {
+            minDepositUsdt = Number(Number(cfgObj.minRecharge).toFixed(2));
+          }
+        }
+      }
+    } catch (cfgErr) {}
+
     // ------------------------------------------------------------------------
     // Rule 1 & Rule 2:
     // - ব্লকচেইন লগের from অবশ্যই ইউজারের দেওয়া Sender Address এর সাথে মিলতে হবে, আর to কোম্পানি অ্যাড্রেসের সাথে।
@@ -242,11 +279,11 @@ export default async function handler(req, res) {
         const logRawValue = parsed.args[2]; // uint256 (BigInt)
 
         // Strict address matching:
-        // from === cleanSender AND to === COMPANY_BEP20_ADDRESS
-        if (logFrom === cleanSender && logTo === COMPANY_BEP20_ADDRESS) {
+        // from === cleanSender AND to === activeCompanyAddress
+        if (logFrom === cleanSender && logTo === activeCompanyAddress) {
           // Rule 1: strictly value / 10^18
           const actualUsdt = parseFloat(ethers.formatUnits(logRawValue, 18));
-          if (actualUsdt >= 1) {
+          if (actualUsdt >= minDepositUsdt) {
             matchedTransfer = {
               logIndex: Number(log.index ?? log.logIndex ?? 0),
               from: logFrom,
@@ -268,19 +305,19 @@ export default async function handler(req, res) {
       if (belowMinimumAmount > 0) {
         return res.status(400).json({
           success: false,
-          message: `সর্বনিম্ন ডিপোজিট পরিমাণ 1.00 USDT ($1)। এই ট্রানজেকশনে কেবল ${belowMinimumAmount.toFixed(4)} USDT পাওয়া গেছে।`,
-          messageEn: `Minimum deposit is 1.00 USDT ($1). Only ${belowMinimumAmount.toFixed(4)} USDT was transferred in this transaction.`
+          message: `সর্বনিম্ন ডিপোজিট পরিমাণ ${minDepositUsdt.toFixed(2)} USDT ($${minDepositUsdt.toFixed(2)})। এই ট্রানজেকশনে কেবল ${belowMinimumAmount.toFixed(4)} USDT পাওয়া গেছে।`,
+          messageEn: `Minimum deposit is ${minDepositUsdt.toFixed(2)} USDT ($${minDepositUsdt.toFixed(2)}). Only ${belowMinimumAmount.toFixed(4)} USDT was transferred in this transaction.`
         });
       }
       return res.status(400).json({
         success: false,
-        message: `ব্লকচেইন রেকর্ডে আপনার প্রেরক অ্যাড্রেস (${cleanSender}) থেকে কোম্পানির ডিপোজিট ওয়ালেটে (${COMPANY_BEP20_ADDRESS}) কোনো অনুমোদিত USDT (BEP20) Transfer ইভেন্ট পাওয়া যায়নি।`,
-        messageEn: `No matching USDT (BEP20) Transfer event found from ${cleanSender} to ${COMPANY_BEP20_ADDRESS}.`
+        message: `ব্লকচেইন রেকর্ডে আপনার প্রেরক অ্যাড্রেস (${cleanSender}) থেকে কোম্পানির ডিপোজিট ওয়ালেটে (${activeCompanyAddress}) কোনো অনুমোদিত USDT (BEP20) Transfer ইভেন্ট পাওয়া যায়নি।`,
+        messageEn: `No matching USDT (BEP20) Transfer event found from ${cleanSender} to ${activeCompanyAddress}.`
       });
     }
 
-    const verifiedUsdt = matchedTransfer.usdtAmount;
-    const verifiedBdt = Math.round(verifiedUsdt * USDT_TO_BDT_RATE);
+    const verifiedUsdt = Number(matchedTransfer.usdtAmount.toFixed(6));
+    const verifiedUsd = Number(verifiedUsdt.toFixed(2));
 
     // ------------------------------------------------------------------------
     // Rule 4 & 5:
@@ -294,8 +331,8 @@ export default async function handler(req, res) {
       p_log_index: matchedTransfer.logIndex,
       p_sender_address: cleanSender,
       p_amount_usdt: verifiedUsdt,
-      p_amount_bdt: verifiedBdt,
-      p_rate: USDT_TO_BDT_RATE,
+      p_amount_bdt: verifiedUsd,
+      p_rate: USDT_TO_USD_RATE,
       p_block_number: matchedTransfer.blockNumber
     });
 
@@ -318,16 +355,16 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `অভিনন্দন! আপনার ${verifiedUsdt} USDT ($${verifiedUsdt.toFixed(2)} USD) ডিপোজিট সফলভাবে ব্লকচেইনে ভেরিফাই ও ব্যালেন্সে যুক্ত হয়েছে!`,
-      messageEn: `Congratulations! Your ${verifiedUsdt} USDT deposit has been verified on-chain and credited to your balance.`,
+      message: `অভিনন্দন! আপনার ${verifiedUsdt} USDT ($${verifiedUsd.toFixed(2)} USD) ডিপোজিট সফলভাবে ব্লকচেইনে ভেরিফাই ও ব্যালেন্সে যুক্ত হয়েছে!`,
+      messageEn: `Congratulations! Your ${verifiedUsdt} USDT ($${verifiedUsd.toFixed(2)} USD) deposit has been verified on-chain and credited to your balance.`,
       deposit: {
         txHash: cleanTxHash,
         logIndex: matchedTransfer.logIndex,
         senderAddress: cleanSender,
-        companyAddress: COMPANY_BEP20_ADDRESS,
+        companyAddress: activeCompanyAddress,
         usdtAmount: verifiedUsdt,
-        bdtAmount: verifiedBdt,
-        rate: USDT_TO_BDT_RATE,
+        usdAmount: verifiedUsd,
+        rate: USDT_TO_USD_RATE,
         confirmations: confirmations,
         newBalance: rpcResult?.new_balance,
         approvedAt: new Date().toISOString()

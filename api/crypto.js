@@ -9,6 +9,38 @@ const BSC_RPC_ENDPOINTS = [
   'https://bsc-dataseed.binance.org/',
   'https://bsc.publicnode.com'
 ];
+const UPSTREAM_TIMEOUT_MS = 4500;
+const SWEEP_TIMEOUT_MS = 12000;
+const UPSTREAM_COOLDOWN_MS = 45000;
+
+let upstreamDownUntil = 0;
+let lastUpstreamWarnAt = 0;
+
+function isValidBep20Address(addr) {
+  return /^0x[a-fA-F0-9]{40}$/.test(String(addr || '').trim());
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = UPSTREAM_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, Object.assign({}, options, { signal: controller.signal }));
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function markUpstreamUnavailable(err) {
+  const now = Date.now();
+  upstreamDownUntil = now + UPSTREAM_COOLDOWN_MS;
+  if (now - lastUpstreamWarnAt >= UPSTREAM_COOLDOWN_MS) {
+    lastUpstreamWarnAt = now;
+    const reason = (err && err.name === 'AbortError')
+      ? `timeout (${UPSTREAM_TIMEOUT_MS}ms)`
+      : ((err && err.cause && err.cause.code) || (err && err.message) || 'unreachable');
+    console.warn(`[Crypto Proxy] Upstream imcagro.top temporarily unavailable (${reason}); pausing upstream requests for ${Math.round(UPSTREAM_COOLDOWN_MS / 1000)}s.`);
+  }
+}
 
 async function readBscUsdtBalance(address) {
   const cleanAddr = String(address || '').trim().toLowerCase().replace(/^0x/, '');
@@ -23,15 +55,11 @@ async function readBscUsdtBalance(address) {
 
   for (const rpcUrl of BSC_RPC_ENDPOINTS) {
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
-      const rpcResp = await fetch(rpcUrl, {
+      const rpcResp = await fetchWithTimeout(rpcUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: payload,
-        signal: controller.signal
-      });
-      clearTimeout(timer);
+        body: payload
+      }, 4000);
       if (!rpcResp.ok) continue;
       const rpcJson = await rpcResp.json();
       if (rpcJson && typeof rpcJson.result === 'string' && rpcJson.result.startsWith('0x')) {
@@ -43,6 +71,28 @@ async function readBscUsdtBalance(address) {
     } catch (e) {}
   }
   return null;
+}
+
+async function respondWithBscFallbackOrUnavailable(res, action, cleanUserId, hintAddress) {
+  if (action === 'check' && isValidBep20Address(hintAddress)) {
+    const bscBal = await readBscUsdtBalance(hintAddress);
+    if (bscBal !== null) {
+      return res.status(200).json({
+        success: true,
+        user_id: cleanUserId,
+        address: hintAddress,
+        usdt_balance: bscBal,
+        bsc_rpc_balance: bscBal,
+        verified_zero_onchain: (bscBal === 0),
+        source: 'bsc_rpc'
+      });
+    }
+  }
+  return res.status(200).json({
+    success: false,
+    upstream_unavailable: true,
+    message: 'Crypto backend temporarily unreachable'
+  });
 }
 
 export default async function handler(req, res) {
@@ -85,6 +135,8 @@ export default async function handler(req, res) {
   }
 
   const parsedUserId = parseInt(String(userId || '').replace(/\D/g, ''), 10);
+  const rawHintAddress = String(q.address || url.searchParams.get('address') || '').trim();
+  const hintAddress = isValidBep20Address(rawHintAddress) ? rawHintAddress : '';
 
   // Authenticated server-to-server USDT auto-sweep trigger (destination is locked on cPanel)
   if (action === 'sweep') {
@@ -118,11 +170,19 @@ export default async function handler(req, res) {
       });
     }
 
+    if (Date.now() < upstreamDownUntil) {
+      return res.status(503).json({
+        success: false,
+        upstream_unavailable: true,
+        message: 'Crypto sweep backend temporarily unreachable. Please retry shortly.'
+      });
+    }
+
     try {
       // Pre-check balance before calling cPanel sweep so empty addresses never trigger transactions
-      const checkResp = await fetch(`https://imcagro.top/crypto/check/${parsedUserId}`, {
+      const checkResp = await fetchWithTimeout(`https://imcagro.top/crypto/check/${parsedUserId}`, {
         headers: { 'Accept': 'application/json' }
-      });
+      }, UPSTREAM_TIMEOUT_MS);
       if (!checkResp.ok) {
         return res.status(checkResp.status).json({ success: false, message: 'Failed to check balance before sweep' });
       }
@@ -137,7 +197,7 @@ export default async function handler(req, res) {
         });
       }
 
-      const sweepResp = await fetch(`https://imcagro.top/crypto/sweep/${parsedUserId}`, {
+      const sweepResp = await fetchWithTimeout(`https://imcagro.top/crypto/sweep/${parsedUserId}`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
@@ -145,8 +205,9 @@ export default async function handler(req, res) {
           'x-sweep-secret': sweepSecret
         },
         body: JSON.stringify({ userId: parsedUserId })
-      });
+      }, SWEEP_TIMEOUT_MS);
 
+      upstreamDownUntil = 0;
       const sweepData = await sweepResp.json().catch(() => ({ success: false, message: 'Invalid response from sweep server' }));
       return res.status(sweepResp.ok ? 200 : sweepResp.status).json({
         success: Boolean(sweepData && sweepData.success),
@@ -155,34 +216,37 @@ export default async function handler(req, res) {
         message: (sweepData && (sweepData.message || sweepData.error)) || 'Sweep processed'
       });
     } catch (sweepErr) {
-      console.error('[Crypto Sweep Proxy] Error:', sweepErr.message);
-      return res.status(500).json({
+      markUpstreamUnavailable(sweepErr);
+      return res.status(503).json({
         success: false,
-        message: 'Sweep proxy failed'
+        upstream_unavailable: true,
+        message: 'Crypto sweep backend temporarily unreachable. Please retry shortly.'
       });
     }
   }
 
   const cleanUserId = (Number.isInteger(parsedUserId) && parsedUserId >= 1 && parsedUserId <= 2147483647) ? parsedUserId : 1;
 
+  if (Date.now() < upstreamDownUntil) {
+    return respondWithBscFallbackOrUnavailable(res, action, cleanUserId, hintAddress);
+  }
+
   try {
-    const targetUrl = action === 'check' 
+    const targetUrl = action === 'check'
       ? `https://imcagro.top/crypto/check/${cleanUserId}`
       : `https://imcagro.top/crypto/${cleanUserId}`;
 
-    const resp = await fetch(targetUrl, {
+    const resp = await fetchWithTimeout(targetUrl, {
       headers: {
         'Accept': 'application/json'
       }
-    });
+    }, UPSTREAM_TIMEOUT_MS);
 
     if (!resp.ok) {
-      return res.status(resp.status).json({
-        success: false,
-        message: `Crypto backend returned status ${resp.status}`
-      });
+      return respondWithBscFallbackOrUnavailable(res, action, cleanUserId, hintAddress);
     }
 
+    upstreamDownUntil = 0;
     const data = await resp.json();
 
     // Cross-verify zero balance directly on BSC RPC before allowing sweep-reset of claimedUsdtOnchain
@@ -199,11 +263,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(data);
   } catch (err) {
-    console.error('[Crypto Proxy] Error:', err);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to communicate with crypto backend',
-      error: err.message
-    });
+    markUpstreamUnavailable(err);
+    return respondWithBscFallbackOrUnavailable(res, action, cleanUserId, hintAddress);
   }
 }

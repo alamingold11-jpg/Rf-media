@@ -386,6 +386,7 @@ function mapSupabaseUser(d) {
     rechargeFrozenBalance: opt.recharge_frozen_balance !== undefined ? (Number(opt.recharge_frozen_balance) || 0) : null,
     lifetimeEarnings: Number(opt.lifetime_earnings) || 0,
     todayIncome: Number(opt.today_income) || 0,
+    todayIncomeDate: opt.today_income_date || '',
     totalIncome: Number(opt.total_income) || 0,
     completedMissions: Number(opt.completed_missions) || 0,
     lv0CompletedTasks: Number(opt.lv0_completed_tasks) || 0,
@@ -647,18 +648,59 @@ window.saveUser = function(u) {
 const DEFAULT_CPANEL_OTP_URL = 'https://imcagro.top/send-api/send-otp';
 
 window.aloPlatformConfig = {
+  currencyMode: 'USD',
   telegramUrl: 'https://t.me/PW_Official_Manager_BD',
+  tawkToUrl: '',
   managerId: '#PW-MANAGER-8802',
   usdtAddress: '0x74826F93F58Ae127FB6a77bFEFC5841B61bBDb16',
-  usdtRate: 125,
-  minWithdraw: 700,
-  withdrawNetPercent: 50,
-  minRecharge: 126,
+  minWithdraw: 5.00,
+  minWithdrawUsd: 5.00,
+  withdrawNetPercent: 95,
+  withdrawFeeMigratedV2: true,
+  minRecharge: 1.00,
+  minRechargeUsd: 1.00,
   withdrawEnabled: true,
   bdRealOtpEnabled: true,
   cpanelOtpUrl: DEFAULT_CPANEL_OTP_URL,
   siteNotice: ''
 };
+
+function getPlatformWithdrawNetPercent() {
+  const cfg = window.aloPlatformConfig || {};
+  const raw = Number(cfg.withdrawNetPercent);
+  if (Number.isFinite(raw) && raw >= 1 && raw <= 100) {
+    if (raw === 50 && !cfg.withdrawFeeMigratedV2) return 95;
+    return Number(raw.toFixed(1));
+  }
+  return 95;
+}
+window.getPlatformWithdrawNetPercent = getPlatformWithdrawNetPercent;
+
+function getPlatformMinWithdrawUsd() {
+  const cfg = window.aloPlatformConfig || {};
+  if (Number.isFinite(Number(cfg.minWithdrawUsd)) && Number(cfg.minWithdrawUsd) > 0) {
+    return Number(Number(cfg.minWithdrawUsd).toFixed(2));
+  }
+  const rawW = Number(cfg.minWithdraw);
+  if (Number.isFinite(rawW) && rawW > 0) {
+    return (cfg.currencyMode !== 'USD' && rawW >= 100) ? Number((rawW / 126).toFixed(2)) : Number(rawW.toFixed(2));
+  }
+  return 5.00;
+}
+window.getPlatformMinWithdrawUsd = getPlatformMinWithdrawUsd;
+
+function getPlatformMinRechargeUsd() {
+  const cfg = window.aloPlatformConfig || {};
+  if (Number.isFinite(Number(cfg.minRechargeUsd)) && Number(cfg.minRechargeUsd) > 0) {
+    return Number(Number(cfg.minRechargeUsd).toFixed(2));
+  }
+  const rawR = Number(cfg.minRecharge);
+  if (Number.isFinite(rawR) && rawR > 0) {
+    return (cfg.currencyMode !== 'USD' && rawR >= 50) ? Number((rawR / 126).toFixed(2)) : Number(rawR.toFixed(2));
+  }
+  return 1.00;
+}
+window.getPlatformMinRechargeUsd = getPlatformMinRechargeUsd;
 
 function applyPlatformConfigData(rawOpt) {
   if (!rawOpt) return;
@@ -667,13 +709,41 @@ function applyPlatformConfigData(rawOpt) {
     try { parsed = JSON.parse(rawOpt); } catch (e) { return; }
   }
   if (!parsed || typeof parsed !== 'object') return;
+  const isUsdMode = parsed.currencyMode === 'USD';
+  window.aloPlatformConfig.currencyMode = 'USD';
   if (parsed.telegramUrl) window.aloPlatformConfig.telegramUrl = String(parsed.telegramUrl).trim();
+  if (typeof parsed.tawkToUrl === 'string') window.aloPlatformConfig.tawkToUrl = parsed.tawkToUrl.trim();
   if (parsed.managerId) window.aloPlatformConfig.managerId = String(parsed.managerId).trim();
   if (parsed.usdtAddress) window.aloPlatformConfig.usdtAddress = String(parsed.usdtAddress).trim();
-  if (Number(parsed.usdtRate) > 0) window.aloPlatformConfig.usdtRate = Number(parsed.usdtRate);
-  if (Number(parsed.minWithdraw) > 0) window.aloPlatformConfig.minWithdraw = Number(parsed.minWithdraw);
-  if (Number(parsed.withdrawNetPercent) > 0) window.aloPlatformConfig.withdrawNetPercent = Number(parsed.withdrawNetPercent);
-  if (Number(parsed.minRecharge) > 0) window.aloPlatformConfig.minRecharge = Number(parsed.minRecharge);
+
+  if (Number(parsed.minWithdrawUsd) > 0) {
+    const wUsd = Number(Number(parsed.minWithdrawUsd).toFixed(2));
+    window.aloPlatformConfig.minWithdrawUsd = wUsd;
+    window.aloPlatformConfig.minWithdraw = wUsd;
+  } else if (Number(parsed.minWithdraw) > 0) {
+    const rawW = Number(parsed.minWithdraw);
+    const wUsd = (!isUsdMode && rawW >= 100) ? Number((rawW / 126).toFixed(2)) : Number(rawW.toFixed(2));
+    window.aloPlatformConfig.minWithdrawUsd = wUsd;
+    window.aloPlatformConfig.minWithdraw = wUsd;
+  }
+
+  if (Number(parsed.withdrawNetPercent) > 0) {
+    const rawPct = Number(parsed.withdrawNetPercent);
+    window.aloPlatformConfig.withdrawFeeMigratedV2 = Boolean(parsed.withdrawFeeMigratedV2);
+    window.aloPlatformConfig.withdrawNetPercent = (rawPct === 50 && !parsed.withdrawFeeMigratedV2) ? 95 : Math.min(100, Math.max(1, rawPct));
+  }
+
+  if (Number(parsed.minRechargeUsd) > 0) {
+    const rUsd = Number(Number(parsed.minRechargeUsd).toFixed(2));
+    window.aloPlatformConfig.minRechargeUsd = rUsd;
+    window.aloPlatformConfig.minRecharge = rUsd;
+  } else if (Number(parsed.minRecharge) > 0) {
+    const rawR = Number(parsed.minRecharge);
+    const rUsd = (!isUsdMode && rawR >= 50) ? Number((rawR / 126).toFixed(2)) : Number(rawR.toFixed(2));
+    window.aloPlatformConfig.minRechargeUsd = rUsd;
+    window.aloPlatformConfig.minRecharge = rUsd;
+  }
+
   if (typeof parsed.withdrawEnabled === 'boolean') window.aloPlatformConfig.withdrawEnabled = parsed.withdrawEnabled;
   if (typeof parsed.bdRealOtpEnabled === 'boolean') window.aloPlatformConfig.bdRealOtpEnabled = parsed.bdRealOtpEnabled;
   if (typeof parsed.cpanelOtpUrl === 'string' && parsed.cpanelOtpUrl.trim()) {
@@ -1343,7 +1413,10 @@ async function dbSaveUser(account, options) {
           : Math.max(Number(refOpt.lifetime_earnings) || 0, typeof account.lifetimeEarnings === 'number' ? account.lifetimeEarnings : 0),
         today_income: useDbFinancials
           ? (Number(refOpt.today_income) || 0)
-          : (typeof account.todayIncome === 'number' ? account.todayIncome : (Number(refOpt.today_income) || 0)),
+          : (typeof account.todayIncome === 'number' ? Number(account.todayIncome.toFixed(2)) : (Number(refOpt.today_income) || 0)),
+        today_income_date: useDbFinancials
+          ? (refOpt.today_income_date || '')
+          : (account.todayIncomeDate || refOpt.today_income_date || ''),
         total_income: useDbFinancials
           ? (Number(refOpt.total_income) || 0)
           : Math.max(Number(refOpt.total_income) || 0, typeof account.totalIncome === 'number' ? account.totalIncome : 0),
@@ -2202,14 +2275,6 @@ async function _computeDbGetRealTeam(normPhone) {
 
           if (tx.type === 'package' && !st.includes('pending') && !st.includes('মুলতবি')) {
             pkgTxPhones.add(p);
-            // Guard against legacy BDT-denominated package rows being treated as USD (126x inflation)
-            const lvlMatch = String(tx.method || '').toUpperCase().match(/\b(LV[1-9]\d*)\b/);
-            if (lvlMatch && typeof packageData === 'object' && packageData[lvlMatch[1]]) {
-              const bdtPrice = Number(packageData[lvlMatch[1]].price) || 0;
-              if (bdtPrice > 0 && amt >= bdtPrice * 0.5) {
-                amt = Number((amt / BDT_PER_USD).toFixed(2));
-              }
-            }
             if (amt > 0) {
               pkgTotals[p] = (pkgTotals[p] || 0) + amt;
               if (isTodayTx) pkgTodayTotals[p] = (pkgTodayTotals[p] || 0) + amt;
@@ -2951,7 +3016,7 @@ function renderInvitePage() {
 
         // Package spend in member currency -> viewer currency (exact conversion so fractional USD/USDT sums accurately)
         let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
-        if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
+        if (pkgSpendRaw <= 0 && !m._hasTxLoaded && typeof packageData === 'object') {
           const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
           const uniquePaid = Array.from(new Set(paidPkgs.map(function(p) { return String(p || '').toUpperCase().trim(); })))
             .filter(function(p) { return p && p !== 'LV0' && packageData[p] && Number(packageData[p].price) > 0; });
@@ -3459,7 +3524,7 @@ function openInviteVipClaimModal(tier, type, amount, reqMembers, currentCount) {
   if (reqEl) reqEl.textContent = tLang(lang, `${reqMembers} জন সক্রিয় সদস্য`, `${reqMembers} Active Members`, `${reqMembers} أعضاء نشطين`);
 
   const curCount = Number(currentCount) || 0;
-  const pct = Math.min(100, Math.round((curCount / reqMembers) * 100));
+  const pct = reqMembers > 0 ? Math.min(100, Math.floor((curCount / reqMembers) * 100)) : 0;
   const curEl = document.getElementById('invite-modal-current-display');
   if (curEl) {
     curEl.textContent = tLang(lang, `${curCount} / ${reqMembers} জন (${pct}%)`, `${curCount} / ${reqMembers} (${pct}%)`, `${curCount} / ${reqMembers} (${pct}%)`);
@@ -3587,11 +3652,11 @@ async function executeVipRewardClaim(tier, type, amount, reqMembers, currentCoun
   }
 
   const prevBal = Number(liveUser.balance) || 0;
-  const addAmt = Number(effectiveRewardAmount) || 0;
+  const addAmt = Number((Number(effectiveRewardAmount) || 0).toFixed(2));
   const newBal = Number((prevBal + addAmt).toFixed(2));
   liveUser.balance = newBal;
   liveUser.totalIncome = Number(((Number(liveUser.totalIncome) || 0) + addAmt).toFixed(2));
-  liveUser.todayIncome = Number(((Number(liveUser.todayIncome) || 0) + addAmt).toFixed(2));
+  addDailyIncome(liveUser, addAmt);
   liveUser.lifetimeEarnings = Number(((Number(liveUser.lifetimeEarnings) || 0) + addAmt).toFixed(2));
   claimed.push(key);
   liveUser.claimedInviteRewards = claimed;
@@ -3928,7 +3993,45 @@ function openDashboardPanel(panelName) {
   }
 }
 
-const BDT_PER_USD = 126.0;
+const BDT_PER_USD = 1.0;
+
+function getActiveBdtPerUsdRate() {
+  return 1.0;
+}
+window.getActiveBdtPerUsdRate = getActiveBdtPerUsdRate;
+
+function getLocalTodayIso(dateObj) {
+  const d = dateObj instanceof Date ? dateObj : new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+window.getLocalTodayIso = getLocalTodayIso;
+
+function getSameDayIncomeValue(userObj) {
+  if (!userObj) return 0;
+  const todayIso = getLocalTodayIso();
+  const recordedDate = String(userObj.todayIncomeDate || (userObj._rawOpt && userObj._rawOpt.today_income_date) || '').trim();
+  if (recordedDate) {
+    return recordedDate === todayIso ? (Number(userObj.todayIncome) || 0) : 0;
+  }
+  const lastUpd = userObj.updatedAt || (userObj._rawOpt && userObj._rawOpt.updated_at) || '';
+  if (!lastUpd) return 0;
+  const updDate = new Date(lastUpd);
+  if (Number.isNaN(updDate.getTime())) return 0;
+  return updDate.toDateString() === new Date().toDateString() ? (Number(userObj.todayIncome) || 0) : 0;
+}
+window.getSameDayIncomeValue = getSameDayIncomeValue;
+
+function addDailyIncome(userObj, amount) {
+  const add = Number(amount) || 0;
+  const base = getSameDayIncomeValue(userObj);
+  const next = Number((base + add).toFixed(2));
+  if (userObj) {
+    userObj.todayIncome = next;
+    userObj.todayIncomeDate = getLocalTodayIso();
+  }
+  return next;
+}
+window.addDailyIncome = addDailyIncome;
 
 function isBangladeshUser(user) {
   if (!user) {
@@ -3962,45 +4065,23 @@ function isIndianUser(user) {
 }
 window.isIndianUser = isIndianUser;
 
-// Convert a base BDT catalog value to the active user's currency:
-// BD -> base BDT unchanged; any non-BD country -> USD using Bangladesh's rate (126 BDT = $1.00 USD)
-function toUserCurrencyAmount(baseBdtAmount, user) {
-  const num = Number(baseBdtAmount || 0);
+// Pure USD platform: 1 USDT = $1.00 USD everywhere (no BDT conversion)
+function toUserCurrencyAmount(amount, user) {
+  const num = Number(amount || 0);
   if (!num) return 0;
-  if (!user) user = getCurrentUser();
-  if (isUsdOnlyUser(user)) {
-    return Math.round((num / BDT_PER_USD) * 100) / 100;
-  }
-  return num;
+  return Math.round(num * 100) / 100;
 }
 window.toUserCurrencyAmount = toUserCurrencyAmount;
 
 function convertBetweenCurrenciesExact(amount, fromCurrOrUser, toCurrOrUser) {
   const num = Number(amount || 0);
-  if (!num) return 0;
-  const fromIsUsd = typeof fromCurrOrUser === 'string'
-    ? String(fromCurrOrUser).toUpperCase() === 'USD'
-    : isUsdOnlyUser(fromCurrOrUser);
-  const toIsUsd = typeof toCurrOrUser === 'string'
-    ? String(toCurrOrUser).toUpperCase() === 'USD'
-    : isUsdOnlyUser(toCurrOrUser);
-  if (fromIsUsd === toIsUsd) return num;
-  if (fromIsUsd && !toIsUsd) return num * BDT_PER_USD;
-  return num / BDT_PER_USD;
+  return num || 0;
 }
 window.convertBetweenCurrenciesExact = convertBetweenCurrenciesExact;
 
 function convertBetweenCurrencies(amount, fromCurrOrUser, toCurrOrUser) {
-  const exact = convertBetweenCurrenciesExact(amount, fromCurrOrUser, toCurrOrUser);
-  if (!exact) return 0;
-  const fromIsUsd = typeof fromCurrOrUser === 'string'
-    ? String(fromCurrOrUser).toUpperCase() === 'USD'
-    : isUsdOnlyUser(fromCurrOrUser);
-  const toIsUsd = typeof toCurrOrUser === 'string'
-    ? String(toCurrOrUser).toUpperCase() === 'USD'
-    : isUsdOnlyUser(toCurrOrUser);
-  if (fromIsUsd === toIsUsd) return exact;
-  return Number(exact.toFixed(2));
+  const num = Number(amount || 0);
+  return num ? Number(num.toFixed(2)) : 0;
 }
 window.convertBetweenCurrencies = convertBetweenCurrencies;
 
@@ -4894,11 +4975,9 @@ function formatUserMoney(amount, user) {
   return `${sym} ${formatMoney(amount, user)}`;
 }
 
-// USD Exchange Rates:
-// Bangladesh: 126 BDT = $1.00 USD (e.g. 126৳ = $1.00)
-// International (any country outside Bangladesh): native USD ($1.00 = $1.00 USD)
+// Global 1:1 USD / USDT platform ($1.00 USD = 1.00 USDT)
 function getUsdExchangeRate(user) {
-  return isUsdOnlyUser(user) ? 1.0 : BDT_PER_USD;
+  return 1.0;
 }
 window.getUsdExchangeRate = getUsdExchangeRate;
 
@@ -6173,23 +6252,23 @@ if (sendSmsBtn) {
 }
 
 const packageTaskSettings = {
-  LV0: { count: 5, reward: 20, rewardUsd: 0.16 },
-  LV1: { count: 6, reward: 30, rewardUsd: 0.24 },
-  LV2: { count: 12, reward: 40, rewardUsd: 0.32 },
-  LV3: { count: 15, reward: 50, rewardUsd: 0.40 },
-  LV4: { count: 25, reward: 60, rewardUsd: 0.48 },
-  LV5: { count: 35, reward: 70, rewardUsd: 0.56 },
-  LV6: { count: 50, reward: 100, rewardUsd: 0.79 }
+  LV0: { count: 5, reward: 0.16, rewardUsd: 0.16 },
+  LV1: { count: 6, reward: 0.24, rewardUsd: 0.24 },
+  LV2: { count: 12, reward: 0.32, rewardUsd: 0.32 },
+  LV3: { count: 15, reward: 0.40, rewardUsd: 0.40 },
+  LV4: { count: 25, reward: 0.48, rewardUsd: 0.48 },
+  LV5: { count: 35, reward: 0.56, rewardUsd: 0.56 },
+  LV6: { count: 50, reward: 0.79, rewardUsd: 0.79 }
 };
 
 const packageData = {
-  LV0: { name: 'LV0', nameBn: 'LV0', nameAr: 'LV0', nameEn: 'LV0', price: 0, priceUsd: 0, count: 5, reward: 20, rewardUsd: 0.16, dailyIncome: 100, dailyIncomeUsd: 0.80, validityDays: 5, desc: '5 Daily Tasks · $0.16 / task' },
-  LV1: { name: 'LV1', nameBn: 'LV1', nameAr: 'LV1', nameEn: 'LV1', price: 3500, priceUsd: 27.78, count: 6, reward: 30, rewardUsd: 0.24, dailyIncome: 180, dailyIncomeUsd: 1.44, validityDays: 30, desc: '6 Daily Tasks · $0.24 / task' },
-  LV2: { name: 'LV2', nameBn: 'LV2', nameAr: 'LV2', nameEn: 'LV2', price: 7500, priceUsd: 59.52, count: 12, reward: 40, rewardUsd: 0.32, dailyIncome: 480, dailyIncomeUsd: 3.84, validityDays: 30, desc: '12 Daily Tasks · $0.32 / task' },
-  LV3: { name: 'LV3', nameBn: 'LV3', nameAr: 'LV3', nameEn: 'LV3', price: 36000, priceUsd: 285.71, count: 15, reward: 50, rewardUsd: 0.40, dailyIncome: 750, dailyIncomeUsd: 6.00, validityDays: 30, desc: '15 Daily Tasks · $0.40 / task' },
-  LV4: { name: 'LV4', nameBn: 'LV4', nameAr: 'LV4', nameEn: 'LV4', price: 84000, priceUsd: 666.67, count: 25, reward: 60, rewardUsd: 0.48, dailyIncome: 1500, dailyIncomeUsd: 12.00, validityDays: 30, desc: '25 Daily Tasks · $0.48 / task' },
-  LV5: { name: 'LV5', nameBn: 'LV5', nameAr: 'LV5', nameEn: 'LV5', price: 150000, priceUsd: 1190.48, count: 35, reward: 70, rewardUsd: 0.56, dailyIncome: 2450, dailyIncomeUsd: 19.60, validityDays: 30, desc: '35 Daily Tasks · $0.56 / task' },
-  LV6: { name: 'LV6', nameBn: 'LV6', nameAr: 'LV6', nameEn: 'LV6', price: 300000, priceUsd: 2380.95, count: 50, reward: 100, rewardUsd: 0.79, dailyIncome: 5000, dailyIncomeUsd: 39.50, validityDays: 30, desc: '50 Daily Tasks · $0.79 / task' }
+  LV0: { name: 'LV0', nameBn: 'LV0', nameAr: 'LV0', nameEn: 'LV0', price: 0, priceUsd: 0, count: 5, reward: 0.16, rewardUsd: 0.16, dailyIncome: 0.80, dailyIncomeUsd: 0.80, validityDays: 5, desc: '5 Daily Tasks · $0.16 / task' },
+  LV1: { name: 'LV1', nameBn: 'LV1', nameAr: 'LV1', nameEn: 'LV1', price: 27.78, priceUsd: 27.78, count: 6, reward: 0.24, rewardUsd: 0.24, dailyIncome: 1.44, dailyIncomeUsd: 1.44, validityDays: 30, desc: '6 Daily Tasks · $0.24 / task' },
+  LV2: { name: 'LV2', nameBn: 'LV2', nameAr: 'LV2', nameEn: 'LV2', price: 59.52, priceUsd: 59.52, count: 12, reward: 0.32, rewardUsd: 0.32, dailyIncome: 3.84, dailyIncomeUsd: 3.84, validityDays: 30, desc: '12 Daily Tasks · $0.32 / task' },
+  LV3: { name: 'LV3', nameBn: 'LV3', nameAr: 'LV3', nameEn: 'LV3', price: 285.71, priceUsd: 285.71, count: 15, reward: 0.40, rewardUsd: 0.40, dailyIncome: 6.00, dailyIncomeUsd: 6.00, validityDays: 30, desc: '15 Daily Tasks · $0.40 / task' },
+  LV4: { name: 'LV4', nameBn: 'LV4', nameAr: 'LV4', nameEn: 'LV4', price: 666.67, priceUsd: 666.67, count: 25, reward: 0.48, rewardUsd: 0.48, dailyIncome: 12.00, dailyIncomeUsd: 12.00, validityDays: 30, desc: '25 Daily Tasks · $0.48 / task' },
+  LV5: { name: 'LV5', nameBn: 'LV5', nameAr: 'LV5', nameEn: 'LV5', price: 1190.48, priceUsd: 1190.48, count: 35, reward: 0.56, rewardUsd: 0.56, dailyIncome: 19.60, dailyIncomeUsd: 19.60, validityDays: 30, desc: '35 Daily Tasks · $0.56 / task' },
+  LV6: { name: 'LV6', nameBn: 'LV6', nameAr: 'LV6', nameEn: 'LV6', price: 2380.95, priceUsd: 2380.95, count: 50, reward: 0.79, rewardUsd: 0.79, dailyIncome: 39.50, dailyIncomeUsd: 39.50, validityDays: 30, desc: '50 Daily Tasks · $0.79 / task' }
 };
 
 function getPackagePriceUsd(level) {
@@ -6199,7 +6278,7 @@ function getPackagePriceUsd(level) {
   if (Number.isFinite(rawUsd) && rawUsd >= 0) {
     return Number(rawUsd.toFixed(2));
   }
-  return Math.round(((Number(pkg.price) || 0) / BDT_PER_USD) * 100) / 100;
+  return Number((Number(pkg.price) || 0).toFixed(2));
 }
 
 function getPackageRewardUsd(level) {
@@ -6211,8 +6290,8 @@ function getPackageRewardUsd(level) {
   if (task && Number.isFinite(Number(task.rewardUsd)) && Number(task.rewardUsd) >= 0) {
     return Number(Number(task.rewardUsd).toFixed(2));
   }
-  const bdtRew = (pkg && Number(pkg.reward)) || (task && Number(task.reward)) || 0;
-  return Math.round((bdtRew / BDT_PER_USD) * 100) / 100;
+  const rew = (pkg && Number(pkg.reward)) || (task && Number(task.reward)) || 0;
+  return Number(rew.toFixed(2));
 }
 
 const LEGACY_PACKAGE_NAME_RE = /^(ফ্রি স্তর|বেসিক প্যাকেজ|স্ট্যান্ডার্ড প্যাকেজ|সিলভার প্যাকেজ|গোল্ড প্যাকেজ|প্রিমিয়াম প্যাকেজ|এলিট প্যাকেজ|Free Tier|Basic Package|Standard Package|Silver Package|Gold Package|Premium Package|Elite Package|المستوى المجاني|الباقة الأساسية|الباقة القياسية|الباقة الفضية|الباقة الذهبية|الباقة المميزة|باقة النخبة|(এলিট|Elite|إيليت|एलीट)\s*LV[0-6])$/i;
@@ -6252,24 +6331,20 @@ function applyRemotePackageConfigs(packagesObj, skipCacheWrite) {
       const nextPriceUsd = (Number.isFinite(parsedPriceUsd) && parsedPriceUsd >= 0)
         ? Number(parsedPriceUsd.toFixed(2))
         : (Number.isFinite(parsedPrice) && parsedPrice >= 0
-          ? Number((parsedPrice / BDT_PER_USD).toFixed(2))
+          ? Number(parsedPrice.toFixed(2))
           : getPackagePriceUsd(lvl));
       const nextRewardUsd = (Number.isFinite(parsedRewardUsd) && parsedRewardUsd >= 0)
         ? Number(parsedRewardUsd.toFixed(2))
         : (Number.isFinite(parsedReward) && parsedReward >= 0
-          ? Number((parsedReward / BDT_PER_USD).toFixed(2))
+          ? Number(parsedReward.toFixed(2))
           : getPackageRewardUsd(lvl));
 
-      const nextPrice = (!hasExplicitPriceUsd && Number.isFinite(parsedPrice) && parsedPrice >= 0)
-        ? parsedPrice
-        : Math.round(nextPriceUsd * BDT_PER_USD * 100) / 100;
-      const nextReward = (!hasExplicitRewardUsd && Number.isFinite(parsedReward) && parsedReward >= 0)
-        ? parsedReward
-        : Math.round(nextRewardUsd * BDT_PER_USD * 100) / 100;
+      const nextPrice = nextPriceUsd;
+      const nextReward = nextRewardUsd;
 
       const nextValidity = Number.isFinite(parsedValidity) && parsedValidity >= 1 ? parsedValidity : (targetPkg.validityDays || (lvl === 'LV0' ? 5 : 30));
-      const nextDaily = Number((nextCount * nextReward).toFixed(2));
-      const nextDailyUsd = Number((nextCount * nextRewardUsd).toFixed(2));
+      const nextDaily = Number((nextCount * nextRewardUsd).toFixed(2));
+      const nextDailyUsd = nextDaily;
       const rawBn = String(src.nameBn || '').trim();
       const rawEn = String(src.nameEn || '').trim();
       const rawAr = String(src.nameAr || '').trim();
@@ -7721,9 +7796,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
         supUser.balance = Number(((Number(supUser.balance) || 0) + commission).toFixed(2));
         supUser.totalIncome = Number(((Number(supUser.totalIncome) || 0) + commission).toFixed(2));
         supUser.lifetimeEarnings = Number(((Number(supUser.lifetimeEarnings) || 0) + commission).toFixed(2));
-        const supLastUpd = supUser.updatedAt || (supUser._rawOpt && supUser._rawOpt.updated_at) || '';
-        const sameDayAsUpdate = !supLastUpd || (new Date(supLastUpd).toDateString() === new Date().toDateString());
-        supUser.todayIncome = Number((((sameDayAsUpdate ? Number(supUser.todayIncome) : 0) || 0) + commission).toFixed(2));
+        addDailyIncome(supUser, commission);
         await dbSaveUser(supUser);
 
         if (typeof _realTeamCache !== 'undefined') _realTeamCache.delete(supPhone);
@@ -7735,6 +7808,7 @@ async function distributeTeamCommission(memberPhone, baseAmount, options) {
           activeSignedInUser.totalIncome = supUser.totalIncome;
           activeSignedInUser.lifetimeEarnings = supUser.lifetimeEarnings;
           activeSignedInUser.todayIncome = supUser.todayIncome;
+          activeSignedInUser.todayIncomeDate = supUser.todayIncomeDate;
           activeSignedInUser.commissionDust = supUser.commissionDust;
           localStorage.setItem('my_pass_available_bal', supUser.balance.toFixed(2));
           localStorage.setItem('aloSignedInUser', JSON.stringify(activeSignedInUser));
@@ -7800,7 +7874,7 @@ async function confirmDeposit() {
     return;
   }
 
-  const minRcAmt = toUserCurrencyAmount(Number((window.aloPlatformConfig && window.aloPlatformConfig.minRecharge) || 126), user);
+  const minRcAmt = getPlatformMinRechargeUsd();
   const sym = getUserCurrencySymbol(user);
   const isUsd = isUsdOnlyUser(user);
   if (amount < minRcAmt) {
@@ -8038,15 +8112,24 @@ function renderWithdrawalHistory() {
   // Authoritative sync from Supabase transactions table (withdrawal records ONLY)
   dbGetTransactions(user.phone || user.accountNumber, 'withdraw').then(function(dbList) {
     if (!Array.isArray(dbList)) return;
+    const defaultNetPct = getPlatformWithdrawNetPercent();
     const mapped = dbList.filter(function(tx) {
       return !tx.type || tx.type === 'withdraw';
     }).map(function(tx) {
+      const amtNum = Number(tx.amount || 0);
+      const parsedRatio = parseFloat(String(tx.ratio || ''));
+      const effectiveRatio = (Number.isFinite(parsedRatio) && parsedRatio > 0 && parsedRatio <= 100) ? parsedRatio : defaultNetPct;
+      const ratioStr = tx.ratio && String(tx.ratio).trim() ? String(tx.ratio).trim() : `${effectiveRatio.toFixed(1)}%`;
+      const rawActual = Number(tx.actual);
+      const actualNum = (Number.isFinite(rawActual) && rawActual > 0)
+        ? rawActual
+        : Number((amtNum * (effectiveRatio / 100)).toFixed(2));
       return {
         id: tx.id,
         type: 'withdraw',
-        amount: Number(tx.amount || 0).toFixed(2),
-        ratio: tx.ratio || '50.0%',
-        actual: Number(tx.actual || 0).toFixed(2),
+        amount: amtNum.toFixed(2),
+        ratio: ratioStr,
+        actual: actualNum.toFixed(2),
         status: tx.status || 'মুলতবি (Pending)',
         date: tx.date || (tx.createdAt ? String(tx.createdAt).split('T')[0] : ''),
         time: tx.time || ''
@@ -8486,8 +8569,7 @@ function openWithdrawSheet() {
     if (user && typeof reconcileUserFrozenBuckets === 'function') {
       reconcileUserFrozenBuckets(user);
     }
-    const pCfg = window.aloPlatformConfig || {};
-    const minW = toUserCurrencyAmount(Number(pCfg.minWithdraw) || 700, user);
+    const minW = getPlatformMinWithdrawUsd();
     const availEl = document.getElementById('withdraw-sheet-avail-val');
     const frozenEl = document.getElementById('withdraw-sheet-frozen-val');
     if (availEl) availEl.textContent = (Number(user && user.balance) || 0).toFixed(2);
@@ -8501,6 +8583,19 @@ function openWithdrawSheet() {
     }
     const pwdInp = document.getElementById('withdraw-sheet-fund-password');
     if (pwdInp) pwdInp.value = '';
+    const taxNoteEl = document.getElementById('withdraw-tax-fee-note');
+    if (taxNoteEl) {
+      const langW = getActiveLang(user);
+      const netPctW = getPlatformWithdrawNetPercent();
+      const taxPctW = Math.max(0, Number((100 - netPctW).toFixed(1)));
+      const taxPctStr = Number.isInteger(taxPctW) ? String(taxPctW) : taxPctW.toFixed(1);
+      taxNoteEl.textContent = tLang(
+        langW,
+        `উইথড্র ট্যাক্স ফি ${taxPctStr}%`,
+        `Withdrawal tax fee ${taxPctStr}%`,
+        `رسوم ضريبة السحب ${taxPctStr}%`
+      );
+    }
   }
 }
 
@@ -10145,6 +10240,7 @@ function updateProfileMetrics() {
   const weekday = (startOfWeek.getDay() + 6) % 7;
   startOfWeek.setDate(startOfWeek.getDate() - weekday);
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
   const completedMissions = missions.filter(function(mission) {
     return mission.status === 'complete';
@@ -10169,18 +10265,21 @@ function updateProfileMetrics() {
     if (element) element.textContent = value;
   };
 
-  const dynamicToday = sumRewards(function(date) {
+  const dynamicToday = Number(sumRewards(function(date) {
     return date >= startOfToday && date < new Date(startOfToday.getTime() + 86400000);
-  });
-  const dynamicYesterday = sumRewards(function(date) {
+  }).toFixed(2));
+  const dynamicYesterday = Number(sumRewards(function(date) {
     return date >= startOfYesterday && date < startOfToday;
-  });
-  const dynamicWeekly = sumRewards(function(date) {
+  }).toFixed(2));
+  const dynamicWeekly = Number(sumRewards(function(date) {
     return date >= startOfWeek && date <= now;
-  });
-  const dynamicMonthly = sumRewards(function(date) {
+  }).toFixed(2));
+  const dynamicMonthly = Number(sumRewards(function(date) {
     return date >= startOfMonth && date <= now;
-  });
+  }).toFixed(2));
+  const dynamicLastMonth = Number(sumRewards(function(date) {
+    return date >= startOfLastMonth && date < startOfMonth;
+  }).toFixed(2));
 
   let currentUser = null;
   try {
@@ -10196,34 +10295,37 @@ function updateProfileMetrics() {
     : 0;
 
   // Calculate all-time mission earnings from completed missions
-  const allCompletedMissionsSum = completedMissions.reduce(function(total, mission) {
+  const allCompletedMissionsSum = Number(completedMissions.reduce(function(total, mission) {
     return total + (Number(mission.reward) || 0);
-  }, 0);
+  }, 0).toFixed(2));
+
+  // Include same-day non-task income (team commissions, lucky spin, VIP salary, savings profit)
+  const sameDayIncomeVal = getSameDayIncomeValue(currentUser);
+  const effectiveToday = Number(Math.max(dynamicToday, sameDayIncomeVal).toFixed(2));
+  const effectiveWeekly = Number(Math.max(dynamicWeekly, effectiveToday).toFixed(2));
+  const effectiveMonthly = Number(Math.max(dynamicMonthly, effectiveToday).toFixed(2));
 
   // Lifetime earnings ("সারাজীবন এর আয়") for 'ব্যক্তিগত ভারসাম্য' (Personal Balance)
-  // Ensures lifetime income is permanently preserved and NEVER wiped by withdrawals!
-  let lifetimeEarnings = Math.max(
+  // Permanently preserved across withdrawals and never inflated by deposits!
+  let lifetimeEarnings = Number(Math.max(
     Number(currentUser && currentUser.lifetimeEarnings) || 0,
     Number(currentUser && currentUser.totalIncome) || 0,
-    allCompletedMissionsSum
-  );
+    allCompletedMissionsSum,
+    effectiveToday
+  ).toFixed(2));
 
   if (currentUser) {
-    if (typeof currentUser.lifetimeEarnings !== 'number') {
-      currentUser.lifetimeEarnings = Math.max(lifetimeEarnings, currentBal);
-      lifetimeEarnings = currentUser.lifetimeEarnings;
-      try { localStorage.setItem('aloSignedInUser', JSON.stringify(currentUser)); } catch(e) {}
-    } else if (currentUser.lifetimeEarnings < lifetimeEarnings) {
+    if (typeof currentUser.lifetimeEarnings !== 'number' || currentUser.lifetimeEarnings < lifetimeEarnings) {
       currentUser.lifetimeEarnings = lifetimeEarnings;
       try { localStorage.setItem('aloSignedInUser', JSON.stringify(currentUser)); } catch(e) {}
     }
   }
 
-  const todayVal = dynamicToday.toFixed(2);
+  const todayVal = effectiveToday.toFixed(2);
   const yesterdayVal = dynamicYesterday.toFixed(2);
-  const weeklyVal = dynamicWeekly.toFixed(2);
-  const monthlyVal = dynamicMonthly.toFixed(2);
-  const lastMonthVal = '0.00';
+  const weeklyVal = effectiveWeekly.toFixed(2);
+  const monthlyVal = effectiveMonthly.toFixed(2);
+  const lastMonthVal = dynamicLastMonth.toFixed(2);
   const totalRevenueVal = lifetimeEarnings.toFixed(2);
   const personalBalanceVal = lifetimeEarnings.toFixed(2); // "ব্যক্তিগত ভারসাম্য তে সারাজীবন এর আয় থাকবে"
   const balanceText = Number(currentBal).toFixed(2);      // "আর ভারসাম্য শুধু অখানে উইথড্র দিলে ব্যালেন্স জিরো হবে"
@@ -10237,21 +10339,15 @@ function updateProfileMetrics() {
   setText('personal-earnings-value', personalBalanceVal);
 
   const user = getCurrentUser();
-  const isUsd = isUsdOnlyUser(user);
-  const rate = getUsdExchangeRate(user); // 126 for BD, 1.0 for USD-only countries
-  const curr = getUserCurrency(user);
-  const lang = getActiveLang(user);
+  const rate = 1.0;
 
-  // Conversion: Bangladesh 126 BDT = $1.00 USD; International accounts run natively in USD ($1 = $1 USDT)
-  const profileUsdVal = (Number(currentBal) / rate).toFixed(2);
+  // Native USD / USDT ($1.00 USD = 1.00 USDT)
+  const profileUsdVal = Number(currentBal || 0).toFixed(2);
   setText('profile-balance-value', balanceText);
   setText('profile-usdt-value', profileUsdVal);
   setText('total-balance-value', balanceText);
 
-  const rateBadge = isUsd
-    ? '($1.00 = 1.00 USDT)'
-    : tLang(lang, `(রেট: ১$ = ১২৬৳)`, `(Rate: $1 = ${rate} ${curr})`, `(السعر: $1 = ${rate} ${curr})`);
-  setText('profile-usd-rate-badge', rateBadge);
+  setText('profile-usd-rate-badge', '($1.00 = 1.00 USDT)');
 
   // 7 USD spans in 3x3 Grid
   setText('personal-earnings-usd', '$' + (Number(personalBalanceVal) / rate).toFixed(2));
@@ -10269,7 +10365,7 @@ function updateProfileMetrics() {
   setText('my-pass-balance-value', availBal.toFixed(2));
   setText('my-pass-frozen-value', frozenVal.toFixed(2));
   setText('my-pass-available-value', availBal.toFixed(2));
-  setText('my-pass-usd-subtext', isUsd ? `≈ $${passUsd} USD` : `≈ $${passUsd} USD ${rateBadge}`);
+  setText('my-pass-usd-subtext', `≈ $${passUsd} USD`);
 
   renderWithdrawalHistory();
   if (typeof renderAccountChangeHistory === 'function') {
@@ -10281,14 +10377,15 @@ function updateProfileMetrics() {
 
   // Completed missions count & remaining based on actual package quota (decreases immediately on Accept, resets after 24h)
   const nowMs = now.getTime();
+  const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
   const completedTodayCount = completedMissions.filter(function(m) {
+    if (!doesMissionCountForDailyPool(m, currentLevel)) return false;
     const d = getCompletedAt(m);
     if (!d) return false;
     const diff = nowMs - d.getTime();
     return diff >= -60000 && diff < DAILY_QUOTA_RESET_MS;
   }).length;
 
-  const currentLevel = (currentUser && currentUser.packageLevel) || 'LV0';
   const acceptedIn24hCount = missions.filter(function(m) {
     return doesMissionCountForDailyPool(m, currentLevel) && isMissionIn24hQuotaWindow(m, nowMs);
   }).length;
@@ -10302,6 +10399,11 @@ function updateProfileMetrics() {
       remainingTodayCount = 0;
     } else if (typeof lv0St.remainingAcceptableTasks === 'number') {
       remainingTodayCount = Math.min(remainingTodayCount, lv0St.remainingAcceptableTasks);
+    }
+  } else if (typeof getPackageValidityStatus === 'function') {
+    const curPkgStatus = getPackageValidityStatus(currentLevel, currentUser);
+    if (curPkgStatus && curPkgStatus.isExpired) {
+      remainingTodayCount = 0;
     }
   }
 
@@ -10417,10 +10519,11 @@ function refreshDailyMissionLimit(level) {
   });
 
   const quotaLimit = (packageTaskSettings[level] && packageTaskSettings[level].count) || 5;
+  const poolMaxQuota = level === 'LV0' ? quotaLimit : Math.max(quotaLimit, userMaxQuota);
   const currentCount = acceptedToday.length;
   const lv0QuotaSt = (level === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
   const reachedLv0Total = Boolean(lv0QuotaSt && lv0QuotaSt.remainingAcceptableTasks <= 0);
-  const reached = currentCount >= quotaLimit || allTodayAccepted.length >= userMaxQuota || reachedLv0Total;
+  const reached = isPkgExpired || currentCount >= quotaLimit || allTodayAccepted.length >= poolMaxQuota || reachedLv0Total;
 
   const lang = getActiveLang(user);
 
@@ -11466,6 +11569,7 @@ function checkPendingReviews() {
     let paidReward = 0;
     let completedInBatch = 0;
     let lv0CompletedInBatch = 0;
+    let paidCompletedInBatch = 0;
     let failedInBatch = 0;
     let lastFailReason = '';
     const now = Date.now();
@@ -11524,15 +11628,17 @@ function checkPendingReviews() {
             } else if (isUsdOnlyUser(u) && m.currency !== 'USD') {
               mReward = toUserCurrencyAmount(mReward, u);
             }
+            mReward = Number((Number(mReward) || 0).toFixed(2));
             m.reward = mReward;
             m.currency = userCurr;
             if (mLevel === 'LV0') {
-              lv0Reward += mReward;
+              lv0Reward = Number((lv0Reward + mReward).toFixed(2));
               lv0CompletedInBatch += 1;
             } else {
-              paidReward += mReward;
+              paidReward = Number((paidReward + mReward).toFixed(2));
+              paidCompletedInBatch += 1;
             }
-            totalReward += mReward;
+            totalReward = Number((totalReward + mReward).toFixed(2));
             completedInBatch += 1;
           }
           changed = true;
@@ -11559,7 +11665,7 @@ function checkPendingReviews() {
         if (totalReward > 0) {
           // Both free (LV0) and paid (LV1+) task earnings go straight into Available Balance & USDT (never frozen)
           user.balance = Number(((Number(user.balance) || 0) + totalReward).toFixed(2));
-          user.todayIncome = Number(((Number(user.todayIncome) || 0) + totalReward).toFixed(2));
+          addDailyIncome(user, totalReward);
           user.totalIncome = Number(((Number(user.totalIncome) || 0) + totalReward).toFixed(2));
           user.lifetimeEarnings = Number(((Number(user.lifetimeEarnings) || 0) + totalReward).toFixed(2));
           user.completedMissions = (Number(user.completedMissions) || 0) + completedInBatch;
@@ -11582,7 +11688,7 @@ function checkPendingReviews() {
               ratio: '100%',
               actual: Number(lv0Reward.toFixed(2)),
               status: 'অনুমোদিত',
-              method: 'LV0 Free Task Reward',
+              method: `LV0 Free Task Reward (${lv0CompletedInBatch} tasks)`,
               date: dDate,
               time: dTime,
               newBalance: user.balance
@@ -11594,7 +11700,7 @@ function checkPendingReviews() {
               ratio: '100%',
               actual: Number(paidReward.toFixed(2)),
               status: 'অনুমোদিত',
-              method: `Task Reward (${completedInBatch} tasks)`,
+              method: `Task Reward (${paidCompletedInBatch} tasks)`,
               date: dDate,
               time: dTime,
               newBalance: user.balance
@@ -11606,9 +11712,9 @@ function checkPendingReviews() {
             dbRecordTransaction({
               phone: curPhone,
               type: 'mission',
-              amount: totalReward,
+              amount: Number(totalReward.toFixed(2)),
               ratio: '100%',
-              actual: totalReward,
+              actual: Number(totalReward.toFixed(2)),
               status: 'অনুমোদিত',
               method: methodDesc,
               date: dDate,
@@ -11632,9 +11738,11 @@ function checkPendingReviews() {
               if (freshCloud) {
                 const cloudBal = Number(freshCloud.balance) || 0;
                 const mergedBal = Number((cloudBal + totalReward).toFixed(2));
+                const nextCloudToday = addDailyIncome(freshCloud, totalReward);
                 targetToSave = Object.assign({}, user, freshCloud, {
                   balance: mergedBal,
-                  todayIncome: Number(((Number(freshCloud.todayIncome) || 0) + totalReward).toFixed(2)),
+                  todayIncome: nextCloudToday,
+                  todayIncomeDate: getLocalTodayIso(),
                   totalIncome: Number(((Number(freshCloud.totalIncome) || 0) + totalReward).toFixed(2)),
                   lifetimeEarnings: Number(((Number(freshCloud.lifetimeEarnings) || 0) + totalReward).toFixed(2)),
                   completedMissions: (Number(freshCloud.completedMissions) || 0) + completedInBatch,
@@ -11659,7 +11767,7 @@ function checkPendingReviews() {
           savePromise.then(function() {
             return distributeTeamCommission(curPhone, paidReward, {
               kind: 'task',
-              taskCount: completedInBatch,
+              taskCount: paidCompletedInBatch,
               currency: taskCurr
             });
           }).catch(function(commErr) {
@@ -12051,9 +12159,9 @@ async function openTeamMemberDetailModal(phoneOrMember, tierNum, idx) {
   const dispDeposit = convertBetweenCurrencies(rawDeposit, memberCurr, viewerCurr);
   const dispWithdrawals = convertBetweenCurrencies(rawWithdrawals, memberCurr, viewerCurr);
 
-  const usdtBalance = (viewerIsUsd ? dispBalance : (dispBalance / 126)).toFixed(2);
-  const usdtDeposit = (viewerIsUsd ? dispDeposit : (dispDeposit / 126)).toFixed(2);
-  const usdtWithdrawals = (viewerIsUsd ? dispWithdrawals : (dispWithdrawals / 126)).toFixed(2);
+  const usdtBalance = Number(dispBalance || 0).toFixed(2);
+  const usdtDeposit = Number(dispDeposit || 0).toFixed(2);
+  const usdtWithdrawals = Number(dispWithdrawals || 0).toFixed(2);
 
   // Status Badge (active when Tier-1 member has purchased a paid LV1+ package)
   const statusEl = document.getElementById('team-modal-status-badge');
@@ -12195,17 +12303,6 @@ function parseTeamCommissionTxsByTier(commTxs, viewerUser) {
     const isPkgTx = methodStr.includes('প্যাকেজ') || methodStr.includes('package');
     const isTaskTx = methodStr.includes('দৈনিক') || methodStr.includes('task') || methodStr.includes('কাজের');
 
-    // Guard legacy BDT-denominated package commission rows against 126x USD inflation
-    if (isPkgTx && /[\u0980-\u09FF]/.test(methodRaw)) {
-      const lvlMatch = methodRaw.toUpperCase().match(/\b(LV[1-9]\d*)\b/);
-      if (lvlMatch && typeof packageData === 'object' && packageData[lvlMatch[1]]) {
-        const bdtExpected = (Number(packageData[lvlMatch[1]].price) || 0) * (PACKAGE_COMMISSION_RATES[tierNum] || 0.01);
-        if (bdtExpected > 0 && amt >= bdtExpected * 0.5) {
-          amt = Number((amt / BDT_PER_USD).toFixed(2));
-        }
-      }
-    }
-
     const bucket = result[tierNum];
     if (isPkgTx) bucket.pkg += amt;
     else if (isTaskTx) bucket.task += amt;
@@ -12241,7 +12338,7 @@ function computeTierEstimatedCommission(memberList, tierNum, viewerCurr) {
   (memberList || []).forEach(function(m) {
     const mCurr = m.currency || 'USD';
     let pkgSpendRaw = Number(m.packageSpendTotal) || 0;
-    if (pkgSpendRaw <= 0 && typeof packageData === 'object') {
+    if (pkgSpendRaw <= 0 && !m._hasTxLoaded && typeof packageData === 'object') {
       const paidPkgs = Array.isArray(m.purchasedPackages) ? m.purchasedPackages : (m.level && m.level !== 'LV0' ? [m.level] : []);
       const uniquePaid = Array.from(new Set(paidPkgs.map(function(p) { return String(p || '').toUpperCase().trim(); })))
         .filter(function(p) { return p && p !== 'LV0' && packageData[p] && Number(packageData[p].price) > 0; });
@@ -12298,24 +12395,25 @@ async function updateTeamReportMetrics(forceRefresh) {
   const tier1 = teamData.tier1 || [];
 
   // 1. Calculate 8 Main Real Stats (converted to viewer's active currency)
-  const totalBalance = all.reduce(function(sum, m) {
+  const totalBalance = Number(all.reduce(function(sum, m) {
     return sum + convertBetweenCurrencies(Number(m.balance) || 0, m.currency || 'USD', viewerCurr);
-  }, 0);
-  const totalRecharge = all.reduce(function(sum, m) {
+  }, 0).toFixed(2));
+  const totalRecharge = Number(all.reduce(function(sum, m) {
     return sum + convertBetweenCurrencies(Number(m.rechargeAmount) || 0, m.currency || 'USD', viewerCurr);
-  }, 0);
-  const totalCashout = all.reduce(function(sum, m) {
+  }, 0).toFixed(2));
+  const totalCashout = Number(all.reduce(function(sum, m) {
     return sum + convertBetweenCurrencies(Number(m.cashoutAmount) || 0, m.currency || 'USD', viewerCurr);
-  }, 0);
-  const totalFlow = totalRecharge + totalCashout + totalBalance;
+  }, 0).toFixed(2));
+  // Team cash flow = total money flowing in & out (recharge + cashout), avoiding balance double-count
+  const totalFlow = Number((totalRecharge + totalCashout).toFixed(2));
   const firstChargeCount = all.filter(function(m) { return (Number(m.rechargeAmount) || 0) > 0; }).length;
   const directPushCount = tier1.length;
   const teamSize = all.length;
-  const now = Date.now();
-  const oneDayAgo = now - 24 * 60 * 60 * 1000;
+  const todayDateStr = new Date().toDateString();
   const newMembersCount = all.filter(function(m) {
-    const t = new Date(m.joinedAt).getTime();
-    return !isNaN(t) && t >= oneDayAgo;
+    if (!m.joinedAt) return false;
+    const d = new Date(m.joinedAt);
+    return !Number.isNaN(d.getTime()) && d.toDateString() === todayDateStr;
   }).length;
 
   const elBal = document.getElementById('team-stat-balance');
@@ -12486,12 +12584,11 @@ document.addEventListener('click', function(event) {
     return;
   }
 
-  // Customer Service Live Solution Button (সরাসরি সমাধান)
+  // Customer Service Live Solution Button (সরাসরি সমাধান -> Tawk.to Live Chat)
   const customerServiceLiveBtn = event.target.closest('#customer-service-live-btn');
   if (customerServiceLiveBtn) {
     event.preventDefault();
-    const l = getActiveLang();
-    showToastNotification(tLang(l, '💬 সরাসরি সহায়তা প্রতিনিধির সাথে সংযুক্ত হচ্ছে...', '💬 Connecting to live support agent...', '💬 جارٍ الاتصال بممثل الدعم المباشر...'));
+    openTawkToLiveChat();
     return;
   }
 
@@ -13077,7 +13174,8 @@ document.addEventListener('click', function(event) {
     }
 
     const amtInp = document.getElementById('withdraw-sheet-amount');
-    const amt = parseFloat(amtInp ? amtInp.value : '0') || 0;
+    const rawAmt = parseFloat(amtInp ? amtInp.value : '0') || 0;
+    const amt = Number(rawAmt.toFixed(2));
     const user = getCurrentUser();
     if (!user || (!user.phone && !user.accountNumber)) {
       showToastNotification(tLang(lPre, '⚠️ অনুগ্রহ করে প্রথমে লগইন করুন', '⚠️ Please log in first', '⚠️ يرجى تسجيل الدخول أولاً'));
@@ -13090,17 +13188,17 @@ document.addEventListener('click', function(event) {
     const sym = getUserCurrencySymbol(user);
     const lang = getActiveLang(user);
     const pCfg = window.aloPlatformConfig || {};
-    const minWithdrawAmt = toUserCurrencyAmount(Number(pCfg.minWithdraw) || 700, user);
+    const minWithdrawAmt = getPlatformMinWithdrawUsd();
 
     if (pCfg.withdrawEnabled === false) {
       showToastNotification(tLang(lang, '⚠️ অ্যাডমিন কর্তৃক উত্তোলন সাময়িকভাবে বন্ধ রাখা হয়েছে।', '⚠️ Withdrawals are temporarily paused by Administrator.', '⚠️ السحوبات متوقفة مؤقتاً من قبل المسؤول.'));
       return;
     }
 
-    if (isNaN(amt) || amt < minWithdrawAmt) {
+    if (isNaN(amt) || amt <= 0 || amt < minWithdrawAmt) {
       const minNotice = tLang(
         lang,
-        `⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন (ন্যূনতম ${minWithdrawAmt})`,
+        `⚠️ অনুগ্রহ করে উত্তোলনের সঠিক পরিমাণ লিখুন (ন্যূনতম ${sym}${minWithdrawAmt.toFixed(2)} ${curr})`,
         `⚠️ Please enter a valid withdrawal amount (Min ${sym}${minWithdrawAmt.toFixed(2)} ${curr})`,
         `⚠️ يرجى إدخال مبلغ سحب صالح (الحد الأدنى ${sym}${minWithdrawAmt.toFixed(2)} ${curr})`
       );
@@ -13165,11 +13263,10 @@ document.addEventListener('click', function(event) {
           return;
         }
 
-        const newBal = Math.max(0, liveBal - amt);
+        const prevCashout = Number(liveUser.cashoutAmount) || 0;
+        const newBal = Number(Math.max(0, liveBal - amt).toFixed(2));
         liveUser.balance = newBal;
-        liveUser.cashoutAmount = (Number(liveUser.cashoutAmount) || 0) + amt;
-        localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
-        localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
+        liveUser.cashoutAmount = Number((prevCashout + amt).toFixed(2));
 
         const now = new Date();
         const dateStr = now.toISOString().split('T')[0];
@@ -13177,8 +13274,8 @@ document.addEventListener('click', function(event) {
         const mins = String(now.getMinutes()).padStart(2, '0');
         const payoutMethodLabel = (usdt && usdt.address) ? `USDT BEP20 (${usdt.address})` : 'USDT (BEP20)';
 
-        const wdNetPct = Number((window.aloPlatformConfig && window.aloPlatformConfig.withdrawNetPercent) || 50);
-        const wdNetAmt = amt * (wdNetPct / 100);
+        const wdNetPct = getPlatformWithdrawNetPercent();
+        const wdNetAmt = Number((amt * (wdNetPct / 100)).toFixed(2));
 
         const newRecord = {
           amount: amt.toFixed(2),
@@ -13189,6 +13286,12 @@ document.addEventListener('click', function(event) {
           time: `${hours}:${mins}`
         };
 
+        const savedUserOk = await dbSaveUser(liveUser);
+        if (savedUserOk === false) {
+          liveUser.balance = liveBal;
+          liveUser.cashoutAmount = prevCashout;
+          throw new Error('Failed to sync withdrawal balance');
+        }
         await dbRecordTransaction({
           phone: liveUser.phone || liveUser.accountNumber,
           type: 'withdraw',
@@ -13202,7 +13305,9 @@ document.addEventListener('click', function(event) {
           time: `${hours}:${mins}`,
           newBalance: liveUser.balance || 0
         });
-        await dbSaveUser(liveUser);
+
+        localStorage.setItem('my_pass_available_bal', newBal.toFixed(2));
+        localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
 
         const curHistory = getWithdrawalHistory();
         curHistory.unshift(newRecord);
@@ -13220,6 +13325,14 @@ document.addEventListener('click', function(event) {
           `🎉 تم إرسال طلب السحب بمبلغ ${amt.toFixed(2)} ${curr} بنجاح!`
         );
         showToastNotification(successNotice);
+      } catch (wdErr) {
+        console.error('[Withdraw] Submission failed:', wdErr);
+        showToastNotification(tLang(
+          lang,
+          '⚠️ উত্তোলন জমা দিতে সমস্যা হয়েছে। অনুগ্রহ করে ইন্টারনেট চেক করে আবার চেষ্টা করুন।',
+          '⚠️ Failed to submit withdrawal request. Please check your connection and try again.',
+          '⚠️ فشل إرسال طلب السحب. يرجى التحقق من الاتصال والمحاولة مرة أخرى.'
+        ));
       } finally {
         window.isSubmittingWithdrawal = false;
         withdrawSheetSubmitBtn.disabled = false;
@@ -13657,6 +13770,7 @@ document.addEventListener('click', function(event) {
     const quota = packageTaskSettings[activePackageLevel]?.count || 5;
     const userLevel = (user && user.packageLevel) || 'LV0';
     const userMaxQuota = (packageTaskSettings[userLevel] && packageTaskSettings[userLevel].count) || 5;
+    const poolMaxQuota = activePackageLevel === 'LV0' ? quota : Math.max(quota, userMaxQuota);
     const nowMs = Date.now();
     const acceptedToday = readAcceptedMissions().filter(function(m) {
       return m.level === activePackageLevel && m.status !== 'failed' && isMissionIn24hQuotaWindow(m, nowMs);
@@ -13667,7 +13781,7 @@ document.addEventListener('click', function(event) {
 
     const lv0AcceptSt = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
     const lv0TotalLimitHit = Boolean(lv0AcceptSt && lv0AcceptSt.remainingAcceptableTasks <= 0);
-    if (acceptedToday.length >= quota || allTodayAccepted.length >= userMaxQuota || lv0TotalLimitHit) {
+    if (acceptedToday.length >= quota || allTodayAccepted.length >= poolMaxQuota || lv0TotalLimitHit) {
       showTaskCenterToast(tLang(lang, 'দৈনিক কোটা পূর্ণ', 'Daily Limit Reached', 'تم بلوغ الحد اليومي'));
       refreshDailyMissionLimit(activePackageLevel);
       return;
@@ -13715,7 +13829,7 @@ document.addEventListener('click', function(event) {
       });
       const newAcceptedCount = currentMissions.length;
       const postLv0St = (activePackageLevel === 'LV0' && typeof getLv0TrialStatus === 'function') ? getLv0TrialStatus(user) : null;
-      const reached = newAcceptedCount >= quota || allMissionsToday.length >= userMaxQuota || Boolean(postLv0St && postLv0St.remainingAcceptableTasks <= 0);
+      const reached = newAcceptedCount >= quota || allMissionsToday.length >= poolMaxQuota || Boolean(postLv0St && postLv0St.remainingAcceptableTasks <= 0);
 
       if (reached) {
         // Immediately update all other unaccepted buttons in the list to 'সীমা পূর্ণ'
@@ -14984,7 +15098,10 @@ function initApp() {
                       status: 'অনুমোদিত',
                       ratio: '100%'
                     };
-                    if (creditedAmt > 0) gwUpdate.actual = creditedAmt;
+                    if (creditedAmt > 0) {
+                      gwUpdate.amount = creditedAmt;
+                      gwUpdate.actual = creditedAmt;
+                    }
                     await window.aloSupabase
                       .from('transactions')
                       .update(gwUpdate)
@@ -15098,7 +15215,7 @@ function initApp() {
 }
 
 document.addEventListener('input', function(e) {
-  if (e.target && e.target.id === 'withdraw-amount-input') {
+  if (e.target && e.target.id === 'withdraw-amount-input' && typeof updateWithdrawCalculations === 'function') {
     updateWithdrawCalculations();
   }
   if (e.target && e.target.id === 'savings-deposit-input') {
@@ -15140,14 +15257,117 @@ function updateSavingsCalculationPreview(amount) {
   const profitEl = document.getElementById('savings-calc-profit');
   const totalEl = document.getElementById('savings-calc-total');
 
-  if (isUsd || lang !== 'bn') {
-    if (dailyEl) dailyEl.textContent = `${sym}${daily.toFixed(2)}`;
-    if (profitEl) profitEl.textContent = `${sym}${totalProfit.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `${sym}${totalReturn.toFixed(2)} ${tLang(lang, 'লাভ সহ', '(incl. profit)', '(شامل الربح)')}`;
-  } else {
-    if (dailyEl) dailyEl.textContent = '৳ ' + formatBanglaNumber(daily) + '.০০';
-    if (profitEl) profitEl.textContent = '৳ ' + formatBanglaNumber(totalProfit) + '.০০';
-    if (totalEl) totalEl.textContent = '৳ ' + formatBanglaNumber(totalReturn) + '.০০ লাভ সহ';
+  if (dailyEl) dailyEl.textContent = `${sym}${daily.toFixed(2)}`;
+  if (profitEl) profitEl.textContent = `${sym}${totalProfit.toFixed(2)}`;
+  if (totalEl) totalEl.textContent = `${sym}${totalReturn.toFixed(2)} ${tLang(lang, 'লাভ সহ', '(incl. profit)', '(شامل الربح)')}`;
+}
+
+function computeSavingsPlanState(plan, user) {
+  const rawAmt = Number(plan && plan.amount) || 30;
+  const amount = Number(rawAmt.toFixed(2));
+  const days = Math.max(1, Number(plan && plan.days) || 45);
+  const rate = Number(plan && plan.rate) || 5;
+  const dailyProfit = Number((amount * (rate / 100)).toFixed(2));
+  const totalProfit = Number((amount * (rate / 100) * days).toFixed(2));
+  const totalReturn = Number((amount + totalProfit).toFixed(2));
+  const createdMs = plan && plan.createdAt ? new Date(plan.createdAt).getTime() : NaN;
+  const elapsedDays = Number.isFinite(createdMs)
+    ? Math.min(days, Math.max(0, Math.floor((Date.now() - createdMs) / 86400000)))
+    : Math.min(days, Math.max(0, Number(plan && plan.daysElapsed) || 0));
+  const daysLeft = Math.max(0, days - elapsedDays);
+  const accruedProfit = elapsedDays >= days
+    ? totalProfit
+    : Number(Math.min(totalProfit, dailyProfit * elapsedDays).toFixed(2));
+  const currentValue = Number((amount + accruedProfit).toFixed(2));
+  const pct = Math.min(100, Math.max(0, Math.round((elapsedDays / days) * 100)));
+  const needed = Number(Math.max(0, totalReturn - currentValue).toFixed(2));
+  const isMatured = elapsedDays >= days;
+  return {
+    amount: amount,
+    target: totalReturn,
+    days: days,
+    rate: rate,
+    elapsedDays: elapsedDays,
+    daysLeft: daysLeft,
+    dailyProfit: dailyProfit,
+    totalProfit: totalProfit,
+    totalReturn: totalReturn,
+    accruedProfit: accruedProfit,
+    currentValue: currentValue,
+    pct: pct,
+    needed: needed,
+    isMatured: isMatured
+  };
+}
+
+let _isSettlingSavingsMaturity = false;
+async function checkAndSettleMaturedSavingsPlan(userArg) {
+  if (_isSettlingSavingsMaturity) return false;
+  const user = userArg || getCurrentUser();
+  if (!user) return false;
+  const plan = getUserSavingsPlan();
+  if (!plan || plan.maturedPaid || String(plan.status || '').toLowerCase() === 'completed') return false;
+  const st = computeSavingsPlanState(plan, user);
+  if (!st.isMatured) return false;
+
+  _isSettlingSavingsMaturity = true;
+  try {
+    const phoneKey = normalizeBdPhone(user.phone || user.accountNumber);
+    const cloudUser = phoneKey && typeof dbGetUser === 'function' ? await dbGetUser(phoneKey).catch(function() { return null; }) : null;
+    const liveUser = cloudUser ? Object.assign({}, user, cloudUser) : user;
+    const livePlan = (liveUser.savingsPlan && typeof liveUser.savingsPlan === 'object') ? liveUser.savingsPlan : plan;
+    if (!livePlan || livePlan.maturedPaid || String(livePlan.status || '').toLowerCase() === 'completed') {
+      return false;
+    }
+    const liveSt = computeSavingsPlanState(livePlan, liveUser);
+    if (!liveSt.isMatured) return false;
+
+    const settledPlan = Object.assign({}, livePlan, {
+      daysElapsed: liveSt.days,
+      target: liveSt.totalReturn,
+      dailyProfit: liveSt.dailyProfit,
+      totalProfit: liveSt.totalProfit,
+      totalReturn: liveSt.totalReturn,
+      status: 'completed',
+      maturedPaid: true,
+      maturedAt: new Date().toISOString()
+    });
+
+    const prevBal = Number(liveUser.balance) || 0;
+    const nextBal = Number((prevBal + liveSt.totalReturn).toFixed(2));
+    liveUser.balance = nextBal;
+    liveUser.totalIncome = Number(((Number(liveUser.totalIncome) || 0) + liveSt.totalProfit).toFixed(2));
+    liveUser.lifetimeEarnings = Number(((Number(liveUser.lifetimeEarnings) || 0) + liveSt.totalProfit).toFixed(2));
+    addDailyIncome(liveUser, liveSt.totalProfit);
+    liveUser.savingsPlan = settledPlan;
+
+    localStorage.setItem('my_pass_available_bal', nextBal.toFixed(2));
+    localStorage.setItem('aloSignedInUser', JSON.stringify(liveUser));
+    if (phoneKey) localStorage.setItem('aloSavingsPlan_' + phoneKey, JSON.stringify(settledPlan));
+
+    await dbSaveUser(liveUser);
+
+    const now = new Date();
+    await dbRecordTransaction({
+      phone: phoneKey || liveUser.phone,
+      type: 'savings',
+      amount: liveSt.totalReturn,
+      ratio: '100%',
+      actual: liveSt.totalReturn,
+      status: 'অনুমোদিত',
+      method: isUsdOnlyUser(liveUser) ? 'Savings Plan Maturity Return (45 Days)' : 'সঞ্চয় পরিকল্পনা মেয়াদপূর্তি রিটার্ন (৪৫ দিন)',
+      date: now.toISOString().split('T')[0],
+      time: now.toTimeString().split(' ')[0],
+      newBalance: nextBal
+    });
+
+    if (typeof updateUserDetails === 'function') updateUserDetails(liveUser);
+    if (typeof updateProfileMetrics === 'function') updateProfileMetrics();
+    return true;
+  } catch (e) {
+    return false;
+  } finally {
+    _isSettlingSavingsMaturity = false;
   }
 }
 
@@ -15157,17 +15377,17 @@ function renderSavingsRecordCard(plan) {
   const sym = getUserCurrencySymbol(user);
   const lang = getActiveLang(user);
 
-  const rawAmt = Number(plan.amount) || (isUsd ? toUserCurrencyAmount(3500, user) : 3500);
-  const rawTarget = Number(plan.target) || (isUsd ? toUserCurrencyAmount(10000, user) : 10000);
-  const amount = (isUsd && plan.currency !== 'USD') ? toUserCurrencyAmount(rawAmt, user) : rawAmt;
-  const target = (isUsd && plan.currency !== 'USD') ? toUserCurrencyAmount(rawTarget, user) : rawTarget;
-  const days = Number(plan.days) || 45;
-  const rate = Number(plan.rate) || 5;
-  const pct = Math.min(100, Math.max(1, Math.round((amount / (target || 1)) * 100)));
-  const needed = Number(Math.max(0, target - amount).toFixed(2));
-  const dailyProfit = isUsd ? Number((amount * (rate / 100)).toFixed(2)) : Math.round(amount * (rate / 100));
-  const totalProfit = isUsd ? Number((amount * (rate / 100) * days).toFixed(2)) : Math.round(amount * (rate / 100) * days);
-  const totalReturn = Number((amount + totalProfit).toFixed(2));
+  const st = computeSavingsPlanState(plan, user);
+  const amount = st.amount;
+  const target = st.target;
+  const days = st.days;
+  const daysLeft = st.daysLeft;
+  const pct = st.pct;
+  const needed = st.needed;
+  const dailyProfit = st.dailyProfit;
+  const totalProfit = st.totalProfit;
+  const totalReturn = st.totalReturn;
+  const isSettled = Boolean(plan && (plan.maturedPaid || String(plan.status || '').toLowerCase() === 'completed'));
 
   const fmtDisp = function(v, forceDec) {
     if (isUsd || lang !== 'bn') {
@@ -15182,11 +15402,13 @@ function renderSavingsRecordCard(plan) {
     const progressTxt = tLang(lang, 'সঞ্চয়ের অগ্রগতি', 'Savings Progress', 'تقدم الادخار');
     const remainTxt = tLang(lang, 'আরও প্রয়োজন', 'Remaining', 'المتبقي');
     const durationTxt = tLang(lang, 'পরিকল্পনার মেয়াদ', 'Plan Duration', 'مدة الخطة');
-    const daysTxt = tLang(lang, `${days} দিন`, `${days} Days`, `${days} يوماً`);
+    const daysTxt = tLang(lang, `${daysLeft} দিন`, `${daysLeft} Days`, `${daysLeft} يوماً`);
     const dailyLbl = tLang(lang, 'দৈনিক প্রফিট (৫%):', 'Daily Profit (5%):', 'الربح اليومي (5%):');
     const profit45Lbl = tLang(lang, '৪৫ দিনে মোট মুনাফা (২২৫%):', '45-Day Total Profit (225%):', 'إجمالي ربح 45 يوماً (225%):');
     const maturityLbl = tLang(lang, 'একবারে ৪৫ দিন পর লাভ সহ প্রফিট:', 'Total Maturity Return (45 Days):', 'إجمالي العائد عند الاستحقاق (45 يوماً):');
-    const activeBadgeTxt = tLang(lang, 'সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)', 'Savings Plan Active (One-Time Enrollment)', 'خطة الادخار نشطة (اشتراك لمرة واحدة)');
+    const activeBadgeTxt = isSettled
+      ? tLang(lang, 'সঞ্চয় মেয়াদ পূর্ণ — মুনাফা সহ ব্যালেন্সে যোগ হয়েছে', 'Savings Plan Matured & Credited to Balance', 'اكتملت خطة الادخار وتمت الإضافة إلى الرصيد')
+      : tLang(lang, 'সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)', 'Savings Plan Active (One-Time Enrollment)', 'خطة الادخار نشطة (اشتراك لمرة واحدة)');
     return `
       <div class="bg-[#071536] rounded-3xl p-5 shadow-2xl space-y-4 relative overflow-hidden">
         <div class="flex items-start justify-between">
@@ -15288,7 +15510,7 @@ function renderSavingsRecordCard(plan) {
         <div class="bg-[#040c21] p-4 rounded-2xl shadow-inner">
           <p class="text-xs text-slate-400 font-medium">পরিকল্পনার মেয়াদ</p>
           <p class="text-2xl font-extrabold text-white mt-1 font-mono">
-            ${formatBanglaNumber(days)} দিন
+            ${formatBanglaNumber(daysLeft)} দিন
           </p>
         </div>
       </div>
@@ -15308,7 +15530,7 @@ function renderSavingsRecordCard(plan) {
       </div>
       <div class="w-full py-3.5 rounded-2xl bg-[#091a42] text-[#38bdf8] font-bold text-xs text-center shadow-lg flex items-center justify-center gap-2 select-none">
         <span class="w-2.5 h-2.5 rounded-full bg-[#34d399] animate-pulse"></span>
-        <span>সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)</span>
+        <span>${isSettled ? 'সঞ্চয় মেয়াদ পূর্ণ — মুনাফা সহ ব্যালেন্সে যোগ হয়েছে' : 'সঞ্চয় পরিকল্পনা সক্রিয় রয়েছে (একবার প্রযোজ্য)'}</span>
       </div>
     </div>
   `;
@@ -15327,22 +15549,14 @@ function renderSavingsPlanPanel() {
     balEl.textContent = isUsd ? `${sym} ${bal.toFixed(2)} USD` : ('৳ ' + formatNumber(bal, user));
   }
 
-  // 2. Sync preset buttons to user's currency ($8/$16/$28/$40/$80 for USD vs ৳1000..৳10000 for BD)
-  const basePresets = [1000, 2000, 3500, 5000, 10000];
+  // 2. Pure USD savings presets ($10, $20, $30, $50, $100)
+  const usdPresets = [10, 20, 30, 50, 100];
   const presetBtns = document.querySelectorAll('.savings-preset-btn');
   presetBtns.forEach(function(btn, idx) {
-    const base = basePresets[idx];
-    if (!base) return;
-    if (isUsd) {
-      const usdAmt = toUserCurrencyAmount(base, user);
-      btn.dataset.amount = String(usdAmt);
-      btn.textContent = `$${usdAmt}`;
-    } else {
-      btn.dataset.amount = String(base);
-      btn.textContent = lang === 'bn'
-        ? `৳${formatBanglaNumber(base.toLocaleString('en-US'))}`
-        : `৳${base.toLocaleString('en-US')}`;
-    }
+    const usdAmt = usdPresets[idx];
+    if (!usdAmt) return;
+    btn.dataset.amount = String(usdAmt);
+    btn.textContent = `$${usdAmt}`;
   });
 
   const symEl = document.getElementById('savings-input-currency-sym');
@@ -15355,6 +15569,19 @@ function renderSavingsPlanPanel() {
   const recordContent = document.getElementById('savings-record-card-content');
 
   if (activePlan) {
+    checkAndSettleMaturedSavingsPlan(user).then(function(didSettle) {
+      if (didSettle) {
+        const refreshedPlan = getUserSavingsPlan();
+        if (recordContent && refreshedPlan) {
+          recordContent.innerHTML = renderSavingsRecordCard(refreshedPlan);
+        }
+        const refreshedUser = getCurrentUser();
+        if (balEl && refreshedUser) {
+          const newB = Number(refreshedUser.balance || 0);
+          balEl.textContent = `${sym} ${newB.toFixed(2)} USD`;
+        }
+      }
+    }).catch(function() {});
     if (recordContent) {
       recordContent.innerHTML = renderSavingsRecordCard(activePlan);
     }
@@ -15366,10 +15593,8 @@ function renderSavingsPlanPanel() {
     const inputEl = document.getElementById('savings-deposit-input');
     if (inputEl) {
       const curVal = Number(inputEl.value || 0);
-      if (isUsd && (curVal === 3500 || curVal === 0)) {
-        inputEl.value = String(toUserCurrencyAmount(3500, user));
-      } else if (!isUsd && curVal > 0 && curVal < 100) {
-        inputEl.value = '3500';
+      if (curVal === 3500 || curVal === 0) {
+        inputEl.value = '30';
       }
       updateSavingsCalculationPreview(inputEl.value);
     }
@@ -15409,7 +15634,8 @@ function handleSavingsSubmission() {
     return;
   }
 
-  const amount = parseFloat(inputEl.value);
+  const rawAmount = parseFloat(inputEl.value);
+  const amount = Number.isFinite(rawAmount) ? Number(rawAmount.toFixed(2)) : 0;
   if (!amount || isNaN(amount) || amount <= 0) {
     showToastNotification(tLang(
       lang,
@@ -15482,22 +15708,20 @@ function handleSavingsSubmission() {
 
       // Sufficient balance: save savings plan to Supabase
       const isFreshUsd = isUsdOnlyUser(freshUser);
-      const targetGoal = isFreshUsd
-        ? Math.max(80, Math.round(amount * 2.85))
-        : Math.max(10000, Math.round((amount * 2.85) / 1000) * 1000);
       const dailyP = isFreshUsd ? Number((amount * 0.05).toFixed(2)) : Math.round(amount * 0.05);
       const totalP = isFreshUsd ? Number((amount * 0.05 * 45).toFixed(2)) : Math.round(amount * 0.05 * 45);
+      const totalReturnVal = Number((amount + totalP).toFixed(2));
       const newPlan = {
         id: 'plan_' + Date.now(),
         amount: amount,
         currency: getUserCurrency(freshUser),
-        target: targetGoal,
+        target: totalReturnVal,
         rate: 5,
         days: 45,
         daysElapsed: 0,
         dailyProfit: dailyP,
         totalProfit: totalP,
-        totalReturn: Number((amount + totalP).toFixed(2)),
+        totalReturn: totalReturnVal,
         status: 'active',
         createdAt: new Date().toISOString()
       };
@@ -15709,10 +15933,10 @@ function renderUsdtDepositCardsHtml(container, records) {
       }
     } catch(e) {}
 
-    const activeRate = isUsd ? 1 : Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+    const activeRate = isUsd ? 1 : getActiveBdtPerUsdRate();
     const usdtVal = item.usdtAmount !== undefined
       ? parseFloat(item.usdtAmount || 0)
-      : (parseFloat(item.amount || 0) / (activeRate > 0 ? activeRate : 125));
+      : (parseFloat(item.amount || 0) / (activeRate > 0 ? activeRate : 126));
     const amt = usdtVal.toFixed(2);
     const shortTx = item.txHash ? item.txHash.slice(0, 6) + '...' + item.txHash.slice(-4) : '';
     const stLower = String(item.status || '').toLowerCase();
@@ -15759,11 +15983,11 @@ function renderRecentUsdtDeposits() {
       const usdtOnly = dbList.filter(function(tx) {
         return String(tx.method || '').toLowerCase().includes('usdt') || String(tx.orderId || '').startsWith('0x');
       }).map(function(tx) {
-        const rate = isUsd ? 1 : Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
+        const usdAmt = Number(Number(tx.amount || 0).toFixed(2));
         return {
           txHash: tx.orderId || '',
-          usdtAmount: Number((Number(tx.amount || 0) / (rate > 0 ? rate : 125)).toFixed(2)),
-          bdtAmount: Number(tx.amount || 0),
+          usdtAmount: usdAmt,
+          bdtAmount: usdAmt,
           rawDate: tx.createdAt || tx.date,
           date: tx.date,
           status: tx.status || 'অনুমোদিত'
@@ -15866,38 +16090,36 @@ async function loadUserCryptoDepositAddress(forceRefresh = false) {
   if (qrSpinner && (!cached || isFallback)) qrSpinner.classList.remove('hidden');
 
   try {
-    let res = null;
-    const fetchEndpoints = [
-      `/api/crypto?action=address&userId=${userId}`,
-      `/api/crypto/${userId}`,
-      `https://imcagro.top/crypto/${userId}`
-    ];
-    for (const ep of fetchEndpoints) {
-      try {
-        const attempt = await fetch(ep);
-        if (attempt && attempt.ok) {
-          res = attempt;
-          break;
-        }
-      } catch (eAttempt) {}
-    }
+    const isOnImcagro = (window.location.hostname === 'imcagro.top' || window.location.hostname.endsWith('.imcagro.top'));
+    const ep = isOnImcagro ? `/crypto/${userId}` : `/api/crypto?action=address&userId=${userId}`;
+    const res = await fetch(ep);
+    let loadedLive = false;
 
     if (res && res.ok) {
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (data && data.success && data.bep20_address) {
         currentUserBep20Address = data.bep20_address;
         localStorage.setItem(cacheKey, currentUserBep20Address);
         if (addressEl) addressEl.textContent = currentUserBep20Address;
         if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(currentUserBep20Address)}`;
         if (statusBadge) statusBadge.textContent = badgeLiveTxt;
+        loadedLive = true;
       }
+    }
+
+    if (!loadedLive && (!cached || isFallback)) {
+      const cfgAddr = (window.aloPlatformConfig && window.aloPlatformConfig.usdtAddress) || COMPANY_USDT_BEP20_ADDRESS;
+      currentUserBep20Address = cfgAddr;
+      if (addressEl) addressEl.textContent = cfgAddr;
+      if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cfgAddr)}`;
     }
   } catch (err) {
     console.warn('[Crypto] Address load fallback:', err);
-    if (!cached && addressEl) {
+    if (!cached || isFallback) {
       const cfgAddr = (window.aloPlatformConfig && window.aloPlatformConfig.usdtAddress) || COMPANY_USDT_BEP20_ADDRESS;
-      addressEl.textContent = cfgAddr;
       currentUserBep20Address = cfgAddr;
+      if (addressEl) addressEl.textContent = cfgAddr;
+      if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(cfgAddr)}`;
     }
   } finally {
     isFetchingUserCryptoAddress = false;
@@ -15934,24 +16156,17 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
   }
 
   try {
-    let res = null;
-    const checkEndpoints = [
-      `/api/crypto?action=check&userId=${userId}`,
-      `/api/crypto/check/${userId}`,
-      `https://imcagro.top/crypto/check/${userId}`
-    ];
-    for (const ep of checkEndpoints) {
-      try {
-        const attempt = await fetch(ep);
-        if (attempt && attempt.ok) {
-          res = attempt;
-          break;
-        }
-      } catch (eAttempt) {}
-    }
+    const cachedAddr = localStorage.getItem(`alo_usdt_bep20_${userId}`) || '';
+    const candidateAddr = (currentUserBep20Address && currentUserBep20Address !== COMPANY_USDT_BEP20_ADDRESS)
+      ? currentUserBep20Address
+      : ((cachedAddr && cachedAddr !== COMPANY_USDT_BEP20_ADDRESS) ? cachedAddr : '');
+    const addrQuery = /^0x[a-fA-F0-9]{40}$/.test(candidateAddr) ? `&address=${encodeURIComponent(candidateAddr)}` : '';
+    const isOnImcagro = (window.location.hostname === 'imcagro.top' || window.location.hostname.endsWith('.imcagro.top'));
+    const ep = isOnImcagro ? `/crypto/check/${userId}` : `/api/crypto?action=check&userId=${userId}${addrQuery}`;
+    const res = await fetch(ep);
 
     if (res && res.ok) {
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (data && data.success) {
         const rawBalance = parseFloat(data.usdt_balance || 0);
         if (balanceText) {
@@ -15985,10 +16200,9 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
 
         if (rawBalance > lastCredited) {
           const newUsdt = rawBalance - lastCredited;
-          if (newUsdt >= 1) {
-            const isUsd = isUsdOnlyUser(activeTargetUser);
-            const activeRate = Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
-            const creditAmt = isUsd ? Number(newUsdt.toFixed(2)) : Number((newUsdt * activeRate).toFixed(2));
+          const minUsdtDep = Math.max(0.01, getPlatformMinRechargeUsd());
+          if (newUsdt >= minUsdtDep) {
+            const creditAmt = Number(newUsdt.toFixed(2));
 
             if (activeTargetUser) {
               activeTargetUser.balance = Number(((Number(activeTargetUser.balance) || 0) + creditAmt).toFixed(2));
@@ -16111,28 +16325,21 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
             if (typeof showToastNotification === 'function') {
               const l = getActiveLang(user);
               showToastNotification(
-                isUsd
-                  ? tLang(
-                      l,
-                      `🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) ব্যালেন্সে যোগ হয়েছে!`,
-                      `🎉 Congratulations! ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) added to your balance!`,
-                      `🎉 تهانينا! تمت إضافة ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) إلى رصيدك!`
-                    )
-                  : tLang(
-                      l,
-                      `🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT (৳ ${creditAmt.toLocaleString('en-US')}) ব্যালেন্সে যোগ হয়েছে!`,
-                      `🎉 Congratulations! ${newUsdt.toFixed(2)} USDT (৳ ${creditAmt.toLocaleString('en-US')}) added to your balance!`,
-                      `🎉 تهانينا! تمت إضافة ${newUsdt.toFixed(2)} USDT (৳ ${creditAmt.toLocaleString('en-US')}) إلى رصيدك!`
-                    )
+                tLang(
+                  l,
+                  `🎉 অভিনন্দন! ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) ব্যালেন্সে যোগ হয়েছে!`,
+                  `🎉 Congratulations! ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) added to your balance!`,
+                  `🎉 تهانينا! تمت إضافة ${newUsdt.toFixed(2)} USDT ($${creditAmt.toFixed(2)} USD) إلى رصيدك!`
+                )
               );
             }
           } else if (options && options.showToast && typeof showToastNotification === 'function') {
             const l = getActiveLang(user);
             showToastNotification(tLang(
               l,
-              `সর্বনিম্ন ক্রিপ্টো ডিপোজিট ১.০০ USDT ($১)। বর্তমান অক্রেডিটেড পরিমাণ: ${newUsdt.toFixed(2)} USDT`,
-              `Minimum crypto deposit is 1.00 USDT ($1). Pending uncredited amount: ${newUsdt.toFixed(2)} USDT`,
-              `الحد الأدنى للإيداع بالعملات الرقمية هو 1.00 USDT ($1). المبلغ المعلق حالياً: ${newUsdt.toFixed(2)} USDT`
+              `সর্বনিম্ন ক্রিপ্টো ডিপোজিট ${minUsdtDep.toFixed(2)} USDT ($${minUsdtDep.toFixed(2)})। বর্তমান অক্রেডিটেড পরিমাণ: ${newUsdt.toFixed(2)} USDT`,
+              `Minimum crypto deposit is ${minUsdtDep.toFixed(2)} USDT ($${minUsdtDep.toFixed(2)}). Pending uncredited amount: ${newUsdt.toFixed(2)} USDT`,
+              `الحد الأدنى للإيداع بالعملات الرقمية هو ${minUsdtDep.toFixed(2)} USDT ($${minUsdtDep.toFixed(2)}). المبلغ المعلق حالياً: ${newUsdt.toFixed(2)} USDT`
             ));
           }
         } else {
@@ -16150,6 +16357,14 @@ async function checkUserUsdtDepositBalance(options = { showToast: true }) {
             ));
           }
         }
+      } else if (options && options.showToast && typeof showToastNotification === 'function') {
+        const l = getActiveLang(user);
+        showToastNotification(tLang(
+          l,
+          'ক্রিপ্টো সার্ভার সাময়িকভাবে ব্যস্ত আছে, কিছুক্ষণ পর আবার চেষ্টা করুন।',
+          'Crypto server is temporarily unavailable. Please try again shortly.',
+          'خادم العملات الرقمية غير متاح مؤقتاً، يرجى المحاولة مرة أخرى قريباً.'
+        ));
       }
     }
   } catch (err) {
@@ -16403,15 +16618,13 @@ function initUsdtDeposit() {
     };
   }
 
-  // 3. Amount Input -> User currency preview calculation
+  // 3. Amount Input -> 1:1 USD preview calculation
   const amountInput = document.getElementById('usdt-amount-input');
   const bdtPreview = document.getElementById('usdt-bdt-preview');
   if (amountInput && bdtPreview) {
     amountInput.oninput = function() {
       const val = parseFloat(amountInput.value) || 0;
-      const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
-      const activeRate = isUsdOnlyUser(u) ? 1 : Number((window.aloPlatformConfig && window.aloPlatformConfig.usdtRate) || 125);
-      bdtPreview.textContent = (val * activeRate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      bdtPreview.textContent = val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
   }
 
@@ -16514,17 +16727,23 @@ function initUsdtDeposit() {
         if (result && result.success) {
           const depositData = result.deposit || {};
           const usdtAmount = Number(depositData.usdtAmount) || 0;
-          const isUsd = isUsdOnlyUser(user);
-          const creditAmount = isUsd ? Number(usdtAmount.toFixed(2)) : (Number(depositData.bdtAmount) || 0);
+          const creditAmount = Number((Number(depositData.usdAmount) || usdtAmount || 0).toFixed(2));
 
-          // 1. Credit Recharged USDT Funds directly to Balance (only freezes upon purchasing a VIP package)
+          // 1. Credit Recharged USDT Funds directly to fresh cloud Balance (only freezes upon purchasing a VIP package)
+          const manualNormPhone = normalizeBdPhone(user.phone || user.accountNumber || '');
+          const freshManualUser = (manualNormPhone && typeof dbGetUser === 'function')
+            ? (await dbGetUser(manualNormPhone).catch(function() { return null; }))
+            : null;
+          if (freshManualUser) {
+            Object.assign(user, freshManualUser);
+          }
           user.balance = Number(((Number(user.balance) || 0) + creditAmount).toFixed(2));
           user.rechargeAmount = Number(((Number(user.rechargeAmount) || 0) + creditAmount).toFixed(2));
 
           localStorage.setItem('my_pass_available_bal', user.balance.toFixed(2));
           localStorage.setItem('aloSignedInUser', JSON.stringify(user));
           if (typeof dbSaveUser === 'function') {
-            dbSaveUser(user);
+            await dbSaveUser(user);
           }
 
           // 2. Record / Upgrade Transaction
@@ -16633,37 +16852,23 @@ function initUsdtDeposit() {
           // 5. Success Feedback
           if (msgEl) {
             msgEl.className = 'text-xs text-center font-bold text-emerald-400 py-2 px-3 bg-emerald-500/15 rounded-xl border border-emerald-500/40';
-            msgEl.textContent = isUsd
-              ? tLang(
-                  l,
-                  `🎉 সফল! ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD) অটো এপ্রুভ হয়েছে।`,
-                  `🎉 Success! ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD) auto-approved & credited.`,
-                  `🎉 تم بنجاح! تمت الموافقة التلقائية وإضافة ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD).`
-                )
-              : tLang(
-                  l,
-                  (result.message || `🎉 অভিনন্দন! ${usdtAmount} USDT (৳ ${creditAmount.toLocaleString('en-US')}) অটো এপ্রুভ হয়েছে।`),
-                  `🎉 Success! ${usdtAmount} USDT (৳ ${creditAmount.toLocaleString('en-US')}) auto-approved & credited.`,
-                  `🎉 تم بنجاح! تمت الموافقة وإضافة ${usdtAmount} USDT (৳ ${creditAmount.toLocaleString('en-US')}).`
-                );
+            msgEl.textContent = tLang(
+              l,
+              `🎉 সফল! ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD) অটো এপ্রুভ হয়েছে।`,
+              `🎉 Success! ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD) auto-approved & credited.`,
+              `🎉 تم بنجاح! تمت الموافقة التلقائية وإضافة ${usdtAmount} USDT ($${creditAmount.toFixed(2)} USD).`
+            );
             msgEl.classList.remove('hidden');
           }
 
           if (typeof showToastNotification === 'function') {
             showToastNotification(
-              isUsd
-                ? tLang(
-                    l,
-                    `🎉 ${usdtAmount} USDT আপনার USD ব্যালেন্সে যুক্ত হয়েছে!`,
-                    `🎉 ${usdtAmount} USDT deposit credited to your USD balance!`,
-                    `🎉 تمت إضافة إيداع ${usdtAmount} USDT إلى رصيدك!`
-                  )
-                : tLang(
-                    l,
-                    `🎉 ${usdtAmount} USDT ডিপোজিট সফল ও ব্যালেন্সে যুক্ত হয়েছে!`,
-                    `🎉 ${usdtAmount} USDT deposit credited to your balance!`,
-                    `🎉 تم إيداع ${usdtAmount} USDT وإضافته إلى رصيدك بنجاح!`
-                  )
+              tLang(
+                l,
+                `🎉 ${usdtAmount} USDT আপনার USD ব্যালেন্সে যুক্ত হয়েছে!`,
+                `🎉 ${usdtAmount} USDT deposit credited to your USD balance!`,
+                `🎉 تمت إضافة إيداع ${usdtAmount} USDT إلى رصيدك!`
+              )
             );
           }
 
@@ -16671,7 +16876,7 @@ function initUsdtDeposit() {
           if (txInput) txInput.value = '';
           if (senderInput) senderInput.value = '';
           if (amountInput) amountInput.value = '';
-          if (bdtPreview) bdtPreview.textContent = (isUsd || l !== 'bn') ? '0.00' : '০.০০';
+          if (bdtPreview) bdtPreview.textContent = '0.00';
 
         } else {
           // Failure response from API
@@ -16809,17 +17014,21 @@ async function handleGatewayPayNow() {
   const user = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
   const userPhone = user ? (user.phone || user.accountNumber || '') : '';
 
+  const activeBdtRate = getActiveBdtPerUsdRate();
+  const amountUsd = Number((amount / activeBdtRate).toFixed(2));
+
   try {
     localStorage.setItem('alo_pending_recharge_order', JSON.stringify({
       orderId: orderId,
       amount: amount,
+      amountUsd: amountUsd,
       payType: payType,
       phone: userPhone,
       timestamp: Date.now()
     }));
   } catch (e) {}
 
-  // Ensure pending deposit order exists immediately in local cache & Supabase
+  // Ensure pending deposit order exists immediately in local cache & Supabase (stored in USD to match backend)
   if (userPhone) {
     const nowGw = new Date();
     const gwMethod = payType === 'NAGAD' ? 'নগদ (Nagad) [Auto]' : 'বিকাশ (bKash) [Auto]';
@@ -16829,7 +17038,7 @@ async function handleGatewayPayNow() {
       upsertLocalDepositOrder(userPhone, {
         orderId: orderId,
         type: 'deposit',
-        amount: amount,
+        amount: amountUsd,
         actual: 0,
         ratio: '0%',
         status: 'মুলতবি (Pending)',
@@ -16846,7 +17055,7 @@ async function handleGatewayPayNow() {
           window.aloSupabase.from('transactions').insert({
             phone: normalizeBdPhone(userPhone),
             type: 'deposit',
-            amount: amount,
+            amount: amountUsd,
             actual: 0,
             ratio: '0%',
             status: 'মুলতবি (Pending)',
@@ -17324,21 +17533,21 @@ window.addEventListener('alo-language-changed', function(e) {
 });
 
 // ============================================================================
-// LUCKY SPIN (ভাগ্যবান স্পিন) - REAL SUPABASE DRAW & PRIZE SYSTEM (৳42 - ৳45000)
+// LUCKY SPIN (ভাগ্যবান স্পিন) - REAL SUPABASE DRAW & PRIZE SYSTEM ($0.10 - $350)
 // ============================================================================
 const LUCKY_SPIN_PRIZES = [
-  { amount: 12.6,  usdAmount: 0.10, label: '$0.10',  enLabel: '$0.10',  weight: 72,   fill: '#ef4444', text: '#ffffff' },
-  { amount: 500,                    label: '৫০০৳',   enLabel: '500৳',   weight: 0.6,  fill: '#f59e0b', text: '#091326' },
-  { amount: 95,                     label: '৯৫৳',    enLabel: '95৳',    weight: 4.5,  fill: '#10b981', text: '#ffffff' },
-  { amount: 5000,                   label: '৫০০০৳',  enLabel: '5000৳',  weight: 0.08, fill: '#3b82f6', text: '#ffffff' },
-  { amount: 220,                    label: '২২০৳',   enLabel: '220৳',   weight: 1.2,  fill: '#a855f7', text: '#ffffff' },
-  { amount: 45000,                  label: '৪৫০০০৳', enLabel: '45000৳', weight: 0.02, fill: '#ec4899', text: '#ffffff' },
-  { amount: 65,                     label: '৬৫৳',    enLabel: '65৳',    weight: 7,    fill: '#06b6d4', text: '#071638' },
-  { amount: 1500,                   label: '১৫০০৳',  enLabel: '1500৳',  weight: 0.25, fill: '#f97316', text: '#ffffff' },
-  { amount: 150,                    label: '১৫০৳',   enLabel: '150৳',   weight: 2.2,  fill: '#84cc16', text: '#071638' },
-  { amount: 15000,                  label: '১৫০০০৳', enLabel: '15000৳', weight: 0.03, fill: '#6366f1', text: '#ffffff' },
-  { amount: 42,                     label: '৪২৳',    enLabel: '42৳',    weight: 12,   fill: '#14b8a6', text: '#071638' },
-  { amount: 2500,                   label: '২৫০০৳',  enLabel: '2500৳',  weight: 0.12, fill: '#eab308', text: '#071638' }
+  { amount: 0.10,  usdAmount: 0.10,  label: '$0.10', enLabel: '$0.10', weight: 72,   fill: '#ef4444', text: '#ffffff' },
+  { amount: 4.00,  usdAmount: 4.00,  label: '$4.00', enLabel: '$4.00', weight: 0.6,  fill: '#f59e0b', text: '#091326' },
+  { amount: 0.75,  usdAmount: 0.75,  label: '$0.75', enLabel: '$0.75', weight: 4.5,  fill: '#10b981', text: '#ffffff' },
+  { amount: 40.00, usdAmount: 40.00, label: '$40',   enLabel: '$40',   weight: 0.08, fill: '#3b82f6', text: '#ffffff' },
+  { amount: 1.75,  usdAmount: 1.75,  label: '$1.75', enLabel: '$1.75', weight: 1.2,  fill: '#a855f7', text: '#ffffff' },
+  { amount: 350,   usdAmount: 350,   label: '$350',  enLabel: '$350',  weight: 0.02, fill: '#ec4899', text: '#ffffff' },
+  { amount: 0.50,  usdAmount: 0.50,  label: '$0.50', enLabel: '$0.50', weight: 7,    fill: '#06b6d4', text: '#071638' },
+  { amount: 12.00, usdAmount: 12.00, label: '$12',   enLabel: '$12',   weight: 0.25, fill: '#f97316', text: '#ffffff' },
+  { amount: 1.20,  usdAmount: 1.20,  label: '$1.20', enLabel: '$1.20', weight: 2.2,  fill: '#84cc16', text: '#071638' },
+  { amount: 120,   usdAmount: 120,   label: '$120',  enLabel: '$120',  weight: 0.03, fill: '#6366f1', text: '#ffffff' },
+  { amount: 0.35,  usdAmount: 0.35,  label: '$0.35', enLabel: '$0.35', weight: 12,   fill: '#14b8a6', text: '#071638' },
+  { amount: 20.00, usdAmount: 20.00, label: '$20',   enLabel: '$20',   weight: 0.12, fill: '#eab308', text: '#071638' }
 ];
 
 // Start at 15deg (half a slice) so the fixed top pointer rests neutrally on the divider seam — not favoring any dollar slice
@@ -17346,24 +17555,19 @@ let luckySpinCurrentRotation = 15;
 let isLuckySpinAnimating = false;
 let luckySpinWheelBuilt = false;
 
-function getLuckySpinPrizeAmountForUser(prizeOrBdt, user) {
-  if (prizeOrBdt && typeof prizeOrBdt === 'object') {
-    if (isUsdOnlyUser(user) && Number.isFinite(Number(prizeOrBdt.usdAmount))) {
-      return Number(Number(prizeOrBdt.usdAmount).toFixed(2));
-    }
-    return toUserCurrencyAmount(prizeOrBdt.amount, user);
+function getLuckySpinPrizeAmountForUser(prizeOrUsd, user) {
+  if (prizeOrUsd && typeof prizeOrUsd === 'object') {
+    const val = Number.isFinite(Number(prizeOrUsd.usdAmount))
+      ? Number(prizeOrUsd.usdAmount)
+      : Number(prizeOrUsd.amount || 0);
+    return Number(val.toFixed(2));
   }
-  return toUserCurrencyAmount(prizeOrBdt, user);
+  return Number(Number(prizeOrUsd || 0).toFixed(2));
 }
 
 function getLuckySpinPrizeLabelForUser(item, user, lang) {
-  if (isUsdOnlyUser(user)) {
-    const usdAmt = Number.isFinite(Number(item.usdAmount))
-      ? Number(Number(item.usdAmount).toFixed(2))
-      : toUserCurrencyAmount(item.amount, user);
-    return usdAmt >= 100 ? `$${Math.round(usdAmt)}` : `$${usdAmt.toFixed(2)}`;
-  }
-  return lang === 'bn' ? item.label : item.enLabel;
+  const usdAmt = getLuckySpinPrizeAmountForUser(item, user);
+  return usdAmt >= 100 ? `$${Math.round(usdAmt)}` : `$${usdAmt.toFixed(2)}`;
 }
 
 function buildLuckySpinWheelSvg() {
@@ -17826,7 +18030,7 @@ async function executeLuckySpin() {
     latestUser.balance = nextBal;
     latestUser.lifetimeEarnings = Number(((Number(latestUser.lifetimeEarnings) || 0) + wonAmount).toFixed(2));
     latestUser.totalIncome = Number(((Number(latestUser.totalIncome) || 0) + wonAmount).toFixed(2));
-    latestUser.todayIncome = Number(((Number(latestUser.todayIncome) || 0) + wonAmount).toFixed(2));
+    addDailyIncome(latestUser, wonAmount);
 
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
@@ -17903,6 +18107,154 @@ document.addEventListener('click', function(e) {
     }
   }
 });
+
+// ============================================================================
+// TAWK.TO LIVE CHAT (Direct Solution / সরাসরি সমাধান)
+// Strictly validates official embed.tawk.to/{propertyId}/{widgetId} URLs,
+// loads on-demand, attaches logged-in member info, and auto-hides bubble on close.
+// ============================================================================
+let _tawkLoadedKey = '';
+let _tawkPendingOpen = false;
+
+function parseTawkToConfigIds(rawVal) {
+  const s = String(rawVal || '').trim();
+  if (!s) return null;
+  const mEmbed = s.match(/embed\.tawk\.to\/([a-fA-F0-9]{16,32})\/([a-zA-Z0-9_-]{4,32})/);
+  if (mEmbed) return { propertyId: mEmbed[1], widgetId: mEmbed[2] };
+  const mChat = s.match(/tawk\.to\/chat\/([a-fA-F0-9]{16,32})\/([a-zA-Z0-9_-]{4,32})/);
+  if (mChat) return { propertyId: mChat[1], widgetId: mChat[2] };
+  const mPair = s.match(/^([a-fA-F0-9]{16,32})\/([a-zA-Z0-9_-]{4,32})$/);
+  if (mPair) return { propertyId: mPair[1], widgetId: mPair[2] };
+  return null;
+}
+
+function syncTawkVisitorIdentity() {
+  try {
+    if (!window.Tawk_API || typeof window.Tawk_API.setAttributes !== 'function') return;
+    const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+    if (!u) return;
+    const nameStr = String(u.realName || u.name || u.memberId || u.phone || 'Member').trim();
+    const phoneStr = String(u.phone || u.accountNumber || '').trim();
+    const memberIdStr = String(u.memberId || '').trim();
+    const levelStr = String(u.packageLevel || 'LV0').trim();
+    window.Tawk_API.setAttributes({
+      name: memberIdStr ? `${nameStr} (${memberIdStr})` : nameStr,
+      phone: phoneStr,
+      member_id: memberIdStr,
+      vip_level: levelStr
+    }, function() {});
+  } catch (e) {}
+}
+
+function openTawkToLiveChat() {
+  const l = getActiveLang();
+  const cfgUrl = (window.aloPlatformConfig && window.aloPlatformConfig.tawkToUrl) || '';
+  const ids = parseTawkToConfigIds(cfgUrl);
+
+  if (!ids) {
+    showToastNotification(tLang(
+      l,
+      '💬 লাইভ চ্যাট (Tawk.to) এখনো সেটআপ করা হয়নি। এডমিন প্যানেলের Platform Rules থেকে Tawk.to লিংক যুক্ত করুন।',
+      '💬 Live chat (Tawk.to) is not configured yet. Add your Tawk.to link in Admin Panel → Platform Rules.',
+      '💬 لم يتم إعداد الدردشة المباشرة (Tawk.to) بعد. يرجى إضافة رابط Tawk.to من لوحة الإدارة.'
+    ));
+    return;
+  }
+
+  const key = `${ids.propertyId}/${ids.widgetId}`;
+  const embedSrc = `https://embed.tawk.to/${ids.propertyId}/${ids.widgetId}`;
+
+  showToastNotification(tLang(
+    l,
+    '💬 সরাসরি লাইভ সাপোর্ট চ্যাট ওপেন হচ্ছে...',
+    '💬 Opening live support chat...',
+    '💬 جارٍ فتح الدردشة المباشرة للدعم...'
+  ));
+
+  // If already loaded with the same widget, show & maximize immediately
+  if (_tawkLoadedKey === key && window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
+    syncTawkVisitorIdentity();
+    try {
+      if (typeof window.Tawk_API.showWidget === 'function') window.Tawk_API.showWidget();
+      window.Tawk_API.maximize();
+    } catch (e) {}
+    return;
+  }
+
+  _tawkPendingOpen = true;
+  window.Tawk_API = window.Tawk_API || {};
+  window.Tawk_LoadStart = new Date();
+
+  const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  if (u) {
+    const vName = String(u.realName || u.name || u.memberId || u.phone || 'Member').trim();
+    const vId = String(u.memberId || '').trim();
+    window.Tawk_API.visitor = {
+      name: vId ? `${vName} (${vId})` : vName
+    };
+  }
+
+  window.Tawk_API.onLoad = function() {
+    _tawkLoadedKey = key;
+    syncTawkVisitorIdentity();
+    try {
+      if (_tawkPendingOpen) {
+        _tawkPendingOpen = false;
+        if (typeof window.Tawk_API.showWidget === 'function') window.Tawk_API.showWidget();
+        if (typeof window.Tawk_API.maximize === 'function') window.Tawk_API.maximize();
+      } else if (typeof window.Tawk_API.hideWidget === 'function') {
+        window.Tawk_API.hideWidget();
+      }
+    } catch (e) {}
+  };
+
+  window.Tawk_API.onChatMinimized = function() {
+    try {
+      if (typeof window.Tawk_API.hideWidget === 'function') window.Tawk_API.hideWidget();
+    } catch (e) {}
+  };
+
+  window.Tawk_API.onChatEnded = function() {
+    try {
+      if (typeof window.Tawk_API.hideWidget === 'function') window.Tawk_API.hideWidget();
+    } catch (e) {}
+  };
+
+  const existingScript = document.getElementById('alo-tawk-to-script');
+  if (existingScript) {
+    if (existingScript.dataset.tawkKey === key) {
+      if (window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
+        _tawkPendingOpen = false;
+        syncTawkVisitorIdentity();
+        try {
+          if (typeof window.Tawk_API.showWidget === 'function') window.Tawk_API.showWidget();
+          window.Tawk_API.maximize();
+        } catch (e) {}
+      }
+      return;
+    }
+    existingScript.remove();
+  }
+
+  const s1 = document.createElement('script');
+  s1.id = 'alo-tawk-to-script';
+  s1.dataset.tawkKey = key;
+  s1.async = true;
+  s1.src = embedSrc;
+  s1.charset = 'UTF-8';
+  s1.setAttribute('crossorigin', '*');
+  s1.onerror = function() {
+    _tawkPendingOpen = false;
+    showToastNotification(tLang(
+      l,
+      '⚠️ লাইভ চ্যাট লোড হতে পারেনি। অনুগ্রহ করে ইন্টারনেট বা Tawk.to লিংক চেক করুন।',
+      '⚠️ Failed to load live chat. Please check your connection or Tawk.to link.',
+      '⚠️ تعذر تحميل الدردشة المباشرة. يرجى التحقق من الاتصال أو رابط Tawk.to.'
+    ));
+  };
+  (document.head || document.body).appendChild(s1);
+}
+window.openTawkToLiveChat = openTawkToLiveChat;
 
 if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', initApp);
